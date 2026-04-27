@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
+import { useEffect, useState } from 'react';
 
+import { ensureUserProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 
 export const useAuth = () => {
@@ -8,14 +9,26 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        // Stale/invalid token — clear it so the user is sent to login
+        supabase.auth.signOut();
+        setSession(null);
+      } else {
+        if (session?.user) {
+          ensureUserProfile(session.user);
+        }
+        setSession(session);
+      }
       setLoading(false);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        ensureUserProfile(session.user);
+      }
       setSession(session);
     });
 

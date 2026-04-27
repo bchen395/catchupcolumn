@@ -40,7 +40,7 @@ const TabLayout = () => {
       <Tabs.Screen
         name="groups"
         options={{
-          title: 'My Columns',
+          title: 'My Groups',
           tabBarIcon: ({ color }) => <TabBarIcon name="users" color={color} />,
         }}
       />

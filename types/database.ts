@@ -7,13 +7,15 @@ export type UserRow = {
   created_at: string;
 };
 
-export type UserInsert = Omit<UserRow, 'created_at'> & {
+export type UserInsert = Omit<UserRow, 'created_at' | 'avatar_url' | 'bio'> & {
   created_at?: string;
+  avatar_url?: string | null;
+  bio?: string | null;
 };
 
 export type UserUpdate = Partial<Omit<UserRow, 'id'>>;
 
-export type ColumnRow = {
+export type GroupRow = {
   id: string;
   name: string;
   description: string | null;
@@ -25,32 +27,33 @@ export type ColumnRow = {
   created_at: string;
 };
 
-export type ColumnInsert = Omit<ColumnRow, 'id' | 'created_at' | 'invite_code'> & {
+export type GroupInsert = Omit<GroupRow, 'id' | 'created_at' | 'invite_code' | 'cover_image_url'> & {
   id?: string;
   created_at?: string;
   invite_code?: string;
+  cover_image_url?: string | null;
 };
 
-export type ColumnUpdate = Partial<Omit<ColumnRow, 'id' | 'created_by'>>;
+export type GroupUpdate = Partial<Omit<GroupRow, 'id' | 'created_by'>>;
 
-export type ColumnMemberRow = {
-  column_id: string;
+export type GroupMemberRow = {
+  group_id: string;
   user_id: string;
   role: 'moderator' | 'contributor';
   joined_at: string;
 };
 
-export type ColumnMemberInsert = Omit<ColumnMemberRow, 'joined_at'> & {
+export type GroupMemberInsert = Omit<GroupMemberRow, 'joined_at'> & {
   joined_at?: string;
 };
 
-export type ColumnMemberUpdate = {
+export type GroupMemberUpdate = {
   role?: 'moderator' | 'contributor';
 };
 
 export type PostRow = {
   id: string;
-  column_id: string;
+  group_id: string;
   author_id: string;
   body: string;
   image_url: string | null;
@@ -66,11 +69,11 @@ export type PostInsert = Omit<PostRow, 'id' | 'created_at' | 'updated_at' | 'edi
   edition_id?: string | null;
 };
 
-export type PostUpdate = Partial<Omit<PostRow, 'id' | 'column_id' | 'author_id'>>;
+export type PostUpdate = Partial<Omit<PostRow, 'id' | 'group_id' | 'author_id'>>;
 
 export type EditionRow = {
   id: string;
-  column_id: string;
+  group_id: string;
   edition_number: number;
   published_at: string;
   created_at: string;
@@ -81,16 +84,47 @@ export type EditionInsert = Omit<EditionRow, 'id' | 'created_at'> & {
   created_at?: string;
 };
 
-export type EditionUpdate = Partial<Omit<EditionRow, 'id' | 'column_id'>>;
+export type EditionUpdate = Partial<Omit<EditionRow, 'id' | 'group_id'>>;
+
+// Derived types for common query patterns
+export type GroupWithMembers = GroupRow & {
+  members: (GroupMemberRow & { user: UserRow })[];
+};
+
+export type EditionWithPosts = EditionRow & {
+  posts: (PostRow & { author: UserRow })[];
+};
+
+export type PostWithAuthor = PostRow & {
+  author: UserRow;
+};
 
 export type Database = {
   public: {
     Tables: {
-      users: { Row: UserRow; Insert: UserInsert; Update: UserUpdate };
-      columns: { Row: ColumnRow; Insert: ColumnInsert; Update: ColumnUpdate };
-      column_members: { Row: ColumnMemberRow; Insert: ColumnMemberInsert; Update: ColumnMemberUpdate };
-      posts: { Row: PostRow; Insert: PostInsert; Update: PostUpdate };
-      editions: { Row: EditionRow; Insert: EditionInsert; Update: EditionUpdate };
+      users: { Row: UserRow; Insert: UserInsert; Update: UserUpdate; Relationships: [] };
+      groups: { Row: GroupRow; Insert: GroupInsert; Update: GroupUpdate; Relationships: [] };
+      group_members: {
+        Row: GroupMemberRow;
+        Insert: GroupMemberInsert;
+        Update: GroupMemberUpdate;
+        Relationships: [];
+      };
+      posts: { Row: PostRow; Insert: PostInsert; Update: PostUpdate; Relationships: [] };
+      editions: { Row: EditionRow; Insert: EditionInsert; Update: EditionUpdate; Relationships: [] };
     };
+    Views: {};
+    Functions: {
+      find_group_by_invite_code: {
+        Args: { p_invite_code: string };
+        Returns: GroupRow[];
+      };
+      delete_group_as_moderator: {
+        Args: { p_group_id: string };
+        Returns: void;
+      };
+    };
+    Enums: {};
+    CompositeTypes: {};
   };
 };

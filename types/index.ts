@@ -1,18 +1,4 @@
 export type {
-  Database,
-  UserRow,
-  UserInsert,
-  UserUpdate,
-  ColumnRow,
-  ColumnInsert,
-  ColumnUpdate,
-  ColumnMemberRow,
-  ColumnMemberInsert,
-  ColumnMemberUpdate,
-  PostRow,
-  PostInsert,
-  PostUpdate,
-  EditionRow,
-  EditionInsert,
-  EditionUpdate,
+    Database, EditionInsert, EditionRow, EditionUpdate, EditionWithPosts, GroupInsert, GroupMemberInsert, GroupMemberRow, GroupMemberUpdate, GroupRow, GroupUpdate, GroupWithMembers, PostInsert, PostRow, PostUpdate, PostWithAuthor, UserInsert, UserRow, UserUpdate
 } from './database';
+

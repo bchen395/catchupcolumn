@@ -24,7 +24,7 @@ catch-up-column/
 │   ├── (tabs)/             # Main tab navigator
 │   │   ├── inbox.tsx       # Weekly editions reading view
 │   │   ├── compose.tsx     # Write/edit a post for the week
-│   │   ├── groups.tsx      # View and manage Columns (groups)
+│   │   ├── groups.tsx      # View and manage Groups
 │   │   └── profile.tsx     # User profile and settings
 │   └── _layout.tsx         # Root layout
 ├── components/             # Reusable UI components
@@ -48,7 +48,7 @@ catch-up-column/
 - `email` (text, not null)
 - `created_at` (timestamptz)
 
-### columns (groups/newsletters)
+### groups (group newsletters)
 - `id` (uuid, PK)
 - `name` (text, not null) — e.g. "The Williams Family Weekly"
 - `description` (text, nullable)
@@ -59,16 +59,16 @@ catch-up-column/
 - `invite_code` (text, unique) — short code for invite links
 - `created_at` (timestamptz)
 
-### column_members
-- `column_id` (uuid, FK → columns.id)
+### group_members
+- `group_id` (uuid, FK → groups.id)
 - `user_id` (uuid, FK → users.id)
 - `role` (text, 'moderator' | 'contributor')
 - `joined_at` (timestamptz)
-- PK: (column_id, user_id)
+- PK: (group_id, user_id)
 
 ### posts
 - `id` (uuid, PK)
-- `column_id` (uuid, FK → columns.id)
+- `group_id` (uuid, FK → groups.id)
 - `author_id` (uuid, FK → users.id)
 - `body` (text, not null)
 - `image_url` (text, nullable)
@@ -78,7 +78,7 @@ catch-up-column/
 
 ### editions (compiled weekly newsletters)
 - `id` (uuid, PK)
-- `column_id` (uuid, FK → columns.id)
+- `group_id` (uuid, FK → groups.id)
 - `edition_number` (int, not null)
 - `published_at` (timestamptz)
 - `created_at` (timestamptz)
@@ -86,20 +86,20 @@ catch-up-column/
 ## Key Terminology
 
 Use this language consistently in code, UI, and comments:
-- **Column** — a group newsletter (not "group" or "channel")
-- **Edition** — a compiled weekly issue of a Column
-- **Contributor** — a member of a Column who writes posts
-- **Moderator** — the Column creator/admin
+- **Group** — a group newsletter (not "column" or "channel")
+- **Edition** — a compiled weekly issue of a Group
+- **Contributor** — a member of a Group who writes posts
+- **Moderator** — the Group creator/admin
 - **Post** — a single written entry by one contributor for one edition
 
 ## MVP Features (in priority order)
 
-1. **Auth** — Email/password signup and login via Supabase Auth. Keep onboarding to 3 screens max: create account → set display name & avatar → create or join a Column.
-2. **Column creation & invites** — Moderator creates a Column, gets a shareable invite link/code. Others join via that link.
+1. **Auth** — Email/password signup and login via Supabase Auth. Keep onboarding to 3 screens max: create account → set display name & avatar → create or join a Group.
+2. **Group creation & invites** — Moderator creates a Group, gets a shareable invite link/code. Others join via that link.
 3. **Post composer** — Simple text editor with optional single photo upload. No rich text formatting in v1. Posts are tied to the current (unpublished) edition window.
-4. **Weekly compilation** — A Supabase Edge Function runs on a cron schedule, groups all uncompiled posts for each Column into an Edition, and triggers delivery.
+4. **Weekly compilation** — A Supabase Edge Function runs on a cron schedule, groups all uncompiled posts for each Group into an Edition, and triggers delivery.
 5. **Inbox / reading view** — Newspaper-styled layout showing the latest Edition. Each contributor's post is a "section." Prioritize readability and warmth.
-6. **Email delivery** — When an Edition publishes, send an email to all Column members with the content (via Resend).
+6. **Email delivery** — When an Edition publishes, send an email to all Group members with the content (via Resend).
 
 ## NOT in MVP (future phases)
 
@@ -116,14 +116,14 @@ Use this language consistently in code, UI, and comments:
 - **Accessibility first.** Minimum 16px body text, 48px touch targets, high contrast. Test with larger system font sizes.
 - **Newspaper aesthetic.** Use serif fonts for edition headlines and reading view (e.g. Playfair Display or Lora). Sans-serif for UI chrome (e.g. Inter or system default).
 - **Warm color palette.** Cream/warm white backgrounds, deep charcoal text, muted accent color (e.g. warm navy or burgundy). Avoid sterile whites and bright blues.
-- **Minimal navigation.** 4 bottom tabs: Inbox, Compose, My Columns, Profile. No hamburger menus or deep nesting.
-- **Language tone.** Friendly, clear, non-technical. "Your Column is ready!" not "Edition #4 has been published." Say "Write something for this week" not "Create a new post."
+- **Minimal navigation.** 4 bottom tabs: Inbox, Compose, My Groups, Profile. No hamburger menus or deep nesting.
+- **Language tone.** Friendly, clear, non-technical. "Your Group is ready!" not "Edition #4 has been published." Say "Write something for this week" not "Create a new post."
 
 ## Supabase Setup Notes
 
 - Enable Row Level Security (RLS) on all tables.
-- RLS policies: users can only read/write posts in Columns they belong to. Only moderators can edit Column settings. Users can only edit their own posts and profile.
-- Use Supabase Storage for avatar and post images. Create two buckets: `avatars` (public) and `post-images` (authenticated access scoped to Column members).
+- RLS policies: users can only read/write posts in Groups they belong to. Only moderators can edit Group settings. Users can only edit their own posts and profile.
+- Use Supabase Storage for avatar and post images. Create two buckets: `avatars` (public) and `post-images` (authenticated access scoped to Group members).
 - Use Supabase Edge Functions for the weekly cron compilation job.
 
 ## Commands
