@@ -1,6 +1,5 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
   Image,
@@ -125,21 +124,10 @@ const CreateGroupScreen = () => {
   };
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: 'Create a Group',
-          headerLeft: () => (
-            <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
-              <Ionicons name="chevron-back" size={26} color={Colors.accentNavy} />
-            </Pressable>
-          ),
-        }}
-      />
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.scroll}
@@ -278,16 +266,12 @@ const CreateGroupScreen = () => {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
-    </>
   );
 };
 
 export default CreateGroupScreen;
 
 const styles = StyleSheet.create({
-  backButton: {
-    marginLeft: 4,
-  },
   flex: {
     flex: 1,
     backgroundColor: Colors.background,

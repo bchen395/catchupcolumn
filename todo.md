@@ -39,12 +39,12 @@ Mark phases as [x] when complete. Work through them in order.
 
 ---
 
-## Phase 4: Post Composer
-- [ ] Compose tab: simple text input + optional photo upload to `post-images` bucket
-- [ ] Select which Group to post to (if member of multiple)
-- [ ] Show current draft / already-submitted post for this week's edition window
-- [ ] Edit and delete own posts before the edition publishes
-- [ ] Character guidance (not a hard limit, but a gentle nudge around 500 words)
+## Phase 4: Posting
+- [x] Post tab: simple text input + optional photo upload to `post-images` bucket
+- [x] Select which Group to post to (if member of multiple)
+- [x] Show current draft / already-submitted post for this week's edition window
+- [x] Edit and delete own posts before the edition publishes
+- [x] Character guidance (not a hard limit, but a gentle nudge around 500 words)
 
 **Test:** Can write a post with a photo, see it saved, edit it, delete it.
 

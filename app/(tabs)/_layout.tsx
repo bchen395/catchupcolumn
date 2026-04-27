@@ -31,9 +31,9 @@ const TabLayout = () => {
         }}
       />
       <Tabs.Screen
-        name="compose"
+        name="post"
         options={{
-          title: 'Compose',
+          title: 'Post',
           tabBarIcon: ({ color }) => <TabBarIcon name="pencil-square-o" color={color} />,
         }}
       />

@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
 import { FormButton } from '@/components/form-button';
@@ -33,10 +33,12 @@ const GroupsScreen = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    setLoading(true);
-    load().finally(() => setLoading(false));
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      load().finally(() => setLoading(false));
+    }, [load])
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
