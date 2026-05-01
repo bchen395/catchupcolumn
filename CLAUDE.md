@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-Catch Up Column is a mobile app where families collaborate on a private weekly newsletter — like a digital Sunday newspaper made by your own family. Members contribute short written entries (with optional photos) throughout the week, and at a set time the app compiles everything into a single "edition" delivered to the whole group.
+Catch Up Column is a mobile app where families and friends collaborate on a private weekly newsletter — like a digital Sunday newspaper made by your own family/friend group. Members contribute short written entries (with optional photos) throughout the week, and at a set time the app compiles everything into a single "edition" delivered to the whole group.
 
 ## Target Audience (MVP)
 
-The primary audience is older adults (grandparents, older parents) who want to stay connected with younger family members. The app must be extremely simple and accessible — large tap targets, readable fonts, minimal navigation, warm familiar language. Think "family group text" ease of use, not "SaaS onboarding."
+The primary audience is older adults (grandparents, older parents) who want to stay connected with younger family members and Gen Z friend groups who want to have more meaningful digital interactions. The app must be extremely simple and accessible — large tap targets, readable fonts, minimal navigation, warm familiar language. Think "family group text" ease of use, not "SaaS onboarding."
 
 ## Tech Stack
 

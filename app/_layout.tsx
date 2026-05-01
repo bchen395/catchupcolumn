@@ -54,7 +54,10 @@ const RootLayout = () => {
 
     const inAuthGroup = segments[0] === '(auth)';
     const onOnboardingScreen = inAuthGroup && segments[1] === 'onboarding';
+    const onResetPasswordScreen = inAuthGroup && (segments[1] as string) === 'reset-password';
     const requiresOnboarding = needsOnboarding(session?.user);
+
+    if (onResetPasswordScreen) return;
 
     if (!session && (!inAuthGroup || onOnboardingScreen)) {
       router.replace('/(auth)/login');
@@ -74,6 +77,7 @@ const RootLayout = () => {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="group" options={{ headerShown: false }} />
+      <Stack.Screen name="edition" options={{ headerShown: false }} />
     </Stack>
   );
 };

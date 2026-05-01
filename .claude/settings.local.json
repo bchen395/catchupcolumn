@@ -5,7 +5,8 @@
       "Bash(npx create-expo-app@latest catchupcolumn-init --template tabs --yes)",
       "Bash(rsync -av --exclude='.git' --exclude='CLAUDE.md' --exclude='docs' /tmp/catchupcolumn-init/ /Users/bensonchen/repos/catchupcolumn/)",
       "Bash(npx expo:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(echo \"EXIT=$?\")"
     ]
   }
 }

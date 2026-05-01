@@ -177,7 +177,7 @@ const PostScreen = () => {
         if (imageChanged) {
           if (imageUri) {
             setUploadingImage(true);
-            finalImageUrl = await uploadPostImage(existingPost.id, imageUri);
+            finalImageUrl = await uploadPostImage(user.id, existingPost.id, imageUri);
             setUploadingImage(false);
           } else {
             finalImageUrl = null;
@@ -201,7 +201,7 @@ const PostScreen = () => {
 
         if (imageUri && imageChanged) {
           setUploadingImage(true);
-          finalImageUrl = await uploadPostImage(created.id, imageUri);
+          finalImageUrl = await uploadPostImage(user.id, created.id, imageUri);
           setUploadingImage(false);
           const withImage = await updatePost(created.id, { image_url: finalImageUrl });
           setExistingPost(withImage);

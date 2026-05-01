@@ -50,8 +50,16 @@ export const signInWithEmail = async ({ email, password }: Credentials) => {
 
 export const sendPasswordResetEmail = async (email: string) => {
   const { error } = await supabase.auth.resetPasswordForEmail(normalizeEmail(email), {
-    redirectTo: Linking.createURL('/(auth)/login'),
+    redirectTo: Linking.createURL('/(auth)/reset-password'),
   });
+
+  if (error) {
+    throw error;
+  }
+};
+
+export const updatePassword = async (newPassword: string) => {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
 
   if (error) {
     throw error;
@@ -142,36 +150,36 @@ export const clearNeedsOnboardingFlag = async () => {
   return data;
 };
 
-export const needsOnboarding = (user: User | null | undefined) => {
-  return Boolean(user?.user_metadata?.needs_onboarding);
-};
-
 export const deleteAccount = async () => {
   const {
     data: { session },
     error: sessionError,
   } = await supabase.auth.getSession();
 
-  if (sessionError || !session) {
+  if (sessionError) {
+    throw sessionError;
+  }
+
+  if (!session?.access_token) {
     throw new Error('No active session');
   }
 
-  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-  const response = await fetch(`${supabaseUrl}/functions/v1/delete-account`, {
+  const { error } = await supabase.functions.invoke('delete-account', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${session.access_token}`,
-      'Content-Type': 'application/json',
     },
   });
 
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error((body as { error?: string }).error ?? 'Failed to delete account');
+  if (error) {
+    throw error;
   }
 
-  // Sign out locally after successful deletion
   await supabase.auth.signOut();
+};
+
+export const needsOnboarding = (user: User | null | undefined) => {
+  return Boolean(user?.user_metadata?.needs_onboarding);
 };
 
 export const mapAuthErrorMessage = (

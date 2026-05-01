@@ -18,29 +18,29 @@ Mark phases as [x] when complete. Work through them in order.
 ---
 
 ## Phase 2: Auth & Onboarding
-- [ ] Sign up screen (email + password)
-- [ ] Log in screen
-- [ ] Onboarding screen: set display name + avatar (photo picker → upload to `avatars` bucket)
-- [ ] Auth error handling (clear, non-technical messages)
-- [ ] "Forgot password" flow via Supabase magic link
+- [x] Sign up screen (email + password)
+- [x] Log in screen
+- [x] Onboarding screen: set display name + avatar (photo picker → upload to `avatars` bucket)
+- [x] Auth error handling (clear, non-technical messages)
+- [x] "Forgot password" flow via Supabase magic link
 
 **Test:** Can sign up, set a name/avatar, land on the main tabs. Can log out and log back in.
 
 ---
 
 ## Phase 3: Group Creation & Invites
-- [ ] "Create a Group" flow: name, description, optional cover image, pick publish day/time
-- [ ] Generate invite code on creation, show shareable invite link
-- [ ] "Join a Group" screen: enter invite code or open a deep link
-- [ ] My Groups tab: list of Groups the user belongs to, tap to view details
-- [ ] Group detail screen: member list, settings (moderator only), leave group
+- [x] "Create a Group" flow: name, description, optional cover image, pick publish day/time
+- [x] Generate invite code on creation, show shareable invite link
+- [x] "Join a Group" screen: enter invite code or open a deep link
+- [x] My Groups tab: list of Groups the user belongs to, tap to view details
+- [x] Group detail screen: member list, settings (moderator only), leave group
 
 **Test:** Can create a Group, invite another test account, both see the Group in their list.
 
 ---
 
-## Phase 4: Posting
-- [x] Post tab: simple text input + optional photo upload to `post-images` bucket
+## Phase 4: Post Composer
+- [x] Compose tab: simple text input + optional photo upload to `post-images` bucket
 - [x] Select which Group to post to (if member of multiple)
 - [x] Show current draft / already-submitted post for this week's edition window
 - [x] Edit and delete own posts before the edition publishes
@@ -51,21 +51,21 @@ Mark phases as [x] when complete. Work through them in order.
 ---
 
 ## Phase 5: Weekly Edition Compilation
-- [ ] Supabase Edge Function: compile all unassigned posts for a Group into a new Edition
-- [ ] Cron trigger based on each Group's `publish_day` and `publish_time`
-- [ ] Edition data structure: ordered list of posts with author info
-- [ ] Handle edge cases: no posts this week (send a "no edition" notice or skip), Group with one member
+- [x] Supabase Edge Function: compile all unassigned posts for a Group into a new Edition
+- [x] Cron trigger based on each Group's `publish_day` and `publish_time`
+- [x] Edition data structure: ordered list of posts with author info
+- [x] Handle edge cases: no posts this week (send a "no edition" notice or skip), Group with one member
 
 **Test:** Manually trigger the function, verify an Edition is created with the correct posts linked.
 
 ---
 
 ## Phase 6: Inbox & Reading View
-- [ ] Inbox tab: list of Editions, newest first, grouped by Group
-- [ ] Edition reading view: newspaper-styled layout with serif headlines, each post as a "section"
-- [ ] Show author name, avatar, and photo for each post section
-- [ ] Empty state: "No editions yet — write something for your Group this week!"
-- [ ] Pull-to-refresh
+- [x] Inbox tab: list of Editions, newest first, grouped by Group
+- [x] Edition reading view: newspaper-styled layout with serif headlines, each post as a "section"
+- [x] Show author name, avatar, and photo for each post section
+- [x] Empty state: "No editions yet — write something for your Group this week!"
+- [x] Pull-to-refresh
 
 **Test:** Open the Inbox, see a compiled Edition, read through it. Feels like reading a family newspaper.
 

@@ -33,7 +33,7 @@ export const fetchUserGroups = async (userId: string): Promise<GroupWithMembers[
     .select(
       `group_id, groups!inner(
         id, name, description, cover_image_url, publish_day, publish_time,
-        created_by, invite_code, created_at,
+        timezone, created_by, invite_code, created_at,
         group_members(group_id, user_id, role, joined_at, users(id, display_name, avatar_url, bio, email, created_at))
       )`
     )
@@ -65,7 +65,7 @@ export const fetchGroupDetails = async (groupId: string): Promise<GroupWithMembe
     .from('groups')
     .select(
       `id, name, description, cover_image_url, publish_day, publish_time,
-       created_by, invite_code, created_at,
+       timezone, created_by, invite_code, created_at,
        group_members(group_id, user_id, role, joined_at, users(id, display_name, avatar_url, bio, email, created_at))`
     )
     .eq('id', groupId)
@@ -96,7 +96,7 @@ export const fetchGroupDetails = async (groupId: string): Promise<GroupWithMembe
 // ---------------------------------------------------------------------------
 
 export const createGroup = async (
-  input: Pick<GroupInsert, 'name' | 'description' | 'publish_day' | 'publish_time' | 'created_by'>
+  input: Pick<GroupInsert, 'name' | 'description' | 'publish_day' | 'publish_time' | 'timezone' | 'created_by'>
 ): Promise<GroupRow> => {
   const { data, error } = await supabase
     .from('groups')

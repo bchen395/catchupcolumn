@@ -22,16 +22,18 @@ export type GroupRow = {
   cover_image_url: string | null;
   publish_day: number;
   publish_time: string;
+  timezone: string;
   created_by: string;
   invite_code: string;
   created_at: string;
 };
 
-export type GroupInsert = Omit<GroupRow, 'id' | 'created_at' | 'invite_code' | 'cover_image_url'> & {
+export type GroupInsert = Omit<GroupRow, 'id' | 'created_at' | 'invite_code' | 'cover_image_url' | 'timezone'> & {
   id?: string;
   created_at?: string;
   invite_code?: string;
   cover_image_url?: string | null;
+  timezone?: string;
 };
 
 export type GroupUpdate = Partial<Omit<GroupRow, 'id' | 'created_by'>>;
@@ -122,6 +124,21 @@ export type Database = {
       delete_group_as_moderator: {
         Args: { p_group_id: string };
         Returns: void;
+      };
+      get_groups_to_compile: {
+        Args: { p_tolerance_minutes?: number };
+        Returns: Pick<GroupRow, 'id' | 'name' | 'timezone' | 'publish_day' | 'publish_time'>[];
+      };
+      compile_due_editions: {
+        Args: { p_tolerance_minutes?: number };
+        Returns: {
+          compiled: number;
+          skipped_no_posts: number;
+          details: (
+            | { group_id: string; group_name: string; edition_number: number; post_count: number }
+            | { group_id: string; group_name: string; skipped: true; reason: string }
+          )[];
+        };
       };
     };
     Enums: {};

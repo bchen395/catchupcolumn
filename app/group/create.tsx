@@ -1,9 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -20,6 +22,14 @@ import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
 import { createGroup, updateGroupSettings, uploadGroupCover } from '@/lib/groups';
+import {
+  AMPM_ITEMS,
+  from12hTo24,
+  HOURS_12,
+  MINUTE_ITEMS,
+  SnapColumn,
+  to12hIndices,
+} from '@/components/snap-column';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -32,6 +42,14 @@ const formatTime = (hours: number, minutes: number) => {
 
 const formatPublishTime = (hours: number, minutes: number) => {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+};
+
+const getDeviceTimezone = () => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
 };
 
 type SelectedImage = {
@@ -55,6 +73,23 @@ const CreateGroupScreen = () => {
   const [saving, setSaving] = useState(false);
   const [pickingImage, setPickingImage] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [tempHourIndex, setTempHourIndex] = useState(9);
+  const [tempMinuteIndex, setTempMinuteIndex] = useState(0);
+  const [tempAmpmIndex, setTempAmpmIndex] = useState(0);
+
+  const openTimePicker = () => {
+    const { hourIndex, ampmIndex, minuteIndex } = to12hIndices(publishHour, publishMinute);
+    setTempHourIndex(hourIndex);
+    setTempMinuteIndex(minuteIndex);
+    setTempAmpmIndex(ampmIndex);
+    setShowTimePicker(true);
+  };
+
+  const confirmTime = () => {
+    setPublishHour(from12hTo24(tempHourIndex, tempAmpmIndex));
+    setPublishMinute([0, 15, 30, 45][tempMinuteIndex]);
+    setShowTimePicker(false);
+  };
 
   const descriptionRef = useRef(null);
 
@@ -102,6 +137,7 @@ const CreateGroupScreen = () => {
         description: description.trim() || null,
         publish_day: publishDay,
         publish_time: formatPublishTime(publishHour, publishMinute),
+        timezone: getDeviceTimezone(),
         created_by: user.id,
       });
 
@@ -124,10 +160,69 @@ const CreateGroupScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <>
+      <Stack.Screen
+        options={{
+          headerLeft: () => (
+            <Pressable
+              onPress={() => router.back()}
+              style={styles.backButton}
+              hitSlop={8}
+            >
+              <Ionicons name="chevron-back" size={28} color={Colors.accentNavy} />
+            </Pressable>
+          ),
+        }}
+      />
+      <Modal
+        visible={showTimePicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowTimePicker(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setShowTimePicker(false)}>
+          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+            <ThemedText variant="label" style={styles.modalTitle}>
+              Publish time
+            </ThemedText>
+            <View style={styles.modalColumns}>
+              <SnapColumn
+                data={HOURS_12}
+                selectedIndex={tempHourIndex}
+                onSelect={setTempHourIndex}
+                visible={showTimePicker}
+              />
+              <ThemedText variant="body" style={styles.colonSeparator}>:</ThemedText>
+              <SnapColumn
+                data={MINUTE_ITEMS}
+                selectedIndex={tempMinuteIndex}
+                onSelect={setTempMinuteIndex}
+                visible={showTimePicker}
+                width={64}
+              />
+              <SnapColumn
+                data={AMPM_ITEMS}
+                selectedIndex={tempAmpmIndex}
+                onSelect={setTempAmpmIndex}
+                visible={showTimePicker}
+                width={64}
+              />
+            </View>
+            <View style={styles.modalActions}>
+              <Pressable onPress={() => setShowTimePicker(false)} style={styles.modalActionButton}>
+                <ThemedText variant="body" style={styles.cancelText}>Cancel</ThemedText>
+              </Pressable>
+              <Pressable onPress={confirmTime} style={[styles.modalActionButton, styles.doneButton]}>
+                <ThemedText variant="body" style={styles.doneText}>Done</ThemedText>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.scroll}
@@ -221,40 +316,13 @@ const CreateGroupScreen = () => {
               Publish time
             </ThemedText>
             <Pressable
-              onPress={() => setShowTimePicker(!showTimePicker)}
+              onPress={openTimePicker}
               style={styles.timeButton}
             >
               <ThemedText variant="body">
                 {formatTime(publishHour, publishMinute)}
               </ThemedText>
             </Pressable>
-
-            {showTimePicker ? (
-              <View style={styles.timePickerRow}>
-                <ScrollView
-                  style={styles.timeColumn}
-                  showsVerticalScrollIndicator={false}
-                >
-                  {Array.from({ length: 24 }, (_, i) => (
-                    <Pressable
-                      key={i}
-                      onPress={() => {
-                        setPublishHour(i);
-                        setShowTimePicker(false);
-                      }}
-                      style={[styles.timeItem, publishHour === i ? styles.timeItemActive : null]}
-                    >
-                      <ThemedText
-                        variant="body"
-                        style={publishHour === i ? styles.timeItemTextActive : undefined}
-                      >
-                        {String(i).padStart(2, '0')}:00
-                      </ThemedText>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
-            ) : null}
           </View>
 
           <FormButton
@@ -265,7 +333,8 @@ const CreateGroupScreen = () => {
           />
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </>
   );
 };
 
@@ -364,28 +433,60 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     justifyContent: 'center',
   },
-  timePickerRow: {
-    borderRadius: Layout.borderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
-    maxHeight: 200,
-    overflow: 'hidden',
-  },
-  timeColumn: {
-    flex: 1,
-  },
-  timeItem: {
-    paddingHorizontal: Layout.padding.md,
-    paddingVertical: Layout.padding.sm,
-    minHeight: Layout.touchTargetMin,
+  backButton: {
+    paddingHorizontal: Layout.padding.sm,
+    minWidth: 48,
     justifyContent: 'center',
   },
-  timeItemActive: {
-    backgroundColor: Colors.backgroundWarm,
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  timeItemTextActive: {
+  modalCard: {
+    backgroundColor: Colors.background,
+    borderRadius: Layout.borderRadius.lg,
+    width: 320,
+    padding: Layout.padding.lg,
+    gap: Layout.padding.md,
+  },
+  modalTitle: {
     color: Colors.accentNavy,
+    textAlign: 'center',
+  },
+  modalColumns: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Layout.padding.xs,
+  },
+  colonSeparator: {
+    fontFamily: Typography.families.sansSemiBold,
+    color: Colors.textMuted,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: Layout.padding.md,
+    marginTop: Layout.padding.xs,
+  },
+  modalActionButton: {
+    minHeight: Layout.touchTargetMin,
+    paddingHorizontal: Layout.padding.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: Layout.borderRadius.md,
+  },
+  doneButton: {
+    backgroundColor: Colors.accentNavy,
+    paddingHorizontal: Layout.padding.lg,
+  },
+  cancelText: {
+    color: Colors.textMuted,
+  },
+  doneText: {
+    color: Colors.white,
     fontFamily: Typography.families.sansSemiBold,
   },
   submitButton: {

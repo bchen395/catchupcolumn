@@ -3,7 +3,7 @@ import { Text, TextProps, StyleSheet } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 
-type Variant = 'headline' | 'subheadline' | 'body' | 'caption' | 'label';
+type Variant = 'headline' | 'subheadline' | 'body' | 'serifBody' | 'caption' | 'label';
 
 interface ThemedTextProps extends TextProps {
   variant?: Variant;
@@ -34,6 +34,11 @@ const variantStyles = StyleSheet.create({
     fontFamily: Typography.families.sans,
     fontSize: Typography.sizes.body,
     lineHeight: Typography.lineHeights.body,
+  },
+  serifBody: {
+    fontFamily: Typography.families.serif,
+    fontSize: Typography.sizes.lg,
+    lineHeight: 28,
   },
   caption: {
     fontFamily: Typography.families.sans,

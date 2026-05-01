@@ -93,11 +93,10 @@ export const deletePost = async (postId: string): Promise<void> => {
 // Image upload
 // ---------------------------------------------------------------------------
 
-/**
- * Upload a post image to the `post-images` bucket and return its public URL.
- * If a previous image exists at the same path it will be replaced (upsert).
- */
+// Storage RLS on `post-images` requires the first path segment to equal
+// auth.uid()::text, so the path must start with the uploading user's id.
 export const uploadPostImage = async (
+  userId: string,
   postId: string,
   imageUri: string,
   mimeType?: string | null
@@ -106,7 +105,7 @@ export const uploadPostImage = async (
   const imageBuffer = await imageResponse.arrayBuffer();
   const ext = getFileExtension(imageUri, mimeType);
   const contentType = mimeType ?? (ext === 'png' ? 'image/png' : 'image/jpeg');
-  const storagePath = `posts/${postId}/image.${ext}`;
+  const storagePath = `${userId}/posts/${postId}/image.${ext}`;
 
   const { error } = await supabase.storage
     .from('post-images')
