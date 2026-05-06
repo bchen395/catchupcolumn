@@ -1,8 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Alert,
-    Image,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -13,13 +13,18 @@ import {
     View,
 } from 'react-native';
 
+import { AppImage } from '@/components/app-image';
+import { EmptyState } from '@/components/empty-state';
 import { FormButton } from '@/components/form-button';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
+import { Icons } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
+import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
+import { usePostImageUrl } from '@/hooks/use-post-image-url';
 import { fetchUserGroups } from '@/lib/groups';
 import {
     createPost,
@@ -60,6 +65,7 @@ const wordCountLabel = (count: number): string => {
 
 const PostScreen = () => {
   const { user } = useAuth();
+  const router = useRouter();
 
   // ── Groups ────────────────────────────────────────────────────────────────
   const [groups, setGroups] = useState<GroupWithMembers[]>([]);
@@ -83,6 +89,9 @@ const PostScreen = () => {
 
   const bodyInputRef = useRef<TextInput>(null);
   const wordCount = countWords(body);
+  // Resolves storage paths from the DB into signed URLs; passes local file://
+  // URIs through unchanged for previewing freshly-picked images.
+  const previewUri = usePostImageUrl(imageUri);
 
   // ── Load groups ───────────────────────────────────────────────────────────
 
@@ -96,7 +105,7 @@ const PostScreen = () => {
         setSelectedGroupId(data[0].id);
       }
     } catch {
-      setScreenError('Could not load your Groups. Pull down to try again.');
+      setScreenError(Strings.error.groupsLoad);
     }
   }, [user, selectedGroupId]);
 
@@ -118,7 +127,7 @@ const PostScreen = () => {
       setImageUri(post?.image_url ?? null);
       setImageChanged(false);
     } catch {
-      setScreenError('Could not load your post. Pull down to try again.');
+      setScreenError(Strings.error.postLoad);
     } finally {
       setLoadingPost(false);
     }
@@ -196,7 +205,6 @@ const PostScreen = () => {
           group_id: selectedGroupId,
           author_id: user.id,
           body: body.trim(),
-          image_url: null,
         });
 
         if (imageUri && imageChanged) {
@@ -214,7 +222,7 @@ const PostScreen = () => {
       }
     } catch {
       setUploadingImage(false);
-      setScreenError('Something went wrong. Please try again.');
+      setScreenError(Strings.error.postSave);
     } finally {
       setSaving(false);
     }
@@ -243,7 +251,7 @@ const PostScreen = () => {
               setImageUri(null);
               setImageChanged(false);
             } catch {
-              setScreenError('Could not delete your post. Please try again.');
+              setScreenError(Strings.error.postDelete);
             } finally {
               setDeleting(false);
             }
@@ -257,14 +265,13 @@ const PostScreen = () => {
 
   if (!loadingGroups && groups.length === 0) {
     return (
-      <View style={styles.centeredState}>
-        <ThemedText variant="subheadline" style={styles.emptyTitle}>
-          No Groups yet
-        </ThemedText>
-        <ThemedText variant="body" style={styles.emptyBody}>
-          Join or create a Group before writing your first post.
-        </ThemedText>
-      </View>
+      <EmptyState
+        icon={Icons.emptyGroups}
+        title={Strings.empty.postNoGroups.title}
+        body={Strings.empty.postNoGroups.body}
+        ctaLabel={Strings.empty.postNoGroups.cta}
+        onCtaPress={() => router.push('/(tabs)/groups')}
+      />
     );
   }
 
@@ -378,10 +385,9 @@ const PostScreen = () => {
               </ThemedText>
               {imageUri ? (
                 <View style={styles.imagePreviewWrapper}>
-                  <Image
-                    source={{ uri: imageUri }}
+                  <AppImage
+                    source={previewUri ? { uri: previewUri } : undefined}
                     style={styles.imagePreview}
-                    resizeMode="cover"
                   />
                   <View style={styles.imageActions}>
                     <FormButton
@@ -443,24 +449,6 @@ const styles = StyleSheet.create({
     padding: Layout.padding.lg,
     gap: Layout.padding.lg,
     paddingBottom: Layout.padding.xl,
-  },
-  centeredState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Layout.padding.xl,
-    gap: Layout.padding.md,
-    backgroundColor: Colors.background,
-  },
-  emptyTitle: {
-    fontFamily: Typography.families.serifBold,
-    color: Colors.text,
-    textAlign: 'center',
-  },
-  emptyBody: {
-    color: Colors.textMuted,
-    textAlign: 'center',
-    lineHeight: Typography.lineHeights.body,
   },
   section: {
     gap: Layout.padding.sm,

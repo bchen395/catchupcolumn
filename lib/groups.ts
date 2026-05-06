@@ -1,3 +1,4 @@
+import { resizeImageForUpload } from '@/lib/image';
 import { supabase } from '@/lib/supabase';
 import type {
     GroupInsert,
@@ -12,16 +13,25 @@ import type {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const getFileExtension = (uri: string, mimeType?: string | null): string => {
-  if (mimeType) {
-    const ext = mimeType.split('/')[1];
-    if (ext) return ext.replace('jpeg', 'jpg');
-  }
-  const match = uri.split('?')[0].match(/\.([a-zA-Z0-9]+)$/);
-  return match ? match[1].toLowerCase() : 'jpg';
+const normalizeInviteCode = (code: string) => code.trim();
+
+// Shape of a `groups` row joined with `group_members(..., users(...))` —
+// hand-written because supabase-js infers `Relationships: []` until
+// `types/database.ts` is regenerated via `supabase gen types` (bug #29).
+type GroupRowWithMembers = GroupRow & {
+  group_members: (GroupMemberRow & { users: UserRow })[];
 };
 
-const normalizeInviteCode = (code: string) => code.trim().toUpperCase();
+const toGroupWithMembers = (col: GroupRowWithMembers): GroupWithMembers => ({
+  ...col,
+  members: col.group_members.map((m) => ({
+    group_id: m.group_id,
+    user_id: m.user_id,
+    role: m.role,
+    joined_at: m.joined_at,
+    user: m.users,
+  })),
+});
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -43,21 +53,9 @@ export const fetchUserGroups = async (userId: string): Promise<GroupWithMembers[
     throw error;
   }
 
-  return (data ?? []).map((row) => {
-    const col = row.groups as unknown as GroupRow & {
-      group_members: (GroupMemberRow & { users: UserRow })[];
-    };
-    return {
-      ...col,
-      members: col.group_members.map((m) => ({
-        group_id: m.group_id,
-        user_id: m.user_id,
-        role: m.role,
-        joined_at: m.joined_at,
-        user: m.users,
-      })),
-    };
-  });
+  return (data ?? []).map((row) =>
+    toGroupWithMembers(row.groups as unknown as GroupRowWithMembers),
+  );
 };
 
 export const fetchGroupDetails = async (groupId: string): Promise<GroupWithMembers> => {
@@ -75,20 +73,7 @@ export const fetchGroupDetails = async (groupId: string): Promise<GroupWithMembe
     throw error;
   }
 
-  const col = data as unknown as GroupRow & {
-    group_members: (GroupMemberRow & { users: UserRow })[];
-  };
-
-  return {
-    ...col,
-    members: col.group_members.map((m) => ({
-      group_id: m.group_id,
-      user_id: m.user_id,
-      role: m.role,
-      joined_at: m.joined_at,
-      user: m.users,
-    })),
-  };
+  return toGroupWithMembers(data as unknown as GroupRowWithMembers);
 };
 
 // ---------------------------------------------------------------------------
@@ -96,8 +81,20 @@ export const fetchGroupDetails = async (groupId: string): Promise<GroupWithMembe
 // ---------------------------------------------------------------------------
 
 export const createGroup = async (
-  input: Pick<GroupInsert, 'name' | 'description' | 'publish_day' | 'publish_time' | 'timezone' | 'created_by'>
+  input: Pick<GroupInsert, 'name' | 'description' | 'publish_day' | 'publish_time' | 'timezone' | 'created_by'>,
 ): Promise<GroupRow> => {
+  // Guard: a DB trigger derives the moderator from `created_by`, so passing
+  // a different UUID would make someone else the moderator. Caller must own
+  // the row they're creating.
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  if (session?.user?.id && session.user.id !== input.created_by) {
+    throw new Error('createGroup: created_by must match the signed-in user');
+  }
+
   const { data, error } = await supabase
     .from('groups')
     .insert(input)
@@ -133,19 +130,24 @@ export const updateGroupSettings = async (
 // Cover image
 // ---------------------------------------------------------------------------
 
+export type GroupCoverUpload = {
+  publicUrl: string;
+  storagePath: string;
+};
+
 export const uploadGroupCover = async (
   groupId: string,
   imageUri: string,
-  mimeType?: string | null
-): Promise<string> => {
-  const imageResponse = await fetch(imageUri);
+): Promise<GroupCoverUpload> => {
+  const resizedUri = await resizeImageForUpload(imageUri);
+  const imageResponse = await fetch(resizedUri);
   const imageBuffer = await imageResponse.arrayBuffer();
-  const ext = getFileExtension(imageUri, mimeType);
-  const contentType = mimeType ?? (ext === 'png' ? 'image/png' : 'image/jpeg');
-  const storagePath = `groups/${groupId}/cover.${ext}`;
+  // Bucket RLS uses the first path segment as the group_id to gate writes
+  // against `is_group_moderator`. See 20260505000020_group_covers_bucket.sql.
+  const storagePath = `${groupId}/cover.jpg`;
 
-  const { error } = await supabase.storage.from('avatars').upload(storagePath, imageBuffer, {
-    contentType,
+  const { error } = await supabase.storage.from('group-covers').upload(storagePath, imageBuffer, {
+    contentType: 'image/jpeg',
     upsert: true,
   });
 
@@ -153,12 +155,37 @@ export const uploadGroupCover = async (
     throw error;
   }
 
-  return supabase.storage.from('avatars').getPublicUrl(storagePath).data.publicUrl;
+  return {
+    publicUrl: supabase.storage.from('group-covers').getPublicUrl(storagePath).data.publicUrl,
+    storagePath,
+  };
+};
+
+export const removeGroupCover = async (storagePath: string): Promise<void> => {
+  await supabase.storage.from('group-covers').remove([storagePath]);
 };
 
 // ---------------------------------------------------------------------------
 // Invite / Join
 // ---------------------------------------------------------------------------
+
+export const isGroupMember = async (
+  groupId: string,
+  userId: string
+): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from('group_members')
+    .select('user_id')
+    .eq('group_id', groupId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data !== null;
+};
 
 export const lookupGroupByInviteCode = async (
   inviteCode: string
@@ -174,21 +201,21 @@ export const lookupGroupByInviteCode = async (
   return rows?.[0] ?? null;
 };
 
-export const joinGroupByCode = async (
-  groupId: string,
-  userId: string
-): Promise<void> => {
-  const { error } = await supabase
-    .from('group_members')
-    .insert({ group_id: groupId, user_id: userId, role: 'contributor' });
+export const joinGroupByInviteCode = async (
+  inviteCode: string
+): Promise<string> => {
+  const { data, error } = await supabase.rpc('join_group_by_invite_code', {
+    p_invite_code: normalizeInviteCode(inviteCode),
+  });
 
   if (error) {
-    // Unique constraint violation means they're already a member
-    if (error.code === '23505') {
-      throw new Error('already_member');
+    if (error.code === 'P0002') {
+      throw new Error('invalid_invite_code');
     }
     throw error;
   }
+
+  return data;
 };
 
 // ---------------------------------------------------------------------------

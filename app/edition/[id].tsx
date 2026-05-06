@@ -4,10 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { EditionPost } from '@/components/edition-post';
+import { ErrorState } from '@/components/error-state';
+import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
+import { Icons } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
+import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { fetchEditionWithPosts, fetchGroupForEdition } from '@/lib/editions';
 import type { EditionWithPosts, GroupRow } from '@/types';
@@ -43,7 +47,7 @@ const EditionScreen = () => {
       setGroup(g);
       setScreenError('');
     } catch (_err) {
-      setScreenError('We could not load this edition right now. Pull down to try again.');
+      setScreenError(Strings.error.editionLoad);
     }
   }, [id]);
 
@@ -59,22 +63,20 @@ const EditionScreen = () => {
   };
 
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ThemedText variant="body" style={styles.loadingText}>
-          Loading…
-        </ThemedText>
-      </View>
-    );
+    return <PrintingPressLoading message={Strings.loading.edition} />;
   }
 
   if (!edition || !group) {
     return (
-      <View style={styles.loadingContainer}>
-        <ThemedText variant="body" style={styles.loadingText}>
-          {screenError || 'Edition not found.'}
-        </ThemedText>
-      </View>
+      <ErrorState
+        icon={Icons.errorGeneric}
+        title={Strings.error.generic.title}
+        body={screenError || 'Edition not found.'}
+        onRetry={() => {
+          setLoading(true);
+          load().finally(() => setLoading(false));
+        }}
+      />
     );
   }
 
@@ -124,7 +126,7 @@ const EditionScreen = () => {
       {edition.posts.length === 0 ? (
         <View style={styles.emptyEdition}>
           <ThemedText variant="body" style={styles.emptyEditionText}>
-            This edition went out without any posts. Write something for next week!
+            {Strings.empty.edition.body}
           </ThemedText>
         </View>
       ) : (
@@ -151,17 +153,6 @@ const styles = StyleSheet.create({
     minHeight: Layout.touchTargetMin,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Layout.padding.xl,
-    backgroundColor: Colors.background,
-  },
-  loadingText: {
-    color: Colors.textMuted,
-    textAlign: 'center',
   },
   banner: {
     margin: Layout.padding.md,

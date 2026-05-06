@@ -1,6 +1,7 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AppImage } from '@/components/app-image';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
@@ -23,7 +24,7 @@ export const GroupCard = ({ group, onPress }: GroupCardProps) => {
       style={({ pressed }) => [styles.card, pressed ? styles.pressed : null]}
     >
       {group.cover_image_url ? (
-        <Image source={{ uri: group.cover_image_url }} style={styles.thumbnail} resizeMode="cover" />
+        <AppImage source={{ uri: group.cover_image_url }} style={styles.thumbnail} />
       ) : (
         <View style={styles.thumbnailPlaceholder}>
           <FontAwesome name="newspaper-o" size={20} color={Colors.textMuted} />

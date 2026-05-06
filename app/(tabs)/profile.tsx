@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Alert, Image, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
+import { AppImage } from '@/components/app-image';
 import { FormButton } from '@/components/form-button';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
+import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
 import { deleteAccount, fetchCurrentUserProfile } from '@/lib/auth';
@@ -40,7 +42,7 @@ const ProfileScreen = () => {
         }
       } catch (_error) {
         if (isMounted) {
-          setScreenError('We could not load your account details right now.');
+          setScreenError(Strings.error.profileLoad);
         }
       } finally {
         if (isMounted) {
@@ -111,7 +113,7 @@ const ProfileScreen = () => {
 
       <ThemedView variant="card" style={styles.card}>
         {profile?.avatar_url ? (
-          <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+          <AppImage source={{ uri: profile.avatar_url }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.avatarFallback]}>
             <ThemedText variant="subheadline" style={styles.initials}>
@@ -125,6 +127,11 @@ const ProfileScreen = () => {
             {profile?.display_name ?? 'Your Catch Up Column account'}
           </ThemedText>
           <ThemedText variant="body">{user?.email ?? 'No email available'}</ThemedText>
+          {profile?.bio ? (
+            <ThemedText variant="body" style={styles.bio}>
+              {profile.bio}
+            </ThemedText>
+          ) : null}
           <ThemedText variant="caption">
             {loadingProfile ? 'Loading your account details...' : 'You can sign out here any time.'}
           </ThemedText>
@@ -177,6 +184,10 @@ const styles = StyleSheet.create({
   profileText: {
     alignItems: 'center',
     gap: Layout.padding.xs,
+  },
+  bio: {
+    color: Colors.text,
+    textAlign: 'center',
   },
 });
 

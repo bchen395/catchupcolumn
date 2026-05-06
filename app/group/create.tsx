@@ -21,7 +21,7 @@ import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
-import { createGroup, updateGroupSettings, uploadGroupCover } from '@/lib/groups';
+import { createGroup, removeGroupCover, updateGroupSettings, uploadGroupCover } from '@/lib/groups';
 import {
   AMPM_ITEMS,
   from12hTo24,
@@ -142,11 +142,16 @@ const CreateGroupScreen = () => {
       });
 
       if (coverImage) {
+        let upload: Awaited<ReturnType<typeof uploadGroupCover>> | null = null;
         try {
-          const publicUrl = await uploadGroupCover(group.id, coverImage.uri, coverImage.mimeType);
-          await updateGroupSettings(group.id, { cover_image_url: publicUrl });
+          upload = await uploadGroupCover(group.id, coverImage.uri);
+          await updateGroupSettings(group.id, { cover_image_url: upload.publicUrl });
         } catch (_err) {
-          // Non-fatal: group already created; skip cover silently
+          // Non-fatal: the group already exists; remove the orphan storage
+          // object (if upload had succeeded) so we don't leak it.
+          if (upload) {
+            await removeGroupCover(upload.storagePath).catch(() => undefined);
+          }
         }
       }
 
@@ -447,7 +452,9 @@ const styles = StyleSheet.create({
   modalCard: {
     backgroundColor: Colors.background,
     borderRadius: Layout.borderRadius.lg,
-    width: 320,
+    width: '100%',
+    maxWidth: 320,
+    marginHorizontal: Layout.padding.lg,
     padding: Layout.padding.lg,
     gap: Layout.padding.md,
   },

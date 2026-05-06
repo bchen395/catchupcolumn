@@ -64,11 +64,12 @@ export type PostRow = {
   updated_at: string;
 };
 
-export type PostInsert = Omit<PostRow, 'id' | 'created_at' | 'updated_at' | 'edition_id'> & {
+export type PostInsert = Omit<PostRow, 'id' | 'created_at' | 'updated_at' | 'edition_id' | 'image_url'> & {
   id?: string;
   created_at?: string;
   updated_at?: string;
   edition_id?: string | null;
+  image_url?: string | null;
 };
 
 export type PostUpdate = Partial<Omit<PostRow, 'id' | 'group_id' | 'author_id'>>;
@@ -87,6 +88,19 @@ export type EditionInsert = Omit<EditionRow, 'id' | 'created_at'> & {
 };
 
 export type EditionUpdate = Partial<Omit<EditionRow, 'id' | 'group_id'>>;
+
+export type PushTokenRow = {
+  user_id: string;
+  token: string;
+  platform: 'ios' | 'android' | 'web';
+  created_at: string;
+};
+
+export type PushTokenInsert = Omit<PushTokenRow, 'created_at'> & {
+  created_at?: string;
+};
+
+export type PushTokenUpdate = Partial<Omit<PushTokenRow, 'user_id' | 'token'>>;
 
 // Derived types for common query patterns
 export type GroupWithMembers = GroupRow & {
@@ -114,6 +128,12 @@ export type Database = {
       };
       posts: { Row: PostRow; Insert: PostInsert; Update: PostUpdate; Relationships: [] };
       editions: { Row: EditionRow; Insert: EditionInsert; Update: EditionUpdate; Relationships: [] };
+      push_tokens: {
+        Row: PushTokenRow;
+        Insert: PushTokenInsert;
+        Update: PushTokenUpdate;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {
@@ -124,6 +144,17 @@ export type Database = {
       delete_group_as_moderator: {
         Args: { p_group_id: string };
         Returns: void;
+      };
+      join_group_by_invite_code: {
+        Args: { p_invite_code: string };
+        Returns: string;
+      };
+      prepare_account_deletion: {
+        Args: { p_user_id: string };
+        Returns: {
+          deleted_groups: number;
+          promoted_moderator_count: number;
+        };
       };
       get_groups_to_compile: {
         Args: { p_tolerance_minutes?: number };

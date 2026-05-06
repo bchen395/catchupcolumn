@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
     Alert,
     FlatList,
-    Image,
     Modal,
     Pressable,
     RefreshControl,
@@ -15,8 +14,11 @@ import {
     View
 } from 'react-native';
 
+import { AppImage } from '@/components/app-image';
+import { ErrorState } from '@/components/error-state';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
+import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -29,6 +31,7 @@ import {
     fetchGroupDetails,
     leaveGroup,
     updateGroupSettings,
+    removeGroupCover,
     uploadGroupCover,
 } from '@/lib/groups';
 import {
@@ -76,7 +79,7 @@ const MemberRow = ({ displayName, avatarUrl, role, isCurrentUser }: MemberRowPro
   return (
     <View style={memberStyles.row}>
       {avatarUrl ? (
-        <Image source={{ uri: avatarUrl }} style={memberStyles.avatar} />
+        <AppImage source={{ uri: avatarUrl }} style={memberStyles.avatar} />
       ) : (
         <View style={[memberStyles.avatar, memberStyles.fallback]}>
           <ThemedText variant="caption" style={memberStyles.initials}>
@@ -284,14 +287,21 @@ const GroupDetailScreen = () => {
       const result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: true,
         aspect: [16, 9],
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         quality: 0.8,
       });
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        const publicUrl = await uploadGroupCover(group.id, asset.uri, asset.mimeType);
-        await updateGroupSettings(group.id, { cover_image_url: publicUrl });
-        setGroup((prev) => (prev ? { ...prev, cover_image_url: publicUrl } : prev));
+        const upload = await uploadGroupCover(group.id, asset.uri);
+        try {
+          await updateGroupSettings(group.id, { cover_image_url: upload.publicUrl });
+        } catch (err) {
+          // DB write failed after upload — clean up the orphan object so we
+          // don't leave dangling storage with no row pointing at it.
+          await removeGroupCover(upload.storagePath).catch(() => undefined);
+          throw err;
+        }
+        setGroup((prev) => (prev ? { ...prev, cover_image_url: upload.publicUrl } : prev));
       }
     } catch (_err) {
       setScreenError('Could not update the cover photo. Please try again.');
@@ -355,22 +365,16 @@ const GroupDetailScreen = () => {
   };
 
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ThemedText variant="body" style={styles.loadingText}>
-          Loading…
-        </ThemedText>
-      </View>
-    );
+    return <PrintingPressLoading />;
   }
 
   if (!group) {
     return (
-      <View style={styles.loadingContainer}>
-        <ThemedText variant="body" style={styles.loadingText}>
-          {screenError || 'Group not found.'}
-        </ThemedText>
-      </View>
+      <ErrorState
+        body={screenError || 'Group not found.'}
+        onRetry={() => router.replace('/(tabs)/groups')}
+        ctaLabel="Back to Groups"
+      />
     );
   }
 
@@ -450,7 +454,7 @@ const GroupDetailScreen = () => {
 
       {/* Cover */}
       {group.cover_image_url ? (
-        <Image source={{ uri: group.cover_image_url }} style={styles.cover} resizeMode="cover" />
+        <AppImage source={{ uri: group.cover_image_url }} style={styles.cover} />
       ) : (
         <View style={styles.coverPlaceholder} />
       )}
@@ -656,17 +660,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Layout.padding.xl,
-    backgroundColor: Colors.background,
-  },
-  loadingText: {
-    color: Colors.textMuted,
-    textAlign: 'center',
-  },
   banner: {
     margin: Layout.padding.md,
   },
@@ -758,7 +751,9 @@ const styles = StyleSheet.create({
   modalCard: {
     backgroundColor: Colors.background,
     borderRadius: Layout.borderRadius.lg,
-    width: 320,
+    width: '100%',
+    maxWidth: 320,
+    marginHorizontal: Layout.padding.lg,
     padding: Layout.padding.lg,
     gap: Layout.padding.md,
   },

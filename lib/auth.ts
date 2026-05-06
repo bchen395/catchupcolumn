@@ -1,6 +1,7 @@
 import type { User } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 
+import { resizeImageForUpload } from '@/lib/image';
 import { supabase } from '@/lib/supabase';
 import type { UserRow, UserUpdate } from '@/types';
 
@@ -14,6 +15,8 @@ type UploadAvatarInput = {
   imageUri: string;
   mimeType?: string | null;
 };
+
+const AVATAR_MAX_EDGE = 512;
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
@@ -48,6 +51,17 @@ export const signInWithEmail = async ({ email, password }: Credentials) => {
   return data;
 };
 
+export const resendConfirmationEmail = async (email: string) => {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: normalizeEmail(email),
+  });
+
+  if (error) {
+    throw error;
+  }
+};
+
 export const sendPasswordResetEmail = async (email: string) => {
   const { error } = await supabase.auth.resetPasswordForEmail(normalizeEmail(email), {
     redirectTo: Linking.createURL('/(auth)/reset-password'),
@@ -70,18 +84,23 @@ export const updatePassword = async (newPassword: string) => {
 // Safe to call repeatedly — uses INSERT ... ON CONFLICT DO NOTHING.
 // Handles users created outside the normal signup flow (e.g. via dashboard).
 export const ensureUserProfile = async (user: User) => {
+  if (!user.email) {
+    // public.users.email is NOT NULL/unique. An auth user without an email
+    // (rare — phone-only or anonymous flow we don't use) can't get a profile
+    // row, so surface the failure instead of inserting an empty string.
+    throw new Error('ensureUserProfile: auth user is missing an email');
+  }
   const { error } = await supabase.from('users').upsert(
     {
       id: user.id,
-      email: user.email ?? '',
+      email: user.email,
       display_name:
-        user.user_metadata?.display_name ??
-        (user.email ? user.email.split('@')[0] : 'Member'),
+        user.user_metadata?.display_name ?? user.email.split('@')[0],
     },
-    { onConflict: 'id', ignoreDuplicates: true }
+    { onConflict: 'id', ignoreDuplicates: true },
   );
   if (error) {
-    console.warn('ensureUserProfile failed:', error);
+    throw error;
   }
 };
 
@@ -101,24 +120,31 @@ export const updateCurrentUserProfile = async (userId: string, updates: UserUpda
     .update(updates)
     .eq('id', userId)
     .select('*')
-    .single();
+    .maybeSingle();
 
   if (error) {
     throw error;
   }
 
+  if (!data) {
+    // Update returned 0 rows. With RLS in front of the table this almost
+    // always means the policy denied the write rather than the row missing.
+    throw new Error('Profile update was not applied. Please sign in again.');
+  }
+
   return data satisfies UserRow;
 };
 
-export const uploadUserAvatar = async ({ userId, imageUri, mimeType }: UploadAvatarInput) => {
-  const imageResponse = await fetch(imageUri);
+export const uploadUserAvatar = async ({ userId, imageUri }: UploadAvatarInput) => {
+  // Avatars only render at 100–200px on screen, so 512px is plenty even on
+  // very high-DPR devices and keeps storage tiny.
+  const resizedUri = await resizeImageForUpload(imageUri, { maxEdge: AVATAR_MAX_EDGE });
+  const imageResponse = await fetch(resizedUri);
   const imageBuffer = await imageResponse.arrayBuffer();
-  const fileExtension = getFileExtension(imageUri, mimeType);
-  const contentType = mimeType ?? extensionToMimeType[fileExtension] ?? 'image/jpeg';
-  const storagePath = `${userId}/avatar-${Date.now()}.${fileExtension}`;
+  const storagePath = `${userId}/avatar-${Date.now()}.jpg`;
 
   const { error } = await supabase.storage.from('avatars').upload(storagePath, imageBuffer, {
-    contentType,
+    contentType: 'image/jpeg',
     upsert: true,
   });
 
@@ -147,28 +173,24 @@ export const clearNeedsOnboardingFlag = async () => {
     throw error;
   }
 
+  // updateUser writes the new metadata server-side, but the local cached
+  // session JWT still carries the old metadata until the next refresh.
+  // `needsOnboarding` reads from user_metadata, so without this refresh the
+  // root layout would keep redirecting to onboarding until the next token
+  // refresh tick.
+  const { error: refreshError } = await supabase.auth.refreshSession();
+  if (refreshError) {
+    throw refreshError;
+  }
+
   return data;
 };
 
 export const deleteAccount = async () => {
-  const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
-
-  if (sessionError) {
-    throw sessionError;
-  }
-
-  if (!session?.access_token) {
-    throw new Error('No active session');
-  }
-
+  // `functions.invoke` attaches the session JWT automatically; passing a
+  // manual Authorization header collides with the SDK's own.
   const { error } = await supabase.functions.invoke('delete-account', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-    },
   });
 
   if (error) {
@@ -222,26 +244,3 @@ export const mapAuthErrorMessage = (
   return fallback;
 };
 
-const extensionToMimeType: Record<string, string> = {
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  png: 'image/png',
-  heic: 'image/heic',
-  webp: 'image/webp',
-};
-
-const getFileExtension = (imageUri: string, mimeType?: string | null) => {
-  const mimeExtension = mimeType?.split('/')[1]?.toLowerCase();
-  if (mimeExtension) {
-    return mimeExtension === 'jpeg' ? 'jpg' : mimeExtension;
-  }
-
-  const uriMatch = imageUri.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
-  const uriExtension = uriMatch?.[1]?.toLowerCase();
-
-  if (uriExtension) {
-    return uriExtension === 'jpeg' ? 'jpg' : uriExtension;
-  }
-
-  return 'jpg';
-};

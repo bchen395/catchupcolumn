@@ -6,7 +6,12 @@
       "Bash(rsync -av --exclude='.git' --exclude='CLAUDE.md' --exclude='docs' /tmp/catchupcolumn-init/ /Users/bensonchen/repos/catchupcolumn/)",
       "Bash(npx expo:*)",
       "Bash(npx tsc:*)",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(python3 -c \"from PIL import Image, ImageDraw, ImageFont; print\\('ok'\\)\")",
+      "Bash(pip3 install *)",
+      "Bash(python3 -c \"from PIL import Image; print\\('ok'\\)\")",
+      "Bash(tee /tmp/tsc.out)",
+      "Bash(echo \"---exit $?---\")"
     ]
   }
 }

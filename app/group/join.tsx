@@ -19,7 +19,7 @@ import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
-import { joinGroupByCode, lookupGroupByInviteCode } from '@/lib/groups';
+import { isGroupMember, joinGroupByInviteCode, lookupGroupByInviteCode } from '@/lib/groups';
 import type { GroupRow } from '@/types';
 
 const JoinGroupScreen = () => {
@@ -37,7 +37,7 @@ const JoinGroupScreen = () => {
   const inputRef = useRef(null);
 
   const handleFindGroup = async () => {
-    const trimmedCode = code.trim().toUpperCase();
+    const trimmedCode = code.trim();
     if (!trimmedCode) {
       setCodeError('Enter an invite code to find a Group.');
       return;
@@ -55,6 +55,10 @@ const JoinGroupScreen = () => {
         return;
       }
       setPreview(found);
+      if (user) {
+        const member = await isGroupMember(found.id, user.id);
+        setAlreadyMember(member);
+      }
     } catch (_err) {
       setScreenError('Something went wrong. Please try again.');
     } finally {
@@ -68,11 +72,12 @@ const JoinGroupScreen = () => {
 
     try {
       setJoining(true);
-      await joinGroupByCode(preview.id, user.id);
-      router.replace(`/group/${preview.id}`);
+      const groupId = await joinGroupByInviteCode(code);
+      router.replace(`/group/${groupId}`);
     } catch (err: unknown) {
-      if (err instanceof Error && err.message === 'already_member') {
-        setAlreadyMember(true);
+      if (err instanceof Error && err.message === 'invalid_invite_code') {
+        setCodeError('That code does not match any Group. Check the spelling and try again.');
+        setPreview(null);
       } else {
         setScreenError('Something went wrong joining the Group. Please try again.');
       }

@@ -1,8 +1,7 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
-  Image,
   Pressable,
   RefreshControl,
   SectionList,
@@ -10,12 +9,17 @@ import {
   View,
 } from 'react-native';
 
+import { AppImage } from '@/components/app-image';
+import { EmptyState } from '@/components/empty-state';
+import { ErrorState } from '@/components/error-state';
+import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/colors';
+import { Icons } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
-import { Typography } from '@/constants/typography';
+import { Strings } from '@/constants/strings';
+import { useAuth } from '@/hooks/use-auth';
 import { fetchEditionsForUser, type EditionListItem } from '@/lib/editions';
 
 type Section = {
@@ -58,20 +62,22 @@ const buildSections = (editions: EditionListItem[]): Section[] => {
 
 const InboxScreen = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [editions, setEditions] = useState<EditionListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [screenError, setScreenError] = useState('');
 
   const load = useCallback(async () => {
+    if (!user) return;
     try {
-      const data = await fetchEditionsForUser();
+      const data = await fetchEditionsForUser(user.id);
       setEditions(data);
       setScreenError('');
     } catch (_err) {
-      setScreenError('We could not load your editions right now. Pull down to try again.');
+      setScreenError(Strings.error.inboxLoad);
     }
-  }, []);
+  }, [user]);
 
   useFocusEffect(
     useCallback(() => {
@@ -92,7 +98,7 @@ const InboxScreen = () => {
     setRefreshing(false);
   };
 
-  const sections = buildSections(editions);
+  const sections = useMemo(() => buildSections(editions), [editions]);
 
   const renderItem = ({ item }: { item: EditionListItem }) => {
     return (
@@ -118,7 +124,7 @@ const InboxScreen = () => {
     return (
       <View style={styles.sectionHeader}>
         {section.coverUrl ? (
-          <Image source={{ uri: section.coverUrl }} style={styles.sectionThumb} resizeMode="cover" />
+          <AppImage source={{ uri: section.coverUrl }} style={styles.sectionThumb} />
         ) : (
           <View style={styles.sectionThumbPlaceholder}>
             <FontAwesome name="newspaper-o" size={16} color={Colors.textMuted} />
@@ -132,37 +138,28 @@ const InboxScreen = () => {
   };
 
   if (loading) {
-    return (
-      <ThemedView style={styles.center}>
-        <ThemedText variant="body" style={styles.muted}>
-          Loading…
-        </ThemedText>
-      </ThemedView>
-    );
+    return <PrintingPressLoading message={Strings.loading.inbox} />;
   }
 
   if (sections.length === 0) {
+    if (screenError) {
+      return (
+        <ErrorState
+          icon={Icons.errorNetwork}
+          title={Strings.error.network.title}
+          body={screenError}
+          onRetry={load}
+        />
+      );
+    }
     return (
-      <ThemedView style={styles.center}>
-        {screenError ? (
-          <StatusBanner variant="error" message={screenError} style={styles.emptyBanner} />
-        ) : null}
-        <ThemedText variant="headline" style={styles.emptyTitle}>
-          Nothing to read yet
-        </ThemedText>
-        <ThemedText variant="body" style={styles.emptyBody}>
-          No editions yet — write something for your Group this week!
-        </ThemedText>
-        <Pressable
-          onPress={() => router.push('/(tabs)/post')}
-          accessibilityRole="button"
-          style={styles.emptyCta}
-        >
-          <ThemedText variant="label" style={styles.emptyCtaText}>
-            Write a post
-          </ThemedText>
-        </Pressable>
-      </ThemedView>
+      <EmptyState
+        icon={Icons.emptyInbox}
+        title={Strings.empty.inbox.title}
+        body={Strings.empty.inbox.body}
+        ctaLabel={Strings.empty.inbox.cta}
+        onCtaPress={() => router.push('/(tabs)/post')}
+      />
     );
   }
 
@@ -250,40 +247,5 @@ const styles = StyleSheet.create({
   rowMeta: {
     color: Colors.textMuted,
     fontStyle: 'italic',
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Layout.padding.xl,
-    gap: Layout.padding.md,
-  },
-  muted: {
-    color: Colors.textMuted,
-  },
-  emptyBanner: {
-    alignSelf: 'stretch',
-  },
-  emptyTitle: {
-    textAlign: 'center',
-    color: Colors.text,
-  },
-  emptyBody: {
-    textAlign: 'center',
-    color: Colors.textMuted,
-  },
-  emptyCta: {
-    minHeight: Layout.touchTargetMin,
-    paddingHorizontal: Layout.padding.lg,
-    paddingVertical: Layout.padding.sm,
-    backgroundColor: Colors.accentNavy,
-    borderRadius: Layout.borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Layout.padding.sm,
-  },
-  emptyCtaText: {
-    color: Colors.white,
-    fontFamily: Typography.families.sansSemiBold,
   },
 });

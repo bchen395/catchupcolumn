@@ -8,7 +8,7 @@ import { FormField } from '@/components/form-field';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { Layout } from '@/constants/layout';
-import { mapAuthErrorMessage, signUpWithEmail } from '@/lib/auth';
+import { mapAuthErrorMessage, resendConfirmationEmail, signUpWithEmail } from '@/lib/auth';
 
 type SignupErrors = {
   email?: string;
@@ -23,6 +23,8 @@ const SignupScreen = () => {
   const [formError, setFormError] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resentMessage, setResentMessage] = useState('');
 
   const handleSignup = async () => {
     const nextErrors = validateSignupForm(email, password);
@@ -51,6 +53,20 @@ const SignupScreen = () => {
     }
   };
 
+  const handleResendConfirmation = async () => {
+    setFormError('');
+    setResentMessage('');
+    try {
+      setResending(true);
+      await resendConfirmationEmail(email);
+      setResentMessage('Sent — check your inbox for the confirmation link.');
+    } catch (error) {
+      setFormError(mapAuthErrorMessage(error, 'We could not resend the confirmation email right now.'));
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
     <AuthScreenShell
       title="Create your account"
@@ -69,6 +85,7 @@ const SignupScreen = () => {
       <View style={styles.form}>
         {formError ? <StatusBanner variant="error" message={formError} /> : null}
         {infoMessage ? <StatusBanner variant="info" message={infoMessage} /> : null}
+        {resentMessage ? <StatusBanner variant="success" message={resentMessage} /> : null}
 
         <FormField
           label="Email address"
@@ -96,6 +113,15 @@ const SignupScreen = () => {
         />
 
         <FormButton title="Continue" loading={submitting} onPress={handleSignup} />
+
+        {infoMessage ? (
+          <FormButton
+            title="Resend confirmation email"
+            variant="ghost"
+            loading={resending}
+            onPress={handleResendConfirmation}
+          />
+        ) : null}
       </View>
     </AuthScreenShell>
   );

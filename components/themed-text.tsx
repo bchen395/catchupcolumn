@@ -40,15 +40,16 @@ const variantStyles = StyleSheet.create({
     fontSize: Typography.sizes.lg,
     lineHeight: 28,
   },
+  // 16px floor satisfies the older-adult readability target in CLAUDE.md.
   caption: {
     fontFamily: Typography.families.sans,
-    fontSize: Typography.sizes.sm,
-    lineHeight: 20,
+    fontSize: Typography.sizes.body,
+    lineHeight: 22,
     color: Colors.textMuted,
   },
   label: {
     fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.sm,
-    lineHeight: 20,
+    fontSize: Typography.sizes.body,
+    lineHeight: 22,
   },
 });

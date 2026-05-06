@@ -378,6 +378,15 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# compile-editions handles its own auth via CRON_SECRET (bearer header),
+# so it must bypass the platform JWT verifier.
+[functions.compile-editions]
+verify_jwt = false
+
+# unsubscribe is a public, link-driven endpoint hit straight from email clients.
+[functions.unsubscribe]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

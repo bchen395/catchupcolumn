@@ -6,7 +6,6 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -19,7 +18,6 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // Verify the caller is authenticated using the anon client
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
@@ -32,7 +30,6 @@ Deno.serve(async (req: Request) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Use the caller's JWT to verify identity
     const callerClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -49,10 +46,25 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Use the service role client to delete the account
     const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+
+    // Tear down memberships, sole-member groups, and storage objects
+    // before auth.users is deleted. Without this, the FK cascade hits
+    // prevent_last_moderator_removal and the deleteUser call fails.
+    const { data: prepResult, error: prepError } = await adminClient.rpc(
+      'prepare_account_deletion',
+      { p_user_id: user.id }
+    );
+
+    if (prepError) {
+      console.error('Failed to prepare account deletion:', prepError);
+      return new Response(JSON.stringify({ error: 'Failed to delete account' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id);
 
@@ -64,7 +76,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, ...(prepResult ?? {}) }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

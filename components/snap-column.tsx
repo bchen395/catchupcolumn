@@ -44,6 +44,8 @@ export const SnapColumn = ({ data, selectedIndex, onSelect, visible, width = 72 
       listRef.current?.scrollToOffset({ offset: selectedIndex * ITEM_H, animated: false });
     }, 50);
     return () => clearTimeout(timer);
+    // Only re-anchor when the picker opens. Reacting to selectedIndex would
+    // fight active scroll, since onSelect updates it during deceleration.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 

@@ -1,10 +1,12 @@
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
+import { usePostImageUrl } from '@/hooks/use-post-image-url';
 import type { PostWithAuthor } from '@/types';
 
+import { AppImage } from './app-image';
 import { ThemedText } from './themed-text';
 
 type Props = {
@@ -21,12 +23,13 @@ const getInitials = (name: string) =>
 
 export const EditionPost = ({ post }: Props) => {
   const { author, body, image_url } = post;
+  const photoUri = usePostImageUrl(image_url);
 
   return (
     <View style={styles.section}>
       <View style={styles.byline}>
         {author.avatar_url ? (
-          <Image source={{ uri: author.avatar_url }} style={styles.avatar} />
+          <AppImage source={{ uri: author.avatar_url }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.avatarFallback]}>
             <ThemedText variant="caption" style={styles.initials}>
@@ -44,8 +47,8 @@ export const EditionPost = ({ post }: Props) => {
         </View>
       </View>
 
-      {image_url ? (
-        <Image source={{ uri: image_url }} style={styles.photo} resizeMode="cover" />
+      {photoUri ? (
+        <AppImage source={{ uri: photoUri }} style={styles.photo} />
       ) : null}
 
       <ThemedText variant="serifBody" style={styles.body}>

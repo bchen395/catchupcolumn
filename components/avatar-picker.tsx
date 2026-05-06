@@ -1,5 +1,6 @@
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { AppImage } from '@/components/app-image';
 import { FormButton } from '@/components/form-button';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
@@ -36,7 +37,7 @@ export const AvatarPicker = ({
       </ThemedText>
       <View style={styles.row}>
         {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.avatar} />
+          <AppImage source={{ uri: imageUrl }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.fallbackAvatar]}>
             <ThemedText variant="subheadline" style={styles.initials}>

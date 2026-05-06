@@ -20,8 +20,12 @@ import {
 
 type OnboardingErrors = {
   displayName?: string;
+  bio?: string;
   avatar?: string;
 };
+
+const DISPLAY_NAME_MAX = 60;
+const BIO_MAX = 200;
 
 type SelectedAvatar = {
   uri: string;
@@ -32,6 +36,7 @@ const OnboardingScreen = () => {
   const router = useRouter();
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const [selectedAvatar, setSelectedAvatar] = useState<SelectedAvatar | null>(null);
   const [errors, setErrors] = useState<OnboardingErrors>({});
@@ -62,6 +67,10 @@ const OnboardingScreen = () => {
 
         if (profile.display_name && profile.display_name.toLowerCase() !== fallbackName.toLowerCase()) {
           setDisplayName(profile.display_name);
+        }
+
+        if (profile.bio) {
+          setBio(profile.bio);
         }
 
         setAvatarPreviewUrl(profile.avatar_url);
@@ -105,7 +114,7 @@ const OnboardingScreen = () => {
       const result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: true,
         aspect: [1, 1],
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         quality: 0.7,
       });
 
@@ -128,10 +137,17 @@ const OnboardingScreen = () => {
 
   const handleComplete = async () => {
     const trimmedDisplayName = displayName.trim();
+    const trimmedBio = bio.trim();
     const nextErrors: OnboardingErrors = {};
 
     if (!trimmedDisplayName) {
       nextErrors.displayName = 'Enter the name you want your family to see.';
+    } else if (trimmedDisplayName.length > DISPLAY_NAME_MAX) {
+      nextErrors.displayName = `Keep your name under ${DISPLAY_NAME_MAX} characters.`;
+    }
+
+    if (trimmedBio.length > BIO_MAX) {
+      nextErrors.bio = `Keep your bio under ${BIO_MAX} characters.`;
     }
 
     setErrors(nextErrors);
@@ -167,6 +183,7 @@ const OnboardingScreen = () => {
       await updateCurrentUserProfile(user.id, {
         avatar_url: nextAvatarUrl,
         display_name: trimmedDisplayName,
+        bio: trimmedBio || null,
       });
       await clearNeedsOnboardingFlag();
       router.replace('/(tabs)/inbox');
@@ -215,8 +232,22 @@ const OnboardingScreen = () => {
           autoCapitalize="words"
           autoComplete="name"
           textContentType="name"
+          maxLength={DISPLAY_NAME_MAX}
           error={errors.displayName}
           placeholder="Your name"
+        />
+
+        <FormField
+          label="Bio"
+          value={bio}
+          onChangeText={setBio}
+          multiline
+          numberOfLines={3}
+          maxLength={BIO_MAX}
+          helperText={`Optional — up to ${BIO_MAX} characters.`}
+          error={errors.bio}
+          placeholder="A sentence or two about you (optional)"
+          style={styles.bioInput}
         />
 
         <FormButton title="Finish setup" loading={saving} onPress={handleComplete} />
@@ -230,6 +261,11 @@ export default OnboardingScreen;
 const styles = StyleSheet.create({
   form: {
     gap: Layout.padding.md,
+  },
+  bioInput: {
+    minHeight: 88,
+    paddingTop: 12,
+    textAlignVertical: 'top',
   },
 });
 

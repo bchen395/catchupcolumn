@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Colors } from '@/constants/colors';
 
 const NotFoundScreen = () => {
   return (
@@ -32,6 +33,6 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   linkText: {
-    color: '#2e78b7',
+    color: Colors.accentNavy,
   },
 });

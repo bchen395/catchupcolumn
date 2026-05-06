@@ -72,11 +72,11 @@ Mark phases as [x] when complete. Work through them in order.
 ---
 
 ## Phase 7: Email Delivery
-- [ ] Integrate Resend for transactional email
-- [ ] When an Edition publishes, email all Group members with the content
-- [ ] Email template: clean, readable, newspaper-styled HTML email
-- [ ] Include a deep link back to the app to read the full edition
-- [ ] Unsubscribe option per Group
+- [x] Integrate Resend for transactional email
+- [x] When an Edition publishes, email all Group members with the content
+- [x] Email template: clean, readable, newspaper-styled HTML email
+- [x] Include a deep link back to the app to read the full edition
+- [x] Unsubscribe option per Group
 
 **Test:** Edition publishes, all members receive a well-formatted email.
 
