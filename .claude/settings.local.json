@@ -11,7 +11,9 @@
       "Bash(pip3 install *)",
       "Bash(python3 -c \"from PIL import Image; print\\('ok'\\)\")",
       "Bash(tee /tmp/tsc.out)",
-      "Bash(echo \"---exit $?---\")"
+      "Bash(echo \"---exit $?---\")",
+      "Bash(git diff *)",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }

@@ -117,27 +117,28 @@ export const uploadPostImage = async (
   return storagePath;
 };
 
-/**
- * Resolve the value stored in `posts.image_url` to something an `<Image>`
- * can render.
- *
- * Accepts either:
- *   - a storage path like "<userId>/posts/<postId>/image.jpg" (current shape)
- *   - a fully-qualified http(s) URL (legacy rows, or a local file:// preview)
- *
- * For storage paths the bucket is private, so we mint a short-lived signed
- * URL. Returns null when no image is set or signing fails (caller is
- * expected to render a no-image state, not an error state).
- */
+// Legacy rows stored the full public URL; extract the storage path so we can
+// sign it. Matches `.../object/public/post-images/<path>`.
+const LEGACY_PUBLIC_URL_RE = /\/storage\/v1\/object\/public\/post-images\/(.+)$/;
+
 export const getPostImageDisplayUrl = async (
   rawImageUrl: string | null | undefined,
 ): Promise<string | null> => {
   if (!rawImageUrl) return null;
-  if (/^(https?:|file:|data:)/i.test(rawImageUrl)) return rawImageUrl;
+
+  let storagePath = rawImageUrl;
+
+  if (/^(file:|data:)/i.test(rawImageUrl)) return rawImageUrl;
+
+  if (/^https?:/i.test(rawImageUrl)) {
+    const match = rawImageUrl.match(LEGACY_PUBLIC_URL_RE);
+    if (!match) return rawImageUrl;
+    storagePath = match[1];
+  }
 
   const { data, error } = await supabase.storage
     .from(POST_IMAGE_BUCKET)
-    .createSignedUrl(rawImageUrl, POST_IMAGE_SIGNED_TTL_SECONDS);
+    .createSignedUrl(storagePath, POST_IMAGE_SIGNED_TTL_SECONDS);
 
   if (error || !data?.signedUrl) {
     return null;
