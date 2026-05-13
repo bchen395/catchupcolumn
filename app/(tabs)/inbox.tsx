@@ -19,6 +19,7 @@ import { Colors } from '@/constants/colors';
 import { Icons } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
+import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
 import { fetchEditionsForUser, type EditionListItem } from '@/lib/editions';
 
@@ -30,13 +31,19 @@ type Section = {
 };
 
 const formatWeekOf = (publishedAt: string, timezone?: string | null): string => {
-  const date = new Date(publishedAt);
-  return date.toLocaleDateString('en-US', {
-    timeZone: timezone || undefined,
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const tz = timezone || undefined;
+  const end = new Date(publishedAt);
+  const start = new Date(end);
+  start.setDate(start.getDate() - 6);
+  const startMonth = start.toLocaleDateString('en-US', { timeZone: tz, month: 'long' });
+  const endMonth = end.toLocaleDateString('en-US', { timeZone: tz, month: 'long' });
+  const startDay = start.toLocaleDateString('en-US', { timeZone: tz, day: 'numeric' });
+  const endDay = end.toLocaleDateString('en-US', { timeZone: tz, day: 'numeric' });
+  const year = end.toLocaleDateString('en-US', { timeZone: tz, year: 'numeric' });
+  if (startMonth === endMonth) {
+    return `${startMonth} ${startDay}\u2013${endDay}, ${year}`;
+  }
+  return `${startMonth} ${startDay} \u2013 ${endMonth} ${endDay}, ${year}`;
 };
 
 const buildSections = (editions: EditionListItem[]): Section[] => {
@@ -108,14 +115,13 @@ const InboxScreen = () => {
         style={({ pressed }) => [styles.row, pressed ? styles.rowPressed : null]}
       >
         <View style={styles.rowContent}>
-          <ThemedText variant="subheadline" style={styles.rowTitle}>
-            Week of {formatWeekOf(item.published_at, item.group.timezone)}
+          <ThemedText style={styles.rowTitle}>
+            {formatWeekOf(item.published_at, item.group.timezone)}
           </ThemedText>
           <ThemedText variant="caption" style={styles.rowMeta}>
-            Edition №{item.edition_number}
+            Edition #{item.edition_number}
           </ThemedText>
         </View>
-        <FontAwesome name="chevron-right" size={14} color={Colors.textMuted} />
       </Pressable>
     );
   };
@@ -127,10 +133,10 @@ const InboxScreen = () => {
           <AppImage source={{ uri: section.coverUrl }} style={styles.sectionThumb} />
         ) : (
           <View style={styles.sectionThumbPlaceholder}>
-            <FontAwesome name="newspaper-o" size={16} color={Colors.textMuted} />
+            <FontAwesome name="newspaper-o" size={18} color={Colors.navy} />
           </View>
         )}
-        <ThemedText variant="label" style={styles.sectionLabel} numberOfLines={1}>
+        <ThemedText style={styles.sectionLabel} numberOfLines={1}>
           {section.groupName}
         </ThemedText>
       </View>
@@ -165,14 +171,19 @@ const InboxScreen = () => {
 
   return (
     <SectionList
+      style={styles.listBackground}
       sections={sections}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
       renderSectionHeader={renderSectionHeader}
+      SectionSeparatorComponent={({ trailingItem }) =>
+        trailingItem ? <View style={styles.rowSpacer} /> : null
+      }
+      ItemSeparatorComponent={() => <View style={styles.rowSpacer} />}
       stickySectionHeadersEnabled={false}
       contentContainerStyle={styles.listContent}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.accent} />
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.navy} />
       }
       ListHeaderComponent={
         screenError ? (
@@ -186,66 +197,73 @@ const InboxScreen = () => {
 export default InboxScreen;
 
 const styles = StyleSheet.create({
+  listBackground: {
+    backgroundColor: Colors.paperWarm,
+  },
   listContent: {
+    paddingHorizontal: Layout.padding.lg,
     paddingBottom: Layout.padding.xl,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.paperWarm,
   },
   banner: {
-    margin: Layout.padding.md,
+    marginBottom: Layout.padding.md,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Layout.padding.md,
-    paddingHorizontal: Layout.padding.lg,
     paddingTop: Layout.padding.lg,
     paddingBottom: Layout.padding.sm,
-    backgroundColor: Colors.background,
   },
   sectionThumb: {
-    width: 36,
-    height: 36,
-    borderRadius: Layout.borderRadius.md,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   sectionThumbPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: Layout.borderRadius.md,
-    backgroundColor: Colors.backgroundWarm,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.blueWash,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Section label is the group name in display serif — matches the masthead
+  // styling on the edition reader so the inbox feels like a stack of papers.
   sectionLabel: {
-    color: Colors.accentNavy,
     flex: 1,
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
+    color: Colors.ink,
+    fontFamily: Typography.families.serifBlack,
+    fontSize: Typography.sizes.xl,
+    lineHeight: 28,
   },
+  // Row is a soft pill in `blueWash`, no chevron, generous height. Pressed
+  // state deepens to `blueChipLight` for tactile feedback.
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: Layout.touchTargetMin * 1.4,
+    minHeight: Layout.touchTargetMin + 8,
     paddingVertical: Layout.padding.md,
     paddingHorizontal: Layout.padding.lg,
-    backgroundColor: Colors.background,
-    borderTopWidth: 1,
-    borderColor: Colors.border,
-    gap: Layout.padding.md,
+    backgroundColor: Colors.blueWash,
+    borderRadius: 999,
+    gap: 2,
+    justifyContent: 'center',
   },
   rowPressed: {
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.blueChipLight,
   },
   rowContent: {
-    flex: 1,
     gap: 2,
   },
   rowTitle: {
-    color: Colors.text,
+    fontFamily: Typography.families.serifBold,
+    fontSize: Typography.sizes.lg,
+    color: Colors.navy,
   },
   rowMeta: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
     fontStyle: 'italic',
+  },
+  rowSpacer: {
+    height: Layout.padding.sm,
   },
 });

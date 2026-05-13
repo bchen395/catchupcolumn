@@ -1,4 +1,3 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { Colors } from '@/constants/colors';
@@ -7,6 +6,7 @@ import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 
+import { Icon } from './icon';
 import { ThemedText } from './themed-text';
 
 interface ErrorStateProps {
@@ -29,23 +29,17 @@ export const ErrorState = ({
   return (
     <View style={[styles.container, style]}>
       <View style={styles.iconBubble}>
-        <FontAwesome name={icon.name} size={28} color={Colors.error} />
+        <Icon icon={icon} size={32} color={Colors.error} />
       </View>
-      <ThemedText variant="subheadline" style={styles.title}>
-        {title}
-      </ThemedText>
-      <ThemedText variant="body" style={styles.body}>
-        {body}
-      </ThemedText>
+      <ThemedText style={styles.title}>{title}</ThemedText>
+      <ThemedText style={styles.body}>{body}</ThemedText>
       {onRetry ? (
         <Pressable
           onPress={onRetry}
           accessibilityRole="button"
           style={({ pressed }) => [styles.cta, pressed ? styles.ctaPressed : null]}
         >
-          <ThemedText variant="label" style={styles.ctaText}>
-            {ctaLabel}
-          </ThemedText>
+          <ThemedText style={styles.ctaText}>{ctaLabel}</ThemedText>
         </Pressable>
       ) : null}
     </View>
@@ -60,43 +54,49 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.xl,
     paddingVertical: Layout.padding.xl,
     gap: Layout.padding.md,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.paperWarm,
   },
+  // Keep the bubble blueWash to match EmptyState — the *icon color* is what
+  // signals "error" (red) without making the whole shell feel alarming.
   iconBubble: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.backgroundWarm,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    backgroundColor: Colors.blueWash,
+    marginBottom: Layout.padding.sm,
   },
   title: {
-    fontFamily: Typography.families.serifBold,
-    color: Colors.text,
+    fontFamily: Typography.families.serifBlack,
+    fontSize: Typography.sizes.xxl,
+    lineHeight: 32,
+    color: Colors.ink,
     textAlign: 'center',
   },
   body: {
-    color: Colors.textMuted,
-    textAlign: 'center',
+    fontFamily: Typography.families.serif,
+    fontSize: Typography.sizes.body,
+    fontStyle: 'italic',
     lineHeight: Typography.lineHeights.body,
+    color: Colors.inkSoft,
+    textAlign: 'center',
   },
   cta: {
-    minHeight: Layout.touchTargetMin,
+    minHeight: Layout.touchTargetMin + 4,
     paddingHorizontal: Layout.padding.lg,
-    paddingVertical: Layout.padding.sm,
-    backgroundColor: Colors.accent,
-    borderRadius: Layout.borderRadius.md,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: Layout.padding.sm,
+    marginTop: Layout.padding.md,
+    backgroundColor: Colors.navy,
   },
   ctaPressed: {
-    opacity: 0.85,
+    backgroundColor: Colors.navySoft,
   },
   ctaText: {
-    color: Colors.white,
     fontFamily: Typography.families.sansSemiBold,
+    fontSize: Typography.sizes.body,
+    color: Colors.paper,
   },
 });

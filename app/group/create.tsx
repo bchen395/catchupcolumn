@@ -174,7 +174,7 @@ const CreateGroupScreen = () => {
               style={styles.backButton}
               hitSlop={8}
             >
-              <Ionicons name="chevron-back" size={28} color={Colors.accentNavy} />
+              <Ionicons name="chevron-back" size={28} color={Colors.navy} />
             </Pressable>
           ),
         }}
@@ -348,7 +348,7 @@ export default CreateGroupScreen;
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.paperWarm,
   },
   scroll: {
     paddingBottom: Layout.padding.xl,
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   },
   coverPickerWrapper: {
     height: 180,
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
     marginBottom: Layout.padding.md,
     overflow: 'hidden',
   },
@@ -371,10 +371,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
   },
   coverPlaceholderText: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
   },
   coverOverlay: {
     position: 'absolute',
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   coverOverlayText: {
-    color: Colors.white,
+    color: Colors.paper,
   },
   form: {
     paddingHorizontal: Layout.padding.lg,
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   fieldLabel: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
   },
   dayRow: {
     flexDirection: 'row',
@@ -414,26 +414,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    borderColor: Colors.borderMid,
+    backgroundColor: Colors.paper,
   },
   dayButtonActive: {
-    backgroundColor: Colors.accentNavy,
-    borderColor: Colors.accentNavy,
+    backgroundColor: Colors.navy,
+    borderColor: Colors.navy,
   },
   dayButtonText: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
     fontFamily: Typography.families.sansMedium,
   },
   dayButtonTextActive: {
-    color: Colors.white,
+    color: Colors.paper,
   },
   timeButton: {
     minHeight: Layout.touchTargetMin,
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    borderColor: Colors.borderMid,
+    backgroundColor: Colors.paper,
     paddingHorizontal: Layout.padding.md,
     paddingVertical: 14,
     justifyContent: 'center',
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalCard: {
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.paperWarm,
     borderRadius: Layout.borderRadius.lg,
     width: '100%',
     maxWidth: 320,
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
   },
   modalTitle: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
     textAlign: 'center',
   },
   modalColumns: {
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
   },
   colonSeparator: {
     fontFamily: Typography.families.sansSemiBold,
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
   },
   modalActions: {
     flexDirection: 'row',
@@ -486,14 +486,14 @@ const styles = StyleSheet.create({
     borderRadius: Layout.borderRadius.md,
   },
   doneButton: {
-    backgroundColor: Colors.accentNavy,
+    backgroundColor: Colors.navy,
     paddingHorizontal: Layout.padding.lg,
   },
   cancelText: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
   },
   doneText: {
-    color: Colors.white,
+    color: Colors.paper,
     fontFamily: Typography.families.sansSemiBold,
   },
   submitButton: {

@@ -95,10 +95,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   text: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
   },
   textActive: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
     fontFamily: Typography.families.sansSemiBold,
   },
   highlight: {
@@ -109,6 +109,6 @@ const styles = StyleSheet.create({
     height: ITEM_H,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
   },
 });

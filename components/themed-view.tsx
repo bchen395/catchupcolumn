@@ -12,12 +12,12 @@ export const ThemedView = ({ variant = 'default', style, ...props }: ThemedViewP
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.paperWarm,
   },
   card: {
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
   },
 });

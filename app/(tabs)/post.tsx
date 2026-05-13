@@ -1,3 +1,4 @@
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -46,10 +47,10 @@ const WORD_SOFT_MIN = 400;
 const WORD_SOFT_MAX = 600;
 
 const wordCountColor = (count: number): string => {
-  if (count === 0) return Colors.textMuted;
+  if (count === 0) return Colors.inkSoft;
   if (count >= WORD_SOFT_MIN && count <= WORD_SOFT_MAX) return Colors.success;
-  if (count > WORD_SOFT_MAX) return Colors.accentNavy;
-  return Colors.textMuted;
+  if (count > WORD_SOFT_MAX) return Colors.navy;
+  return Colors.inkSoft;
 };
 
 const wordCountLabel = (count: number): string => {
@@ -270,7 +271,7 @@ const PostScreen = () => {
         title={Strings.empty.postNoGroups.title}
         body={Strings.empty.postNoGroups.body}
         ctaLabel={Strings.empty.postNoGroups.cta}
-        onCtaPress={() => router.push('/(tabs)/groups')}
+        onCtaPress={() => router.push('/groups')}
       />
     );
   }
@@ -292,7 +293,7 @@ const PostScreen = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={Colors.accent}
+            tintColor={Colors.navy}
           />
         }
       >
@@ -355,29 +356,37 @@ const PostScreen = () => {
               </View>
             ) : null}
 
-            <View style={styles.section}>
-              <ThemedText variant="label" style={styles.sectionLabel}>
-                Write something for this week
-              </ThemedText>
+            {/* Compose "card" — the main creative surface. Cream paper, no
+                visible border on the input itself, sparkle anchored bottom-right
+                as a decorative anchor (no behavior in v1; placeholder for the
+                future "write for me" feature). */}
+            <View style={styles.composeCard}>
               <TextInput
                 ref={bodyInputRef}
                 style={styles.bodyInput}
                 value={body}
                 onChangeText={setBody}
-                placeholder="What's been happening in your world this week?"
-                placeholderTextColor={Colors.textMuted}
+                placeholder="Write…"
+                placeholderTextColor={Colors.inkSoft}
                 multiline
-                selectionColor={Colors.accent}
+                selectionColor={Colors.navy}
                 editable={!isBusy}
                 textAlignVertical="top"
               />
-              <ThemedText
-                variant="caption"
-                style={[styles.wordCount, { color: wordCountColor(wordCount) }]}
-              >
-                {wordCountLabel(wordCount)}
-              </ThemedText>
+              <View style={styles.sparkleSlot} pointerEvents="none">
+                <MaterialCommunityIcons
+                  name="creation-outline"
+                  size={22}
+                  color={Colors.navySoft}
+                />
+              </View>
             </View>
+            <ThemedText
+              variant="caption"
+              style={[styles.wordCount, { color: wordCountColor(wordCount) }]}
+            >
+              {wordCountLabel(wordCount)}
+            </ThemedText>
 
             <View style={styles.section}>
               <ThemedText variant="label" style={styles.sectionLabel}>
@@ -443,7 +452,7 @@ export default PostScreen;
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.paperWarm,
   },
   scrollContent: {
     padding: Layout.padding.lg,
@@ -454,7 +463,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   sectionLabel: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
   },
   banner: {},
   groupPicker: {
@@ -464,48 +473,53 @@ const styles = StyleSheet.create({
   groupPill: {
     paddingHorizontal: Layout.padding.md,
     paddingVertical: Layout.padding.sm,
-    borderRadius: Layout.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.backgroundWarm,
+    borderRadius: 999,
+    backgroundColor: Colors.blueWash,
     minHeight: Layout.touchTargetMin,
     justifyContent: 'center',
   },
   groupPillSelected: {
-    backgroundColor: Colors.accent,
-    borderColor: Colors.accent,
+    backgroundColor: Colors.navy,
   },
   groupPillText: {
-    color: Colors.text,
-    fontFamily: Typography.families.sansMedium,
+    color: Colors.navy,
+    fontFamily: Typography.families.sansSemiBold,
   },
   groupPillTextSelected: {
-    color: Colors.white,
+    color: Colors.paper,
   },
   editingBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
     borderRadius: Layout.borderRadius.sm,
     paddingHorizontal: Layout.padding.sm,
     paddingVertical: Layout.padding.xs,
   },
   editingBadgeText: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
+  },
+  // Compose card — cream paper background with a generous min-height. The
+  // sparkle is positioned absolutely so it sits inside the card flow.
+  composeCard: {
+    position: 'relative',
+    backgroundColor: Colors.paperCream,
+    borderRadius: Layout.borderRadius.md,
+    minHeight: 280,
+    padding: Layout.padding.lg,
   },
   bodyInput: {
-    minHeight: 200,
-    borderRadius: Layout.borderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
-    paddingHorizontal: Layout.padding.md,
-    paddingVertical: Layout.padding.md,
-    color: Colors.text,
+    minHeight: 240,
+    color: Colors.ink,
     fontFamily: Typography.families.serif,
-    fontSize: Typography.sizes.body,
-    lineHeight: Typography.lineHeights.body,
+    fontSize: Typography.sizes.lg,
+    lineHeight: 28,
+  },
+  sparkleSlot: {
+    position: 'absolute',
+    bottom: Layout.padding.md,
+    right: Layout.padding.md,
   },
   wordCount: {
     alignSelf: 'flex-end',
@@ -517,7 +531,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     borderRadius: Layout.borderRadius.md,
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
   },
   imageActions: {
     flexDirection: 'row',

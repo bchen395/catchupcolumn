@@ -90,7 +90,7 @@ const GroupsScreen = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={Colors.accent}
+              tintColor={Colors.navy}
             />
           }
           style={styles.flex}
@@ -106,7 +106,7 @@ export default GroupsScreen;
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.paperWarm,
   },
   actionBar: {
     flexDirection: 'row',
@@ -114,8 +114,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.lg,
     paddingVertical: Layout.padding.md,
     borderBottomWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.background,
+    borderColor: Colors.borderMid,
+    backgroundColor: Colors.paperWarm,
   },
   actionButton: {
     flex: 1,

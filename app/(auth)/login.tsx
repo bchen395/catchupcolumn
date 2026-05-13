@@ -38,7 +38,7 @@ const LoginScreen = () => {
     try {
       setSubmitting(true);
       await signInWithEmail({ email, password });
-      router.replace('/(tabs)/inbox');
+      router.replace('/(tabs)/home');
     } catch (error) {
       setFormError(mapAuthErrorMessage(error, 'We could not sign you in right now.'));
     } finally {

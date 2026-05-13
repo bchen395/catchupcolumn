@@ -114,7 +114,7 @@ Use this language consistently in code, UI, and comments:
 ## Design & UX Guidelines
 
 - **Accessibility first.** Minimum 16px body text, 48px touch targets, high contrast. Test with larger system font sizes.
-- **Newspaper aesthetic.** Use serif fonts for edition headlines and reading view (e.g. Playfair Display or Lora). Sans-serif for UI chrome (e.g. Inter or system default).
+- **Newspaper aesthetic.** Use Salo (a bold display serif) for edition headlines and reading view. Sans-serif for UI chrome (e.g. Inter or system default). Salo is the design-intent font; until/unless it's loaded as a custom font, fall back to Playfair Display Black (closest readily-available match on Google Fonts).
 - **Warm color palette.** Cream/warm white backgrounds, deep charcoal text, muted accent color (e.g. warm navy or burgundy). Avoid sterile whites and bright blues.
 - **Minimal navigation.** 4 bottom tabs: Inbox, Compose, My Groups, Profile. No hamburger menus or deep nesting.
 - **Language tone.** Friendly, clear, non-technical. "Your Group is ready!" not "Edition #4 has been published." Say "Write something for this week" not "Create a new post."

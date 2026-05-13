@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   subtitle: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
   },
   card: {
     padding: Layout.padding.lg,

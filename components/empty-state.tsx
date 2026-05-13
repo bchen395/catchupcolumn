@@ -1,4 +1,3 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { Colors } from '@/constants/colors';
@@ -6,6 +5,7 @@ import type { IconDescriptor } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
 
+import { Icon } from './icon';
 import { ThemedText } from './themed-text';
 
 interface EmptyStateProps {
@@ -22,26 +22,18 @@ export const EmptyState = ({ icon, title, body, ctaLabel, onCtaPress, style }: E
     <View style={[styles.container, style]}>
       {icon ? (
         <View style={styles.iconBubble}>
-          <FontAwesome name={icon.name} size={32} color={Colors.accentNavy} />
+          <Icon icon={icon} size={36} color={Colors.navy} />
         </View>
       ) : null}
-      <ThemedText variant="subheadline" style={styles.title}>
-        {title}
-      </ThemedText>
-      {body ? (
-        <ThemedText variant="body" style={styles.body}>
-          {body}
-        </ThemedText>
-      ) : null}
+      <ThemedText style={styles.title}>{title}</ThemedText>
+      {body ? <ThemedText style={styles.body}>{body}</ThemedText> : null}
       {ctaLabel && onCtaPress ? (
         <Pressable
           onPress={onCtaPress}
           accessibilityRole="button"
           style={({ pressed }) => [styles.cta, pressed ? styles.ctaPressed : null]}
         >
-          <ThemedText variant="label" style={styles.ctaText}>
-            {ctaLabel}
-          </ThemedText>
+          <ThemedText style={styles.ctaText}>{ctaLabel}</ThemedText>
         </Pressable>
       ) : null}
     </View>
@@ -56,44 +48,50 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.xl,
     paddingVertical: Layout.padding.xl,
     gap: Layout.padding.md,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.paperWarm,
   },
+  // The icon bubble matches the new "blue chip" pill language used on Home /
+  // Inbox so empty states feel like the same family of UI, not a separate
+  // legacy shell.
   iconBubble: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.backgroundWarm,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    backgroundColor: Colors.blueWash,
     marginBottom: Layout.padding.sm,
   },
   title: {
-    fontFamily: Typography.families.serifBold,
-    color: Colors.text,
+    fontFamily: Typography.families.serifBlack,
+    fontSize: Typography.sizes.xxl,
+    lineHeight: 32,
+    color: Colors.ink,
     textAlign: 'center',
   },
   body: {
-    color: Colors.textMuted,
-    textAlign: 'center',
+    fontFamily: Typography.families.serif,
+    fontSize: Typography.sizes.body,
+    fontStyle: 'italic',
     lineHeight: Typography.lineHeights.body,
+    color: Colors.inkSoft,
+    textAlign: 'center',
   },
   cta: {
-    minHeight: Layout.touchTargetMin,
+    minHeight: Layout.touchTargetMin + 4,
     paddingHorizontal: Layout.padding.lg,
-    paddingVertical: Layout.padding.sm,
-    backgroundColor: Colors.accentNavy,
-    borderRadius: Layout.borderRadius.md,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: Layout.padding.sm,
+    marginTop: Layout.padding.md,
+    backgroundColor: Colors.navy,
   },
   ctaPressed: {
-    opacity: 0.85,
+    backgroundColor: Colors.navySoft,
   },
   ctaText: {
-    color: Colors.white,
     fontFamily: Typography.families.sansSemiBold,
+    fontSize: Typography.sizes.body,
+    color: Colors.paper,
   },
 });

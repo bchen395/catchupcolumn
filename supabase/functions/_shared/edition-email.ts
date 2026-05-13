@@ -81,7 +81,7 @@ export const renderEditionEmailHtml = (payload: EditionEmailPayload): string => 
           <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #fffaf0; border: 1px solid #e6e0d4;">
             <tr>
               <td style="padding: 40px 40px 24px 40px; border-bottom: 3px double #2b2620;">
-                <p style="margin: 0 0 4px 0; font-family: Georgia, 'Times New Roman', serif; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #6b5d49;">Edition №${payload.edition_number} · ${escape(dateLine)}</p>
+                <p style="margin: 0 0 4px 0; font-family: Georgia, 'Times New Roman', serif; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #6b5d49;">Edition #${payload.edition_number} · ${escape(dateLine)}</p>
                 <h1 style="margin: 8px 0 0 0; font-family: Georgia, 'Times New Roman', serif; font-size: 36px; line-height: 1.15; font-weight: bold; color: #2b2620;">${escape(payload.group_name)}</h1>
               </td>
             </tr>
@@ -113,4 +113,4 @@ export const renderEditionEmailHtml = (payload: EditionEmailPayload): string => 
 };
 
 export const renderEditionEmailSubject = (payload: Pick<EditionEmailPayload, 'group_name' | 'edition_number'>): string =>
-  `${payload.group_name} — Edition №${payload.edition_number}`;
+  `${payload.group_name} — Edition #${payload.edition_number}`;

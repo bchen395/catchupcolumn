@@ -186,7 +186,7 @@ const OnboardingScreen = () => {
         bio: trimmedBio || null,
       });
       await clearNeedsOnboardingFlag();
-      router.replace('/(tabs)/inbox');
+      router.replace('/(tabs)/home');
     } catch (_error) {
       setScreenError('We could not save your profile yet. Please try again.');
     } finally {

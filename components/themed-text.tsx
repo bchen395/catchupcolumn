@@ -15,13 +15,13 @@ export const ThemedText = ({ variant = 'body', style, ...props }: ThemedTextProp
 
 const styles = StyleSheet.create({
   base: {
-    color: Colors.text,
+    color: Colors.ink,
   },
 });
 
 const variantStyles = StyleSheet.create({
   headline: {
-    fontFamily: Typography.families.serifBold,
+    fontFamily: Typography.families.serifBlack,
     fontSize: Typography.sizes.headline,
     lineHeight: Typography.lineHeights.headline,
   },
@@ -45,7 +45,7 @@ const variantStyles = StyleSheet.create({
     fontFamily: Typography.families.sans,
     fontSize: Typography.sizes.body,
     lineHeight: 22,
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
   },
   label: {
     fontFamily: Typography.families.sansSemiBold,

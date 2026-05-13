@@ -11,7 +11,7 @@ const NotFoundScreen = () => {
       <Stack.Screen options={{ title: 'Oops!' }} />
       <ThemedView style={styles.container}>
         <ThemedText variant="subheadline">This screen doesn't exist.</ThemedText>
-        <Link href="/(tabs)/inbox" style={styles.link}>
+        <Link href="/(tabs)/home" style={styles.link}>
           <ThemedText variant="body" style={styles.linkText}>Go to home screen!</ThemedText>
         </Link>
       </ThemedView>
@@ -33,6 +33,6 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   linkText: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
   },
 });

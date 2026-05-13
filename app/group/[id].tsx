@@ -115,14 +115,14 @@ const memberStyles = StyleSheet.create({
     borderRadius: 22,
   },
   fallback: {
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
     alignItems: 'center',
     justifyContent: 'center',
   },
   initials: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
     fontFamily: Typography.families.sansBold,
   },
   info: {
@@ -137,20 +137,20 @@ const memberStyles = StyleSheet.create({
     paddingHorizontal: Layout.padding.sm,
     paddingVertical: 2,
     borderRadius: Layout.borderRadius.sm,
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
   },
   badgeMod: {
     backgroundColor: '#EEF2F5',
-    borderColor: Colors.accentNavy,
+    borderColor: Colors.navy,
   },
   badgeModText: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
     fontFamily: Typography.families.sansSemiBold,
   },
   badgeContribText: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
   },
 });
 
@@ -324,7 +324,7 @@ const GroupDetailScreen = () => {
             try {
               setDeletingGroup(true);
               await deleteGroup(group.id);
-              router.replace('/(tabs)/groups');
+              router.replace('/groups');
             } catch (_err) {
               setScreenError('Could not delete the Group right now. Please try again.');
               setDeletingGroup(false);
@@ -349,7 +349,7 @@ const GroupDetailScreen = () => {
             try {
               setLeaving(true);
               await leaveGroup(group.id, currentUserId);
-              router.replace('/(tabs)/groups');
+              router.replace('/groups');
             } catch (err) {
               const message =
                 err instanceof Error && err.message.includes('last moderator')
@@ -372,7 +372,7 @@ const GroupDetailScreen = () => {
     return (
       <ErrorState
         body={screenError || 'Group not found.'}
-        onRetry={() => router.replace('/(tabs)/groups')}
+        onRetry={() => router.replace('/groups')}
         ctaLabel="Back to Groups"
       />
     );
@@ -431,7 +431,7 @@ const GroupDetailScreen = () => {
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.accent} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.navy} />}
       >
       <Stack.Screen
         options={{
@@ -443,7 +443,7 @@ const GroupDetailScreen = () => {
               accessibilityLabel="Go back"
               style={styles.backButton}
             >
-              <FontAwesome name="chevron-left" size={16} color={Colors.accentNavy} />
+              <FontAwesome name="chevron-left" size={16} color={Colors.navy} />
             </Pressable>
           ),
         }}
@@ -575,7 +575,7 @@ const GroupDetailScreen = () => {
             </ThemedText>
           </View>
           <Pressable onPress={handleShare} style={styles.shareButton} accessibilityRole="button">
-            <FontAwesome name="share-alt" size={18} color={Colors.accentNavy} />
+            <FontAwesome name="share-alt" size={18} color={Colors.navy} />
             <ThemedText variant="label" style={styles.shareText}>
               Share
             </ThemedText>
@@ -647,7 +647,7 @@ export default GroupDetailScreen;
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.paperWarm,
   },
   scroll: {
     paddingBottom: Layout.padding.xl,
@@ -670,27 +670,27 @@ const styles = StyleSheet.create({
   coverPlaceholder: {
     width: '100%',
     height: 120,
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
     borderBottomWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
   },
   header: {
     paddingHorizontal: Layout.padding.lg,
     paddingVertical: Layout.padding.lg,
     borderBottomWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
     gap: Layout.padding.sm,
   },
   columnName: {
     fontFamily: Typography.families.serifBold,
-    color: Colors.text,
+    color: Colors.ink,
   },
   columnDescription: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
     lineHeight: Typography.lineHeights.body,
   },
   schedule: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
     marginTop: Layout.padding.xs,
   },
   editForm: {
@@ -705,7 +705,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   fieldLabel: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
   },
   dayRow: {
     flexDirection: 'row',
@@ -718,26 +718,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    borderColor: Colors.borderMid,
+    backgroundColor: Colors.paper,
   },
   dayButtonActive: {
-    backgroundColor: Colors.accentNavy,
-    borderColor: Colors.accentNavy,
+    backgroundColor: Colors.navy,
+    borderColor: Colors.navy,
   },
   dayButtonText: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
     fontFamily: Typography.families.sansMedium,
   },
   dayButtonTextActive: {
-    color: Colors.white,
+    color: Colors.paper,
   },
   timeButton: {
     minHeight: Layout.touchTargetMin,
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    borderColor: Colors.borderMid,
+    backgroundColor: Colors.paper,
     paddingHorizontal: Layout.padding.md,
     paddingVertical: 14,
     justifyContent: 'center',
@@ -749,7 +749,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalCard: {
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.paperWarm,
     borderRadius: Layout.borderRadius.lg,
     width: '100%',
     maxWidth: 320,
@@ -758,7 +758,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
   },
   modalTitle: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
     textAlign: 'center',
   },
   modalColumns: {
@@ -769,7 +769,7 @@ const styles = StyleSheet.create({
   },
   colonSeparator: {
     fontFamily: Typography.families.sansSemiBold,
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
   },
   modalActions: {
     flexDirection: 'row',
@@ -785,14 +785,14 @@ const styles = StyleSheet.create({
     borderRadius: Layout.borderRadius.md,
   },
   doneButton: {
-    backgroundColor: Colors.accentNavy,
+    backgroundColor: Colors.navy,
     paddingHorizontal: Layout.padding.lg,
   },
   cancelText: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
   },
   doneText: {
-    color: Colors.white,
+    color: Colors.paper,
     fontFamily: Typography.families.sansSemiBold,
   },
   editButtons: {
@@ -806,11 +806,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.lg,
     paddingVertical: Layout.padding.md,
     borderBottomWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
     gap: Layout.padding.sm,
   },
   sectionTitle: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
     marginBottom: Layout.padding.xs,
   },
   inviteRow: {
@@ -820,17 +820,17 @@ const styles = StyleSheet.create({
   },
   inviteCodeChip: {
     flex: 1,
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
     paddingHorizontal: Layout.padding.md,
     paddingVertical: Layout.padding.sm,
   },
   inviteCode: {
     fontFamily: Typography.families.sansBold,
     letterSpacing: 2,
-    color: Colors.accentNavy,
+    color: Colors.navy,
   },
   shareButton: {
     flexDirection: 'row',
@@ -840,14 +840,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.md,
   },
   shareText: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
   },
   inviteHelp: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
   },
   dangerZone: {
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.borderMid,
     borderBottomWidth: 0,
     marginTop: Layout.padding.lg,
   },

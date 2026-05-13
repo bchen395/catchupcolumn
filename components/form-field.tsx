@@ -27,8 +27,8 @@ const FormFieldComponent = (
       <TextInput
         ref={ref}
         style={[styles.input, error ? styles.inputError : null, style as InputStyle]}
-        placeholderTextColor={Colors.textMuted}
-        selectionColor={Colors.accent}
+        placeholderTextColor={Colors.inkSoft}
+        selectionColor={Colors.navy}
         {...props}
       />
       {error ? (
@@ -53,17 +53,17 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   label: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
   },
   input: {
     minHeight: Layout.touchTargetMin,
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    borderColor: Colors.borderMid,
+    backgroundColor: Colors.paper,
     paddingHorizontal: Layout.padding.md,
     paddingVertical: 14,
-    color: Colors.text,
+    color: Colors.ink,
     fontFamily: Typography.families.sans,
     fontSize: Typography.sizes.body,
   },
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.error,
   },
   helperText: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
   },
   errorText: {
     color: Colors.error,

@@ -76,12 +76,12 @@ const styles = StyleSheet.create({
 
 const variantStyles = StyleSheet.create({
   primary: {
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.navy,
   },
   secondary: {
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
   },
   ghost: {
     backgroundColor: 'transparent',
@@ -90,7 +90,7 @@ const variantStyles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   destructive: {
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
     borderWidth: 1,
     borderColor: Colors.error,
   },
@@ -98,13 +98,13 @@ const variantStyles = StyleSheet.create({
 
 const textStyles = StyleSheet.create({
   primary: {
-    color: Colors.white,
+    color: Colors.paper,
   },
   secondary: {
-    color: Colors.text,
+    color: Colors.ink,
   },
   ghost: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
   },
   destructive: {
     color: Colors.error,
@@ -112,8 +112,8 @@ const textStyles = StyleSheet.create({
 });
 
 const indicatorColors: Record<FormButtonVariant, string> = {
-  primary: Colors.white,
-  secondary: Colors.accentNavy,
-  ghost: Colors.accentNavy,
+  primary: Colors.paper,
+  secondary: Colors.navy,
+  ghost: Colors.navy,
   destructive: Colors.error,
 };

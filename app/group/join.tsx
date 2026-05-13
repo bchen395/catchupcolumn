@@ -99,7 +99,7 @@ const JoinGroupScreen = () => {
           title: 'Join a Group',
           headerLeft: () => (
             <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
-              <Ionicons name="chevron-back" size={26} color={Colors.accentNavy} />
+              <Ionicons name="chevron-back" size={26} color={Colors.navy} />
             </Pressable>
           ),
         }}
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.paperWarm,
   },
   scroll: {
     flexGrow: 1,
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.lg,
   },
   intro: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
     lineHeight: Typography.lineHeights.body,
   },
   inputRow: {
@@ -226,10 +226,10 @@ const styles = StyleSheet.create({
   },
   previewName: {
     fontFamily: Typography.families.serifBold,
-    color: Colors.text,
+    color: Colors.ink,
   },
   previewDescription: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
     lineHeight: Typography.lineHeights.body,
   },
   alreadyBanner: {

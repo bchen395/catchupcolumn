@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   label: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
   },
   row: {
     flexDirection: 'row',
@@ -104,16 +104,16 @@ const styles = StyleSheet.create({
     width: 92,
     height: 92,
     borderRadius: 46,
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
   },
   fallbackAvatar: {
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
   },
   initials: {
-    color: Colors.accentNavy,
+    color: Colors.navy,
     fontFamily: Typography.families.sansBold,
   },
   actions: {
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   helperText: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
   },
   errorText: {
     color: Colors.error,

@@ -7,14 +7,14 @@ const EditionLayout = () => {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: Colors.background },
-        headerTintColor: Colors.accentNavy,
+        headerStyle: { backgroundColor: Colors.paperWarm },
+        headerTintColor: Colors.navy,
         headerTitleStyle: {
           fontFamily: Typography.families.sansSemiBold,
-          color: Colors.text,
+          color: Colors.ink,
         },
         headerShadowVisible: false,
-        contentStyle: { backgroundColor: Colors.background },
+        contentStyle: { backgroundColor: Colors.paperWarm },
       }}
     />
   );

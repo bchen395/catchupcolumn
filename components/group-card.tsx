@@ -27,7 +27,7 @@ export const GroupCard = ({ group, onPress }: GroupCardProps) => {
         <AppImage source={{ uri: group.cover_image_url }} style={styles.thumbnail} />
       ) : (
         <View style={styles.thumbnailPlaceholder}>
-          <FontAwesome name="newspaper-o" size={20} color={Colors.textMuted} />
+          <FontAwesome name="newspaper-o" size={20} color={Colors.inkSoft} />
         </View>
       )}
       <View style={styles.content}>
@@ -43,7 +43,7 @@ export const GroupCard = ({ group, onPress }: GroupCardProps) => {
           {memberLabel}
         </ThemedText>
       </View>
-      <FontAwesome name="chevron-right" size={14} color={Colors.textMuted} style={styles.chevron} />
+      <FontAwesome name="chevron-right" size={14} color={Colors.inkSoft} style={styles.chevron} />
     </Pressable>
   );
 };
@@ -55,13 +55,13 @@ const styles = StyleSheet.create({
     minHeight: Layout.touchTargetMin * 1.5,
     paddingVertical: Layout.padding.md,
     paddingHorizontal: Layout.padding.lg,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.paperWarm,
     borderBottomWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
     gap: Layout.padding.md,
   },
   pressed: {
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
   },
   thumbnail: {
     width: 52,
@@ -72,9 +72,9 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: Layout.borderRadius.md,
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -84,13 +84,13 @@ const styles = StyleSheet.create({
   },
   name: {
     fontFamily: Typography.families.sansSemiBold,
-    color: Colors.text,
+    color: Colors.ink,
   },
   description: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
   },
   meta: {
-    color: Colors.textMuted,
+    color: Colors.inkSoft,
     marginTop: 2,
   },
   chevron: {

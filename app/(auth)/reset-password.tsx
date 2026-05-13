@@ -97,7 +97,7 @@ const ResetPasswordScreen = () => {
     try {
       setSubmitting(true);
       await updatePassword(password);
-      router.replace('/(tabs)/inbox');
+      router.replace('/(tabs)/home');
     } catch (error) {
       setFormError(mapAuthErrorMessage(error, 'We could not update your password right now.'));
     } finally {

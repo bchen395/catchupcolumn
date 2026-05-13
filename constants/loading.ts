@@ -21,13 +21,13 @@ export const LoadingConfig = {
   mastheadFadeMs: 600,
 
   // Visuals
-  cylinderColor: Colors.accentNavy,
-  cylinderAccent: Colors.accent,
-  paperColor: Colors.white,
-  paperBorderColor: Colors.border,
-  paperLineColor: Colors.textMuted,
-  mastheadColor: Colors.text,
-  captionColor: Colors.textMuted,
+  cylinderColor: Colors.navy,
+  cylinderAccent: Colors.navy,
+  paperColor: Colors.paper,
+  paperBorderColor: Colors.borderMid,
+  paperLineColor: Colors.inkSoft,
+  mastheadColor: Colors.ink,
+  captionColor: Colors.inkSoft,
 
   // Layout
   spacingBetweenPressAndText: 32,

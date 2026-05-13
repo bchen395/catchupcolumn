@@ -9,6 +9,7 @@ import {
 import {
   PlayfairDisplay_400Regular,
   PlayfairDisplay_700Bold,
+  PlayfairDisplay_900Black,
 } from '@expo-google-fonts/playfair-display';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
@@ -17,6 +18,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
 import { PrintingPressLoading } from '@/components/printing-press-loading';
+import { Colors } from '@/constants/colors';
+import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
 import { needsOnboarding } from '@/lib/auth';
 
@@ -35,6 +38,7 @@ const RootLayout = () => {
   const [fontsLoaded, fontError] = useFonts({
     PlayfairDisplay_400Regular,
     PlayfairDisplay_700Bold,
+    PlayfairDisplay_900Black,
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
@@ -82,7 +86,7 @@ const RootLayout = () => {
     } else if (session && requiresOnboarding && !onOnboardingScreen) {
       router.replace('/(auth)/onboarding');
     } else if (session && inAuthGroup && (!onOnboardingScreen || !requiresOnboarding)) {
-      router.replace('/(tabs)/inbox');
+      router.replace('/(tabs)/home');
     }
   }, [session, loading, fontsLoaded, segments]);
 
@@ -99,6 +103,19 @@ const RootLayout = () => {
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="group" options={{ headerShown: false }} />
       <Stack.Screen name="edition" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="groups"
+        options={{
+          title: 'My Groups',
+          headerBackButtonDisplayMode: 'minimal',
+          headerStyle: { backgroundColor: Colors.paperWarm },
+          headerTintColor: Colors.ink,
+          headerTitleStyle: {
+            fontFamily: Typography.families.serifBold,
+            color: Colors.ink,
+          },
+        }}
+      />
     </Stack>
   );
 };

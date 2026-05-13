@@ -1,11 +1,12 @@
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppImage } from '@/components/app-image';
 import { FormButton } from '@/components/form-button';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
@@ -16,6 +17,7 @@ import { supabase } from '@/lib/supabase';
 import type { UserRow } from '@/types';
 
 const ProfileScreen = () => {
+  const router = useRouter();
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserRow | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -103,91 +105,159 @@ const ProfileScreen = () => {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText variant="headline">Your profile</ThemedText>
-      <ThemedText variant="body" style={styles.subtitle}>
-        Keep track of the account tied to your family Group.
-      </ThemedText>
-
-      {screenError ? <StatusBanner variant="error" message={screenError} /> : null}
-
-      <ThemedView variant="card" style={styles.card}>
+    <ScrollView style={styles.flex} contentContainerStyle={styles.scroll}>
+      <View style={styles.heroBlock}>
         {profile?.avatar_url ? (
           <AppImage source={{ uri: profile.avatar_url }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.avatarFallback]}>
-            <ThemedText variant="subheadline" style={styles.initials}>
-              {initials}
-            </ThemedText>
+            <ThemedText style={styles.initials}>{initials}</ThemedText>
           </View>
         )}
-
-        <View style={styles.profileText}>
-          <ThemedText variant="subheadline">
-            {profile?.display_name ?? 'Your Catch Up Column account'}
+        <ThemedText style={styles.displayName} numberOfLines={1}>
+          {profile?.display_name ?? 'Your account'}
+        </ThemedText>
+        <ThemedText style={styles.email} numberOfLines={1}>
+          {user?.email ?? 'No email available'}
+        </ThemedText>
+        {profile?.bio ? (
+          <ThemedText style={styles.bio}>{profile.bio}</ThemedText>
+        ) : null}
+        {loadingProfile ? (
+          <ThemedText variant="caption" style={styles.loadingHint}>
+            Loading your account details…
           </ThemedText>
-          <ThemedText variant="body">{user?.email ?? 'No email available'}</ThemedText>
-          {profile?.bio ? (
-            <ThemedText variant="body" style={styles.bio}>
-              {profile.bio}
-            </ThemedText>
-          ) : null}
-          <ThemedText variant="caption">
-            {loadingProfile ? 'Loading your account details...' : 'You can sign out here any time.'}
-          </ThemedText>
-        </View>
-      </ThemedView>
+        ) : null}
+      </View>
 
-      <FormButton title="Sign out" variant="secondary" loading={signingOut} onPress={handleSignOut} />
-      <FormButton
-        title="Delete my account"
-        variant="destructive"
-        loading={deletingAccount}
-        onPress={handleDeleteAccount}
-      />
-    </ThemedView>
+      {screenError ? <StatusBanner variant="error" message={screenError} /> : null}
+
+      <View style={styles.linkSection}>
+        <Pressable
+          onPress={() => router.push('/groups')}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.linkRow, pressed && styles.linkRowPressed]}
+        >
+          <MaterialCommunityIcons
+            name="account-group-outline"
+            size={22}
+            color={Colors.navy}
+          />
+          <ThemedText style={styles.linkLabel}>My Groups</ThemedText>
+          <MaterialCommunityIcons
+            name="chevron-right"
+            size={20}
+            color={Colors.navySoft}
+          />
+        </Pressable>
+
+      </View>
+
+      <View style={styles.accountActions}>
+        <FormButton
+          title="Sign out"
+          variant="secondary"
+          loading={signingOut}
+          onPress={handleSignOut}
+        />
+        <FormButton
+          title="Delete my account"
+          variant="destructive"
+          loading={deletingAccount}
+          onPress={handleDeleteAccount}
+        />
+      </View>
+    </ScrollView>
   );
 };
 
 export default ProfileScreen;
 
 const styles = StyleSheet.create({
-  container: {
+  flex: {
     flex: 1,
-    padding: Layout.padding.lg,
-    gap: Layout.padding.md,
+    backgroundColor: Colors.paperWarm,
   },
-  subtitle: {
-    color: Colors.textMuted,
+  scroll: {
+    paddingHorizontal: Layout.padding.lg,
+    paddingTop: Layout.padding.xl,
+    paddingBottom: Layout.padding.xl,
+    gap: Layout.padding.lg,
   },
-  card: {
-    padding: Layout.padding.lg,
-    gap: Layout.padding.md,
+  // Hero matches the Figma profile screen: large avatar, display name in
+  // newspaper serif, email and bio underneath. No card chrome — sits directly
+  // on the paper.
+  heroBlock: {
     alignItems: 'center',
+    gap: 4,
   },
   avatar: {
     width: 104,
     height: 104,
     borderRadius: 52,
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperCream,
+    marginBottom: Layout.padding.sm,
   },
   avatarFallback: {
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
   },
   initials: {
-    color: Colors.accentNavy,
-    fontFamily: Typography.families.sansBold,
+    fontFamily: Typography.families.serifBlack,
+    fontSize: Typography.sizes.xxl,
+    color: Colors.navy,
   },
-  profileText: {
-    alignItems: 'center',
-    gap: Layout.padding.xs,
+  displayName: {
+    fontFamily: Typography.families.serifBlack,
+    fontSize: Typography.sizes.xxl,
+    lineHeight: 32,
+    color: Colors.ink,
+    textAlign: 'center',
+  },
+  email: {
+    fontFamily: Typography.families.sans,
+    fontSize: Typography.sizes.body,
+    color: Colors.inkSoft,
   },
   bio: {
-    color: Colors.text,
+    fontFamily: Typography.families.serif,
+    fontSize: Typography.sizes.body,
+    fontStyle: 'italic',
+    color: Colors.ink,
     textAlign: 'center',
+    marginTop: Layout.padding.sm,
+    paddingHorizontal: Layout.padding.lg,
+  },
+  loadingHint: {
+    marginTop: Layout.padding.sm,
+  },
+  linkSection: {
+    gap: Layout.padding.sm,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Layout.padding.md,
+    paddingHorizontal: Layout.padding.lg,
+    paddingVertical: Layout.padding.md,
+    minHeight: Layout.touchTargetMin + 4,
+    borderRadius: 999,
+    backgroundColor: Colors.blueWash,
+  },
+  linkRowPressed: {
+    backgroundColor: Colors.blueChipLight,
+  },
+  linkLabel: {
+    flex: 1,
+    fontFamily: Typography.families.sansSemiBold,
+    fontSize: Typography.sizes.body,
+    color: Colors.navy,
+  },
+  accountActions: {
+    gap: Layout.padding.sm,
+    marginTop: Layout.padding.lg,
   },
 });
 

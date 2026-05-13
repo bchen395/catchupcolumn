@@ -21,6 +21,14 @@ const getInitials = (name: string) =>
     .map((p) => p[0]?.toUpperCase() ?? '')
     .join('');
 
+// A "section" in the continuous newspaper. No card chrome. Posts sit directly
+// on the paperCream surface; the only separator between them is the
+// `OrnamentalRule` rendered by the parent.
+//
+// Byline = small caps "FROM" kicker over the author's name set in display
+// serif, like a newspaper section head. Photo (when present) goes full-width
+// with squared corners and a 1px ink hairline — a printed-photo feel.
+// Body is set in serif at 17/26 for comfortable long-form reading.
 export const EditionPost = ({ post }: Props) => {
   const { author, body, image_url } = post;
   const photoUri = usePostImageUrl(image_url);
@@ -32,28 +40,22 @@ export const EditionPost = ({ post }: Props) => {
           <AppImage source={{ uri: author.avatar_url }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.avatarFallback]}>
-            <ThemedText variant="caption" style={styles.initials}>
+            <ThemedText style={styles.initials}>
               {getInitials(author.display_name)}
             </ThemedText>
           </View>
         )}
         <View style={styles.bylineText}>
-          <ThemedText variant="label" style={styles.bylineLabel}>
-            From
-          </ThemedText>
-          <ThemedText variant="subheadline" style={styles.authorName}>
+          <ThemedText style={styles.bylineKicker}>FROM</ThemedText>
+          <ThemedText style={styles.authorName} numberOfLines={2}>
             {author.display_name}
           </ThemedText>
         </View>
       </View>
 
-      {photoUri ? (
-        <AppImage source={{ uri: photoUri }} style={styles.photo} />
-      ) : null}
+      {photoUri ? <AppImage source={{ uri: photoUri }} style={styles.photo} /> : null}
 
-      <ThemedText variant="serifBody" style={styles.body}>
-        {body}
-      </ThemedText>
+      <ThemedText style={styles.body}>{body}</ThemedText>
     </View>
   );
 };
@@ -61,9 +63,7 @@ export const EditionPost = ({ post }: Props) => {
 const styles = StyleSheet.create({
   section: {
     paddingHorizontal: Layout.padding.lg,
-    paddingVertical: Layout.padding.lg,
-    borderBottomWidth: 1,
-    borderColor: Colors.border,
+    paddingTop: Layout.padding.lg,
     gap: Layout.padding.md,
   },
   byline: {
@@ -72,39 +72,54 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   avatarFallback: {
-    backgroundColor: Colors.backgroundWarm,
+    backgroundColor: Colors.paperWarm,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderMid,
     alignItems: 'center',
     justifyContent: 'center',
   },
   initials: {
-    color: Colors.accentNavy,
-    fontFamily: Typography.families.sansBold,
+    fontFamily: Typography.families.serifBlack,
+    fontSize: Typography.sizes.lg,
+    color: Colors.navy,
   },
   bylineText: {
+    flex: 1,
     gap: 2,
   },
-  bylineLabel: {
-    color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
+  bylineKicker: {
+    fontFamily: Typography.families.sansSemiBold,
+    fontSize: Typography.sizes.xs,
+    letterSpacing: 2,
+    color: Colors.inkSoft,
   },
   authorName: {
-    color: Colors.text,
+    fontFamily: Typography.families.serifBlack,
+    fontSize: Typography.sizes.xl,
+    lineHeight: 28,
+    color: Colors.ink,
   },
+  // Full-width photo with squared corners and a thin ink hairline — meant to
+  // read as a printed press photo. Bleeds to the section's horizontal padding,
+  // not the screen edge, so the right margin still feels like a newspaper page.
   photo: {
     width: '100%',
-    height: 220,
-    borderRadius: Layout.borderRadius.md,
-    backgroundColor: Colors.backgroundWarm,
+    aspectRatio: 4 / 3,
+    backgroundColor: Colors.paperWarm,
+    borderWidth: 1,
+    borderColor: Colors.ink,
   },
+  // Reading body. Serif at 17/26 keeps continuity with the masthead while
+  // staying within accessible-text guidance from CLAUDE.md (≥16px floor).
   body: {
-    color: Colors.text,
+    fontFamily: Typography.families.serif,
+    fontSize: 17,
+    lineHeight: 26,
+    color: Colors.ink,
   },
 });

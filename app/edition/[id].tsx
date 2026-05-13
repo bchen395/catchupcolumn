@@ -1,6 +1,6 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { EditionPost } from '@/components/edition-post';
@@ -19,14 +19,42 @@ import type { EditionWithPosts, GroupRow } from '@/types';
 type GroupSummary = Pick<GroupRow, 'id' | 'name' | 'cover_image_url' | 'timezone'>;
 
 const formatWeekOf = (publishedAt: string, timezone?: string | null): string => {
-  const date = new Date(publishedAt);
-  return date.toLocaleDateString('en-US', {
-    timeZone: timezone || undefined,
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const tz = timezone || undefined;
+  const end = new Date(publishedAt);
+  const start = new Date(end);
+  start.setDate(start.getDate() - 6);
+  const startMonth = start.toLocaleDateString('en-US', { timeZone: tz, month: 'long' });
+  const endMonth = end.toLocaleDateString('en-US', { timeZone: tz, month: 'long' });
+  const startDay = start.toLocaleDateString('en-US', { timeZone: tz, day: 'numeric' });
+  const endDay = end.toLocaleDateString('en-US', { timeZone: tz, day: 'numeric' });
+  const year = end.toLocaleDateString('en-US', { timeZone: tz, year: 'numeric' });
+  if (startMonth === endMonth) {
+    return `${startMonth} ${startDay}\u2013${endDay}, ${year}`;
+  }
+  return `${startMonth} ${startDay} \u2013 ${endMonth} ${endDay}, ${year}`;
 };
+
+// Centered ornamental rule between posts. Three asterisks is the classic
+// newspaper section break ("dinkus") — easy to render in any serif font and
+// reads as a visual pause without looking like a card boundary.
+const OrnamentalRule = () => (
+  <View style={ornamentStyles.wrap} accessibilityRole="none">
+    <ThemedText style={ornamentStyles.glyph}>* * *</ThemedText>
+  </View>
+);
+
+const ornamentStyles = StyleSheet.create({
+  wrap: {
+    alignItems: 'center',
+    paddingVertical: Layout.padding.lg,
+  },
+  glyph: {
+    fontFamily: Typography.families.serif,
+    fontSize: Typography.sizes.lg,
+    letterSpacing: 8,
+    color: Colors.inkSoft,
+  },
+});
 
 const EditionScreen = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -87,12 +115,18 @@ const EditionScreen = () => {
       style={styles.flex}
       contentContainerStyle={styles.scroll}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.accent} />
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.navy} />
       }
     >
       <Stack.Screen
         options={{
           title: group.name,
+          headerStyle: { backgroundColor: Colors.paperCream },
+          headerTintColor: Colors.ink,
+          headerTitleStyle: {
+            fontFamily: Typography.families.serifBold,
+            color: Colors.ink,
+          },
           headerLeft: () => (
             <Pressable
               onPress={() => router.back()}
@@ -100,7 +134,7 @@ const EditionScreen = () => {
               accessibilityLabel="Go back"
               style={styles.backButton}
             >
-              <FontAwesome name="chevron-left" size={16} color={Colors.accentNavy} />
+              <FontAwesome name="chevron-left" size={16} color={Colors.navy} />
             </Pressable>
           ),
         }}
@@ -111,16 +145,12 @@ const EditionScreen = () => {
       ) : null}
 
       <View style={styles.masthead}>
-        <ThemedText variant="caption" style={styles.mastheadKicker}>
+        <ThemedText style={styles.mastheadTitle} numberOfLines={2}>
           {group.name.toUpperCase()}
         </ThemedText>
         <View style={styles.mastheadRule} />
-        <ThemedText variant="headline" style={styles.mastheadTitle}>
-          Week of {weekOf}
-        </ThemedText>
-        <ThemedText variant="caption" style={styles.mastheadMeta}>
-          Edition №{edition.edition_number}
-        </ThemedText>
+        <ThemedText style={styles.mastheadDate}>{weekOf}</ThemedText>
+        <ThemedText style={styles.mastheadMeta}>Edition #{edition.edition_number}</ThemedText>
       </View>
 
       {edition.posts.length === 0 ? (
@@ -130,7 +160,12 @@ const EditionScreen = () => {
           </ThemedText>
         </View>
       ) : (
-        edition.posts.map((post) => <EditionPost key={post.id} post={post} />)
+        edition.posts.map((post, idx) => (
+          <Fragment key={post.id}>
+            {idx > 0 ? <OrnamentalRule /> : null}
+            <EditionPost post={post} />
+          </Fragment>
+        ))
       )}
     </ScrollView>
   );
@@ -141,7 +176,9 @@ export default EditionScreen;
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: Colors.background,
+    // Switching to paperCream gives the whole screen a single, warm,
+    // newsprint-feeling surface from masthead to last post — no card seams.
+    backgroundColor: Colors.paperCream,
   },
   scroll: {
     paddingBottom: Layout.padding.xl,
@@ -157,39 +194,52 @@ const styles = StyleSheet.create({
   banner: {
     margin: Layout.padding.md,
   },
+  // Masthead: heavy serif group name, thin rule below, italic week-of, edition
+  // number in soft ink. Bottom border is a thicker double-strike newspaper rule.
   masthead: {
     paddingHorizontal: Layout.padding.lg,
     paddingTop: Layout.padding.xl,
     paddingBottom: Layout.padding.lg,
     alignItems: 'center',
-    gap: Layout.padding.sm,
-    borderBottomWidth: 2,
-    borderColor: Colors.text,
-  },
-  mastheadKicker: {
-    letterSpacing: 3,
-    color: Colors.accentNavy,
-    fontFamily: Typography.families.sansSemiBold,
-  },
-  mastheadRule: {
-    width: 64,
-    height: 1,
-    backgroundColor: Colors.border,
+    gap: Layout.padding.xs,
+    borderBottomWidth: 3,
+    borderBottomColor: Colors.ink,
   },
   mastheadTitle: {
+    fontFamily: Typography.families.serifBlack,
+    fontSize: Typography.sizes.headline,
+    lineHeight: Typography.lineHeights.headline,
+    color: Colors.ink,
     textAlign: 'center',
-    color: Colors.text,
+    letterSpacing: 1,
+  },
+  mastheadRule: {
+    width: 80,
+    height: 1,
+    backgroundColor: Colors.ink,
+    marginVertical: Layout.padding.xs,
+  },
+  mastheadDate: {
+    fontFamily: Typography.families.serif,
+    fontSize: Typography.sizes.lg,
+    fontStyle: 'italic',
+    color: Colors.ink,
   },
   mastheadMeta: {
-    color: Colors.textMuted,
-    fontStyle: 'italic',
+    fontFamily: Typography.families.sansMedium,
+    fontSize: Typography.sizes.xs,
+    letterSpacing: 2,
+    color: Colors.inkSoft,
+    textTransform: 'uppercase',
   },
   emptyEdition: {
     padding: Layout.padding.xl,
     alignItems: 'center',
   },
   emptyEditionText: {
-    color: Colors.textMuted,
+    fontFamily: Typography.families.serif,
+    fontStyle: 'italic',
+    color: Colors.inkSoft,
     textAlign: 'center',
   },
 });
