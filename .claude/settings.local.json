@@ -21,7 +21,12 @@
       "Bash(curl -s -o /tmp/_layout.bundle.txt \"http://localhost:8081/app/_layout.bundle/?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app&minify=false\")",
       "Read(//tmp/**)",
       "Bash(curl -s \"http://localhost:8081/app/_layout.bundle/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.routerRoot=app&minify=false&modulesOnly=true&runModule=false&shallow=true\" -o /tmp/lay.txt)",
-      "Bash(sed -n '170,180p' /tmp/lay.txt)"
+      "Bash(sed -n '170,180p' /tmp/lay.txt)",
+      "Bash(xargs sed -i '' -e 's/Colors\\\\.navySoft/Colors.orange + '\\\\''CC'\\\\''/g' -e 's/Colors\\\\.navy\\\\b/Colors.orange/g' -e 's/Colors\\\\.blueChipLight/Colors.peach/g' -e 's/Colors\\\\.blueChip\\\\b/Colors.peach/g' -e 's/Colors\\\\.blueWash/Colors.peach + '\\\\''66'\\\\''/g' -e 's/Colors\\\\.paperCream/Colors.peach/g' -e 's/Colors\\\\.borderMid/Colors.borderSoft/g' -e 's/Colors\\\\.divider/Colors.borderSoft/g' -e 's/Colors\\\\.inkBlack/Colors.ink/g')",
+      "Bash(xargs sed -i '' -e 's/Colors\\\\.navy/Colors.orange/g' -e 's/Colors\\\\.blueChip/Colors.peach/g')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost:8081/assets/?unstable_path=.%2Fassets%2Fbrand%2Flogo.png\")",
+      "Bash(shasum design/Logo.png assets/brand/logo.png)",
+      "Bash(python3 -c \"from PIL import Image; print\\('PIL available'\\)\")"
     ]
   }
 }

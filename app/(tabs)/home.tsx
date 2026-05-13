@@ -72,13 +72,11 @@ const HomeScreen = () => {
   return (
     <ScrollView style={styles.flex} contentContainerStyle={[styles.scroll, { paddingTop: insets.top + Layout.padding.lg }]}>
       <View style={styles.masthead}>
-        <View style={styles.wordmarkBlock}>
-          <ThemedText style={styles.wordmarkLine}>CATCH UP</ThemedText>
-          <ThemedText style={styles.wordmarkLine}>COLUMN</ThemedText>
-        </View>
-        {/* The World's Page badge will live here once the asset lands at
-            assets/images/worlds-page-logo.png. */}
-        <View style={styles.logoSlot} />
+        <AppImage
+          source={require('@/assets/brand/logo.png')}
+          style={styles.brandmark}
+          contentFit="contain"
+        />
       </View>
 
       <ThemedText style={styles.tagline}>{Strings.brand.tagline}</ThemedText>
@@ -97,7 +95,7 @@ const HomeScreen = () => {
               <MaterialCommunityIcons
                 name="newspaper-variant-outline"
                 size={32}
-                color={Colors.navy}
+                color={Colors.orange}
               />
             </View>
           )}
@@ -122,12 +120,12 @@ const HomeScreen = () => {
             accessibilityLabel={pill.label}
             style={({ pressed }) => [styles.pill, pressed && styles.pillPressed]}
           >
-            <MaterialCommunityIcons name={pill.icon} size={22} color={Colors.navy} />
+            <MaterialCommunityIcons name={pill.icon} size={22} color={Colors.orange} />
             <ThemedText style={styles.pillLabel}>{pill.label}</ThemedText>
             <MaterialCommunityIcons
               name="chevron-right"
               size={20}
-              color={Colors.navySoft}
+              color={Colors.orange + 'CC'}
             />
           </Pressable>
         ))}
@@ -146,23 +144,12 @@ const styles = StyleSheet.create({
     gap: Layout.padding.lg,
   },
   masthead: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
   },
-  wordmarkBlock: {
-    flexShrink: 1,
-  },
-  wordmarkLine: {
-    fontFamily: Typography.families.serifBlack,
-    fontSize: Typography.sizes.wordmark,
-    lineHeight: Typography.lineHeights.wordmark,
-    color: Colors.ink,
-    letterSpacing: 0.5,
-  },
-  logoSlot: {
-    width: 56,
-    height: 56,
+  brandmark: {
+    width: 160,
+    aspectRatio: 315 / 266,
+    backgroundColor: 'transparent',
   },
   tagline: {
     fontFamily: Typography.families.serif,
@@ -175,22 +162,22 @@ const styles = StyleSheet.create({
   featureCard: {
     backgroundColor: Colors.paper,
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
     borderRadius: Layout.borderRadius.md,
     overflow: 'hidden',
   },
   featureCardPressed: {
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.peach,
   },
   coverImage: {
     width: '100%',
     aspectRatio: 16 / 9,
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.peach,
   },
   coverPlaceholder: {
     width: '100%',
     aspectRatio: 16 / 9,
-    backgroundColor: Colors.blueWash,
+    backgroundColor: Colors.peach + '66',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -198,12 +185,12 @@ const styles = StyleSheet.create({
     padding: Layout.padding.lg,
     gap: 4,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderMid,
+    borderTopColor: Colors.borderSoft,
   },
   featureKicker: {
     fontFamily: Typography.families.sansSemiBold,
     fontSize: Typography.sizes.xs,
-    color: Colors.navy,
+    color: Colors.orange,
     letterSpacing: 2,
   },
   featureTitle: {
@@ -230,15 +217,15 @@ const styles = StyleSheet.create({
     paddingVertical: Layout.padding.md,
     minHeight: Layout.touchTargetMin + 8,
     borderRadius: 999,
-    backgroundColor: Colors.blueWash,
+    backgroundColor: Colors.peach + '66',
   },
   pillPressed: {
-    backgroundColor: Colors.blueChipLight,
+    backgroundColor: Colors.peach,
   },
   pillLabel: {
     flex: 1,
     fontFamily: Typography.families.sansSemiBold,
     fontSize: Typography.sizes.body,
-    color: Colors.navy,
+    color: Colors.orange,
   },
 });

@@ -174,7 +174,7 @@ const CreateGroupScreen = () => {
               style={styles.backButton}
               hitSlop={8}
             >
-              <Ionicons name="chevron-back" size={28} color={Colors.navy} />
+              <Ionicons name="chevron-back" size={28} color={Colors.orange} />
             </Pressable>
           ),
         }}
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   },
   coverPickerWrapper: {
     height: 180,
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.peach,
     marginBottom: Layout.padding.md,
     overflow: 'hidden',
   },
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
   },
   coverPlaceholderText: {
     color: Colors.inkSoft,
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   fieldLabel: {
-    color: Colors.navy,
+    color: Colors.orange,
   },
   dayRow: {
     flexDirection: 'row',
@@ -414,12 +414,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
     backgroundColor: Colors.paper,
   },
   dayButtonActive: {
-    backgroundColor: Colors.navy,
-    borderColor: Colors.navy,
+    backgroundColor: Colors.orange,
+    borderColor: Colors.orange,
   },
   dayButtonText: {
     color: Colors.inkSoft,
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     minHeight: Layout.touchTargetMin,
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
     backgroundColor: Colors.paper,
     paddingHorizontal: Layout.padding.md,
     paddingVertical: 14,
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
   },
   modalTitle: {
-    color: Colors.navy,
+    color: Colors.orange,
     textAlign: 'center',
   },
   modalColumns: {
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
     borderRadius: Layout.borderRadius.md,
   },
   doneButton: {
-    backgroundColor: Colors.navy,
+    backgroundColor: Colors.orange,
     paddingHorizontal: Layout.padding.lg,
   },
   cancelText: {

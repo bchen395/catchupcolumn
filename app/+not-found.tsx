@@ -33,6 +33,6 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   linkText: {
-    color: Colors.navy,
+    color: Colors.orange,
   },
 });

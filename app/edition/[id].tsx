@@ -1,4 +1,4 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -115,13 +115,13 @@ const EditionScreen = () => {
       style={styles.flex}
       contentContainerStyle={styles.scroll}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.navy} />
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.orange} />
       }
     >
       <Stack.Screen
         options={{
           title: group.name,
-          headerStyle: { backgroundColor: Colors.paperCream },
+          headerStyle: { backgroundColor: Colors.paperWarm },
           headerTintColor: Colors.ink,
           headerTitleStyle: {
             fontFamily: Typography.families.serifBold,
@@ -134,7 +134,7 @@ const EditionScreen = () => {
               accessibilityLabel="Go back"
               style={styles.backButton}
             >
-              <FontAwesome name="chevron-left" size={16} color={Colors.navy} />
+              <Ionicons name="chevron-back" size={22} color={Colors.orange} />
             </Pressable>
           ),
         }}
@@ -176,18 +176,15 @@ export default EditionScreen;
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    // Switching to paperCream gives the whole screen a single, warm,
-    // newsprint-feeling surface from masthead to last post — no card seams.
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.paperWarm,
   },
   scroll: {
     paddingBottom: Layout.padding.xl,
   },
   backButton: {
-    paddingHorizontal: Layout.padding.md,
-    paddingVertical: Layout.padding.sm,
-    minWidth: Layout.touchTargetMin,
-    minHeight: Layout.touchTargetMin,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },

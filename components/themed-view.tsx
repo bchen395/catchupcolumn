@@ -15,9 +15,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.paperWarm,
   },
   card: {
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.peach,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
   },
 });

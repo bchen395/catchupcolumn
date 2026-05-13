@@ -8,7 +8,7 @@ const EditionLayout = () => {
     <Stack
       screenOptions={{
         headerStyle: { backgroundColor: Colors.paperWarm },
-        headerTintColor: Colors.navy,
+        headerTintColor: Colors.orange,
         headerTitleStyle: {
           fontFamily: Typography.families.sansSemiBold,
           color: Colors.ink,

@@ -133,7 +133,7 @@ const InboxScreen = () => {
           <AppImage source={{ uri: section.coverUrl }} style={styles.sectionThumb} />
         ) : (
           <View style={styles.sectionThumbPlaceholder}>
-            <FontAwesome name="newspaper-o" size={18} color={Colors.navy} />
+            <FontAwesome name="newspaper-o" size={18} color={Colors.orange} />
           </View>
         )}
         <ThemedText style={styles.sectionLabel} numberOfLines={1}>
@@ -183,7 +183,7 @@ const InboxScreen = () => {
       stickySectionHeadersEnabled={false}
       contentContainerStyle={styles.listContent}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.navy} />
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.orange} />
       }
       ListHeaderComponent={
         screenError ? (
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.blueWash,
+    backgroundColor: Colors.peach + '66',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -243,13 +243,13 @@ const styles = StyleSheet.create({
     minHeight: Layout.touchTargetMin + 8,
     paddingVertical: Layout.padding.md,
     paddingHorizontal: Layout.padding.lg,
-    backgroundColor: Colors.blueWash,
+    backgroundColor: Colors.peach + '66',
     borderRadius: 999,
     gap: 2,
     justifyContent: 'center',
   },
   rowPressed: {
-    backgroundColor: Colors.blueChipLight,
+    backgroundColor: Colors.peach,
   },
   rowContent: {
     gap: 2,
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   rowTitle: {
     fontFamily: Typography.families.serifBold,
     fontSize: Typography.sizes.lg,
-    color: Colors.navy,
+    color: Colors.orange,
   },
   rowMeta: {
     color: Colors.inkSoft,

@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.blueWash,
+    backgroundColor: Colors.peach + '66',
     marginBottom: Layout.padding.sm,
   },
   title: {
@@ -75,9 +75,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   body: {
-    fontFamily: Typography.families.serif,
+    fontFamily: Typography.families.sans,
     fontSize: Typography.sizes.body,
-    fontStyle: 'italic',
     lineHeight: Typography.lineHeights.body,
     color: Colors.inkSoft,
     textAlign: 'center',
@@ -89,10 +88,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Layout.padding.md,
-    backgroundColor: Colors.navy,
+    backgroundColor: Colors.orange,
   },
   ctaPressed: {
-    backgroundColor: Colors.navySoft,
+    backgroundColor: Colors.orange + 'CC',
   },
   ctaText: {
     fontFamily: Typography.families.sansSemiBold,

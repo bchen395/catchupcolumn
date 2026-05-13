@@ -1,21 +1,22 @@
 import 'react-native-url-polyfill/auto';
 
 import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-} from '@expo-google-fonts/inter';
+  Jost_400Regular,
+  Jost_500Medium,
+  Jost_600SemiBold,
+  Jost_700Bold,
+} from '@expo-google-fonts/jost';
 import {
-  PlayfairDisplay_400Regular,
-  PlayfairDisplay_700Bold,
-  PlayfairDisplay_900Black,
-} from '@expo-google-fonts/playfair-display';
+  RobotoSlab_400Regular,
+  RobotoSlab_700Bold,
+  RobotoSlab_900Black,
+} from '@expo-google-fonts/roboto-slab';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { Colors } from '@/constants/colors';
@@ -35,15 +36,21 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 const RootLayout = () => {
-  const [fontsLoaded, fontError] = useFonts({
-    PlayfairDisplay_400Regular,
-    PlayfairDisplay_700Bold,
-    PlayfairDisplay_900Black,
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
-  });
+  // iOS uses bundled Superclarendon/Futura — no loading needed. Android and
+  // web load Roboto Slab + Jost via @expo-google-fonts.
+  const [fontsLoaded, fontError] = useFonts(
+    Platform.OS === 'ios'
+      ? {}
+      : {
+          RobotoSlab_400Regular,
+          RobotoSlab_700Bold,
+          RobotoSlab_900Black,
+          Jost_400Regular,
+          Jost_500Medium,
+          Jost_600SemiBold,
+          Jost_700Bold,
+        },
+  );
   const { session, loading } = useAuth();
   const router = useRouter();
   const segments = useSegments();

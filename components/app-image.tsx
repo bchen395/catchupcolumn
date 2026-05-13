@@ -30,7 +30,7 @@ export const AppImage = ({
       transition={transition}
       cachePolicy={cachePolicy}
       placeholderContentFit={placeholderContentFit}
-      style={[{ backgroundColor: Colors.paperCream }, style]}
+      style={[{ backgroundColor: Colors.peach }, style]}
       {...props}
     />
   );

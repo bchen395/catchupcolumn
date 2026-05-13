@@ -115,14 +115,14 @@ const memberStyles = StyleSheet.create({
     borderRadius: 22,
   },
   fallback: {
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.peach,
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   initials: {
-    color: Colors.navy,
+    color: Colors.orange,
     fontFamily: Typography.families.sansBold,
   },
   info: {
@@ -137,16 +137,16 @@ const memberStyles = StyleSheet.create({
     paddingHorizontal: Layout.padding.sm,
     paddingVertical: 2,
     borderRadius: Layout.borderRadius.sm,
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.peach,
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
   },
   badgeMod: {
     backgroundColor: '#EEF2F5',
-    borderColor: Colors.navy,
+    borderColor: Colors.orange,
   },
   badgeModText: {
-    color: Colors.navy,
+    color: Colors.orange,
     fontFamily: Typography.families.sansSemiBold,
   },
   badgeContribText: {
@@ -431,7 +431,7 @@ const GroupDetailScreen = () => {
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.navy} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.orange} />}
       >
       <Stack.Screen
         options={{
@@ -443,7 +443,7 @@ const GroupDetailScreen = () => {
               accessibilityLabel="Go back"
               style={styles.backButton}
             >
-              <FontAwesome name="chevron-left" size={16} color={Colors.navy} />
+              <FontAwesome name="chevron-left" size={16} color={Colors.orange} />
             </Pressable>
           ),
         }}
@@ -575,7 +575,7 @@ const GroupDetailScreen = () => {
             </ThemedText>
           </View>
           <Pressable onPress={handleShare} style={styles.shareButton} accessibilityRole="button">
-            <FontAwesome name="share-alt" size={18} color={Colors.navy} />
+            <FontAwesome name="share-alt" size={18} color={Colors.orange} />
             <ThemedText variant="label" style={styles.shareText}>
               Share
             </ThemedText>
@@ -670,15 +670,15 @@ const styles = StyleSheet.create({
   coverPlaceholder: {
     width: '100%',
     height: 120,
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.peach,
     borderBottomWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
   },
   header: {
     paddingHorizontal: Layout.padding.lg,
     paddingVertical: Layout.padding.lg,
     borderBottomWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
     gap: Layout.padding.sm,
   },
   columnName: {
@@ -705,7 +705,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   fieldLabel: {
-    color: Colors.navy,
+    color: Colors.orange,
   },
   dayRow: {
     flexDirection: 'row',
@@ -718,12 +718,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
     backgroundColor: Colors.paper,
   },
   dayButtonActive: {
-    backgroundColor: Colors.navy,
-    borderColor: Colors.navy,
+    backgroundColor: Colors.orange,
+    borderColor: Colors.orange,
   },
   dayButtonText: {
     color: Colors.inkSoft,
@@ -736,7 +736,7 @@ const styles = StyleSheet.create({
     minHeight: Layout.touchTargetMin,
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
     backgroundColor: Colors.paper,
     paddingHorizontal: Layout.padding.md,
     paddingVertical: 14,
@@ -758,7 +758,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
   },
   modalTitle: {
-    color: Colors.navy,
+    color: Colors.orange,
     textAlign: 'center',
   },
   modalColumns: {
@@ -785,7 +785,7 @@ const styles = StyleSheet.create({
     borderRadius: Layout.borderRadius.md,
   },
   doneButton: {
-    backgroundColor: Colors.navy,
+    backgroundColor: Colors.orange,
     paddingHorizontal: Layout.padding.lg,
   },
   cancelText: {
@@ -806,11 +806,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.lg,
     paddingVertical: Layout.padding.md,
     borderBottomWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
     gap: Layout.padding.sm,
   },
   sectionTitle: {
-    color: Colors.navy,
+    color: Colors.orange,
     marginBottom: Layout.padding.xs,
   },
   inviteRow: {
@@ -820,17 +820,17 @@ const styles = StyleSheet.create({
   },
   inviteCodeChip: {
     flex: 1,
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.peach,
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
     paddingHorizontal: Layout.padding.md,
     paddingVertical: Layout.padding.sm,
   },
   inviteCode: {
     fontFamily: Typography.families.sansBold,
     letterSpacing: 2,
-    color: Colors.navy,
+    color: Colors.orange,
   },
   shareButton: {
     flexDirection: 'row',
@@ -840,14 +840,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.md,
   },
   shareText: {
-    color: Colors.navy,
+    color: Colors.orange,
   },
   inviteHelp: {
     color: Colors.inkSoft,
   },
   dangerZone: {
     borderTopWidth: 1,
-    borderTopColor: Colors.borderMid,
+    borderTopColor: Colors.borderSoft,
     borderBottomWidth: 0,
     marginTop: Layout.padding.lg,
   },

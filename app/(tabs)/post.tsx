@@ -49,7 +49,7 @@ const WORD_SOFT_MAX = 600;
 const wordCountColor = (count: number): string => {
   if (count === 0) return Colors.inkSoft;
   if (count >= WORD_SOFT_MIN && count <= WORD_SOFT_MAX) return Colors.success;
-  if (count > WORD_SOFT_MAX) return Colors.navy;
+  if (count > WORD_SOFT_MAX) return Colors.orange;
   return Colors.inkSoft;
 };
 
@@ -293,7 +293,7 @@ const PostScreen = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={Colors.navy}
+            tintColor={Colors.orange}
           />
         }
       >
@@ -369,7 +369,7 @@ const PostScreen = () => {
                 placeholder="Write…"
                 placeholderTextColor={Colors.inkSoft}
                 multiline
-                selectionColor={Colors.navy}
+                selectionColor={Colors.orange}
                 editable={!isBusy}
                 textAlignVertical="top"
               />
@@ -377,7 +377,7 @@ const PostScreen = () => {
                 <MaterialCommunityIcons
                   name="creation-outline"
                   size={22}
-                  color={Colors.navySoft}
+                  color={Colors.orange + 'CC'}
                 />
               </View>
             </View>
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   sectionLabel: {
-    color: Colors.navy,
+    color: Colors.orange,
   },
   banner: {},
   groupPicker: {
@@ -474,15 +474,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.md,
     paddingVertical: Layout.padding.sm,
     borderRadius: 999,
-    backgroundColor: Colors.blueWash,
+    backgroundColor: Colors.peach + '66',
     minHeight: Layout.touchTargetMin,
     justifyContent: 'center',
   },
   groupPillSelected: {
-    backgroundColor: Colors.navy,
+    backgroundColor: Colors.orange,
   },
   groupPillText: {
-    color: Colors.navy,
+    color: Colors.orange,
     fontFamily: Typography.families.sansSemiBold,
   },
   groupPillTextSelected: {
@@ -490,9 +490,9 @@ const styles = StyleSheet.create({
   },
   editingBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.peach,
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
     borderRadius: Layout.borderRadius.sm,
     paddingHorizontal: Layout.padding.sm,
     paddingVertical: Layout.padding.xs,
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   // sparkle is positioned absolutely so it sits inside the card flow.
   composeCard: {
     position: 'relative',
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.peach,
     borderRadius: Layout.borderRadius.md,
     minHeight: 280,
     padding: Layout.padding.lg,
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     borderRadius: Layout.borderRadius.md,
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.peach,
   },
   imageActions: {
     flexDirection: 'row',

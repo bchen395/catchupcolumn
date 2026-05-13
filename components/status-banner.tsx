@@ -26,19 +26,15 @@ const ICON_BY_VARIANT: Record<
 const ICON_COLOR: Record<StatusVariant, string> = {
   error: Colors.error,
   success: Colors.success,
-  info: Colors.navy,
+  info: Colors.ink,
 };
 
 const TEXT_COLOR: Record<StatusVariant, string> = {
   error: Colors.error,
   success: Colors.success,
-  info: Colors.navy,
+  info: Colors.ink,
 };
 
-// Banner sits inside `paperCream` containers throughout the app, so we use
-// `paper` (white) for the surface to keep it readable, with a 1px tone-tinted
-// hairline border that picks up the variant's intent. This avoids the bright
-// red/green block fills the old banner used.
 export const StatusBanner = ({ message, variant = 'info', style }: StatusBannerProps) => {
   return (
     <View style={[styles.container, variantStyles[variant], style]}>
@@ -61,7 +57,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: Layout.padding.md,
     paddingVertical: Layout.padding.md,
-    backgroundColor: Colors.paper,
   },
   message: {
     flex: 1,
@@ -73,12 +68,15 @@ const styles = StyleSheet.create({
 
 const variantStyles = StyleSheet.create({
   error: {
+    backgroundColor: Colors.paper,
     borderColor: Colors.error,
   },
   success: {
+    backgroundColor: Colors.paper,
     borderColor: Colors.success,
   },
   info: {
-    borderColor: Colors.navySoft,
+    backgroundColor: Colors.peach,
+    borderColor: Colors.peach,
   },
 });

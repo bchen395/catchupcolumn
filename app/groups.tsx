@@ -90,7 +90,7 @@ const GroupsScreen = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={Colors.navy}
+              tintColor={Colors.orange}
             />
           }
           style={styles.flex}
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.lg,
     paddingVertical: Layout.padding.md,
     borderBottomWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
     backgroundColor: Colors.paperWarm,
   },
   actionButton: {

@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   label: {
-    color: Colors.navy,
+    color: Colors.orange,
   },
   row: {
     flexDirection: 'row',
@@ -104,16 +104,16 @@ const styles = StyleSheet.create({
     width: 92,
     height: 92,
     borderRadius: 46,
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.peach,
   },
   fallbackAvatar: {
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
   },
   initials: {
-    color: Colors.navy,
+    color: Colors.orange,
     fontFamily: Typography.families.sansBold,
   },
   actions: {

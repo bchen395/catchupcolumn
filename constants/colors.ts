@@ -1,18 +1,20 @@
 export const Colors = {
+  // Brand palette (BRAND.md §2)
+  orange: '#FF7237',
+  peach: '#FFD3C2',
+  yellow: '#F4E33A',
+
+  // Surfaces
   paper: '#FFFFFF',
-  paperWarm: '#F5F5F5',
-  paperCream: '#E8E2DB',
-  ink: '#1D1B20',
-  inkSoft: '#49454F',
-  inkBlack: '#000000',
-  navy: '#1A3263',
-  navySoft: '#547792',
-  blueChip: '#7EA4C2',
-  blueChipLight: '#9CBDD7',
-  blueWash: '#D0E3F1',
-  borderSoft: '#CAC8C8',
-  borderMid: '#CDCDCD',
-  divider: '#D9D9D9',
-  error: '#C62828',
+  paperWarm: '#FAF7F2',
+
+  // Text & borders. Opacity-on-black per BRAND §2; kept as named tokens.
+  ink: '#000000',
+  inkSoft: 'rgba(0,0,0,0.6)',
+  inkMuted: 'rgba(0,0,0,0.38)',
+  borderSoft: 'rgba(0,0,0,0.12)',
+
+  // Semantic
+  error: '#C7361B',
   success: '#2E7D32',
 };

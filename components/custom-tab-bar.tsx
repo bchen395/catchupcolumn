@@ -77,7 +77,7 @@ export const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
               <MaterialCommunityIcons
                 name={focused ? meta.iconActive : meta.iconInactive}
                 size={26}
-                color={focused ? Colors.navy : Colors.inkSoft}
+                color={focused ? Colors.orange : Colors.inkSoft}
               />
               <ThemedText style={[styles.label, focused && styles.labelFocused]}>
                 {meta.label}
@@ -98,9 +98,9 @@ const styles = StyleSheet.create({
   // Wrapper carries the safe-area inset and the soft top hairline. Background
   // extends below the bar to avoid a visible seam on devices with home bars.
   barWrap: {
-    backgroundColor: Colors.blueChip,
+    backgroundColor: Colors.paper,
     borderTopWidth: 1,
-    borderTopColor: Colors.navySoft,
+    borderTopColor: Colors.borderSoft,
   },
   bar: {
     flexDirection: 'row',
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     color: Colors.inkSoft,
   },
   labelFocused: {
-    color: Colors.navy,
+    color: Colors.orange,
     fontFamily: Typography.families.sansSemiBold,
   },
   // The center cell takes a slot's width but renders the raised circle that
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     width: RAISED_DIAMETER,
     height: RAISED_DIAMETER,
     borderRadius: RAISED_DIAMETER / 2,
-    backgroundColor: Colors.navy,
+    backgroundColor: Colors.orange,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -RAISED_LIFT,
@@ -148,6 +148,6 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   raisedPressed: {
-    backgroundColor: Colors.navySoft,
+    backgroundColor: Colors.orange + 'CC',
   },
 });

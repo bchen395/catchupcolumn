@@ -141,13 +141,13 @@ const ProfileScreen = () => {
           <MaterialCommunityIcons
             name="account-group-outline"
             size={22}
-            color={Colors.navy}
+            color={Colors.orange}
           />
           <ThemedText style={styles.linkLabel}>My Groups</ThemedText>
           <MaterialCommunityIcons
             name="chevron-right"
             size={20}
-            color={Colors.navySoft}
+            color={Colors.orange + 'CC'}
           />
         </Pressable>
 
@@ -195,19 +195,19 @@ const styles = StyleSheet.create({
     width: 104,
     height: 104,
     borderRadius: 52,
-    backgroundColor: Colors.paperCream,
+    backgroundColor: Colors.peach,
     marginBottom: Layout.padding.sm,
   },
   avatarFallback: {
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
   },
   initials: {
     fontFamily: Typography.families.serifBlack,
     fontSize: Typography.sizes.xxl,
-    color: Colors.navy,
+    color: Colors.orange,
   },
   displayName: {
     fontFamily: Typography.families.serifBlack,
@@ -244,16 +244,16 @@ const styles = StyleSheet.create({
     paddingVertical: Layout.padding.md,
     minHeight: Layout.touchTargetMin + 4,
     borderRadius: 999,
-    backgroundColor: Colors.blueWash,
+    backgroundColor: Colors.peach + '66',
   },
   linkRowPressed: {
-    backgroundColor: Colors.blueChipLight,
+    backgroundColor: Colors.peach,
   },
   linkLabel: {
     flex: 1,
     fontFamily: Typography.families.sansSemiBold,
     fontSize: Typography.sizes.body,
-    color: Colors.navy,
+    color: Colors.orange,
   },
   accountActions: {
     gap: Layout.padding.sm,

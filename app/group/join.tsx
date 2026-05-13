@@ -99,7 +99,7 @@ const JoinGroupScreen = () => {
           title: 'Join a Group',
           headerLeft: () => (
             <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
-              <Ionicons name="chevron-back" size={26} color={Colors.navy} />
+              <Ionicons name="chevron-back" size={26} color={Colors.orange} />
             </Pressable>
           ),
         }}

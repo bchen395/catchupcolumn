@@ -79,14 +79,14 @@ const styles = StyleSheet.create({
   avatarFallback: {
     backgroundColor: Colors.paperWarm,
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   initials: {
     fontFamily: Typography.families.serifBlack,
     fontSize: Typography.sizes.lg,
-    color: Colors.navy,
+    color: Colors.orange,
   },
   bylineText: {
     flex: 1,
@@ -114,12 +114,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.ink,
   },
-  // Reading body. Serif at 17/26 keeps continuity with the masthead while
-  // staying within accessible-text guidance from CLAUDE.md (≥16px floor).
   body: {
     fontFamily: Typography.families.serif,
-    fontSize: 17,
-    lineHeight: 26,
+    fontSize: Typography.sizes.read,
+    lineHeight: Typography.lineHeights.read,
     color: Colors.ink,
   },
 });

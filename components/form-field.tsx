@@ -28,7 +28,7 @@ const FormFieldComponent = (
         ref={ref}
         style={[styles.input, error ? styles.inputError : null, style as InputStyle]}
         placeholderTextColor={Colors.inkSoft}
-        selectionColor={Colors.navy}
+        selectionColor={Colors.orange}
         {...props}
       />
       {error ? (
@@ -53,13 +53,13 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   label: {
-    color: Colors.navy,
+    color: Colors.ink,
   },
   input: {
     minHeight: Layout.touchTargetMin,
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.borderMid,
+    borderColor: Colors.borderSoft,
     backgroundColor: Colors.paper,
     paddingHorizontal: Layout.padding.md,
     paddingVertical: 14,
