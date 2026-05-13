@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: Typography.families.serifBlack,
     fontSize: Typography.sizes.xxl,
-    lineHeight: 32,
+    lineHeight: Typography.sizes.xxl * 1.3,
     color: Colors.ink,
     textAlign: 'center',
   },

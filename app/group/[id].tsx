@@ -1,10 +1,9 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
     Alert,
-    FlatList,
     Modal,
     Pressable,
     RefreshControl,
@@ -19,6 +18,14 @@ import { ErrorState } from '@/components/error-state';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
+import {
+    AMPM_ITEMS,
+    from12hTo24,
+    HOURS_12,
+    MINUTE_ITEMS,
+    SnapColumn,
+    to12hIndices,
+} from '@/components/snap-column';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -30,18 +37,10 @@ import {
     deleteGroup,
     fetchGroupDetails,
     leaveGroup,
-    updateGroupSettings,
     removeGroupCover,
+    updateGroupSettings,
     uploadGroupCover,
 } from '@/lib/groups';
-import {
-    AMPM_ITEMS,
-    from12hTo24,
-    HOURS_12,
-    MINUTE_ITEMS,
-    SnapColumn,
-    to12hIndices,
-} from '@/components/snap-column';
 import type { GroupWithMembers } from '@/types';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -442,8 +441,9 @@ const GroupDetailScreen = () => {
               accessibilityRole="button"
               accessibilityLabel="Go back"
               style={styles.backButton}
+              hitSlop={8}
             >
-              <FontAwesome name="chevron-left" size={16} color={Colors.orange} />
+              <Ionicons name="chevron-back" size={26} color={Colors.orange} />
             </Pressable>
           ),
         }}
@@ -575,7 +575,7 @@ const GroupDetailScreen = () => {
             </ThemedText>
           </View>
           <Pressable onPress={handleShare} style={styles.shareButton} accessibilityRole="button">
-            <FontAwesome name="share-alt" size={18} color={Colors.orange} />
+            <Ionicons name="share-social-outline" size={18} color={Colors.orange} />
             <ThemedText variant="label" style={styles.shareText}>
               Share
             </ThemedText>
@@ -653,12 +653,7 @@ const styles = StyleSheet.create({
     paddingBottom: Layout.padding.xl,
   },
   backButton: {
-    paddingHorizontal: Layout.padding.md,
-    paddingVertical: Layout.padding.sm,
-    minWidth: Layout.touchTargetMin,
-    minHeight: Layout.touchTargetMin,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginLeft: 4,
   },
   banner: {
     margin: Layout.padding.md,

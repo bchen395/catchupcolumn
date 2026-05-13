@@ -207,6 +207,7 @@ const styles = StyleSheet.create({
   initials: {
     fontFamily: Typography.families.serifBlack,
     fontSize: Typography.sizes.xxl,
+    lineHeight: Typography.sizes.xxl,
     color: Colors.orange,
   },
   displayName: {
