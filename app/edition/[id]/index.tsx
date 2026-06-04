@@ -3,8 +3,10 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
-import { EditionPost } from '@/components/edition-post';
+import { EditionBrief } from '@/components/edition-brief';
+import { EditionLead } from '@/components/edition-lead';
 import { ErrorState } from '@/components/error-state';
+import { PaperGrain } from '@/components/paper-grain';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
@@ -13,6 +15,7 @@ import { Icons } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
+import { orderEdition } from '@/lib/edition-layout';
 import { fetchEditionWithPosts, fetchGroupForEdition } from '@/lib/editions';
 import type { EditionWithPosts, GroupRow } from '@/types';
 
@@ -29,34 +32,19 @@ const formatWeekOf = (publishedAt: string, timezone?: string | null): string => 
   const endDay = end.toLocaleDateString('en-US', { timeZone: tz, day: 'numeric' });
   const year = end.toLocaleDateString('en-US', { timeZone: tz, year: 'numeric' });
   if (startMonth === endMonth) {
-    return `${startMonth} ${startDay}\u2013${endDay}, ${year}`;
+    return `${startMonth} ${startDay}–${endDay}, ${year}`;
   }
-  return `${startMonth} ${startDay} \u2013 ${endMonth} ${endDay}, ${year}`;
+  return `${startMonth} ${startDay} – ${endMonth} ${endDay}, ${year}`;
 };
 
-// Centered ornamental rule between posts. Three asterisks is the classic
-// newspaper section break ("dinkus") — easy to render in any serif font and
-// reads as a visual pause without looking like a card boundary.
-const OrnamentalRule = () => (
-  <View style={ornamentStyles.wrap} accessibilityRole="none">
-    <ThemedText style={ornamentStyles.glyph}>* * *</ThemedText>
-  </View>
-);
+const countContributors = (edition: EditionWithPosts): number =>
+  new Set(edition.posts.map((p) => p.author_id)).size;
 
-const ornamentStyles = StyleSheet.create({
-  wrap: {
-    alignItems: 'center',
-    paddingVertical: Layout.padding.lg,
-  },
-  glyph: {
-    fontFamily: Typography.families.serif,
-    fontSize: Typography.sizes.lg,
-    letterSpacing: 8,
-    color: Colors.inkSoft,
-  },
-});
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-const EditionScreen = () => {
+// The edition front page: a masthead, the curated lead story, then "also in
+// this edition" briefs for everyone else. Tapping any story opens the reader.
+const EditionFrontPage = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
@@ -109,74 +97,102 @@ const EditionScreen = () => {
   }
 
   const weekOf = formatWeekOf(edition.published_at, group.timezone);
+  const { lead, briefs } = orderEdition(edition.posts);
+  const openStory = (postId: string) => router.push(`/edition/${id}/${postId}`);
 
   return (
-    <ScrollView
-      style={styles.flex}
-      contentContainerStyle={styles.scroll}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.orange} />
-      }
-    >
-      <Stack.Screen
-        options={{
-          title: group.name,
-          headerStyle: { backgroundColor: Colors.paperWarm },
-          headerTintColor: Colors.ink,
-          headerTitleStyle: {
-            fontFamily: Typography.families.serifBold,
-            color: Colors.ink,
-          },
-          headerLeft: () => (
-            <Pressable
-              onPress={() => router.back()}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-              style={styles.backButton}
-            >
-              <Ionicons name="chevron-back" size={22} color={Colors.orange} />
-            </Pressable>
-          ),
-        }}
-      />
+    <View style={styles.flex}>
+      <PaperGrain />
+      <ScrollView
+        style={styles.scrollFlex}
+        contentContainerStyle={styles.scroll}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.orange} />
+        }
+      >
+        <Stack.Screen
+          options={{
+            title: '',
+            headerStyle: { backgroundColor: Colors.paperWarm },
+            headerShadowVisible: false,
+            headerTintColor: Colors.ink,
+            headerLeft: () => (
+              <Pressable
+                onPress={() => router.back()}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+                style={styles.backButton}
+              >
+                <Ionicons name="chevron-back" size={22} color={Colors.orange} />
+              </Pressable>
+            ),
+          }}
+        />
 
-      {screenError ? (
-        <StatusBanner variant="error" message={screenError} style={styles.banner} />
-      ) : null}
+        {screenError ? (
+          <StatusBanner variant="error" message={screenError} style={styles.banner} />
+        ) : null}
 
-      <View style={styles.masthead}>
-        <ThemedText style={styles.mastheadTitle} numberOfLines={2}>
-          {group.name.toUpperCase()}
-        </ThemedText>
-        <View style={styles.mastheadRule} />
-        <ThemedText style={styles.mastheadDate}>{weekOf}</ThemedText>
-        <ThemedText style={styles.mastheadMeta}>Edition #{edition.edition_number}</ThemedText>
-      </View>
-
-      {edition.posts.length === 0 ? (
-        <View style={styles.emptyEdition}>
-          <ThemedText variant="body" style={styles.emptyEditionText}>
-            {Strings.empty.edition.body}
+        <View style={styles.masthead}>
+          <ThemedText style={styles.mastheadTitle} numberOfLines={2}>
+            {group.name.toUpperCase()}
+          </ThemedText>
+          <View style={styles.mastheadRule} />
+          <ThemedText style={styles.mastheadDate}>{weekOf}</ThemedText>
+          <ThemedText style={styles.mastheadMeta}>
+            Edition #{edition.edition_number}
+            {edition.posts.length > 0
+              ? `  ·  ${plural(edition.posts.length, 'story', 'stories')}  ·  ${plural(
+                  countContributors(edition),
+                  'writer',
+                  'writers',
+                )}`
+              : ''}
           </ThemedText>
         </View>
-      ) : (
-        edition.posts.map((post, idx) => (
-          <Fragment key={post.id}>
-            {idx > 0 ? <OrnamentalRule /> : null}
-            <EditionPost post={post} />
-          </Fragment>
-        ))
-      )}
-    </ScrollView>
+
+        {!lead ? (
+          <View style={styles.emptyEdition}>
+            <ThemedText variant="body" style={styles.emptyEditionText}>
+              {Strings.empty.edition.body}
+            </ThemedText>
+          </View>
+        ) : (
+          <>
+            <EditionLead post={lead} onPress={() => openStory(lead.id)} />
+
+            {briefs.length > 0 ? (
+              <View style={styles.briefsSection}>
+                <View style={styles.briefsHeader}>
+                  <View style={styles.briefsRule} />
+                  <ThemedText style={styles.briefsLabel}>ALSO IN THIS EDITION</ThemedText>
+                  <View style={styles.briefsRule} />
+                </View>
+                {briefs.map((post, idx) => (
+                  <Fragment key={post.id}>
+                    {idx > 0 ? <View style={styles.briefDivider} /> : null}
+                    <EditionBrief post={post} onPress={() => openStory(post.id)} />
+                  </Fragment>
+                ))}
+              </View>
+            ) : null}
+          </>
+        )}
+      </ScrollView>
+    </View>
   );
 };
 
-export default EditionScreen;
+export default EditionFrontPage;
 
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
     backgroundColor: Colors.paperWarm,
+  },
+  scrollFlex: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
   scroll: {
     paddingBottom: Layout.padding.xl,
@@ -191,8 +207,6 @@ const styles = StyleSheet.create({
   banner: {
     margin: Layout.padding.md,
   },
-  // Masthead: heavy serif group name, thin rule below, italic week-of, edition
-  // number in soft ink. Bottom border is a thicker double-strike newspaper rule.
   masthead: {
     paddingHorizontal: Layout.padding.lg,
     paddingTop: Layout.padding.xl,
@@ -225,9 +239,39 @@ const styles = StyleSheet.create({
   mastheadMeta: {
     fontFamily: Typography.families.sansMedium,
     fontSize: Typography.sizes.xs,
-    letterSpacing: 2,
+    letterSpacing: 1,
     color: Colors.inkSoft,
     textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  briefsSection: {
+    paddingTop: Layout.padding.sm,
+  },
+  // Centered "also in this edition" label flanked by short rules — a section
+  // head, not a card boundary.
+  briefsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Layout.padding.md,
+    paddingHorizontal: Layout.padding.lg,
+    paddingTop: Layout.padding.md,
+    paddingBottom: Layout.padding.sm,
+  },
+  briefsRule: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.borderSoft,
+  },
+  briefsLabel: {
+    fontFamily: Typography.families.sansSemiBold,
+    fontSize: Typography.sizes.xs,
+    letterSpacing: 2,
+    color: Colors.inkSoft,
+  },
+  briefDivider: {
+    height: 1,
+    backgroundColor: Colors.borderSoft,
+    marginHorizontal: Layout.padding.lg,
   },
   emptyEdition: {
     padding: Layout.padding.xl,

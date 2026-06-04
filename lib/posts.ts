@@ -36,7 +36,7 @@ export const fetchCurrentPost = async (
 // ---------------------------------------------------------------------------
 
 export const createPost = async (
-  input: Pick<PostInsert, 'group_id' | 'author_id' | 'body' | 'image_url'>,
+  input: Pick<PostInsert, 'group_id' | 'author_id' | 'body' | 'image_url' | 'title'>,
 ): Promise<PostRow> => {
   const { data, error } = await supabase
     .from('posts')

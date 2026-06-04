@@ -1,7 +1,6 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     Alert,
     KeyboardAvoidingView,
@@ -15,8 +14,10 @@ import {
 } from 'react-native';
 
 import { AppImage } from '@/components/app-image';
+import { useComposeSheet } from '@/components/compose-sheet-provider';
 import { EmptyState } from '@/components/empty-state';
 import { FormButton } from '@/components/form-button';
+import { Icon } from '@/components/icon';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
@@ -26,7 +27,6 @@ import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
 import { usePostImageUrl } from '@/hooks/use-post-image-url';
-import { fetchUserGroups } from '@/lib/groups';
 import {
     createPost,
     deletePost,
@@ -34,31 +34,17 @@ import {
     updatePost,
     uploadPostImage,
 } from '@/lib/posts';
-import type { GroupWithMembers, PostRow } from '@/types';
+import type { PostRow } from '@/types';
 
 // ---------------------------------------------------------------------------
-// Word count helper
+// Auto-save
 // ---------------------------------------------------------------------------
 
-const countWords = (text: string): number =>
-  text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+// Idle delay before a draft is quietly persisted. Long enough to avoid saving
+// mid-word, short enough that a brief pause commits your work.
+const AUTOSAVE_DELAY = 1200;
 
-const WORD_SOFT_MIN = 400;
-const WORD_SOFT_MAX = 600;
-
-const wordCountColor = (count: number): string => {
-  if (count === 0) return Colors.inkSoft;
-  if (count >= WORD_SOFT_MIN && count <= WORD_SOFT_MAX) return Colors.success;
-  if (count > WORD_SOFT_MAX) return Colors.orange;
-  return Colors.inkSoft;
-};
-
-const wordCountLabel = (count: number): string => {
-  if (count < WORD_SOFT_MIN)
-    return `${count} words — ~500 words makes a great read`;
-  if (count <= WORD_SOFT_MAX) return `${count} words — looking good!`;
-  return `${count} words`;
-};
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 // ---------------------------------------------------------------------------
 // Screen
@@ -67,14 +53,14 @@ const wordCountLabel = (count: number): string => {
 const PostScreen = () => {
   const { user } = useAuth();
   const router = useRouter();
-
-  // ── Groups ────────────────────────────────────────────────────────────────
-  const [groups, setGroups] = useState<GroupWithMembers[]>([]);
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const [loadingGroups, setLoadingGroups] = useState(true);
+  // The Group to write for is chosen via the compose sheet (the + button or
+  // the tappable masthead) and arrives as a route param.
+  const { groupId: groupIdParam } = useLocalSearchParams<{ groupId?: string }>();
+  const { groups, loadingGroups, openComposeSheet, reloadGroups } = useComposeSheet();
 
   // ── Post ──────────────────────────────────────────────────────────────────
   const [existingPost, setExistingPost] = useState<PostRow | null>(null);
+  const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [imageChanged, setImageChanged] = useState(false);
@@ -85,48 +71,149 @@ const PostScreen = () => {
   const [deleting, setDeleting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [screenError, setScreenError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [isFocused, setIsFocused] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const bodyInputRef = useRef<TextInput>(null);
-  const wordCount = countWords(body);
   // Resolves storage paths from the DB into signed URLs; passes local file://
   // URIs through unchanged for previewing freshly-picked images.
   const previewUri = usePostImageUrl(imageUri);
 
-  // ── Load groups ───────────────────────────────────────────────────────────
+  // Trust the param (it's set by our own navigation); otherwise fall back to the
+  // user's only group so direct visits still land on a writable page.
+  const selectedGroupId = useMemo<string | null>(() => {
+    if (groupIdParam) return groupIdParam;
+    if (!loadingGroups && groups.length === 1) return groups[0].id;
+    return null;
+  }, [groupIdParam, groups, loadingGroups]);
 
-  const loadGroups = useCallback(async () => {
-    if (!user) return;
-    setScreenError('');
+  // ── Auto-save plumbing ──────────────────────────────────────────────────────
+  // Refs hold the live values the debounced save reads, so the timer callback
+  // never closes over a stale render. `lastSavedBody` is what's persisted in the
+  // DB; we only write when the current text differs from it.
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSavingRef = useRef(false);
+  const lastSavedBodyRef = useRef('');
+  const lastSavedTitleRef = useRef('');
+  const bodyRef = useRef('');
+  const titleRef = useRef('');
+  const existingPostRef = useRef<PostRow | null>(null);
+  // Points at the latest performAutoSave so the timer always runs current logic.
+  const autoSaveRef = useRef<() => void>(() => {});
+
+  // Keep existingPostRef in lockstep with state for the debounced save.
+  useEffect(() => {
+    existingPostRef.current = existingPost;
+  }, [existingPost]);
+
+  const clearAutoSaveTimer = () => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+  };
+
+  const scheduleAutoSave = () => {
+    clearAutoSaveTimer();
+    saveTimerRef.current = setTimeout(() => autoSaveRef.current(), AUTOSAVE_DELAY);
+  };
+
+  const performAutoSave = async () => {
+    if (!user || !selectedGroupId || loadingPost) return;
+    const text = bodyRef.current.trim();
+    const titleText = titleRef.current.trim();
+    // Never auto-create or persist an empty draft; a headline alone isn't a
+    // post. Clearing your text won't delete the post — deleting stays explicit.
+    if (text === '') return;
+    // Bail when nothing changed since the last save (body or headline).
+    if (text === lastSavedBodyRef.current && titleText === lastSavedTitleRef.current) return;
+    // A save is already in flight — try again once it settles.
+    if (isSavingRef.current) {
+      scheduleAutoSave();
+      return;
+    }
+
+    isSavingRef.current = true;
+    setSaveStatus('saving');
     try {
-      const data = await fetchUserGroups(user.id);
-      setGroups(data);
-      if (data.length === 1 && !selectedGroupId) {
-        setSelectedGroupId(data[0].id);
+      const titleValue = titleText === '' ? null : titleText;
+      if (existingPostRef.current) {
+        const updated = await updatePost(existingPostRef.current.id, { body: text, title: titleValue });
+        existingPostRef.current = updated;
+        setExistingPost(updated);
+      } else {
+        const created = await createPost({
+          group_id: selectedGroupId,
+          author_id: user.id,
+          body: text,
+          title: titleValue,
+        });
+        existingPostRef.current = created;
+        setExistingPost(created);
+      }
+      lastSavedBodyRef.current = text;
+      lastSavedTitleRef.current = titleText;
+      setSaveStatus('saved');
+      // Caught more typing while the request was out? Schedule a follow-up.
+      // (Only on success — a failed save waits for the next keystroke or an
+      // explicit Save, so a persistent error never becomes a retry storm.)
+      const currentBody = bodyRef.current.trim();
+      const currentTitle = titleRef.current.trim();
+      if (
+        currentBody !== '' &&
+        (currentBody !== lastSavedBodyRef.current || currentTitle !== lastSavedTitleRef.current)
+      ) {
+        scheduleAutoSave();
       }
     } catch {
-      setScreenError(Strings.error.groupsLoad);
+      setSaveStatus('error');
+    } finally {
+      isSavingRef.current = false;
     }
-  }, [user, selectedGroupId]);
+  };
+  autoSaveRef.current = performAutoSave;
 
-  useEffect(() => {
-    setLoadingGroups(true);
-    loadGroups().finally(() => setLoadingGroups(false));
-  }, [loadGroups]);
+  // Cancel any pending save when the screen unmounts.
+  useEffect(() => clearAutoSaveTimer, []);
+
+  const handleChangeBody = (text: string) => {
+    setBody(text);
+    bodyRef.current = text;
+    scheduleAutoSave();
+  };
+
+  const handleChangeTitle = (text: string) => {
+    setTitle(text);
+    titleRef.current = text;
+    scheduleAutoSave();
+  };
 
   // ── Load existing post for selected group ─────────────────────────────────
 
   const loadPost = useCallback(async (groupId: string) => {
     if (!user) return;
+    // Switching groups: drop any pending save for the previous group so its
+    // draft never lands on the wrong post.
+    clearAutoSaveTimer();
     setLoadingPost(true);
     setScreenError('');
+    setSaveStatus('idle');
     try {
       const post = await fetchCurrentPost(groupId, user.id);
+      const loadedBody = post?.body ?? '';
+      const loadedTitle = post?.title ?? '';
       setExistingPost(post);
-      setBody(post?.body ?? '');
+      setBody(loadedBody);
+      setTitle(loadedTitle);
       setImageUri(post?.image_url ?? null);
       setImageChanged(false);
+      // Seed the auto-save baseline so loading a post doesn't trigger a save.
+      bodyRef.current = loadedBody;
+      titleRef.current = loadedTitle;
+      lastSavedBodyRef.current = loadedBody.trim();
+      lastSavedTitleRef.current = loadedTitle.trim();
+      existingPostRef.current = post;
     } catch {
       setScreenError(Strings.error.postLoad);
     } finally {
@@ -144,7 +231,7 @@ const PostScreen = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadGroups();
+    await reloadGroups();
     if (selectedGroupId) await loadPost(selectedGroupId);
     setRefreshing(false);
   };
@@ -169,6 +256,8 @@ const PostScreen = () => {
   };
 
   // ── Save / Update ─────────────────────────────────────────────────────────
+  // The explicit Save flushes the text and commits the photo (photos aren't
+  // auto-uploaded on every keystroke — only here).
 
   const handleSave = async () => {
     if (!user || !selectedGroupId) return;
@@ -176,9 +265,12 @@ const PostScreen = () => {
       setScreenError('Please write something before saving.');
       return;
     }
+    clearAutoSaveTimer();
     setScreenError('');
-    setSuccessMessage('');
     setSaving(true);
+    setSaveStatus('saving');
+
+    const titleValue = title.trim() === '' ? null : title.trim();
 
     try {
       let finalImageUrl: string | null = existingPost?.image_url ?? null;
@@ -194,17 +286,18 @@ const PostScreen = () => {
           }
         }
         const updated = await updatePost(existingPost.id, {
+          title: titleValue,
           body: body.trim(),
           image_url: finalImageUrl,
         });
         setExistingPost(updated);
         setImageUri(updated.image_url);
         setImageChanged(false);
-        setSuccessMessage('Your post has been updated.');
       } else {
         const created = await createPost({
           group_id: selectedGroupId,
           author_id: user.id,
+          title: titleValue,
           body: body.trim(),
         });
 
@@ -219,11 +312,14 @@ const PostScreen = () => {
           setExistingPost(created);
         }
         setImageChanged(false);
-        setSuccessMessage('Your post has been saved!');
       }
+      lastSavedBodyRef.current = body.trim();
+      lastSavedTitleRef.current = title.trim();
+      setSaveStatus('saved');
     } catch {
       setUploadingImage(false);
       setScreenError(Strings.error.postSave);
+      setSaveStatus('error');
     } finally {
       setSaving(false);
     }
@@ -242,15 +338,22 @@ const PostScreen = () => {
           style: 'destructive',
           onPress: async () => {
             if (!existingPost) return;
+            clearAutoSaveTimer();
             setDeleting(true);
             setScreenError('');
-            setSuccessMessage('');
             try {
               await deletePost(existingPost.id);
               setExistingPost(null);
               setBody('');
+              setTitle('');
               setImageUri(null);
               setImageChanged(false);
+              bodyRef.current = '';
+              titleRef.current = '';
+              lastSavedBodyRef.current = '';
+              lastSavedTitleRef.current = '';
+              existingPostRef.current = null;
+              setSaveStatus('idle');
             } catch {
               setScreenError(Strings.error.postDelete);
             } finally {
@@ -264,20 +367,38 @@ const PostScreen = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  if (!loadingGroups && groups.length === 0) {
+  const isEditing = existingPost !== null;
+  const isBusy = saving || deleting;
+  const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null;
+  const canSwitchGroup = groups.length > 1;
+
+  // No group selected yet: resolve quietly, then either send to Groups (none) or
+  // prompt to choose one (several).
+  if (!selectedGroupId) {
+    if (loadingGroups) {
+      return <View style={styles.flex} />;
+    }
+    if (groups.length === 0) {
+      return (
+        <EmptyState
+          icon={Icons.emptyGroups}
+          title={Strings.empty.postNoGroups.title}
+          body={Strings.empty.postNoGroups.body}
+          ctaLabel={Strings.empty.postNoGroups.cta}
+          onCtaPress={() => router.push('/groups')}
+        />
+      );
+    }
     return (
       <EmptyState
-        icon={Icons.emptyGroups}
-        title={Strings.empty.postNoGroups.title}
-        body={Strings.empty.postNoGroups.body}
-        ctaLabel={Strings.empty.postNoGroups.cta}
-        onCtaPress={() => router.push('/groups')}
+        icon={Icons.emptyPost}
+        title="Who are you writing for?"
+        body="Choose a Group to start this week's entry."
+        ctaLabel="Choose a Group"
+        onCtaPress={openComposeSheet}
       />
     );
   }
-
-  const isEditing = existingPost !== null;
-  const isBusy = saving || deleting;
 
   return (
     <KeyboardAvoidingView
@@ -297,96 +418,102 @@ const PostScreen = () => {
           />
         }
       >
-        {/* ── Group picker ── */}
-        {groups.length > 1 && (
-          <View style={styles.section}>
-            <ThemedText variant="label" style={styles.sectionLabel}>
-              Post to
-            </ThemedText>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.groupPicker}
-            >
-              {groups.map((g) => (
-                <Pressable
-                  key={g.id}
-                  accessibilityRole="button"
-                  onPress={() => {
-                    if (g.id !== selectedGroupId) {
-                      setSelectedGroupId(g.id);
-                    }
-                  }}
-                  style={[
-                    styles.groupPill,
-                    g.id === selectedGroupId && styles.groupPillSelected,
-                  ]}
-                >
-                  <ThemedText
-                    variant="label"
-                    style={[
-                      styles.groupPillText,
-                      g.id === selectedGroupId && styles.groupPillTextSelected,
-                    ]}
-                  >
-                    {g.name}
-                  </ThemedText>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* ── Banners ── */}
+        {/* ── Error banner ── */}
         {screenError ? (
           <StatusBanner variant="error" message={screenError} style={styles.banner} />
         ) : null}
-        {successMessage ? (
-          <StatusBanner variant="success" message={successMessage} style={styles.banner} />
-        ) : null}
 
-        {/* ── Composer ── */}
-        {selectedGroupId && !loadingPost ? (
+        {/* Masthead — names the publication you're writing for. With more than
+            one Group it's tappable, reopening the menu to switch. */}
+        <View style={styles.composeHeader}>
+          {canSwitchGroup ? (
+            <Pressable
+              onPress={openComposeSheet}
+              accessibilityRole="button"
+              accessibilityLabel="Switch Group"
+              style={({ pressed }) => [styles.titleChip, pressed && styles.titleChipPressed]}
+            >
+              <ThemedText variant="subheadline" style={styles.composeTitle} numberOfLines={1}>
+                {selectedGroup ? selectedGroup.name : 'This week'}
+              </ThemedText>
+              <Icon icon={Icons.chevronDown} size={14} color={Colors.inkSoft} />
+            </Pressable>
+          ) : (
+            <ThemedText variant="subheadline" style={styles.composeTitle}>
+              {selectedGroup ? selectedGroup.name : 'This week'}
+            </ThemedText>
+          )}
+          <ThemedText variant="caption" style={styles.composeSubtitle}>
+            {isEditing ? 'Editing your entry for this week' : 'Your entry for this week'}
+          </ThemedText>
+        </View>
+
+        {!loadingPost ? (
           <>
-            {isEditing ? (
-              <View style={styles.editingBadge}>
-                <ThemedText variant="caption" style={styles.editingBadgeText}>
-                  Editing this week's post
-                </ThemedText>
-              </View>
-            ) : null}
-
-            {/* Compose "card" — the main creative surface. Cream paper, no
-                visible border on the input itself, sparkle anchored bottom-right
-                as a decorative anchor (no behavior in v1; placeholder for the
-                future "write for me" feature). */}
-            <View style={styles.composeCard}>
+            {/* The page — a white sheet lifted off the warm desk. Shadow deepens
+                while focused so writing feels tactile. */}
+            <View style={[styles.composeCard, isFocused && styles.composeCardFocused]}>
+              {/* Optional headline. A short serif title that becomes the story's
+                  headline on the front page and in the email; left blank, the
+                  post just runs under the author's name. */}
               <TextInput
-                ref={bodyInputRef}
-                style={styles.bodyInput}
-                value={body}
-                onChangeText={setBody}
-                placeholder="Write…"
-                placeholderTextColor={Colors.inkSoft}
-                multiline
+                style={styles.titleInput}
+                value={title}
+                onChangeText={handleChangeTitle}
+                placeholder="Add a headline (optional)"
+                placeholderTextColor={Colors.inkMuted}
                 selectionColor={Colors.orange}
                 editable={!isBusy}
-                textAlignVertical="top"
+                maxLength={80}
+                returnKeyType="next"
+                onSubmitEditing={() => bodyInputRef.current?.focus()}
               />
-              <View style={styles.sparkleSlot} pointerEvents="none">
-                <MaterialCommunityIcons
-                  name="creation-outline"
-                  size={22}
-                  color={Colors.orange + 'CC'}
+              <View style={styles.titleRule} />
+              <View style={styles.bodyWrap}>
+                <TextInput
+                  ref={bodyInputRef}
+                  style={styles.bodyInput}
+                  value={body}
+                  onChangeText={handleChangeBody}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  multiline
+                  selectionColor={Colors.orange}
+                  editable={!isBusy}
+                  textAlignVertical="top"
                 />
+                {/* Custom italic-serif placeholder. Overlaying it (rather than the
+                    native placeholder) keeps the warm voice without italicizing
+                    the upright serif body the user types. */}
+                {body === '' ? (
+                  <View style={styles.placeholderWrap} pointerEvents="none">
+                    <ThemedText style={styles.placeholder}>
+                      What&apos;s been happening this week?
+                    </ThemedText>
+                  </View>
+                ) : null}
               </View>
             </View>
-            <ThemedText
-              variant="caption"
-              style={[styles.wordCount, { color: wordCountColor(wordCount) }]}
-            >
-              {wordCountLabel(wordCount)}
-            </ThemedText>
+
+            {/* Quiet save status — reassurance, not a quota. */}
+            <View style={styles.saveStatusRow}>
+              {saveStatus === 'saving' ? (
+                <ThemedText variant="caption" style={styles.saveStatusText}>
+                  Saving…
+                </ThemedText>
+              ) : saveStatus === 'saved' ? (
+                <ThemedText variant="caption" style={styles.saveStatusText}>
+                  Saved
+                </ThemedText>
+              ) : saveStatus === 'error' ? (
+                <ThemedText
+                  variant="caption"
+                  style={[styles.saveStatusText, styles.saveStatusError]}
+                >
+                  Couldn&apos;t save — your words are still here
+                </ThemedText>
+              ) : null}
+            </View>
 
             <View style={styles.section}>
               <ThemedText variant="label" style={styles.sectionLabel}>
@@ -466,63 +593,92 @@ const styles = StyleSheet.create({
     color: Colors.orange,
   },
   banner: {},
-  groupPicker: {
+  // Masthead above the page.
+  composeHeader: {
+    gap: Layout.padding.xs,
+  },
+  // Tappable group switcher: name + down-caret.
+  titleChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Layout.padding.sm,
-    paddingVertical: Layout.padding.xs,
-  },
-  groupPill: {
-    paddingHorizontal: Layout.padding.md,
-    paddingVertical: Layout.padding.sm,
-    borderRadius: 999,
-    backgroundColor: Colors.peach + '66',
-    minHeight: Layout.touchTargetMin,
-    justifyContent: 'center',
-  },
-  groupPillSelected: {
-    backgroundColor: Colors.orange,
-  },
-  groupPillText: {
-    color: Colors.orange,
-    fontFamily: Typography.families.sansSemiBold,
-  },
-  groupPillTextSelected: {
-    color: Colors.paper,
-  },
-  editingBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: Colors.peach,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    borderRadius: Layout.borderRadius.sm,
-    paddingHorizontal: Layout.padding.sm,
     paddingVertical: Layout.padding.xs,
   },
-  editingBadgeText: {
+  titleChipPressed: {
+    opacity: 0.6,
+  },
+  composeTitle: {
+    color: Colors.ink,
+  },
+  composeSubtitle: {
     color: Colors.inkSoft,
   },
-  // Compose card — cream paper background with a generous min-height. The
-  // sparkle is positioned absolutely so it sits inside the card flow.
+  // The page — a white sheet on the warm desk, soft rounded corners, hairline
+  // edge, and a warm-tinted lift. Generous min-height invites a blank start.
   composeCard: {
+    ...Layout.shadow.paper,
     position: 'relative',
-    backgroundColor: Colors.peach,
-    borderRadius: Layout.borderRadius.md,
-    minHeight: 280,
+    backgroundColor: Colors.paper,
+    borderRadius: Layout.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    minHeight: 360,
     padding: Layout.padding.lg,
   },
+  composeCardFocused: {
+    ...Layout.shadow.paperRaised,
+  },
+  // Headline line at the top of the page — heavy serif, sized between body and
+  // a real headline so it reads as a title without dwarfing the writing area.
+  titleInput: {
+    color: Colors.ink,
+    fontFamily: Typography.families.serifBlack,
+    fontSize: Typography.sizes.xl,
+    lineHeight: 28,
+    paddingVertical: Layout.padding.xs,
+  },
+  // Hairline separating the headline from the body, echoing the masthead rule.
+  titleRule: {
+    height: 1,
+    backgroundColor: Colors.borderSoft,
+    marginTop: Layout.padding.xs,
+    marginBottom: Layout.padding.md,
+  },
+  bodyWrap: {
+    position: 'relative',
+  },
   bodyInput: {
-    minHeight: 240,
+    minHeight: 312,
     color: Colors.ink,
     fontFamily: Typography.families.serif,
     fontSize: Typography.sizes.lg,
-    lineHeight: 28,
+    lineHeight: 30,
   },
-  sparkleSlot: {
+  // Anchored to the body wrapper's origin so the italic placeholder sits
+  // exactly where typed text begins, below the headline.
+  placeholderWrap: {
     position: 'absolute',
-    bottom: Layout.padding.md,
-    right: Layout.padding.md,
+    top: 0,
+    left: 0,
+    right: 0,
   },
-  wordCount: {
+  placeholder: {
+    fontFamily: Typography.families.serif,
+    fontSize: Typography.sizes.lg,
+    lineHeight: 30,
+    fontStyle: 'italic',
+    color: Colors.inkSoft,
+  },
+  saveStatusRow: {
+    minHeight: 22,
     alignSelf: 'flex-end',
+  },
+  saveStatusText: {
+    color: Colors.inkMuted,
+  },
+  saveStatusError: {
+    color: Colors.error,
   },
   imagePreviewWrapper: {
     gap: Layout.padding.sm,

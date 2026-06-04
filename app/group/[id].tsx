@@ -4,7 +4,6 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
     Alert,
-    Modal,
     Pressable,
     RefreshControl,
     ScrollView,
@@ -14,25 +13,20 @@ import {
 } from 'react-native';
 
 import { AppImage } from '@/components/app-image';
+import { DaySelector } from '@/components/day-selector';
 import { ErrorState } from '@/components/error-state';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
-import {
-    AMPM_ITEMS,
-    from12hTo24,
-    HOURS_12,
-    MINUTE_ITEMS,
-    SnapColumn,
-    to12hIndices,
-} from '@/components/snap-column';
 import { StatusBanner } from '@/components/status-banner';
+import { TimeField } from '@/components/time-picker-modal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
+import { PublishNowError, publishEditionNow } from '@/lib/editions';
 import {
     deleteGroup,
     fetchGroupDetails,
@@ -44,7 +38,6 @@ import {
 import type { GroupWithMembers } from '@/types';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const formatPublishSchedule = (publishDay: number, publishTime: string) => {
   const day = DAYS[publishDay] ?? 'Sunday';
@@ -141,7 +134,7 @@ const memberStyles = StyleSheet.create({
     borderColor: Colors.borderSoft,
   },
   badgeMod: {
-    backgroundColor: '#EEF2F5',
+    backgroundColor: Colors.badgeMod,
     borderColor: Colors.orange,
   },
   badgeModText: {
@@ -178,27 +171,9 @@ const GroupDetailScreen = () => {
   const [saving, setSaving] = useState(false);
   const [pickingCover, setPickingCover] = useState(false);
 
-  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
-  const [tempHourIndex, setTempHourIndex] = useState(0);
-  const [tempMinuteIndex, setTempMinuteIndex] = useState(0);
-  const [tempAmpmIndex, setTempAmpmIndex] = useState(0);
-
-  const openSchedulePicker = () => {
-    const { hourIndex, ampmIndex, minuteIndex } = to12hIndices(editPublishHour, editPublishMinute);
-    setTempHourIndex(hourIndex);
-    setTempAmpmIndex(ampmIndex);
-    setTempMinuteIndex(minuteIndex);
-    setShowSchedulePicker(true);
-  };
-
-  const confirmScheduleTime = () => {
-    setEditPublishHour(from12hTo24(tempHourIndex, tempAmpmIndex));
-    setEditPublishMinute([0, 15, 30, 45][tempMinuteIndex]);
-    setShowSchedulePicker(false);
-  };
-
   const [leaving, setLeaving] = useState(false);
   const [deletingGroup, setDeletingGroup] = useState(false);
+  const [publishingNow, setPublishingNow] = useState(false);
 
   const currentUserId = user?.id ?? '';
   const isModerator = group?.members.some(
@@ -363,6 +338,47 @@ const GroupDetailScreen = () => {
     );
   };
 
+  const handlePublishNow = () => {
+    if (!group) return;
+    Alert.alert(
+      'Send this week’s edition now?',
+      `Everyone in ${group.name} will get the edition right away. Your next regular edition still goes out ${formatPublishSchedule(group.publish_day, group.publish_time).toLowerCase()}.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Publish',
+          style: 'default',
+          onPress: async () => {
+            setScreenError('');
+            try {
+              setPublishingNow(true);
+              const result = await publishEditionNow(group.id);
+              router.replace(`/edition/${result.editionId}`);
+            } catch (err) {
+              if (err instanceof PublishNowError) {
+                if (err.code === 'no_posts_to_publish') {
+                  Alert.alert(
+                    'Nothing to publish yet',
+                    'There aren’t any posts for this edition yet. Ask your group to write something first.',
+                  );
+                } else if (err.code === 'not_moderator') {
+                  setScreenError('Only moderators can publish editions.');
+                } else if (err.code === 'publish_in_progress') {
+                  setScreenError('An edition is already being published. Try again in a moment.');
+                } else {
+                  setScreenError('Could not publish this edition right now. Please try again.');
+                }
+              } else {
+                setScreenError('Could not publish this edition right now. Please try again.');
+              }
+              setPublishingNow(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   if (loading) {
     return <PrintingPressLoading />;
   }
@@ -382,51 +398,6 @@ const GroupDetailScreen = () => {
 
   return (
     <>
-      <Modal
-        visible={showSchedulePicker}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowSchedulePicker(false)}
-      >
-        <Pressable style={styles.modalBackdrop} onPress={() => setShowSchedulePicker(false)}>
-          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
-            <ThemedText variant="label" style={styles.modalTitle}>
-              Publish time
-            </ThemedText>
-            <View style={styles.modalColumns}>
-              <SnapColumn
-                data={HOURS_12}
-                selectedIndex={tempHourIndex}
-                onSelect={setTempHourIndex}
-                visible={showSchedulePicker}
-              />
-              <ThemedText variant="body" style={styles.colonSeparator}>:</ThemedText>
-              <SnapColumn
-                data={MINUTE_ITEMS}
-                selectedIndex={tempMinuteIndex}
-                onSelect={setTempMinuteIndex}
-                visible={showSchedulePicker}
-                width={64}
-              />
-              <SnapColumn
-                data={AMPM_ITEMS}
-                selectedIndex={tempAmpmIndex}
-                onSelect={setTempAmpmIndex}
-                visible={showSchedulePicker}
-                width={64}
-              />
-            </View>
-            <View style={styles.modalActions}>
-              <Pressable onPress={() => setShowSchedulePicker(false)} style={styles.modalActionButton}>
-                <ThemedText variant="body" style={styles.cancelText}>Cancel</ThemedText>
-              </Pressable>
-              <Pressable onPress={confirmScheduleTime} style={[styles.modalActionButton, styles.doneButton]}>
-                <ThemedText variant="body" style={styles.doneText}>Done</ThemedText>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.scroll}
@@ -480,50 +451,16 @@ const GroupDetailScreen = () => {
               numberOfLines={3}
               style={styles.multilineInput}
             />
-            {/* Publish day */}
-            <View style={styles.fieldWrapper}>
-              <ThemedText variant="label" style={styles.fieldLabel}>
-                Publish day
-              </ThemedText>
-              <View style={styles.dayRow}>
-                {DAY_LABELS.map((day, index) => (
-                  <Pressable
-                    key={day}
-                    onPress={() => setEditPublishDay(index)}
-                    style={[
-                      styles.dayButton,
-                      editPublishDay === index ? styles.dayButtonActive : null,
-                    ]}
-                  >
-                    <ThemedText
-                      variant="caption"
-                      style={[
-                        styles.dayButtonText,
-                        editPublishDay === index ? styles.dayButtonTextActive : null,
-                      ]}
-                    >
-                      {day}
-                    </ThemedText>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-            {/* Publish time */}
-            <View style={styles.fieldWrapper}>
-              <ThemedText variant="label" style={styles.fieldLabel}>
-                Publish time
-              </ThemedText>
-              <Pressable onPress={openSchedulePicker} style={styles.timeButton}>
-                <ThemedText variant="body">
-                  {(() => {
-                    const h = editPublishHour;
-                    const period = h >= 12 ? 'PM' : 'AM';
-                    const display = h % 12 === 0 ? 12 : h % 12;
-                    return `${display}:${String(editPublishMinute).padStart(2, '0')} ${period}`;
-                  })()}
-                </ThemedText>
-              </Pressable>
-            </View>
+            <DaySelector value={editPublishDay} onChange={setEditPublishDay} />
+
+            <TimeField
+              hour24={editPublishHour}
+              minute={editPublishMinute}
+              onChange={(h, m) => {
+                setEditPublishHour(h);
+                setEditPublishMinute(m);
+              }}
+            />
             <View style={styles.editButtons}>
               <FormButton
                 title="Save"
@@ -601,6 +538,24 @@ const GroupDetailScreen = () => {
           />
         ))}
       </View>
+
+      {/* Moderator: publish this week's edition immediately */}
+      {isModerator && !editing ? (
+        <ThemedView variant="card" style={styles.section}>
+          <ThemedText variant="label" style={styles.sectionTitle}>
+            Publish this week’s edition
+          </ThemedText>
+          <ThemedText variant="caption" style={styles.publishNowHelp}>
+            Send everything written so far to all members now. Your next
+            regular edition still goes out on schedule.
+          </ThemedText>
+          <FormButton
+            title={publishingNow ? 'Publishing…' : 'Publish now'}
+            onPress={handlePublishNow}
+            loading={publishingNow}
+          />
+        </ThemedView>
+      ) : null}
 
       {/* Moderator settings button */}
       {isModerator && !editing ? (
@@ -692,103 +647,9 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
   },
   multilineInput: {
-    height: 88,
-    paddingTop: 14,
+    minHeight: Layout.input.multilineMinHeight,
+    paddingTop: Layout.input.paddingV,
     textAlignVertical: 'top',
-  },
-  fieldWrapper: {
-    gap: Layout.padding.sm,
-  },
-  fieldLabel: {
-    color: Colors.orange,
-  },
-  dayRow: {
-    flexDirection: 'row',
-    gap: Layout.padding.xs,
-  },
-  dayButton: {
-    flex: 1,
-    minHeight: Layout.touchTargetMin,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: Layout.borderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    backgroundColor: Colors.paper,
-  },
-  dayButtonActive: {
-    backgroundColor: Colors.orange,
-    borderColor: Colors.orange,
-  },
-  dayButtonText: {
-    color: Colors.inkSoft,
-    fontFamily: Typography.families.sansMedium,
-  },
-  dayButtonTextActive: {
-    color: Colors.paper,
-  },
-  timeButton: {
-    minHeight: Layout.touchTargetMin,
-    borderRadius: Layout.borderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    backgroundColor: Colors.paper,
-    paddingHorizontal: Layout.padding.md,
-    paddingVertical: 14,
-    justifyContent: 'center',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalCard: {
-    backgroundColor: Colors.paperWarm,
-    borderRadius: Layout.borderRadius.lg,
-    width: '100%',
-    maxWidth: 320,
-    marginHorizontal: Layout.padding.lg,
-    padding: Layout.padding.lg,
-    gap: Layout.padding.md,
-  },
-  modalTitle: {
-    color: Colors.orange,
-    textAlign: 'center',
-  },
-  modalColumns: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Layout.padding.xs,
-  },
-  colonSeparator: {
-    fontFamily: Typography.families.sansSemiBold,
-    color: Colors.inkSoft,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: Layout.padding.md,
-    marginTop: Layout.padding.xs,
-  },
-  modalActionButton: {
-    minHeight: Layout.touchTargetMin,
-    paddingHorizontal: Layout.padding.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: Layout.borderRadius.md,
-  },
-  doneButton: {
-    backgroundColor: Colors.orange,
-    paddingHorizontal: Layout.padding.lg,
-  },
-  cancelText: {
-    color: Colors.inkSoft,
-  },
-  doneText: {
-    color: Colors.paper,
-    fontFamily: Typography.families.sansSemiBold,
   },
   editButtons: {
     flexDirection: 'row',
@@ -839,6 +700,11 @@ const styles = StyleSheet.create({
   },
   inviteHelp: {
     color: Colors.inkSoft,
+  },
+  publishNowHelp: {
+    color: Colors.inkSoft,
+    lineHeight: Typography.lineHeights.body,
+    marginBottom: Layout.padding.xs,
   },
   dangerZone: {
     borderTopWidth: 1,

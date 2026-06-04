@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.peach + '66',
+    backgroundColor: Colors.peachWash,
     marginBottom: Layout.padding.sm,
   },
   title: {
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   cta: {
     minHeight: Layout.touchTargetMin + 4,
     paddingHorizontal: Layout.padding.lg,
-    borderRadius: 999,
+    borderRadius: Layout.borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Layout.padding.md,

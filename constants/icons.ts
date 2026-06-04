@@ -33,6 +33,7 @@ export const Icons = {
   brand: mci('newspaper-variant-outline'),
   chevronRight: fa('chevron-right'),
   chevronLeft: fa('chevron-left'),
+  chevronDown: fa('chevron-down'),
   close: mci('close'),
 
   // Empty states — soft outlines that match the Figma wireframe sketches

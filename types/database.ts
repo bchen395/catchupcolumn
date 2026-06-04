@@ -57,6 +57,9 @@ export type PostRow = {
   id: string;
   group_id: string;
   author_id: string;
+  // Optional headline. Used as the story title on the front page, story
+  // reader, and the weekly email; null falls back to the author's name.
+  title: string | null;
   body: string;
   image_url: string | null;
   edition_id: string | null;
@@ -64,12 +67,13 @@ export type PostRow = {
   updated_at: string;
 };
 
-export type PostInsert = Omit<PostRow, 'id' | 'created_at' | 'updated_at' | 'edition_id' | 'image_url'> & {
+export type PostInsert = Omit<PostRow, 'id' | 'created_at' | 'updated_at' | 'edition_id' | 'image_url' | 'title'> & {
   id?: string;
   created_at?: string;
   updated_at?: string;
   edition_id?: string | null;
   image_url?: string | null;
+  title?: string | null;
 };
 
 export type PostUpdate = Partial<Omit<PostRow, 'id' | 'group_id' | 'author_id'>>;

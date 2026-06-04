@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderSoft,
     backgroundColor: Colors.paper,
     paddingHorizontal: Layout.padding.md,
-    paddingVertical: 14,
+    paddingVertical: Layout.input.paddingV,
     color: Colors.ink,
     fontFamily: Typography.families.sans,
     fontSize: Typography.sizes.body,

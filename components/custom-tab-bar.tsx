@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 
+import { useComposeSheet } from './compose-sheet-provider';
 import { ThemedText } from './themed-text';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -30,6 +31,7 @@ const TAB_META: Record<
 
 export const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
   const insets = useSafeAreaInsets();
+  const { openComposeSheet } = useComposeSheet();
 
   return (
     <View style={[styles.barWrap, { paddingBottom: Math.max(insets.bottom, 8) }]}>
@@ -48,12 +50,15 @@ export const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
           };
 
           if (route.name === 'post') {
+            // The center button opens the "write for…" sheet instead of
+            // navigating to the tab; the sheet routes to Compose once a Group
+            // is chosen.
             return (
               <View key={route.key} style={styles.centerSlot}>
                 <Pressable
-                  onPress={onPress}
+                  onPress={openComposeSheet}
                   accessibilityRole="button"
-                  accessibilityLabel="Compose"
+                  accessibilityLabel="Write a post"
                   style={({ pressed }) => [styles.raised, pressed && styles.raisedPressed]}
                 >
                   <MaterialCommunityIcons name="plus" size={32} color={Colors.paper} />

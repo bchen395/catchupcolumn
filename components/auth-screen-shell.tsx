@@ -9,6 +9,7 @@ import {
     type ViewStyle,
 } from 'react-native';
 
+import { AppImage } from '@/components/app-image';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/colors';
@@ -41,6 +42,11 @@ export const AuthScreenShell = ({
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
+            <AppImage
+              source={require('@/assets/brand/logo.png')}
+              style={styles.brandmark}
+              contentFit="contain"
+            />
             <ThemedText variant="headline">{title}</ThemedText>
             <ThemedText variant="body" style={styles.subtitle}>
               {subtitle}
@@ -71,6 +77,14 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: Layout.padding.sm,
+  },
+  // Brandmark above the headline grounds the auth screens in the brand instead
+  // of opening on bare text. Left-aligned to match the Home masthead.
+  brandmark: {
+    width: 132,
+    aspectRatio: 315 / 266,
+    backgroundColor: 'transparent',
+    marginBottom: Layout.padding.xs,
   },
   subtitle: {
     color: Colors.inkSoft,

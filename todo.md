@@ -83,12 +83,13 @@ Mark phases as [x] when complete. Work through them in order.
 ---
 
 ## Phase 8: Polish & Launch Prep
-- [ ] Loading screen with newspaper-themed animation (as described in app screens doc)
-- [ ] Push notifications: "Your Group is ready!" on edition publish
+- [x] Loading screen with newspaper-themed animation (as described in app screens doc)
+- [x] Push notifications: "Your Group is ready!" on edition publish
 - [ ] Onboarding improvements based on testing with a real family member
-- [ ] Error states and empty states for every screen
-- [ ] App icon, splash screen, App Store / Play Store metadata
-- [ ] Performance pass: image optimization, lazy loading
+- [x] Error states and empty states for every screen
+- [x] App icon and splash screen
+- [ ] App Store / Play Store metadata
+- [x] Performance pass: image optimization, lazy loading
 
 **Test:** Hand the app to a non-technical family member. Can they sign up, join a Column, write a post, and read an edition without asking you for help?
 

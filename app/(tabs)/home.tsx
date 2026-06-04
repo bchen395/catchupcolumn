@@ -5,12 +5,14 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppImage } from '@/components/app-image';
+import { useComposeSheet } from '@/components/compose-sheet-provider';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
+import { headlineFor, orderEdition } from '@/lib/edition-layout';
 import { fetchEditionsForUser, type EditionListItem } from '@/lib/editions';
 
 const formatWeekOf = (publishedAt: string, timezone?: string | null): string => {
@@ -38,6 +40,7 @@ type Pill = {
 const HomeScreen = () => {
   const router = useRouter();
   const { user } = useAuth();
+  const { openComposeSheet } = useComposeSheet();
   const insets = useSafeAreaInsets();
   const [latest, setLatest] = useState<EditionListItem | null>(null);
 
@@ -104,12 +107,38 @@ const HomeScreen = () => {
             <ThemedText style={styles.featureTitle} numberOfLines={2}>
               {latest.group.name}
             </ThemedText>
+            {(() => {
+              const lead = orderEdition(latest.posts ?? []).lead;
+              return lead ? (
+                <ThemedText style={styles.featureLead} numberOfLines={2}>
+                  “{headlineFor(lead)}”
+                </ThemedText>
+              ) : null;
+            })()}
             <ThemedText style={styles.featureMeta}>
               {formatWeekOf(latest.published_at, latest.group.timezone)} · Edition #{latest.edition_number}
             </ThemedText>
           </View>
         </Pressable>
       ) : null}
+
+      <Pressable
+        onPress={openComposeSheet}
+        accessibilityRole="button"
+        accessibilityLabel="Write your post for this week"
+        style={({ pressed }) => [styles.writeCard, pressed && styles.writeCardPressed]}
+      >
+        <View style={styles.writeIcon}>
+          <MaterialCommunityIcons name="pencil-outline" size={24} color={Colors.paper} />
+        </View>
+        <View style={styles.writeText}>
+          <ThemedText style={styles.writeTitle}>Write for this week</ThemedText>
+          <ThemedText style={styles.writeBody}>
+            Add your note before this week's edition goes out.
+          </ThemedText>
+        </View>
+        <MaterialCommunityIcons name="chevron-right" size={22} color={Colors.orange} />
+      </Pressable>
 
       <View style={styles.pills}>
         {pills.map((pill) => (
@@ -177,7 +206,7 @@ const styles = StyleSheet.create({
   coverPlaceholder: {
     width: '100%',
     aspectRatio: 16 / 9,
-    backgroundColor: Colors.peach + '66',
+    backgroundColor: Colors.peachWash,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -199,12 +228,59 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     color: Colors.ink,
   },
+  // The lead story's headline — the reason to open this edition.
+  featureLead: {
+    fontFamily: Typography.families.serif,
+    fontStyle: 'italic',
+    fontSize: Typography.sizes.read,
+    lineHeight: 24,
+    color: Colors.ink,
+    marginTop: 4,
+  },
   featureMeta: {
     fontFamily: Typography.families.serif,
     fontSize: Typography.sizes.body,
     color: Colors.inkSoft,
     fontStyle: 'italic',
     marginTop: 2,
+  },
+  // Primary weekly action. Solid peach card with a raised orange icon badge
+  // that echoes the compose "+" in the tab bar, so the main thing to *do* on
+  // Home reads as deliberate, not just another wash pill.
+  writeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Layout.padding.md,
+    backgroundColor: Colors.peach,
+    borderRadius: Layout.borderRadius.lg,
+    paddingHorizontal: Layout.padding.lg,
+    paddingVertical: Layout.padding.lg,
+  },
+  writeCardPressed: {
+    opacity: 0.92,
+  },
+  writeIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.orange,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  writeText: {
+    flex: 1,
+    gap: 2,
+  },
+  writeTitle: {
+    fontFamily: Typography.families.serifBold,
+    fontSize: Typography.sizes.lg,
+    color: Colors.ink,
+  },
+  writeBody: {
+    fontFamily: Typography.families.sans,
+    fontSize: Typography.sizes.body,
+    lineHeight: 22,
+    color: Colors.inkSoft,
   },
   pills: {
     gap: Layout.padding.md,
@@ -216,8 +292,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.lg,
     paddingVertical: Layout.padding.md,
     minHeight: Layout.touchTargetMin + 8,
-    borderRadius: 999,
-    backgroundColor: Colors.peach + '66',
+    borderRadius: Layout.borderRadius.full,
+    backgroundColor: Colors.peachWash,
   },
   pillPressed: {
     backgroundColor: Colors.peach,
@@ -226,6 +302,9 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Typography.families.sansSemiBold,
     fontSize: Typography.sizes.body,
-    color: Colors.orange,
+    // Ink, not orange: orange at 16px on the peach wash fails AA for body text
+    // (BRAND §9 reserves orange for 18px+/icons/interactive). The orange icon +
+    // chevron carry the accent; the label is content and reads at ink.
+    color: Colors.ink,
   },
 });

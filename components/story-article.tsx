@@ -3,10 +3,11 @@ import { StyleSheet, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
-import { usePostImageUrl } from '@/hooks/use-post-image-url';
+import { headlineFor } from '@/lib/edition-layout';
 import type { PostWithAuthor } from '@/types';
 
 import { AppImage } from './app-image';
+import { Polaroid } from './polaroid-photo';
 import { ThemedText } from './themed-text';
 
 type Props = {
@@ -21,50 +22,71 @@ const getInitials = (name: string) =>
     .map((p) => p[0]?.toUpperCase() ?? '')
     .join('');
 
-// A "section" in the continuous newspaper. No card chrome. Posts sit directly
-// on the paperCream surface; the only separator between them is the
-// `OrnamentalRule` rendered by the parent.
+// One contributor's full story, as read in the reader. Headline (the post's
+// title or a warm byline fallback), an avatar byline, the taped photo when
+// present, then the body set for long-form reading with a raised initial.
 //
-// Byline = small caps "FROM" kicker over the author's name set in display
-// serif, like a newspaper section head. Photo (when present) goes full-width
-// with squared corners and a 1px ink hairline — a printed-photo feel.
-// Body is set in serif at 17/26 for comfortable long-form reading.
-export const EditionPost = ({ post }: Props) => {
+// The raised initial is an inline "lettrine", not a true CSS-float drop cap
+// (React Native has no float). It reads as the same flourish without risking a
+// clipped glyph. Skipped when the body opens on punctuation/whitespace.
+export const StoryArticle = ({ post }: Props) => {
   const { author, body, image_url } = post;
-  const photoUri = usePostImageUrl(image_url);
+
+  const trimmed = body.trimStart();
+  const firstChar = trimmed.charAt(0);
+  const showCap = firstChar !== '' && !/[\s"'“”‘’(){}[\].,!?;:—–-]/.test(firstChar);
+  const initial = showCap ? firstChar : '';
+  const rest = showCap ? trimmed.slice(1) : body;
 
   return (
-    <View style={styles.section}>
+    <View style={styles.article}>
+      <ThemedText style={styles.headline}>{headlineFor(post)}</ThemedText>
+
       <View style={styles.byline}>
         {author.avatar_url ? (
           <AppImage source={{ uri: author.avatar_url }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.avatarFallback]}>
-            <ThemedText style={styles.initials}>
-              {getInitials(author.display_name)}
-            </ThemedText>
+            <ThemedText style={styles.initials}>{getInitials(author.display_name)}</ThemedText>
           </View>
         )}
         <View style={styles.bylineText}>
-          <ThemedText style={styles.bylineKicker}>FROM</ThemedText>
+          <ThemedText style={styles.bylineKicker}>BY</ThemedText>
           <ThemedText style={styles.authorName} numberOfLines={2}>
             {author.display_name}
           </ThemedText>
         </View>
       </View>
 
-      {photoUri ? <AppImage source={{ uri: photoUri }} style={styles.photo} /> : null}
+      {image_url ? (
+        <Polaroid
+          imageUrl={image_url}
+          rotate={1.5}
+          caption={author.display_name}
+          photoAspectRatio={4 / 3}
+          style={styles.photo}
+        />
+      ) : null}
 
-      <ThemedText style={styles.body}>{body}</ThemedText>
+      <ThemedText style={styles.body}>
+        {showCap ? <ThemedText style={styles.dropCap}>{initial}</ThemedText> : null}
+        {rest}
+      </ThemedText>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  section: {
+  article: {
     paddingHorizontal: Layout.padding.lg,
     paddingTop: Layout.padding.lg,
     gap: Layout.padding.md,
+  },
+  headline: {
+    fontFamily: Typography.families.serifBlack,
+    fontSize: Typography.sizes.headline,
+    lineHeight: Typography.lineHeights.headline,
+    color: Colors.ink,
   },
   byline: {
     flexDirection: 'row',
@@ -104,20 +126,21 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     color: Colors.ink,
   },
-  // Full-width photo with squared corners and a thin ink hairline — meant to
-  // read as a printed press photo. Bleeds to the section's horizontal padding,
-  // not the screen edge, so the right margin still feels like a newspaper page.
+  // Slightly extra bottom space so the tilted frame's shadow clears the body.
   photo: {
-    width: '100%',
-    aspectRatio: 4 / 3,
-    backgroundColor: Colors.paperWarm,
-    borderWidth: 1,
-    borderColor: Colors.ink,
+    marginTop: Layout.padding.xs,
+    marginBottom: Layout.padding.md,
   },
   body: {
     fontFamily: Typography.families.serif,
     fontSize: Typography.sizes.read,
     lineHeight: Typography.lineHeights.read,
     color: Colors.ink,
+  },
+  dropCap: {
+    fontFamily: Typography.families.serifBlack,
+    fontSize: 36,
+    lineHeight: 40,
+    color: Colors.orange,
   },
 });

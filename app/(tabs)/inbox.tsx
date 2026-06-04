@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import { AppImage } from '@/components/app-image';
+import { useComposeSheet } from '@/components/compose-sheet-provider';
 import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
@@ -21,6 +22,7 @@ import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
+import { headlineFor, orderEdition } from '@/lib/edition-layout';
 import { fetchEditionsForUser, type EditionListItem } from '@/lib/editions';
 
 type Section = {
@@ -70,6 +72,7 @@ const buildSections = (editions: EditionListItem[]): Section[] => {
 const InboxScreen = () => {
   const router = useRouter();
   const { user } = useAuth();
+  const { openComposeSheet } = useComposeSheet();
   const [editions, setEditions] = useState<EditionListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -108,6 +111,11 @@ const InboxScreen = () => {
   const sections = useMemo(() => buildSections(editions), [editions]);
 
   const renderItem = ({ item }: { item: EditionListItem }) => {
+    const weekOf = formatWeekOf(item.published_at, item.group.timezone);
+    // Lead with the edition's lead-story headline when there is one — it sells
+    // the issue far better than a bare date. Fall back to the date otherwise.
+    const lead = orderEdition(item.posts ?? []).lead;
+    const headline = lead ? headlineFor(lead) : null;
     return (
       <Pressable
         onPress={() => router.push(`/edition/${item.id}`)}
@@ -115,11 +123,11 @@ const InboxScreen = () => {
         style={({ pressed }) => [styles.row, pressed ? styles.rowPressed : null]}
       >
         <View style={styles.rowContent}>
-          <ThemedText style={styles.rowTitle}>
-            {formatWeekOf(item.published_at, item.group.timezone)}
+          <ThemedText style={styles.rowTitle} numberOfLines={2}>
+            {headline ?? weekOf}
           </ThemedText>
           <ThemedText variant="caption" style={styles.rowMeta}>
-            Edition #{item.edition_number}
+            {headline ? `${weekOf} · Edition #${item.edition_number}` : `Edition #${item.edition_number}`}
           </ThemedText>
         </View>
       </Pressable>
@@ -164,7 +172,7 @@ const InboxScreen = () => {
         title={Strings.empty.inbox.title}
         body={Strings.empty.inbox.body}
         ctaLabel={Strings.empty.inbox.cta}
-        onCtaPress={() => router.push('/(tabs)/post')}
+        onCtaPress={openComposeSheet}
       />
     );
   }
@@ -224,7 +232,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.peach + '66',
+    backgroundColor: Colors.peachWash,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -237,14 +245,14 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.xl,
     lineHeight: 28,
   },
-  // Row is a soft pill in `blueWash`, no chevron, generous height. Pressed
-  // state deepens to `blueChipLight` for tactile feedback.
+  // Row is a soft pill on the peach wash, no chevron, generous height. Pressed
+  // state deepens to solid peach for tactile feedback.
   row: {
     minHeight: Layout.touchTargetMin + 8,
     paddingVertical: Layout.padding.md,
     paddingHorizontal: Layout.padding.lg,
-    backgroundColor: Colors.peach + '66',
-    borderRadius: 999,
+    backgroundColor: Colors.peachWash,
+    borderRadius: Layout.borderRadius.full,
     gap: 2,
     justifyContent: 'center',
   },
@@ -257,7 +265,9 @@ const styles = StyleSheet.create({
   rowTitle: {
     fontFamily: Typography.families.serifBold,
     fontSize: Typography.sizes.lg,
-    color: Colors.orange,
+    // The edition date is the row's content, not a link: set it in ink so it
+    // reads like a newspaper dateline and clears AA on the peach wash.
+    color: Colors.ink,
   },
   rowMeta: {
     color: Colors.inkSoft,

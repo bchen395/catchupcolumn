@@ -26,7 +26,23 @@
       "Bash(xargs sed -i '' -e 's/Colors\\\\.navy/Colors.orange/g' -e 's/Colors\\\\.blueChip/Colors.peach/g')",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost:8081/assets/?unstable_path=.%2Fassets%2Fbrand%2Flogo.png\")",
       "Bash(shasum design/Logo.png assets/brand/logo.png)",
-      "Bash(python3 -c \"from PIL import Image; print\\('PIL available'\\)\")"
+      "Bash(python3 -c \"from PIL import Image; print\\('PIL available'\\)\")",
+      "Bash(grep -rn \"#[0-9A-Fa-f]\\\\{3,6\\\\}\" app components --include=\"*.tsx\")",
+      "Bash(echo \"tsc exit: $?\")",
+      "Bash(node -e \"console.log\\('gh version:', require\\('./node_modules/react-native-gesture-handler/package.json'\\).version\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(python3 -c \"import zlib, struct; print\\('python3 ok'\\)\")",
+      "Bash(node -e \"console.log\\('node', process.version\\)\")",
+      "Bash(python3 -)",
+      "Bash(sips -g pixelWidth -g pixelHeight -g hasAlpha /Users/bensonchen/repos/catchupcolumn/assets/textures/paper-grain.png)",
+      "Bash(git rm *)",
+      "Bash(echo \"tsc exit code: $?\")",
+      "Bash(command -v deno)",
+      "Bash(deno --version)",
+      "Bash(echo \"deno: $\\(deno --version)",
+      "Bash(env)",
+      "Bash(echo \"export exit: $?\")",
+      "Bash(awk '/^\\\\/\\\\//{print; found=1; next} found && !/^\\\\/\\\\//{exit}' __TRACKED_VAR__.tsx)"
     ]
   }
 }

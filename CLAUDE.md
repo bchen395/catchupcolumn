@@ -21,16 +21,21 @@ The primary audience is older adults (grandparents, older parents) who want to s
 catch-up-column/
 ├── app/                    # Expo Router file-based routing
 │   ├── (auth)/             # Auth screens (login, signup, onboarding)
-│   ├── (tabs)/             # Main tab navigator
-│   │   ├── inbox.tsx       # Weekly editions reading view
-│   │   ├── compose.tsx     # Write/edit a post for the week
-│   │   ├── groups.tsx      # View and manage Groups
+│   ├── (tabs)/             # Main tab navigator (5 slots, raised center "+")
+│   │   ├── home.tsx        # Home — brandmark, latest edition, entry to Groups
+│   │   ├── inbox.tsx       # "Editions" tab — weekly editions list
+│   │   ├── post.tsx        # Compose — reached via the center "+" sheet
+│   │   ├── mail.tsx        # Mail stub (empty state for now)
 │   │   └── profile.tsx     # User profile and settings
+│   ├── edition/[id]/       # Edition reading screens (front page + story reader)
+│   ├── group/              # Group create/detail screens
+│   ├── groups.tsx          # My Groups (un-tabbed; reached from Home/Profile)
 │   └── _layout.tsx         # Root layout
 ├── components/             # Reusable UI components
 ├── lib/                    # Utilities, Supabase client, helpers
 ├── hooks/                  # Custom React hooks
-├── constants/              # Colors, typography, layout values
+├── constants/              # Design tokens: colors, typography, layout, icons, strings
+├── design/                 # BRAND.md — visual system source of truth
 ├── supabase/
 │   ├── migrations/         # SQL migration files
 │   └── functions/          # Supabase Edge Functions
@@ -39,6 +44,8 @@ catch-up-column/
 ```
 
 ## Database Schema
+
+Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, RLS, RPCs) and `types/database.ts` (client-visible TS mirror — server-only delivery columns are intentionally absent there).
 
 ### users
 - `id` (uuid, PK, matches Supabase auth.users.id)
@@ -55,6 +62,7 @@ catch-up-column/
 - `cover_image_url` (text, nullable)
 - `publish_day` (int, 0=Sunday..6=Saturday, default 0)
 - `publish_time` (time, default '09:00')
+- `timezone` (text, not null, default 'UTC') — IANA name; publish_day/time are evaluated in this zone
 - `created_by` (uuid, FK → users.id)
 - `invite_code` (text, unique) — short code for invite links
 - `created_at` (timestamptz)
@@ -63,6 +71,9 @@ catch-up-column/
 - `group_id` (uuid, FK → groups.id)
 - `user_id` (uuid, FK → users.id)
 - `role` (text, 'moderator' | 'contributor')
+- `email_subscribed` (boolean, default true) — per-Group edition-email opt-out
+- `unsubscribe_token` (uuid, unique) — sole identifier in unsubscribe links
+- `push_subscribed` (boolean, default true) — per-Group push opt-out
 - `joined_at` (timestamptz)
 - PK: (group_id, user_id)
 
@@ -70,6 +81,7 @@ catch-up-column/
 - `id` (uuid, PK)
 - `group_id` (uuid, FK → groups.id)
 - `author_id` (uuid, FK → users.id)
+- `title` (text, nullable, max 80 chars) — optional headline; UI falls back to a "From {first name}" byline
 - `body` (text, not null)
 - `image_url` (text, nullable)
 - `edition_id` (uuid, nullable, FK → editions.id) — null until compiled
@@ -82,6 +94,17 @@ catch-up-column/
 - `edition_number` (int, not null)
 - `published_at` (timestamptz)
 - `created_at` (timestamptz)
+- Delivery tracking (server-only, not in `types/database.ts`): `emailed_at`, `email_attempts`, `email_claim_at` and `pushed_at`, `push_attempts`, `push_claim_at` — sent-marker, retry count, and worker-claim timestamp for email and push respectively
+
+### push_tokens
+- `user_id` (uuid, FK → users.id, cascade delete)
+- `token` (text, not null) — device push token
+- `platform` (text, 'ios' | 'android' | 'web')
+- `created_at` (timestamptz)
+- PK: (user_id, token)
+
+### Notable RPCs
+`compile_due_editions` (cron compilation, slot-scoped duplicate guard), `publish_edition_now` (moderator-only immediate publish, shares the compile lock), `join_group_by_invite_code`, `delete_group_as_moderator`, `prepare_account_deletion`, `get_edition_email_payload` (service-role; feeds the email renderer). Full definitions in `supabase/migrations/`.
 
 ## Key Terminology
 
@@ -113,10 +136,12 @@ Use this language consistently in code, UI, and comments:
 
 ## Design & UX Guidelines
 
-- **Accessibility first.** Minimum 16px body text, 48px touch targets, high contrast. Test with larger system font sizes.
-- **Newspaper aesthetic.** Use Salo (a bold display serif) for edition headlines and reading view. Sans-serif for UI chrome (e.g. Inter or system default). Salo is the design-intent font; until/unless it's loaded as a custom font, fall back to Playfair Display Black (closest readily-available match on Google Fonts).
-- **Warm color palette.** Cream/warm white backgrounds, deep charcoal text, muted accent color (e.g. warm navy or burgundy). Avoid sterile whites and bright blues.
-- **Minimal navigation.** 4 bottom tabs: Inbox, Compose, My Groups, Profile. No hamburger menus or deep nesting.
+The full visual system lives in `design/BRAND.md` (source of truth for design decisions — update it as decisions evolve), with token values in `constants/`. The `frontend-design` skill (`.claude/skills/frontend-design/`) catches a session up before UI work. Headlines:
+
+- **Accessibility first.** Minimum 16px body text, 48px touch targets, high contrast. Never set body copy in orange (fails AA below 18px). Test with larger system font sizes.
+- **Newspaper aesthetic.** Display slab serif: Superclarendon (iOS) / Roboto Slab (Android, web). UI sans: Futura (iOS) / Jost (Android, web). Taped polaroid photos, paper-grain texture, warm paper shadows.
+- **Warm color palette.** Orange `#FF7237` primary, peach + yellow accents, warm off-white (`paperWarm`) app background, black ink text. Always use tokens from `constants/colors.ts` — never raw hex in components.
+- **Minimal navigation.** 5-slot bottom bar: Home, Editions, raised orange "+" (opens the compose sheet), Mail, Profile. My Groups lives off-tab, reached from Home and Profile. No hamburger menus or deep nesting.
 - **Language tone.** Friendly, clear, non-technical. "Your Group is ready!" not "Edition #4 has been published." Say "Write something for this week" not "Create a new post."
 
 ## Supabase Setup Notes

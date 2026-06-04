@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
   },
   bioInput: {
-    minHeight: 88,
+    minHeight: Layout.input.multilineMinHeight,
     paddingTop: 12,
     textAlignVertical: 'top',
   },

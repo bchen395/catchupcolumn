@@ -5,6 +5,7 @@
 
 export type EditionEmailPost = {
   id: string;
+  title: string | null;
   body: string;
   author_name: string;
   author_avatar_url: string | null;
@@ -52,11 +53,24 @@ const renderPost = (post: EditionEmailPost): string => {
     ? `<img src="${escape(post.author_avatar_url)}" alt="" width="40" height="40" style="border-radius: 20px; vertical-align: middle; margin-right: 10px;">`
     : '';
 
+  // Optional headline above the byline. When a post has no title, the byline
+  // alone heads the section (as before).
+  const title = post.title?.trim();
+  const headline = title
+    ? `<h2 style="margin: 0 0 8px 0; font-family: Georgia, 'Times New Roman', serif; font-size: 26px; line-height: 1.2; font-weight: bold; color: #2b2620;">${escape(title)}</h2>`
+    : '';
+  // With a headline present the byline reads "By Name"; without, the name
+  // itself is the section heading.
+  const byline = title
+    ? `<span style="font-family: Georgia, 'Times New Roman', serif; font-size: 15px; font-style: italic; color: #6b5d49; vertical-align: middle;">By ${escape(post.author_name)}</span>`
+    : `<span style="font-family: Georgia, 'Times New Roman', serif; font-size: 18px; font-weight: bold; color: #2b2620; vertical-align: middle;">${escape(post.author_name)}</span>`;
+
   return `
     <section style="margin: 0 0 36px 0; padding: 0 0 28px 0; border-bottom: 1px solid #e6e0d4;">
+      ${headline}
       <div style="margin: 0 0 14px 0;">
         ${avatar}
-        <span style="font-family: Georgia, 'Times New Roman', serif; font-size: 18px; font-weight: bold; color: #2b2620; vertical-align: middle;">${escape(post.author_name)}</span>
+        ${byline}
       </div>
       ${paragraphs}
     </section>

@@ -56,15 +56,15 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
     backgroundColor: Colors.paperWarm,
   },
-  // Keep the bubble blueWash to match EmptyState — the *icon color* is what
-  // signals "error" (red) without making the whole shell feel alarming.
+  // Keep the bubble on the peach wash to match EmptyState. The icon color is
+  // what signals "error" (red) without making the whole shell feel alarming.
   iconBubble: {
     width: 72,
     height: 72,
     borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.peach + '66',
+    backgroundColor: Colors.peachWash,
     marginBottom: Layout.padding.sm,
   },
   title: {
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   cta: {
     minHeight: Layout.touchTargetMin + 4,
     paddingHorizontal: Layout.padding.lg,
-    borderRadius: 999,
+    borderRadius: Layout.borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Layout.padding.md,

@@ -1,8 +1,12 @@
+import type { LeadPostLike } from '@/lib/edition-layout';
 import { supabase } from '@/lib/supabase';
 import type { EditionRow, EditionWithPosts, GroupRow, PostRow, UserRow } from '@/types';
 
 export type EditionListItem = EditionRow & {
   group: Pick<GroupRow, 'id' | 'name' | 'cover_image_url' | 'timezone'>;
+  // Trimmed posts (just what the front-page lead picker + headline need) so the
+  // inbox and home can show each edition's lead story without a second query.
+  posts: LeadPostLike[];
 };
 
 export const fetchEditionsForUser = async (userId: string): Promise<EditionListItem[]> => {
@@ -26,7 +30,8 @@ export const fetchEditionsForUser = async (userId: string): Promise<EditionListI
     .from('editions')
     .select(
       `id, group_id, edition_number, published_at, created_at,
-       group:groups!inner(id, name, cover_image_url, timezone)`,
+       group:groups!inner(id, name, cover_image_url, timezone),
+       posts(title, body, image_url, author:users(display_name))`,
     )
     .in('group_id', groupIds)
     .order('published_at', { ascending: false });
@@ -50,7 +55,7 @@ export const fetchEditionWithPosts = async (editionId: string): Promise<EditionW
     .select(
       `id, group_id, edition_number, published_at, created_at,
        posts(
-         id, group_id, author_id, body, image_url, edition_id, created_at, updated_at,
+         id, group_id, author_id, title, body, image_url, edition_id, created_at, updated_at,
          author:users(id, display_name, avatar_url, bio, email, created_at)
        )`,
     )
@@ -67,6 +72,80 @@ export const fetchEditionWithPosts = async (editionId: string): Promise<EditionW
   );
 
   return { ...row, posts: sortedPosts };
+};
+
+export type PublishNowErrorCode =
+  | 'no_posts_to_publish'
+  | 'not_moderator'
+  | 'not_authenticated'
+  | 'publish_in_progress'
+  | 'publish_failed';
+
+export class PublishNowError extends Error {
+  code: PublishNowErrorCode;
+  constructor(code: PublishNowErrorCode, message: string) {
+    super(message);
+    this.code = code;
+  }
+}
+
+export type PublishEditionNowResult = {
+  editionId: string;
+  editionNumber: number;
+  postCount: number;
+  groupId: string;
+};
+
+// Resolve `error` from supabase.functions.invoke into a known
+// PublishNowErrorCode. invoke surfaces a FunctionsHttpError on non-2xx
+// responses; we read the body to recover our structured `error` field.
+const parsePublishError = async (err: unknown): Promise<PublishNowError> => {
+  if (err && typeof err === 'object' && 'context' in err) {
+    const ctx = (err as { context?: { json?: () => Promise<{ error?: string }>; text?: () => Promise<string> } }).context;
+    try {
+      const body = await ctx?.json?.();
+      const code = body?.error;
+      if (
+        code === 'no_posts_to_publish' ||
+        code === 'not_moderator' ||
+        code === 'not_authenticated' ||
+        code === 'publish_in_progress'
+      ) {
+        return new PublishNowError(code, code);
+      }
+    } catch {
+      // Fall through to generic failure below.
+    }
+  }
+  return new PublishNowError('publish_failed', err instanceof Error ? err.message : 'Publish failed');
+};
+
+export const publishEditionNow = async (groupId: string): Promise<PublishEditionNowResult> => {
+  const { data, error } = await supabase.functions.invoke('publish-edition-now', {
+    body: { group_id: groupId },
+  });
+
+  if (error) {
+    throw await parsePublishError(error);
+  }
+
+  const result = data as {
+    edition_id?: string;
+    edition_number?: number;
+    post_count?: number;
+    group_id?: string;
+  } | null;
+
+  if (!result?.edition_id || typeof result.edition_number !== 'number') {
+    throw new PublishNowError('publish_failed', 'Malformed response from publish-edition-now');
+  }
+
+  return {
+    editionId: result.edition_id,
+    editionNumber: result.edition_number,
+    postCount: result.post_count ?? 0,
+    groupId: result.group_id ?? groupId,
+  };
 };
 
 export const fetchGroupForEdition = async (groupId: string): Promise<Pick<GroupRow, 'id' | 'name' | 'cover_image_url' | 'timezone'>> => {
