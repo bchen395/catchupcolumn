@@ -1,20 +1,24 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
-import { EditionBrief } from '@/components/edition-brief';
+import { EditionBriefColumn } from '@/components/edition-brief-column';
+import { EditionBriefsGrid } from '@/components/edition-briefs-grid';
 import { EditionLead } from '@/components/edition-lead';
+import { EditionSecondary } from '@/components/edition-secondary';
 import { ErrorState } from '@/components/error-state';
 import { PaperGrain } from '@/components/paper-grain';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { StatusBanner } from '@/components/status-banner';
+import { StoryReaderOverlay, type SectionFrame } from '@/components/story-reader-overlay';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
 import { Icons } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
+import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { orderEdition } from '@/lib/edition-layout';
 import { fetchEditionWithPosts, fetchGroupForEdition } from '@/lib/editions';
 import type { EditionWithPosts, GroupRow } from '@/types';
@@ -42,17 +46,30 @@ const countContributors = (edition: EditionWithPosts): number =>
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-// The edition front page: a masthead, the curated lead story, then "also in
-// this edition" briefs for everyone else. Tapping any story opens the reader.
+// For the overlay's non-interactive section snapshots.
+const noop = () => {};
+
+// The edition front page: a masthead, the curated lead story, a prominent
+// second story, then an "in brief" two-column grid for everyone else — a
+// classic newspaper front page. Tapping any story opens the reader.
 const EditionFrontPage = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const reduceMotion = useReduceMotion();
 
   const [edition, setEdition] = useState<EditionWithPosts | null>(null);
   const [group, setGroup] = useState<GroupSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [screenError, setScreenError] = useState('');
+
+  // The enlarge overlay: which story was tapped and where its section sits on
+  // screen. The ref guards against a second tap landing while the first
+  // section is still being measured.
+  const [overlay, setOverlay] = useState<{ postId: string; frame: SectionFrame } | null>(null);
+  const overlayOpenRef = useRef(false);
+  const leadRef = useRef<View>(null);
+  const secondaryRef = useRef<View>(null);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -97,8 +114,40 @@ const EditionFrontPage = () => {
   }
 
   const weekOf = formatWeekOf(edition.published_at, group.timezone);
-  const { lead, briefs } = orderEdition(edition.posts);
-  const openStory = (postId: string) => router.push(`/edition/${id}/${postId}`);
+  const { lead, secondary, briefs, ordered } = orderEdition(edition.posts);
+
+  // Open a story by growing it out of its spot on the page. Falls back to the
+  // plain reader route when Reduce Motion is on or the section couldn't be
+  // measured. Taps are ignored mid-refresh so the overlay never opens against
+  // shifting data.
+  const openStory = (postId: string, frame: SectionFrame | null) => {
+    if (overlayOpenRef.current || refreshing) return;
+    if (reduceMotion || !frame || frame.width <= 0 || frame.height <= 0) {
+      router.push(`/edition/${id}/${postId}`);
+      return;
+    }
+    overlayOpenRef.current = true;
+    setOverlay({ postId, frame });
+  };
+
+  const openMeasured = (postId: string, ref: RefObject<View | null>) => {
+    const node = ref.current;
+    if (!node) {
+      openStory(postId, null);
+      return;
+    }
+    node.measureInWindow((x, y, width, height) => openStory(postId, { x, y, width, height }));
+  };
+
+  // Re-render the tapped section's markup for the overlay's cross-fade.
+  const snapshotFor = (postId: string) => () => {
+    if (lead && postId === lead.id) return <EditionLead post={lead} onPress={noop} />;
+    if (secondary && postId === secondary.id) {
+      return <EditionSecondary post={secondary} onPress={noop} />;
+    }
+    const brief = briefs.find((b) => b.id === postId);
+    return brief ? <EditionBriefColumn post={brief} onPress={noop} /> : null;
+  };
 
   return (
     <View style={styles.flex}>
@@ -106,6 +155,7 @@ const EditionFrontPage = () => {
       <ScrollView
         style={styles.scrollFlex}
         contentContainerStyle={styles.scroll}
+        scrollEnabled={!overlay}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.orange} />
         }
@@ -159,26 +209,44 @@ const EditionFrontPage = () => {
           </View>
         ) : (
           <>
-            <EditionLead post={lead} onPress={() => openStory(lead.id)} />
+            {/* Measurable wrappers give the enlarge overlay its launch frame. */}
+            <View ref={leadRef} collapsable={false}>
+              <EditionLead post={lead} onPress={() => openMeasured(lead.id, leadRef)} />
+            </View>
 
-            {briefs.length > 0 ? (
-              <View style={styles.briefsSection}>
-                <View style={styles.briefsHeader}>
-                  <View style={styles.briefsRule} />
-                  <ThemedText style={styles.briefsLabel}>ALSO IN THIS EDITION</ThemedText>
-                  <View style={styles.briefsRule} />
+            {secondary ? (
+              <>
+                <View style={styles.sectionRule} />
+                <View ref={secondaryRef} collapsable={false}>
+                  <EditionSecondary
+                    post={secondary}
+                    onPress={() => openMeasured(secondary.id, secondaryRef)}
+                  />
                 </View>
-                {briefs.map((post, idx) => (
-                  <Fragment key={post.id}>
-                    {idx > 0 ? <View style={styles.briefDivider} /> : null}
-                    <EditionBrief post={post} onPress={() => openStory(post.id)} />
-                  </Fragment>
-                ))}
-              </View>
+              </>
             ) : null}
+
+            <EditionBriefsGrid briefs={briefs} onOpen={openStory} />
           </>
         )}
       </ScrollView>
+
+      {overlay ? (
+        <StoryReaderOverlay
+          posts={ordered}
+          initialIndex={Math.max(
+            0,
+            ordered.findIndex((p) => p.id === overlay.postId),
+          )}
+          originFrame={overlay.frame}
+          renderSnapshot={snapshotFor(overlay.postId)}
+          reduceMotion={reduceMotion}
+          onClosed={() => {
+            overlayOpenRef.current = false;
+            setOverlay(null);
+          }}
+        />
+      ) : null}
     </View>
   );
 };
@@ -244,31 +312,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     textAlign: 'center',
   },
-  briefsSection: {
-    paddingTop: Layout.padding.sm,
-  },
-  // Centered "also in this edition" label flanked by short rules — a section
-  // head, not a card boundary.
-  briefsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Layout.padding.md,
-    paddingHorizontal: Layout.padding.lg,
-    paddingTop: Layout.padding.md,
-    paddingBottom: Layout.padding.sm,
-  },
-  briefsRule: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.borderSoft,
-  },
-  briefsLabel: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.xs,
-    letterSpacing: 2,
-    color: Colors.inkSoft,
-  },
-  briefDivider: {
+  // Hairline between the lead and the second story.
+  sectionRule: {
     height: 1,
     backgroundColor: Colors.borderSoft,
     marginHorizontal: Layout.padding.lg,

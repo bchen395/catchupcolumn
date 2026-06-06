@@ -42,7 +42,9 @@
       "Bash(echo \"deno: $\\(deno --version)",
       "Bash(env)",
       "Bash(echo \"export exit: $?\")",
-      "Bash(awk '/^\\\\/\\\\//{print; found=1; next} found && !/^\\\\/\\\\//{exit}' __TRACKED_VAR__.tsx)"
+      "Bash(awk '/^\\\\/\\\\//{print; found=1; next} found && !/^\\\\/\\\\//{exit}' __TRACKED_VAR__.tsx)",
+      "Bash(git -C /Users/bensonchen/repos/catchupcolumn status --short)",
+      "Bash(git -C /Users/bensonchen/repos/catchupcolumn diff --cached --stat)"
     ]
   }
 }

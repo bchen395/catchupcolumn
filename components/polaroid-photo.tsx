@@ -22,6 +22,9 @@ type Props = {
   tape?: boolean;
   // Photo aspect ratio inside the frame. Square reads most like a polaroid.
   photoAspectRatio?: number;
+  // Reports the image's natural pixel size once loaded — feeds
+  // useImageOrientation so parents can adapt layout to portrait/landscape.
+  onNaturalSize?: (width: number, height: number) => void;
   // Width (and any layout) for the frame. Parent decides the size.
   style?: StyleProp<ViewStyle>;
 };
@@ -35,6 +38,7 @@ export const Polaroid = ({
   caption,
   tape = true,
   photoAspectRatio = 1,
+  onNaturalSize,
   style,
 }: Props) => {
   const uri = usePostImageUrl(imageUrl);
@@ -47,6 +51,11 @@ export const Polaroid = ({
           source={uri ? { uri } : undefined}
           style={[styles.photo, { aspectRatio: photoAspectRatio }]}
           accessibilityIgnoresInvertColors
+          onLoad={
+            onNaturalSize
+              ? (event) => onNaturalSize(event.source.width, event.source.height)
+              : undefined
+          }
         />
         {caption ? (
           <ThemedText style={styles.caption} numberOfLines={1}>

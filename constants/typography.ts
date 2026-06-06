@@ -32,11 +32,17 @@ export const Typography = {
     xxl: 28,
     headline: 36,
     wordmark: 32,
+    // Cover teaser text on the edition front page. Intentionally below the
+    // 16px reading floor: excerpts are scannable newsprint that invites a tap
+    // to enlarge — real reading always happens in the 17px story reader.
+    excerpt: 14,
   },
   lineHeights: {
     body: 24,
     read: 26,
     headline: 44,
     wordmark: 36,
+    // Tight leading for multi-line cover excerpts in narrow columns.
+    excerpt: 20,
   },
 };

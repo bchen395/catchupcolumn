@@ -98,19 +98,45 @@ The redesign uses a 5-tab bar with home, newspaper, +, mail, profile. Current ap
 
 All 5 tabs ship together with the raised center button. Mail is a stub empty-state until it has content.
 
-## 6. Edition reader: continuous newspaper layout
+## 6. Edition: front page + enlarge-to-read
 
-The reader is one continuous newspaper page, not a stack of discrete cards.
+The edition opens to a **classic newspaper front page** — a mixed-editorial cover where every story is visible at once — and tapping any section **enlarges it** into a full-screen single-story reader. This replaced the earlier continuous-scroll reader: the cover-then-enlarge model reads as "picking up a section of the Sunday paper" and gives older readers one big obvious tap target per story.
 
-1. **Masthead** at top of page: group name in Superclarendon Heavy all-caps, thin `ink` rule, italic "Week of …" line in Superclarendon Italic, edition number in Futura `xs` small caps.
-2. **Posts render as stacked sections** in a single scroll, but visually fused:
-   - No card background, no border between posts. One continuous `paperWarm` surface.
-   - Each post = serif **byline headline** (`From {author}` styled as a sub-headline in Superclarendon Bold) → optional inline photo (full-width, no rounded corners, thin `ink` hairline) → body in Superclarendon Regular at 17/26.
-   - Posts separated only by a centered ornamental rule (e.g. `* * *` in Superclarendon) or a 1px `borderSoft` hairline.
-3. **Single column** with generous side padding (~24px), readable on phone. True two-column flow requires custom layout work and is deferred.
-4. **Drop cap** on the first post: oversized Superclarendon Heavy first letter in `orange`, ~3 lines tall, floated left. Nice-to-have on subsequent posts but not required.
+### 6.1 Front page (cover)
 
-Future iteration paths: drop caps on every post, true two-column flow with photos that span columns, "jump to author" anchor nav, printable PDF export.
+Top to bottom (`app/edition/[id]/index.tsx`):
+
+1. **Masthead**: group name in Superclarendon Black all-caps, thin `ink` rule, italic "Week of …" line, edition number + story/writer counts in Futura `xs` small caps. 3px `ink` rule below.
+2. **Lead story** (`edition-lead`): "LEAD STORY" kicker in `orange`, 36px Black headline, italic byline, then the photo (tilt −1.5°, no caption — the byline sits right above it) and a **newsprint teaser**: a short 14px excerpt dissolving into greeked lines (see below), with an orange `READ THE STORY →` cue. Headline-first, photo second — the inverse of the secondary's silhouette.
+3. **Secondary story** (`edition-secondary`): hairline rule above; photo-first for landscape/square (tilt **+1.5°** — never matching the lead's angle); 28px Bold headline; italic 14px byline; a 2-line 14px excerpt + 2 greeked lines; orange read cue.
+4. **"IN BRIEF" grid** (`edition-briefs-grid` + `edition-brief-column`): centered small-caps label flanked by rules, then briefs paired into **two columns** with a 1px `borderSoft` vertical rule between them and horizontal rules between rows. A brief with a photo opens with a **small square untaped thumb** (≤150px, deterministic tilt from the post id) — a third photo post is visible on the cover, not buried. 18px Bold headlines, 3-line 14px excerpts + 2 greeked lines. **An odd final brief runs the full measure** — no dangling half-column or lonely rule.
+
+**Photo shapes are orientation-aware** (`use-image-orientation`): each photo's natural ratio is learned from the image as it loads (no extra fetch), cached by raw URL so the cover, the enlarge snapshot, and the reader always agree, and snapped to a newspaper crop bucket — landscape **4:3**, portrait **4:5**, square **1:1** (±15% of square reads as square). On the cover, landscape/square photos run the full measure with text below; a **portrait photo holds its own column with the teaser running beside it** (46% width on the lead, 42% on the secondary) — the classic text-wrap move, and the page's main source of asymmetry. Until the shape is known, blocks lay out as landscape (the common case) and adapt once, when the image reports its size.
+
+**Greeked continuation lines** (`greeked-lines`): after each cover excerpt, 2–3 thin rounded ink bars (~16% black, 7px on the excerpt's 20px rhythm, irregular ragged-right widths from a fixed pattern table) fade out line by line — the printer's device for "the column continues below the fold." They are decoration, not content: hidden from screen readers (the real excerpt carries the meaning), stable across re-renders so the enlarge overlay's snapshot matches, and always *after* real text so they read as a dissolving column rather than a skeleton loader.
+
+**Slot assignment is by rule, no human editor** (`lib/edition-layout.ts`): most-visual-wins picks the lead (photo posts first, longest body among them), then the same rule picks the secondary from the remainder. Everyone else is a brief in written order. The reader's Next/Previous follows this exact order, so cover and reader always agree.
+
+**Posts have optional titles**; `headlineFor` falls back to a warm byline headline ("From Ruth" — first name only).
+
+**The 14px excerpt decision**: cover excerpts — including the lead's — are set at `sizes.excerpt` (14/20), deliberately below the 16px reading floor. They are *teasers*, newsprint you tap to enlarge, not reading copy; the full story is always available at 17px in the reader. Excerpts use `inkSoft` and carry `maxFontSizeMultiplier={1.6}` (the codebase's only font-scale cap) so the largest accessibility sizes still grow them to ~22px without wrecking the column layouts — everything else on the page scales freely. (Earlier drafts kept the lead at 17px reading type; that made the cover read like a blog post rather than a dense front page, so the lead now sets newsprint like everything else and lets its 36px headline and photo do the selling.)
+
+The `READ THE STORY →` cue is an affordance label (Futura SemiBold 12px, `orange`) inside the already-pressable block — orange is fine here because it is not body copy. Brief cells omit the cue; at half-column width it's clutter, and the whole cell is the tap target.
+
+### 6.2 Enlarge transition (cover → reader)
+
+Tapping a section makes it **grow from its spot on the page into the full-screen reader** (`story-reader-overlay`): a 260ms ease-out frame interpolation from the section's measured frame to full screen, cross-fading the re-rendered section markup into the reader. Rendered in a transparent `Modal` (the app's established overlay idiom) so it covers the native header; warm-brown shadow lifts the "page" mid-flight. Closing reverses the shrink back into the origin frame — front-page scroll position is preserved because nothing ever navigates.
+
+- **Reduce Motion bypasses the overlay entirely**: the tap pushes the plain `/edition/[id]/[postId]` route instead. That route is kept as the deep-link/fallback path and renders the same shared `story-reader` component.
+- No gestures — explicit buttons only (chevron, footer "Front page", Android hardware back via `onRequestClose`). Predictability over spectacle for the older-adult audience.
+
+### 6.3 Story reader
+
+One contributor's full post at a time (`story-reader` + `story-article`): 36px Black headline, avatar byline, taped polaroid, body in Superclarendon Regular at 17/26 with an **inline lettrine drop cap** (orange Black serif raised initial — RN has no float; skipped when the body opens on punctuation). Footer pages Next/Previous through the edition in cover order with a gentle 220ms slide+fade page turn (instant under Reduce Motion).
+
+**Photos are polaroids everywhere** — the taped, tilted white-frame treatment (`polaroid-photo`) at every size, with rotation varied per slot so no two frames sit at the same angle. The earlier squared-off full-width inline photo treatment is retired. The reader's photo uses the same orientation buckets as the cover; a portrait photo renders tall at a **78% centered measure** (a full-width 4:5 would tower over the page).
+
+Future iteration paths: drop caps on every post, "jump to author" anchor nav, printable PDF export.
 
 ## 7. Iconography
 

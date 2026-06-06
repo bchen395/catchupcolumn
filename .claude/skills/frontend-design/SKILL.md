@@ -40,9 +40,13 @@ You're working on the UI of a warm, paperish family-newsletter app built for old
 | `icon` | Rendering an `IconDescriptor` from `constants/icons.ts`. |
 | `paper-grain` | Printed-paper texture; drop as last child of a relative surface. Never intercepts touches. |
 | `polaroid-photo` | Any user photo: tape, tilt, chin, italic serif caption. Vary `rotate` per use so no two sit at the same angle. |
-| `edition-lead` | The front-page lead story block (kicker, headline, byline, deck). |
-| `edition-brief` | Below-the-fold compact story rows — every non-lead contributor, equal to one another. |
+| `edition-lead` | The front-page lead story block (kicker, headline, byline, 17px excerpt, read cue). |
+| `edition-secondary` | The cover's second story — mid-weight: optional polaroid, 28px headline, 14px excerpt, read cue. |
+| `edition-brief-column` | One text-only cell of the "IN BRIEF" grid (18px headline, byline, 14px excerpt). |
+| `edition-briefs-grid` | The "IN BRIEF" section: labeled rule header + two-column rows with hairline rules; odd last brief runs full-width. Reports tapped-cell frames for the enlarge overlay. |
 | `story-article` | One full post in the reader: headline, avatar byline, polaroid, lettrine body. |
+| `story-reader` | Host-agnostic reader body + Next/Previous paging; rendered by both the `[postId]` route and the enlarge overlay. |
+| `story-reader-overlay` | The enlarge transition: tapped cover section grows into the full-screen reader (Modal + reanimated); reverse-shrinks on close. |
 | `custom-tab-bar` | The 5-slot bar with the raised orange "+". |
 | `compose-sheet-provider` / `compose-group-sheet` | The "write for…" group-picker sheet the "+" opens. |
 | `empty-state` / `error-state` | Icon bubble + serif headline + sans body (+ CTA). Copy from `Strings`, icons from `Icons`. |
@@ -59,14 +63,10 @@ You're working on the UI of a warm, paperish family-newsletter app built for old
 
 The implementation has evolved past `design/BRAND.md` in these places. **Treat the code as correct**; fold a note into BRAND.md when you touch its section, then delete it here.
 
-- **Photos are Polaroids.** BRAND §6 still describes full-width squared-off inline photos; the shipped treatment is the taped, tilted polaroid frame (`polaroid-photo.tsx`) at every size — lead, briefs, reader.
 - **Paper grain texture.** A faint tiled warm-noise overlay (`paper-grain.tsx`) gives flat surfaces a printed feel. Not in BRAND.md at all.
-- **Drop cap is an inline lettrine,** not a floated cap (RN has no float). Orange `serifBlack`, skipped when the body opens on punctuation/whitespace. Refines BRAND §6.4.
 - **The center "+" opens a sheet, not a tab.** It opens `compose-group-sheet` to pick a Group first, then routes to Compose. Evolves BRAND §5.
 - **Tab icons bypass `constants/icons.ts`.** `custom-tab-bar.tsx` keeps its own filled/outline pairs (filled when active) in a local `TAB_META`. Known inconsistency with the registry — if you consolidate, registry wins.
 - **The Inbox tab is labeled "Editions."**
-- **Posts have optional titles** (migration `20260603000000_add_post_title.sql`). `headlineFor` in `lib/edition-layout.ts` uses the title, falling back to a warm byline ("From Ruth" — first name only).
-- **Lead story rule: most visual wins.** No human editor — a photo post leads; among photo posts the longest body leads; with no photos, the longest post leads (`lib/edition-layout.ts`). Front page and reader share this order.
 - **Touch targets are 48px** (`Layout.touchTargetMin`), stricter than BRAND §9's 44pt. Follow 48.
 
 ## Workflow for a UI change

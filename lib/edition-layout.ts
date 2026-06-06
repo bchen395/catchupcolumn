@@ -1,11 +1,14 @@
 // Front-page layout for an edition.
 //
-// An edition has no human editor, so the "lead story" is chosen by rule:
+// An edition has no human editor, so the front page is assembled by rule:
 // MOST VISUAL WINS — a post with a photo leads; among several photo posts the
-// longest one leads; with no photos at all, the longest post leads. Everyone
-// else becomes a "brief" in the order they were written. The same ordering
-// (lead first, then briefs) drives Next/Previous on the story reader so the
-// front page and the reader agree on sequence.
+// longest one leads; with no photos at all, the longest post leads. The same
+// rule then picks a SECONDARY story from the remainder (photo preferred,
+// longest body wins), and everyone else becomes an "in brief" item in the
+// order they were written. Pulling the most-visual second story up to
+// position 2 means `ordered` can differ from written order — intentional:
+// Next/Previous on the story reader follows the same visual priority the
+// front page shows, so the two always agree on sequence.
 
 // Structural minimum the layout needs — satisfied by PostWithAuthor and by the
 // trimmed post shape nested into the inbox query.
@@ -18,24 +21,34 @@ export type LeadPostLike = {
 
 export type EditionOrder<T extends LeadPostLike> = {
   lead: T | null;
+  // The second-most-visual story — gets its own prominent slot on the cover.
+  secondary: T | null;
   briefs: T[];
-  // Lead first, then briefs — the canonical reading sequence.
+  // Lead, then secondary, then briefs — the canonical reading sequence.
   ordered: T[];
+};
+
+// Most-visual-wins pick: prefer photo posts, fall back to the whole set when
+// none have a photo. Within the pool, the longest body wins — the meatiest
+// read. Strict `>` keeps the earlier-written post on ties.
+const mostVisual = <T extends LeadPostLike>(posts: T[]): T => {
+  const photoPosts = posts.filter((p) => !!p.image_url);
+  const pool = photoPosts.length > 0 ? photoPosts : posts;
+  return pool.reduce((best, p) => (p.body.length > best.body.length ? p : best), pool[0]);
 };
 
 export const orderEdition = <T extends LeadPostLike>(posts: T[]): EditionOrder<T> => {
   if (posts.length === 0) {
-    return { lead: null, briefs: [], ordered: [] };
+    return { lead: null, secondary: null, briefs: [], ordered: [] };
   }
 
-  // Prefer photo posts for the lead; fall back to the whole set when none have
-  // a photo. Within the pool, the longest body wins — the meatiest read.
-  const photoPosts = posts.filter((p) => !!p.image_url);
-  const pool = photoPosts.length > 0 ? photoPosts : posts;
-  const lead = pool.reduce((best, p) => (p.body.length > best.body.length ? p : best), pool[0]);
+  const lead = mostVisual(posts);
+  const rest = posts.filter((p) => p !== lead);
+  const secondary = rest.length > 0 ? mostVisual(rest) : null;
 
-  const briefs = posts.filter((p) => p !== lead);
-  return { lead, briefs, ordered: [lead, ...briefs] };
+  const briefs = rest.filter((p) => p !== secondary);
+  const ordered = secondary ? [lead, secondary, ...briefs] : [lead];
+  return { lead, secondary, briefs, ordered };
 };
 
 // First name only — warmer and fits a headline better than the full name.

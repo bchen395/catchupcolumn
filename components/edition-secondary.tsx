@@ -16,63 +16,64 @@ type Props = {
   onPress: () => void;
 };
 
-// The front-page lead: kicker, heavy headline, byline, the photo, then a short
-// newsprint excerpt that dissolves into greeked lines — the story visibly
-// continues in the reader. Landscape and square photos run the full measure
-// with the text below; a portrait photo sits in its own column with the text
-// running beside it, newspaper-style. The whole block is the tap target.
-export const EditionLead = ({ post, onPress }: Props) => {
+// The second story on the front page: mid-weight between the lead and the
+// in-brief grid. A landscape/square photo runs full-width above the headline
+// (tilted opposite the lead so no two frames sit at the same angle, and
+// photo-first so its silhouette differs from the lead's headline-first block);
+// a portrait photo drops into a column beside the excerpt instead. The excerpt
+// dissolves into greeked lines. The whole block is the tap target.
+export const EditionSecondary = ({ post, onPress }: Props) => {
   const headline = headlineFor(post);
   const { orientation, onNaturalSize } = useImageOrientation(post.image_url);
   // Until the photo reports its shape, lay out as landscape — the common case.
   const portrait = orientation === 'portrait';
 
-  // Newsprint teaser + greeked continuation. Capped scaling so accessibility
-  // sizes grow it without blowing up the page; full reading is the 17px reader.
-  const teaser = (lines: number) => (
-    <>
-      <ThemedText style={styles.deck} numberOfLines={lines} maxFontSizeMultiplier={1.6}>
-        {deckFor(post, 160)}
-      </ThemedText>
-      <GreekedLines lines={3} style={styles.greek} />
-    </>
-  );
-
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Read the lead story, ${headline}, by ${post.author.display_name}`}
+      accessibilityLabel={`Read ${headline}, by ${post.author.display_name}`}
       style={({ pressed }) => [styles.wrap, pressed && styles.pressed]}
     >
-      <ThemedText style={styles.kicker}>LEAD STORY</ThemedText>
-      <ThemedText style={styles.headline}>{headline}</ThemedText>
+      {post.image_url && !portrait ? (
+        <Polaroid
+          imageUrl={post.image_url}
+          rotate={1.5}
+          photoAspectRatio={displayRatioFor(orientation ?? 'landscape')}
+          onNaturalSize={onNaturalSize}
+          style={styles.photo}
+        />
+      ) : null}
+
+      <ThemedText style={styles.headline} numberOfLines={3}>
+        {headline}
+      </ThemedText>
       <ThemedText style={styles.byline}>By {post.author.display_name}</ThemedText>
 
+      {/* Newsprint teaser — capped scaling so accessibility sizes grow it
+          without blowing up the page; full reading is the 17px reader. */}
       {post.image_url && portrait ? (
-        // Portrait: the photo holds one column, the teaser runs beside it.
         <View style={styles.sideBySide}>
           <Polaroid
             imageUrl={post.image_url}
-            rotate={-1.5}
+            rotate={1.5}
             photoAspectRatio={displayRatioFor('portrait')}
             onNaturalSize={onNaturalSize}
             style={styles.portraitPhoto}
           />
-          <View style={styles.sideText}>{teaser(8)}</View>
+          <View style={styles.sideText}>
+            <ThemedText style={styles.excerpt} numberOfLines={6} maxFontSizeMultiplier={1.6}>
+              {deckFor(post, 140)}
+            </ThemedText>
+            <GreekedLines lines={2} style={styles.greek} />
+          </View>
         </View>
       ) : (
         <>
-          {post.image_url ? (
-            <Polaroid
-              imageUrl={post.image_url}
-              rotate={-1.5}
-              photoAspectRatio={displayRatioFor(orientation ?? 'landscape')}
-              onNaturalSize={onNaturalSize}
-              style={styles.photo}
-            />
-          ) : null}
-          {teaser(3)}
+          <ThemedText style={styles.excerpt} numberOfLines={2} maxFontSizeMultiplier={1.6}>
+            {deckFor(post, 140)}
+          </ThemedText>
+          <GreekedLines lines={2} style={styles.greek} />
         </>
       )}
 
@@ -84,8 +85,7 @@ export const EditionLead = ({ post, onPress }: Props) => {
 const styles = StyleSheet.create({
   wrap: {
     paddingHorizontal: Layout.padding.lg,
-    paddingTop: Layout.padding.lg,
-    paddingBottom: Layout.padding.lg,
+    paddingVertical: Layout.padding.lg,
     gap: Layout.padding.sm,
   },
   pressed: {
@@ -93,8 +93,7 @@ const styles = StyleSheet.create({
   },
   // Extra bottom room so the tilted frame's shadow has space before the text.
   photo: {
-    marginTop: Layout.padding.xs,
-    marginBottom: Layout.padding.sm,
+    marginBottom: Layout.padding.md,
   },
   sideBySide: {
     flexDirection: 'row',
@@ -103,31 +102,25 @@ const styles = StyleSheet.create({
     marginTop: Layout.padding.xs,
   },
   portraitPhoto: {
-    width: '46%',
+    width: '42%',
   },
   sideText: {
     flex: 1,
     gap: Layout.padding.sm,
   },
-  kicker: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.xs,
-    letterSpacing: 2,
-    color: Colors.orange,
-  },
   headline: {
-    fontFamily: Typography.families.serifBlack,
-    fontSize: Typography.sizes.headline,
-    lineHeight: Typography.lineHeights.headline,
+    fontFamily: Typography.families.serifBold,
+    fontSize: Typography.sizes.xxl,
+    lineHeight: 32,
     color: Colors.ink,
   },
   byline: {
     fontFamily: Typography.families.serif,
     fontStyle: 'italic',
-    fontSize: Typography.sizes.body,
+    fontSize: Typography.sizes.sm,
     color: Colors.inkSoft,
   },
-  deck: {
+  excerpt: {
     fontFamily: Typography.families.serif,
     fontSize: Typography.sizes.excerpt,
     lineHeight: Typography.lineHeights.excerpt,

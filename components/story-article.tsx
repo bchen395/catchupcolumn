@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
+import { displayRatioFor, useImageOrientation } from '@/hooks/use-image-orientation';
 import { headlineFor } from '@/lib/edition-layout';
 import type { PostWithAuthor } from '@/types';
 
@@ -31,6 +32,7 @@ const getInitials = (name: string) =>
 // clipped glyph. Skipped when the body opens on punctuation/whitespace.
 export const StoryArticle = ({ post }: Props) => {
   const { author, body, image_url } = post;
+  const { orientation, onNaturalSize } = useImageOrientation(image_url);
 
   const trimmed = body.trimStart();
   const firstChar = trimmed.charAt(0);
@@ -63,8 +65,9 @@ export const StoryArticle = ({ post }: Props) => {
           imageUrl={image_url}
           rotate={1.5}
           caption={author.display_name}
-          photoAspectRatio={4 / 3}
-          style={styles.photo}
+          photoAspectRatio={displayRatioFor(orientation ?? 'landscape')}
+          onNaturalSize={onNaturalSize}
+          style={[styles.photo, orientation === 'portrait' && styles.photoPortrait]}
         />
       ) : null}
 
@@ -130,6 +133,12 @@ const styles = StyleSheet.create({
   photo: {
     marginTop: Layout.padding.xs,
     marginBottom: Layout.padding.md,
+  },
+  // A tall photo at full width would tower over the page — bring it in to a
+  // narrower centered measure instead, like a portrait plate in a paper.
+  photoPortrait: {
+    width: '78%',
+    alignSelf: 'center',
   },
   body: {
     fontFamily: Typography.families.serif,

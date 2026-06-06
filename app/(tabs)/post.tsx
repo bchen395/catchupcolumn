@@ -460,7 +460,7 @@ const PostScreen = () => {
                 style={styles.titleInput}
                 value={title}
                 onChangeText={handleChangeTitle}
-                placeholder="Add a headline (optional)"
+                placeholder="Headline"
                 placeholderTextColor={Colors.inkMuted}
                 selectionColor={Colors.orange}
                 editable={!isBusy}
