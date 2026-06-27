@@ -84,19 +84,17 @@ Type scale:
 
 ## 5. Navigation mapping (current → target)
 
-The redesign uses a 5-tab bar with home, newspaper, +, mail, profile. Current app has 4: Inbox, Post, Groups, Profile.
+The shipped design uses a 5-slot bar with a raised center button: Home, Editions, +, Groups, Profile.
 
-| Slot | Icon        | Maps to (MVP)                  | Notes                                                |
-| ---- | ----------- | ------------------------------ | ---------------------------------------------------- |
-| 1    | Home        | Home (new lightweight screen)  | Brandmark + most-recent edition card + "Drafts" stub. Uses Inbox data, no separate query. |
-| 2    | Newspaper   | Inbox (`/(tabs)/inbox`)        | Existing list of editions, restyled.                 |
-| 3    | + (raised)  | Compose (`/(tabs)/post`)       | Existing composer.                                   |
-| 4    | Mail        | Mail (new stub screen)         | Empty-state screen for now ("No messages yet"). Wire to real content later. |
-| 5    | Profile     | Profile (`/(tabs)/profile`)    | Existing profile, restyled.                          |
+| Slot | Icon         | Maps to (MVP)                  | Notes                                                |
+| ---- | ------------ | ------------------------------ | ---------------------------------------------------- |
+| 1    | Home         | Home (`/(tabs)/home`)          | Brandmark + most-recent edition card + this-week strip. Uses Inbox data, no separate query. |
+| 2    | Newspaper    | Editions (`/(tabs)/inbox`)     | List of editions, restyled. (File is `inbox.tsx`; the label reads "Editions".) |
+| 3    | + (raised)   | Compose (`/(tabs)/post`)       | The composer, opened via the center "+" sheet.       |
+| 4    | Account group| Groups (`/(tabs)/groups`)      | List of Groups you belong to.                        |
+| 5    | Profile      | Profile (`/(tabs)/profile`)    | Profile + settings.                                  |
 
-**My Groups** is promoted from a tab to a header button on Home + a row on Profile. Keep the `/(tabs)/groups` route alive but un-tabbed; navigate to it from those entry points.
-
-All 5 tabs ship together with the raised center button. Mail is a stub empty-state until it has content.
+The earlier plan put a **Mail** stub in slot 4 and kept Groups off-tab; that was dropped — Groups now owns slot 4, and the Group **create/join/detail** flow lives off-tab under `app/group/`, reached from the Groups tab and Home.
 
 ## 6. Edition: front page + enlarge-to-read
 
@@ -146,7 +144,7 @@ Recommended set:
 - Home → `home-outline`
 - Newspaper → `newspaper-variant-outline`
 - Compose (+) → `plus` (white, on the raised orange circle)
-- Mail → `email-outline`
+- Groups → `account-group-outline` (filled `account-group` when active)
 - Profile → `account-outline`
 
 ## 8. Empty states & status
@@ -162,3 +160,19 @@ Status banners: `peach` background for info, `yellow` background for warnings, d
 - `orange` on `paper` clears AA for large text (18px+) but **not** for body text — never set body copy in `orange` on white. Use `ink` for body, reserve `orange` for headings, links, and interactive elements at 18px+ or with sufficient weight.
 - Dynamic type scaling must continue to satisfy the 16px floor.
 - Hit targets: 44×44pt minimum, including the raised "+" button.
+
+## 10. The weekly ritual
+
+The product's engagement loop is a ritual — write → anticipate → read → write again — and the UI expresses it with newspaper devices, never gamification (no streaks, badges, counters, or confetti; rejected on principle for this audience).
+
+- **Home dateline strip** (`this-week-strip`): between the latest-edition card and the write card. A rule-framed, centered dateline — "NEXT EDITION · SUNDAY AT 9 AM" in kicker register (orange small caps) — over an italic serif byline sentence: "Ruth and Sam have written this week — there's still time to add yours." It aggregates the user's Groups (soonest publish wins the dateline) and **never names who hasn't written** — absence is invisible, presence is celebrated. Not pressable: the write card below is the call to action.
+- **Publish math** lives in `lib/groups.ts` (`nextPublishForGroup`, `soonestPublish`): day-and-time display computed as the Group's own wall clock via `Intl`, deliberately not exact-instant math (no DST wrestling). Day labels come back as "today"/"tomorrow"/weekday for warm copy reuse.
+- **NEW flag**: a yellow pill (`yellow` is the sparing highlight per §2) on Home's feature-card kicker row when the latest edition hasn't been opened **on this device**. Seen-tracking is AsyncStorage-local (`lib/edition-seen.ts`), not synced — "have I read this week's paper" is a per-device feeling, and a schema change wasn't warranted. The edition front page marks itself opened so deep links and the inbox path count.
+- **Composer anticipation line**: the compose masthead subtitle names the destination — "Your story will run in Sunday's edition." (editing: "Editing your story for Sunday's edition.").
+- **Filed stamp** (`filed-stamp`): on explicit Save success (never autosave), a rubber-stamp chip — orange border, small caps, −4° tilt, in family with the polaroids — presses onto the compose card's top-right corner, rests ~1.6s, fades. Paired with the `confirm()` haptic and a screen-reader announcement. Autosave stays quiet ("Saved") on purpose: the stamp marks a moment, the status row gives reassurance.
+- Ritual copy lives together in `Strings.thisWeek` — one register: warm, concrete, never urgent.
+
+## 11. Motion & haptics
+
+- **Motion tokens** (`constants/motion.ts`): durations `quick` 160 / `settle` 220 / `enlarge` 260 / `exit` 200, easing `settle` = ease-out cubic. House style: animations read as a broadsheet being handled — short ease-out timing, no bounces or physics, Reduce Motion always respected. Sanctioned exception: the compose sheet settles with a gentle spring (a sheet that stops dead reads as broken). The printing-press loader keeps its own knobs in `constants/loading.ts`; everything else takes durations from Motion.
+- **Haptics** (`lib/haptics.ts`): three semantic verbs, chosen by meaning — `tap()` light impact for key actions (filled buttons, the raised "+", page turns, a sheet drag that "took"), `select()` for value changes while choosing (day picker, time wheel — fires on change, never on re-pressing the current value), `confirm()` success notification reserved for moments the user cares about (post filed). Sparse on purpose: a haptic on everything is a haptic on nothing. Secondary/ghost buttons stay silent so the tactile layer keeps a hierarchy too. Haptics fire even under Reduce Motion (they aren't motion); all calls are fire-and-forget and no-op on web.

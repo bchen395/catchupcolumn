@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
+import { Haptics } from '@/lib/haptics';
 
 import { useComposeSheet } from './compose-sheet-provider';
 import { ThemedText } from './themed-text';
@@ -21,7 +22,11 @@ const TAB_META: Record<
     iconActive: 'newspaper-variant',
     iconInactive: 'newspaper-variant-outline',
   },
-  mail: { label: 'Mail', iconActive: 'email', iconInactive: 'email-outline' },
+  groups: {
+    label: 'Groups',
+    iconActive: 'account-group',
+    iconInactive: 'account-group-outline',
+  },
   profile: {
     label: 'Profile',
     iconActive: 'account',
@@ -56,7 +61,10 @@ export const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
             return (
               <View key={route.key} style={styles.centerSlot}>
                 <Pressable
-                  onPress={openComposeSheet}
+                  onPress={() => {
+                    Haptics.tap();
+                    openComposeSheet();
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel="Write a post"
                   style={({ pressed }) => [styles.raised, pressed && styles.raisedPressed]}

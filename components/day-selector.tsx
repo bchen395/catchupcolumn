@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
+import { Haptics } from '@/lib/haptics';
 
 import { ThemedText } from './themed-text';
 
@@ -29,7 +30,12 @@ export const DaySelector = ({ value, onChange, label = 'Publish day' }: DaySelec
           return (
             <Pressable
               key={day}
-              onPress={() => onChange(index)}
+              onPress={() => {
+                // Tick only on an actual change — re-pressing the selected day
+                // shouldn't buzz.
+                if (!selected) Haptics.select();
+                onChange(index);
+              }}
               accessibilityRole="button"
               accessibilityLabel={day}
               accessibilityState={selected ? { selected: true } : undefined}

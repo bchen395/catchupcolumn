@@ -91,7 +91,7 @@ Mark phases as [x] when complete. Work through them in order.
 - [ ] App Store / Play Store metadata
 - [x] Performance pass: image optimization, lazy loading
 
-**Test:** Hand the app to a non-technical family member. Can they sign up, join a Column, write a post, and read an edition without asking you for help?
+**Test:** Hand the app to a non-technical family member. Can they sign up, join a Group, write a post, and read an edition without asking you for help?
 
 ---
 

@@ -4,6 +4,7 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
+import { Haptics } from '@/lib/haptics';
 
 export const ITEM_H = 48;
 export const PICKER_H = ITEM_H * 5;
@@ -51,7 +52,11 @@ export const SnapColumn = ({ data, selectedIndex, onSelect, visible, width = 72 
 
   const handleScrollEnd = (e: { nativeEvent: { contentOffset: { y: number } } }) => {
     const i = Math.round(e.nativeEvent.contentOffset.y / ITEM_H);
-    onSelect(Math.max(0, Math.min(data.length - 1, i)));
+    const next = Math.max(0, Math.min(data.length - 1, i));
+    // Tick when the wheel settles on a new value — the scroll itself stays
+    // silent so a long spin doesn't rattle.
+    if (next !== selectedIndex) Haptics.select();
+    onSelect(next);
   };
 
   return (
@@ -69,6 +74,7 @@ export const SnapColumn = ({ data, selectedIndex, onSelect, visible, width = 72 
         renderItem={({ item, index }) => (
           <Pressable
             onPress={() => {
+              if (index !== selectedIndex) Haptics.select();
               listRef.current?.scrollToOffset({ offset: index * ITEM_H, animated: true });
               onSelect(index);
             }}

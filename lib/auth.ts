@@ -140,6 +140,9 @@ export const uploadUserAvatar = async ({ userId, imageUri }: UploadAvatarInput) 
   // very high-DPR devices and keeps storage tiny.
   const resizedUri = await resizeImageForUpload(imageUri, { maxEdge: AVATAR_MAX_EDGE });
   const imageResponse = await fetch(resizedUri);
+  if (!imageResponse.ok) {
+    throw new Error(`Failed to read image for upload (${imageResponse.status})`);
+  }
   const imageBuffer = await imageResponse.arrayBuffer();
   const storagePath = `${userId}/avatar-${Date.now()}.jpg`;
 

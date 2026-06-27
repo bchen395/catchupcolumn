@@ -2,7 +2,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
-  Easing,
   Extrapolation,
   interpolate,
   runOnJS,
@@ -14,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
+import { Motion } from '@/constants/motion';
 import { Typography } from '@/constants/typography';
 import type { PostWithAuthor } from '@/types';
 
@@ -38,9 +38,9 @@ type Props = {
   onClosed: () => void;
 };
 
-// In family with the reader's 220ms page turn — a touch longer so the grow
-// settles rather than snaps. No spring: predictability over bounce.
-const GROW = { duration: 260, easing: Easing.out(Easing.cubic) };
+// In family with the reader's page turn — a touch longer so the grow settles
+// rather than snaps. No spring: predictability over bounce.
+const GROW = { duration: Motion.duration.enlarge, easing: Motion.easing.settle };
 
 // The "enlarge" reading experience: tapping a section on the front page grows
 // it from its spot on the page into a full-screen reader, like bringing the

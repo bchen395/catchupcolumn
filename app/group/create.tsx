@@ -69,7 +69,7 @@ const CreateGroupScreen = () => {
       const result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: true,
         aspect: [16, 9],
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         quality: 0.8,
       });
       if (!result.canceled && result.assets[0]) {

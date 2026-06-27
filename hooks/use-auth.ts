@@ -21,11 +21,19 @@ export const useAuth = () => {
       const userChanged = userId !== lastUserIdRef.current;
 
       if (next?.user && userChanged) {
+        // ensureUserProfile throws on RLS/network failure; downstream screens
+        // join on users.id, so retry once before giving up rather than dropping
+        // a freshly signed-in user into a profile-less, half-broken state.
         try {
           await ensureUserProfile(next.user);
-        } catch (err) {
-          console.warn('ensureUserProfile failed during auth init', err);
+        } catch (firstErr) {
+          try {
+            await ensureUserProfile(next.user);
+          } catch (retryErr) {
+            console.warn('ensureUserProfile failed during auth init', retryErr ?? firstErr);
+          }
         }
+        if (!mounted) return;
         registerForPushAsync(next.user.id);
       }
 

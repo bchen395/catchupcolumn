@@ -1,6 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -15,6 +14,7 @@ import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
+import { unregisterPushAsync } from '@/lib/notifications';
 import {
   deleteAccount,
   fetchCurrentUserProfile,
@@ -39,7 +39,6 @@ type EditErrors = {
 };
 
 const ProfileScreen = () => {
-  const router = useRouter();
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserRow | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -219,6 +218,12 @@ const ProfileScreen = () => {
       setSigningOut(true);
       setScreenError('');
 
+      // Drop this device's push token first so the signed-out account stops
+      // receiving pushes. Best-effort — never block sign-out on it.
+      if (user) {
+        await unregisterPushAsync(user.id);
+      }
+
       const { error } = await supabase.auth.signOut();
 
       if (error) {
@@ -377,26 +382,6 @@ const ProfileScreen = () => {
             }
           />
 
-          <View style={styles.linkSection}>
-            <Pressable
-              onPress={() => router.push('/groups')}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.linkRow, pressed && styles.linkRowPressed]}
-            >
-              <MaterialCommunityIcons
-                name="account-group-outline"
-                size={22}
-                color={Colors.orange}
-              />
-              <ThemedText style={styles.linkLabel}>My Groups</ThemedText>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={20}
-                color={Colors.orange + 'CC'}
-              />
-            </Pressable>
-          </View>
-
           <View style={styles.accountActions}>
             <FormButton
               title="Sign out"
@@ -545,29 +530,6 @@ const styles = StyleSheet.create({
   },
   editButtonHalf: {
     flex: 1,
-  },
-  linkSection: {
-    gap: Layout.padding.sm,
-  },
-  linkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Layout.padding.md,
-    paddingHorizontal: Layout.padding.lg,
-    paddingVertical: Layout.padding.md,
-    minHeight: Layout.touchTargetMin + 4,
-    borderRadius: Layout.borderRadius.full,
-    backgroundColor: Colors.peachWash,
-  },
-  linkRowPressed: {
-    backgroundColor: Colors.peach,
-  },
-  linkLabel: {
-    flex: 1,
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.body,
-    // Ink for AA contrast on the peach wash; orange icon + chevron are the accent.
-    color: Colors.ink,
   },
   accountActions: {
     gap: Layout.padding.sm,

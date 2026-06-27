@@ -34,6 +34,116 @@ const toGroupWithMembers = (col: GroupRowWithMembers): GroupWithMembers => ({
 });
 
 // ---------------------------------------------------------------------------
+// Publish schedule
+// ---------------------------------------------------------------------------
+
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const WEEKDAY_INDEX: Record<string, number> = {
+  Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+};
+
+// "9 AM" / "9:30 AM" — minutes drop when zero so datelines read like speech.
+const formatClock = (hour24: number, minute: number): string => {
+  const period = hour24 >= 12 ? 'PM' : 'AM';
+  const h = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  return minute === 0 ? `${h} ${period}` : `${h}:${String(minute).padStart(2, '0')} ${period}`;
+};
+
+export type NextPublish = {
+  /** Whole days until the next publish moment: 0 = later today, 1 = tomorrow. */
+  daysAway: number;
+  /** "today", "tomorrow", or a weekday name — ready for warm copy. */
+  dayLabel: string;
+  /** "9 AM" / "9:30 AM" in the Group's timezone. */
+  timeLabel: string;
+  /**
+   * Total minutes from `now` until the next publish moment, in the Group's
+   * timezone. Ranking key for `soonestPublish` — two Groups publishing the
+   * same day need the time-of-day to break the tie, which `daysAway` can't.
+   */
+  minutesUntil: number;
+};
+
+// `Number(x)` returns NaN for malformed segments, and destructuring defaults
+// only fill `undefined` — not NaN — so a bad publish_time would silently break
+// every comparison below (NaN < anything === false). Coerce explicitly.
+const toMinuteOfDay = (value: string | undefined, fallback: number): number => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+/**
+ * When this Group's presses next roll, computed in the Group's own timezone
+ * (publish_day/publish_time are defined there — see the schema). Display-only:
+ * it answers "which day and how soon", not "the exact instant", so it never
+ * has to wrestle with DST arithmetic.
+ */
+export const nextPublishForGroup = (
+  group: Pick<GroupRow, 'publish_day' | 'publish_time' | 'timezone'>,
+  now: Date = new Date(),
+): NextPublish => {
+  const [rawHour, rawMinute] = (group.publish_time ?? '09:00').split(':');
+  const pubHour = toMinuteOfDay(rawHour, 9);
+  const pubMinute = toMinuteOfDay(rawMinute, 0);
+
+  // Read "now" as the Group's wall clock. An invalid IANA name throws — fall
+  // back to the device clock rather than hiding the schedule.
+  let parts: Intl.DateTimeFormatPart[];
+  try {
+    parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: group.timezone || 'UTC',
+      weekday: 'short',
+      hour: 'numeric',
+      minute: 'numeric',
+      hourCycle: 'h23',
+    }).formatToParts(now);
+  } catch {
+    parts = new Intl.DateTimeFormat('en-US', {
+      weekday: 'short',
+      hour: 'numeric',
+      minute: 'numeric',
+      hourCycle: 'h23',
+    }).formatToParts(now);
+  }
+  const get = (type: Intl.DateTimeFormatPart['type']) =>
+    parts.find((p) => p.type === type)?.value ?? '';
+  const nowDay = WEEKDAY_INDEX[get('weekday')] ?? now.getDay();
+  const nowHour = toMinuteOfDay(get('hour'), now.getHours());
+  const nowMinute = toMinuteOfDay(get('minute'), now.getMinutes());
+
+  let daysAway = ((group.publish_day ?? 0) - nowDay + 7) % 7;
+  // Publish time already passed today → the next edition is a week out.
+  if (daysAway === 0 && (nowHour > pubHour || (nowHour === pubHour && nowMinute >= pubMinute))) {
+    daysAway = 7;
+  }
+
+  const dayLabel =
+    daysAway === 0 ? 'today' : daysAway === 1 ? 'tomorrow' : DAY_NAMES[group.publish_day ?? 0];
+
+  const minutesUntil =
+    daysAway * 24 * 60 + (pubHour * 60 + pubMinute) - (nowHour * 60 + nowMinute);
+
+  return { daysAway, dayLabel, timeLabel: formatClock(pubHour, pubMinute), minutesUntil };
+};
+
+/** The Group whose presses roll soonest — what Home's dateline announces. */
+export const soonestPublish = (
+  groups: Pick<GroupRow, 'id' | 'name' | 'publish_day' | 'publish_time' | 'timezone'>[],
+  now: Date = new Date(),
+): { group: (typeof groups)[number]; next: NextPublish } | null => {
+  let best: { group: (typeof groups)[number]; next: NextPublish } | null = null;
+  for (const group of groups) {
+    const next = nextPublishForGroup(group, now);
+    // Rank by the actual next-publish instant, not whole days — two Groups that
+    // both publish "today" must be ordered by time-of-day, not array position.
+    if (!best || next.minutesUntil < best.next.minutesUntil) {
+      best = { group, next };
+    }
+  }
+  return best;
+};
+
+// ---------------------------------------------------------------------------
 // Queries
 // ---------------------------------------------------------------------------
 
@@ -141,6 +251,9 @@ export const uploadGroupCover = async (
 ): Promise<GroupCoverUpload> => {
   const resizedUri = await resizeImageForUpload(imageUri);
   const imageResponse = await fetch(resizedUri);
+  if (!imageResponse.ok) {
+    throw new Error(`Failed to read image for upload (${imageResponse.status})`);
+  }
   const imageBuffer = await imageResponse.arrayBuffer();
   // Bucket RLS uses the first path segment as the group_id to gate writes
   // against `is_group_moderator`. See 20260505000020_group_covers_bucket.sql.

@@ -19,8 +19,6 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import { PrintingPressLoading } from '@/components/printing-press-loading';
-import { Colors } from '@/constants/colors';
-import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
 import { needsOnboarding } from '@/lib/auth';
 
@@ -110,19 +108,6 @@ const RootLayout = () => {
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="group" options={{ headerShown: false }} />
       <Stack.Screen name="edition" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="groups"
-        options={{
-          title: 'My Groups',
-          headerBackButtonDisplayMode: 'minimal',
-          headerStyle: { backgroundColor: Colors.paperWarm },
-          headerTintColor: Colors.ink,
-          headerTitleStyle: {
-            fontFamily: Typography.families.serifBold,
-            color: Colors.ink,
-          },
-        }}
-      />
     </Stack>
   );
 };

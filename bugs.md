@@ -1,202 +1,142 @@
 # Catch Up Column — Bug Audit
 
-Generated 2026-05-05 from a three-pass review (backend migrations + edge functions, data/auth layer, UI). Findings are ordered by severity. File:line references are clickable in editors that support them.
+Regenerated **2026-06-27** from a fresh four-pass review (Supabase migrations + edge
+functions, client data/auth layer, app screens + components, and docs) against the
+current working tree. Findings are ordered by severity. File:line references are
+clickable in editors that support them.
+
+This audit **supersedes** the 2026-05-05 version. Since then all four original
+"critical" items and the bulk of the high/medium list were fixed — see
+[Resolved since the last audit](#resolved-since-the-last-audit) at the bottom. The
+codebase is in good shape; what remains is mostly a deliberate trade-off, ops
+config, and hygiene.
 
 ---
 
-## Critical — security / correctness
+## Pending deploy (fixed in repo, not yet live)
 
-### 1. Auth bypass: any signed-in user can join any group as moderator
-- **Where:** `supabase/migrations/20260426000000_rename_columns_to_groups.sql:124`
-- The `group_members` INSERT policy is `with check (user_id = auth.uid())` only. No check that an invite code was supplied, and `role` is unconstrained.
-- An attacker who learns any `groups.id` can `insert into group_members (group_id, user_id, role) values (<id>, auth.uid(), 'moderator')`, then read every post/edition and modify group settings.
-- The invite-code requirement currently lives only in the JS layer.
+These are fixed in the working tree but only take effect once shipped:
 
-### 2. Invite-code lookup regressed and is broken for everyone
-- **Where:** `supabase/migrations/20260426000007_compile_editions_rpc_and_cron.sql:147`
-- Redefines `find_group_by_invite_code` with `where invite_code = upper(trim(...))`.
-- Codes are stored lowercase (UUID hex from initial schema). Migrations `..0002` and `..0003` previously fixed this; the new migration silently reintroduces the bug **and** drops the auth check.
-- Joining by code currently fails for all users.
-
-### 3. `delete-account` orphans / errors out for last moderators or solo-group owners
-- **Where:** `supabase/functions/delete-account/index.ts:57`
-- Calls `auth.admin.deleteUser`. The cascade through `auth.users → public.users → group_members` does not set the `app.deleting_group` bypass that `prevent_last_moderator_removal` expects, so the cascade throws and deletion fails (or partially succeeds).
-- Storage objects under `avatars/<uid>/` and `post-images/<uid>/` are also never cleaned up.
-
-### 4. `SECURITY DEFINER` without `SET search_path` on hot-path RLS helpers
-- **Where:** `supabase/migrations/20260426000000_rename_columns_to_groups.sql:63`
-- `is_group_member` and `is_group_moderator` lack `set search_path = public`. Every other definer function in the repo sets it; these two are outliers.
-- Real exploit vector via temp-schema shadowing, plus the Supabase linter flags it. Called by every RLS check.
-
----
-
-## High
-
-### 5. Cron interval == tolerance window — editions can slip through
-- **Where:** `supabase/migrations/20260426000007_compile_editions_rpc_and_cron.sql:15` (function), cron at line 168
-- `compile_due_editions` uses a 15-minute tolerance and the cron is `*/15 * * * *`.
-- Any drift (cold start, lateness) past the boundary means a 09:00 group fires at 09:15:02 and matches nothing.
-- Fix: drop the cron to `*/10` or widen tolerance to ~20 min.
-
-### 6. Public URL handed out for the private `post-images` bucket
-- **Where:** `lib/posts.ts:108`
-- Returns `getPublicUrl(...)` even though `supabase/migrations/20260430000000_scope_post_images_to_group_members.sql` restricts the bucket via RLS. Those URLs will 4xx on render.
-- Fix: use `createSignedUrl`.
-- Related: `lib/groups.ts:146` writes group covers to `avatars/groups/<id>/...`, which doesn't fit the `<userId>/...` RLS shape used by avatars.
-
-### 7. Auth init double-fires and races
-- **Where:** `hooks/use-auth.ts:12`
-- `getSession()` runs **and** `onAuthStateChange` fires `INITIAL_SESSION`, so `ensureUserProfile` and `registerForPushAsync` execute twice on every cold start.
-- Neither is awaited before `setLoading(false)`; the listener can also `setSession` after unmount.
-- Fix: add a mounted flag, dedupe init vs. INITIAL_SESSION, await profile creation before clearing loading.
-
-### 8. Push token registered on every `onAuthStateChange`
-- **Where:** `lib/notifications.ts:71`
-- `TOKEN_REFRESHED` fires periodically; each call hits Expo + a DB upsert.
-- No `projectId` passed to `getExpoPushTokenAsync` — works in dev, fails in EAS production builds.
-- Fix: cache token in memory, only upsert on change, pass `projectId` from `Constants.expoConfig.extra.eas.projectId`.
-
-### 9. Push delivery has no retry cap and no per-user opt-out
-- **Where:** `supabase/functions/compile-editions/index.ts:357`
-- Iterates everything where `pushed_at IS NULL`, calls `mark_edition_pushed` even when every Expo ticket fails, and has no `push_attempts` counter.
-- A single Expo blip permanently silences notifications for those editions.
-- Also `get_edition_push_targets` has no `push_subscribed` flag — users who unsubscribed from email still get pushes.
-
-### 10. `compile_due_editions` is not actually idempotent under concurrent invocations
-- **Where:** `supabase/migrations/20260426000007_compile_editions_rpc_and_cron.sql:55`
-- `for update skip locked` locks `groups`, but the idempotency guard is the `not exists` predicate on `editions`, which isn't covered.
-- Two concurrent runs (manual + scheduled) both pass the check; the unique constraint fires on the second insert and aborts the **whole** function.
-- Same race on email send: `supabase/functions/compile-editions/index.ts:138` reads `emailed_at` then later writes it.
-- Fix: wrap in an advisory lock keyed by `group_id`.
-
-### 11. Reset-password flow is kicked back to inbox
-- **Where:** `app/_layout.tsx:75` and `app/(auth)/reset-password.tsx:54`
-- Once `setSession` succeeds inside the reset screen, the root redirect immediately replaces to `/(tabs)/inbox` before the user can pick a new password.
-
-### 12. `MediaTypeOptions` is removed in expo-image-picker 17
-- **Mixed usage:**
-  - deprecated `ImagePicker.MediaTypeOptions.Images` at `app/(auth)/onboarding.tsx:108` and `app/group/[id].tsx:289`
-  - new style `mediaTypes: ['images']` at `app/(tabs)/post.tsx:151`
-- The deprecated form will throw at runtime with the current pinned version.
+- **PUBLIC-execute lockdown migration** — `supabase/migrations/20260627000000_revoke_public_execute_on_service_rpcs.sql`. Closes a PII leak where `get_edition_email_payload` (and the other email/compile RPCs) were callable by `anon`/`authenticated` via the default Postgres `PUBLIC` grant. **Apply with `npx supabase db push`.**
+- **Compile tolerance 15 → 20 min** — `supabase/functions/compile-editions/index.ts:39`. Stops a late/cold-start cron tick from missing a group's publish window. **Ships on next `npx supabase functions deploy compile-editions`.**
 
 ---
 
 ## Medium
 
-### 13. Bio is never collected in the UI
-- CLAUDE.md spec says max 200 chars.
-- `app/(auth)/onboarding.tsx:211` and `lib/auth.updateCurrentUserProfile` only write `display_name` + `avatar_url`.
-- `display_name` also has no length cap — empty check only at `app/(auth)/onboarding.tsx:133`.
+### M1. Per-recipient email failures are never retried
+- **Where:** `supabase/functions/_shared/edition-dispatch.ts:154`
+- `mark_edition_emailed` is called after the send loop **regardless of `failed > 0`**, and the function never re-attempts the recipients that errored. A transient Resend 4xx/5xx for a subset of members means those members **permanently** miss that edition's email.
+- This is a **deliberate trade-off** (the inline comment: "not retrying to avoid duplicate sends") — the edition still arrives in-app and via push. Flagged so it's a conscious decision, not an oversight.
+- **Fix (if delivery guarantees matter):** track send state per recipient (e.g. a `edition_email_recipients` table) so a retry sweep can target only the ones that failed, instead of an all-or-nothing per-edition marker.
 
-### 14. `ensureUserProfile` swallows errors
-- **Where:** `lib/auth.ts:75`
-- On RLS or network failure it `console.warn`s and proceeds. Every screen that joins on `users.id` then breaks.
-- Fix: throw, don't warn. Also `email: user.email ?? ''` will violate the NOT NULL/unique constraint on edge cases.
+---
 
-### 15. Initial route + redirect timing
-- **Where:** `app/_layout.tsx:25`
-- Sets `initialRouteName: '(tabs)'`. Tab screens can briefly mount before the redirect effect fires, kicking off `fetchEditionsForUser` against an unauthenticated client.
-- Fix: make initial route `(auth)/login`, or refuse to render tab tree until auth resolves.
+## Low
 
-### 16. `editions` writes have no client-side blocker
-- **Where:** `supabase/migrations/001_initial_schema.sql:207`
-- Only SELECT and INSERT policies. Works in practice (edge function uses service role) but `revoke update, delete on public.editions from authenticated` is good defense in depth.
+### L2. EMAIL_FROM defaults to the Resend sandbox sender
+- **Where:** `supabase/functions/_shared/edition-dispatch.ts:22`
+- Falls back to `'Catch Up Column <onboarding@resend.dev>'` when the env var is unset. Fine for dev; tanks deliverability in production.
+- **Fix:** set `EMAIL_FROM` to a verified-domain sender before shipping. Already documented in the README deploy steps — this is an ops checklist item, not a code defect.
 
-### 17. `fetchEditionsForUser` relies on RLS for filtering
-- **Where:** `lib/editions.ts:8`
-- Selects all editions with no explicit filter. Works only because RLS hides non-member rows.
-- Fix: be explicit — filter by `group_id in (user's groups)` or join through `group_members`.
+### L3. Auth init still proceeds if profile creation fails twice
+- **Where:** `hooks/use-auth.ts:23`
+- `ensureUserProfile` now throws (good) and the hook retries once (added 2026-06-27), but if **both** attempts fail it still `console.warn`s and clears loading, so a brand-new user whose profile row was never created lands on screens that join on `users.id`.
+- Intentionally *not* an auto-sign-out (that would log out returning users on a flaky network — their profile already exists, so the failure is harmless). Residual risk is limited to genuinely-new users on a hard RLS/network failure.
+- **Fix (if you want zero residual):** surface the error through the hook and show a retry/error screen in `app/_layout.tsx` instead of rendering the tab tree.
 
-### 18. Stale display name / onboarding flag after profile update
-- **Where:** `lib/auth.ts:185`
-- `needsOnboarding` reads `user_metadata`, which only refreshes with the JWT. After `clearNeedsOnboardingFlag`, the local flag stays true until the next refresh.
+### L4. `fetchThisWeeksBylines` dedupes by author across all of the user's groups
+- **Where:** `lib/posts.ts:46`
+- Passed all of the user's group ids and dedupes by `author_id` globally, so someone who wrote in two of your groups this week collapses into a single byline carrying their **earliest** timestamp. Acceptable for the Home "this week" strip, but confirm it's intended — a per-group byline would read more accurately.
 
-### 19. `createGroup` redundant `created_by`
-- **Where:** `lib/groups.ts:91`
-- DB trigger (`20260426000001_fix_group_created_trigger.sql`) derives the moderator from `created_by`. Passing the wrong UUID would make a different user the moderator.
-- Fix: drop it from the input or assert equality with `auth.uid()`.
-
-### 20. Resend `from` is the sandbox sender
-- **Where:** `supabase/functions/compile-editions/index.ts:31`
-- `EMAIL_FROM = 'Catch Up Column <onboarding@resend.dev>'` will tank deliverability in production. Move to a verified domain.
-
-### 21. Group cover upload has no rollback
-- **Where:** `app/group/[id].tsx:279`
-- If `updateGroupSettings` fails after the upload succeeds, the storage object is orphaned and local state stays stale.
-
-### 22. `posts` insert type forces callers to pass `image_url: null`
-- **Where:** `lib/posts.ts:39`
-- `Pick<PostInsert, ...>` includes `image_url`, which is optional in the insert type but required in the `Pick`.
-- Fix: use `Partial` on `image_url`.
-
-### 23. `lib/auth.ts` profile update uses `.single()` instead of `.maybeSingle()`
-- **Where:** `lib/auth.ts:101`
-- If RLS denies the update, `.single()` raises "no rows returned" rather than "permission denied" — confusing surface.
-
-### 24. `lib/auth.ts` redundant Authorization header on `functions.invoke`
-- **Where:** `lib/auth.ts:171`
-- `invoke` already attaches the session JWT; the manual header can collide with the SDK's own.
+### L5. `createGroup` still passes `created_by` to the insert
+- **Where:** `lib/groups.ts:174`
+- A DB trigger derives the moderator from `created_by`. The dangerous footgun is closed — there's now an assertion that `created_by === auth.uid()` before insert — but the column is still passed redundantly.
+- **Fix:** drop `created_by` from the insert payload and let the trigger own it.
 
 ---
 
 ## Minor / hygiene
 
-### 25. Accessibility miss for older-adult target
-- `caption` and `label` are 14px in `components/themed-text.tsx` — used widely (inbox meta, group card description, profile sub-copy, edition meta) and violates the 16px-min rule in CLAUDE.md.
+### N1. `types/database.ts` is hand-written with `Relationships: []`
+- **Where:** `types/database.ts`, forcing `as unknown as GroupRowWithMembers` casts in `lib/groups.ts:21`/`:148`.
+- **Fix:** generate via `supabase gen types typescript` so joined selects type without casts. (Carried over from the previous audit as #29 — still open.)
 
-### 26. `buildSections(editions)` recomputed every render
-- **Where:** `app/(tabs)/inbox.tsx:98` — wrap in `useMemo`.
+### N2. Dead `emptyMail` icon token
+- **Where:** `constants/icons.ts:45`
+- `emptyMail: mci('email-outline')` is unreferenced after the Mail tab was removed.
+- **Fix:** delete the token.
 
-### 27. `loadGroups` recreated on every group switch
-- **Where:** `app/(tabs)/post.tsx:106` — extra network calls on every selection change.
+### N3. `SnapColumn` disables `react-hooks/exhaustive-deps`
+- **Where:** `components/snap-column.tsx:50` — the effect omits `selectedIndex`, so an external change while `visible` stays true won't scroll to match. Latent only (the repo has no ESLint config wired, and current call sites don't hit the case).
 
-### 28. Hardcoded modal width 320
-- `app/group/[id].tsx:746`, `app/group/create.tsx:450` — overflows on 320dp Android phones.
-
-### 29. `types/database.ts` `Relationships: []` everywhere
-- **Where:** `types/database.ts:121`
-- Forces `as unknown as ...` casts in `lib/groups.ts:39` and `lib/editions.ts:41`.
-- Fix: generate via `supabase gen types`.
-
-### 30. `lib/supabase.ts` silent fallback to empty env vars
-- **Where:** `lib/supabase.ts:42` — `createClient('', '')` succeeds and every call fails at runtime with confusing errors. Throw at module load if either is empty.
-
-### 31. `storage.foldername(name)[3]` post-image read policy mismatch
-- **Where:** `supabase/migrations/20260430000000_scope_post_images_to_group_members.sql:22`
-- The read policy expects path `<user_id>/posts/<post_id>/...`, but the upload policy (initial schema) only checks the first segment. A post saved with a different layout becomes unreadable.
-- Fix: enforce the `[2] = 'posts'` shape on insert too.
-
-### 32. `delete-account` doesn't clean up storage
-- **Where:** `supabase/functions/delete-account/index.ts`
-- After auth deletion, files in `avatars/<uid>/` and `post-images/<uid>/` remain. They become orphans (RLS allowed select/delete only by `auth.uid()`, which no longer exists).
-
-### 33. `package.json` start script uses `--tunnel`
-- Slow for normal dev. Consider `expo start` and let users opt into tunnel.
-
-### 34. `app.json` foreground notification handler not declared
-- `expo-notifications` is wired in `app/_layout.tsx:14` for tap handling, but no foreground display config — notifications received while the app is open won't show banners.
-
-### 35. Hardcoded `<not-found>` link color
-- `app/+not-found.tsx:35` uses `#2e78b7`, a hardcoded blue clashing with the warm palette and not in `Colors`.
-
-### 36. `Image` from `react-native` mixed with `AppImage`
-- `app/group/[id].tsx:8,449,81` uses RN `Image`; inbox uses `AppImage`. Inconsistent caching/loading behavior.
-
-### 37. `SnapColumn` `useEffect` exhaustive-deps disabled
-- `components/snap-column.tsx:47` ignores `selectedIndex`. If it changes externally while `visible` stays true, the column won't scroll to match.
-
-### 38. `signup.tsx` no resend-confirmation path
-- `app/(auth)/signup.tsx:46` shows an info banner if no session is returned, but offers no way to resend the confirmation email.
+### N4. Post sort uses `localeCompare` on ISO timestamps
+- **Where:** `lib/editions.ts` (`fetchEditionWithPosts`)
+- Correct for ISO-8601 (lexicographic == chronological) but fragile if the timestamp format ever changes. Prefer a numeric/`Date` compare. Cosmetic.
 
 ---
 
-## Top-priority fix list
+## Latent / defense-in-depth
 
-The four items to land first:
+### D1. Edition-number uniqueness leans on the advisory lock, not the constraint path
+- **Where:** `supabase/migrations/20260525000000_manual_publish.sql:204`
+- `max(edition_number)+1` under a per-group `pg_try_advisory_xact_lock` is race-safe for every current writer (all edition inserts go through the locked RPC). It is **not** safe against a hypothetical future direct-insert path that skips the lock. No such path exists today — noted so it isn't introduced unknowingly.
 
-1. **#1** — `group_members` auth bypass (RLS check on role + invite verification)
-2. **#2** — Broken invite-code lookup (currently no one can join groups)
-3. **#4** — `set search_path = public` on `is_group_member` / `is_group_moderator`
-4. **#11** — Reset-password redirect kick-out
+---
 
-After that: **#5** and **#10** (cron / idempotency correctness), then the lib-layer fixes #6–#9.
+## Top-priority list
+
+1. **Apply the security migration** (`db push`) and **redeploy `compile-editions`** — the two "pending deploy" fixes above. Until applied, the email/recipient-data leak is live.
+2. **M1** — decide whether weekly email needs per-recipient retry, or accept the documented trade-off.
+3. **L2** — set a production `EMAIL_FROM` before launch.
+
+Everything else is low-risk cleanup that can ride along with normal work.
+
+---
+
+## Resolved since the last audit
+
+For context — the following 2026-05-05 findings are confirmed fixed in the current
+tree (verified file-by-file during this pass):
+
+**Critical / high (all fixed):**
+- Moderator self-promote auth bypass — `group_members` INSERT is now `with check (false)`; joins go through `join_group_by_invite_code` (role hard-coded to `contributor`).
+- Broken invite-code lookup (`upper()` regression) — now case-insensitive `lower(...)` compare with an auth check; client only trims.
+- `delete-account` orphaning last moderators + leaving storage — `prepare_account_deletion` handles handoff and purges avatars/post-images/group-covers.
+- Missing `set search_path` on `is_group_member` / `is_group_moderator` — added.
+- Public URL for the private `post-images` bucket — now `createSignedUrl`; storage paths hardened to `<uid>/posts/<postId>/...`; group covers moved to a dedicated `group-covers` bucket.
+- Push: no retry cap / no per-user opt-out — `push_attempts` cap + claim leases + `push_subscribed` honored.
+- `compile_due_editions` idempotency race — per-group advisory lock + re-check; email/push use claim/lease RPCs.
+- Reset-password flow kicked back to inbox — root redirect now skips the reset-password screen.
+- Auth init double-fire / race — single `onAuthStateChange`, mounted guard, per-user dedupe.
+- Push token re-registered every event + missing `projectId` — memoised per user, `projectId` passed for EAS builds.
+- Initial route timing — `initialRouteName` is `(auth)/login`.
+- `editions` writes unblocked client-side — `revoke update, delete ... from authenticated`.
+- `fetchEditionsForUser` relying solely on RLS — now filters `.in('group_id', ...)` explicitly.
+
+**Medium / minor (all fixed):**
+- `ensureUserProfile` swallowing errors — now throws (hook retries; see L3).
+- `.single()` → `.maybeSingle()` on profile update; redundant `Authorization` header dropped from `functions.invoke`.
+- Stale onboarding metadata — `refreshSession()` after `updateUser`.
+- `posts` insert forcing `image_url: null` — now optional in the insert type.
+- `supabase.ts` silent empty-env fallback — throws at module load.
+- 14px body/caption text — `caption`/`label` raised to the 16px floor.
+- `MediaTypeOptions` deprecation — all call sites use `mediaTypes: ['images']`. (Note: in the pinned `expo-image-picker@17.0.10` the old enum *warns*, it does not throw.)
+- Bio never collected / no `display_name` cap — onboarding + profile collect bio with `BIO_MAX`, and `display_name` has `DISPLAY_NAME_MAX`.
+- Group cover upload had no rollback — `removeGroupCover` on settings-save failure.
+- `buildSections` recomputed every render — wrapped in `useMemo`.
+- Hardcoded modal width 320 — now `maxWidth: 320` (won't overflow narrow screens).
+- Hardcoded `#2e78b7` not-found link color — now `Colors.orange`.
+- RN `Image` mixed with `AppImage` in group detail — now `AppImage` throughout.
+- `signup` had no resend-confirmation path — `resendConfirmationEmail` + button added.
+- Foreground notification handler — `setNotificationHandler` now shows banner + sound.
+- `package.json start --tunnel` — now plain `expo start`, with a separate `start:tunnel`.
+
+**Fixed during this 2026-06-27 pass (working tree):**
+- Email/compile RPC `PUBLIC` execute leak (migration; pending `db push`).
+- Cron miss-window — compile tolerance 15 → 20 min.
+- `soonestPublish` time-of-day tie-break and `nextPublishForGroup` `NaN` guard.
+- Sign-out now drops the device push token (`unregisterPushAsync`).
+- `FiledStamp` re-animates on rapid saves and no longer latches when no group is selected.
+- Upload helpers check `fetch(...).ok` before uploading.
+- `use-auth` retries `ensureUserProfile` once (see L3 for the residual).

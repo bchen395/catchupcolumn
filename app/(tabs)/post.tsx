@@ -16,6 +16,7 @@ import {
 import { AppImage } from '@/components/app-image';
 import { useComposeSheet } from '@/components/compose-sheet-provider';
 import { EmptyState } from '@/components/empty-state';
+import { FiledStamp } from '@/components/filed-stamp';
 import { FormButton } from '@/components/form-button';
 import { Icon } from '@/components/icon';
 import { StatusBanner } from '@/components/status-banner';
@@ -27,6 +28,9 @@ import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
 import { usePostImageUrl } from '@/hooks/use-post-image-url';
+import { useReduceMotion } from '@/hooks/use-reduce-motion';
+import { nextPublishForGroup } from '@/lib/groups';
+import { Haptics } from '@/lib/haptics';
 import {
     createPost,
     deletePost,
@@ -74,6 +78,12 @@ const PostScreen = () => {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [isFocused, setIsFocused] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  // The "filed" stamp shows once per explicit Save (never on autosave).
+  const [stampVisible, setStampVisible] = useState(false);
+  // Bumped on each save so FiledStamp remounts and replays its animation even
+  // on rapid consecutive saves (a true→true flag flip would be a no-op).
+  const [stampKey, setStampKey] = useState(0);
+  const reduceMotion = useReduceMotion();
 
   const bodyInputRef = useRef<TextInput>(null);
   // Resolves storage paths from the DB into signed URLs; passes local file://
@@ -316,6 +326,16 @@ const PostScreen = () => {
       lastSavedBodyRef.current = body.trim();
       lastSavedTitleRef.current = title.trim();
       setSaveStatus('saved');
+      // The explicit Save is the "my story is in" moment — stamp the page.
+      // Only when a group (and thus a publish date) is selected, since the
+      // stamp prints that date; otherwise the flag would latch with nothing
+      // ever rendering it to reset. Bump the key so each save replays it.
+      Haptics.confirm();
+      const groupForStamp = groups.find((g) => g.id === selectedGroupId) ?? null;
+      if (groupForStamp) {
+        setStampKey((k) => k + 1);
+        setStampVisible(true);
+      }
     } catch {
       setUploadingImage(false);
       setScreenError(Strings.error.postSave);
@@ -371,6 +391,16 @@ const PostScreen = () => {
   const isBusy = saving || deleting;
   const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null;
   const canSwitchGroup = groups.length > 1;
+  // Names the destination ("…will run in Sunday's edition") so writing feels
+  // pointed at a real arrival, not dropped into a void.
+  const nextPublish = selectedGroup ? nextPublishForGroup(selectedGroup) : null;
+  const subtitle = nextPublish
+    ? isEditing
+      ? Strings.thisWeek.composerSubtitleEditing(nextPublish.dayLabel)
+      : Strings.thisWeek.composerSubtitle(nextPublish.dayLabel)
+    : isEditing
+      ? 'Editing your entry for this week'
+      : 'Your entry for this week';
 
   // No group selected yet: resolve quietly, then either send to Groups (none) or
   // prompt to choose one (several).
@@ -444,7 +474,7 @@ const PostScreen = () => {
             </ThemedText>
           )}
           <ThemedText variant="caption" style={styles.composeSubtitle}>
-            {isEditing ? 'Editing your entry for this week' : 'Your entry for this week'}
+            {subtitle}
           </ThemedText>
         </View>
 
@@ -493,6 +523,14 @@ const PostScreen = () => {
                   </View>
                 ) : null}
               </View>
+              {stampVisible && nextPublish ? (
+                <FiledStamp
+                  key={stampKey}
+                  label={Strings.thisWeek.filedStamp(nextPublish.dayLabel)}
+                  reduceMotion={reduceMotion}
+                  onDone={() => setStampVisible(false)}
+                />
+              ) : null}
             </View>
 
             {/* Quiet save status — reassurance, not a quota. */}

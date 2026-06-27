@@ -66,6 +66,24 @@ export const Strings = {
     profileSave: 'Could not save your profile. Please try again.',
   },
 
+  // The weekly-ritual voice. Home's dateline strip, the composer's
+  // anticipation line, and the filed stamp all talk about the same upcoming
+  // edition, so their copy lives together — keep the phrasing in one register
+  // (warm, concrete, never urgent).
+  thisWeek: {
+    dateline: (day: string, time: string) => `Next edition · ${day} at ${time}`,
+    noBylines: 'No stories yet this week — yours could be the first.',
+    bylinesYouOnly: 'Your story is in for this week.',
+    bylines: (names: string, plural: boolean) =>
+      `${names} ${plural ? 'have' : 'has'} written this week`,
+    bylinesAddYours: ' — there’s still time to add yours.',
+    // day arrives as "today", "tomorrow", or a weekday name.
+    composerSubtitle: (day: string) => `Your story will run in ${day}’s edition.`,
+    composerSubtitleEditing: (day: string) => `Editing your story for ${day}’s edition.`,
+    filedStamp: (day: string) => `Filed for ${day}’s edition`,
+    newFlag: 'New',
+  },
+
   push: {
     editionReady: {
       title: 'Your Group is ready!',
