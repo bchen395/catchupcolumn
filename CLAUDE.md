@@ -171,6 +171,9 @@ npx supabase db push
 
 # Deploy edge functions
 npx supabase functions deploy <function-name>
+
+# Type-check the app (strict, no emit; does not cover supabase/functions)
+npm run typecheck
 ```
 
 ## Code Style
@@ -181,3 +184,17 @@ npx supabase functions deploy <function-name>
 - Colocate styles using StyleSheet.create() at the bottom of component files.
 - Name files in kebab-case (`post-composer.tsx`), components in PascalCase (`PostComposer`).
 - Keep components small. If a component exceeds ~150 lines, break it up.
+
+## Agent Skills
+
+Reusable Claude Code skills live in `.claude/skills/`. Each auto-loads when a session touches its surface (via the skill's `description`) — read the matching `SKILL.md` before working in that area.
+
+| Skill | Read it before touching… |
+| --- | --- |
+| `frontend-design` | Any UI: `components/`, `constants/`, screens in `app/`, styling, copy, icons, animation. |
+| `data-layer` | App-side Supabase access: `lib/` data functions, queries, mutations, storage uploads, `types/database.ts`. |
+| `db-migrations` | `supabase/migrations/` — tables, RLS, SECURITY DEFINER functions/RPCs, triggers, storage policies, cron. |
+| `edge-functions` | `supabase/functions/` — the Deno cron compiler, manual publish, unsubscribe, delete-account, shared email/push dispatch. |
+| `verify-changes` | Before declaring a change done — the typecheck + manual-QA checklist (there is no automated test suite yet). |
+
+Skills are self-maintaining: when a convention changes, update the relevant `SKILL.md` and its source of truth (`design/BRAND.md`, `types/database.ts`, or this file) in the same change.
