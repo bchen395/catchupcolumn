@@ -36,7 +36,11 @@ type CompileResult = {
 
 async function compileEditions(client: SupabaseClient): Promise<CompileResult> {
   const { data, error } = await client.rpc('compile_due_editions', {
-    p_tolerance_minutes: 15,
+    // Tolerance is wider than the 15-minute cron interval so a late/cold-start
+    // tick still lands inside a group's publish window. Re-compiling the same
+    // slot is prevented by compile_due_editions' per-group advisory lock plus
+    // its 22-hour duplicate-edition guard, so the overlap is safe.
+    p_tolerance_minutes: 20,
   });
 
   if (error) {

@@ -14,7 +14,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { Icons } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
+import { Motion } from '@/constants/motion';
 import { Typography } from '@/constants/typography';
+import { Haptics } from '@/lib/haptics';
 import type { GroupWithMembers } from '@/types';
 
 import { Icon } from './icon';
@@ -67,7 +69,7 @@ export const ComposeGroupSheet = ({
       // Animates from wherever it is now (incl. a drag) down off-screen.
       Animated.timing(translateY, {
         toValue: SHEET_TRAVEL,
-        duration: 200,
+        duration: Motion.duration.exit,
         useNativeDriver: true,
       }).start(({ finished }) => {
         if (finished) setMounted(false);
@@ -85,6 +87,8 @@ export const ComposeGroupSheet = ({
       },
       onPanResponderRelease: (_, g) => {
         if (g.dy > DISMISS_DISTANCE || g.vy > DISMISS_VELOCITY) {
+          // The drag "took" — a light tick confirms the release did something.
+          Haptics.tap();
           onCloseRef.current();
         } else {
           Animated.spring(translateY, {

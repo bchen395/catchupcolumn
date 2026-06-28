@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, type StyleProp, type ViewStyl
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
+import { Haptics } from '@/lib/haptics';
 
 type FormButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 
@@ -28,11 +29,19 @@ export const FormButton = ({
 }: FormButtonProps) => {
   const inactive = disabled || loading;
 
+  // Filled buttons (primary/destructive) are the screen's key actions and get
+  // a light tap; secondary/ghost are quieter affordances and stay silent so
+  // the tactile layer keeps a hierarchy too.
+  const handlePress = () => {
+    if (variant === 'primary' || variant === 'destructive') Haptics.tap();
+    onPress();
+  };
+
   return (
     <Pressable
       accessibilityRole="button"
       disabled={inactive}
-      onPress={onPress}
+      onPress={handlePress}
       style={({ pressed }) => [
         styles.base,
         variantStyles[variant],

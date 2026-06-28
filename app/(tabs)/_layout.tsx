@@ -22,7 +22,7 @@ const TabLayout = () => {
         <Tabs.Screen name="home" options={{ title: 'Home', headerShown: false }} />
         <Tabs.Screen name="inbox" options={{ title: 'Editions' }} />
         <Tabs.Screen name="post" options={{ title: 'Compose' }} />
-        <Tabs.Screen name="mail" options={{ title: 'Mail' }} />
+        <Tabs.Screen name="groups" options={{ title: 'My Groups' }} />
         <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
       </Tabs>
     </ComposeSheetProvider>

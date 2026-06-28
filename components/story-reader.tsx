@@ -4,7 +4,9 @@ import { Animated, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
+import { Motion } from '@/constants/motion';
 import { Typography } from '@/constants/typography';
+import { Haptics } from '@/lib/haptics';
 import type { PostWithAuthor } from '@/types';
 
 import { StoryArticle } from './story-article';
@@ -35,8 +37,10 @@ export const StoryReader = ({ posts, initialIndex, onExit, reduceMotion, onIndex
   const fade = useRef(new Animated.Value(1)).current;
 
   // Move to an adjacent story: swap content, snap to top, and play the page
-  // turn from the side we're heading toward.
+  // turn from the side we're heading toward. The light tick fires even under
+  // Reduce Motion — haptics aren't motion, and the turn still happened.
   const go = (next: number, direction: number) => {
+    Haptics.tap();
     setIndex(next);
     onIndexChange?.(next);
     scrollRef.current?.scrollTo({ y: 0, animated: false });
@@ -44,8 +48,8 @@ export const StoryReader = ({ posts, initialIndex, onExit, reduceMotion, onIndex
     slide.setValue(direction * 28);
     fade.setValue(0);
     Animated.parallel([
-      Animated.timing(slide, { toValue: 0, duration: 220, useNativeDriver: true }),
-      Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }),
+      Animated.timing(slide, { toValue: 0, duration: Motion.duration.settle, useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 1, duration: Motion.duration.settle, useNativeDriver: true }),
     ]).start();
   };
 

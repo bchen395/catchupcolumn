@@ -7,13 +7,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppImage } from '@/components/app-image';
 import { useComposeSheet } from '@/components/compose-sheet-provider';
 import { ThemedText } from '@/components/themed-text';
+import { ThisWeekStrip } from '@/components/this-week-strip';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
 import { headlineFor, orderEdition } from '@/lib/edition-layout';
+import { hasOpenedEdition } from '@/lib/edition-seen';
 import { fetchEditionsForUser, type EditionListItem } from '@/lib/editions';
+import { fetchThisWeeksBylines, type WeeklyByline } from '@/lib/posts';
 
 const formatWeekOf = (publishedAt: string, timezone?: string | null): string => {
   const tz = timezone || undefined;
@@ -31,18 +34,14 @@ const formatWeekOf = (publishedAt: string, timezone?: string | null): string => 
   return `${startMonth} ${startDay} \u2013 ${endMonth} ${endDay}, ${year}`;
 };
 
-type Pill = {
-  label: string;
-  icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
-  onPress: () => void;
-};
-
 const HomeScreen = () => {
   const router = useRouter();
   const { user } = useAuth();
-  const { openComposeSheet } = useComposeSheet();
+  const { openComposeSheet, groups } = useComposeSheet();
   const insets = useSafeAreaInsets();
   const [latest, setLatest] = useState<EditionListItem | null>(null);
+  const [latestIsNew, setLatestIsNew] = useState(false);
+  const [bylines, setBylines] = useState<WeeklyByline[]>([]);
 
   // Reuse the inbox query and pluck the newest edition. Keeps Home a thin
   // composition over data that's already cached on the inbox tab.
@@ -51,8 +50,15 @@ const HomeScreen = () => {
       let cancelled = false;
       if (!user) return;
       fetchEditionsForUser(user.id)
-        .then((data) => {
-          if (!cancelled) setLatest(data[0] ?? null);
+        .then(async (data) => {
+          const newest = data[0] ?? null;
+          // Re-checked on every focus so reading the edition (which marks it
+          // opened) clears the flag the moment you come back to Home.
+          const isNew = newest ? !(await hasOpenedEdition(newest.id)) : false;
+          if (!cancelled) {
+            setLatest(newest);
+            setLatestIsNew(isNew);
+          }
         })
         .catch(() => {
           // Home gracefully degrades: missing latest edition just hides the card.
@@ -64,13 +70,28 @@ const HomeScreen = () => {
     }, [user])
   );
 
-  const pills: Pill[] = [
-    {
-      label: 'My Groups',
-      icon: 'account-group-outline',
-      onPress: () => router.push('/groups'),
-    },
-  ];
+  // Who has filed for the upcoming editions — feeds the dateline strip.
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      const groupIds = groups.map((g) => g.id);
+      if (groupIds.length === 0) {
+        setBylines([]);
+        return;
+      }
+      fetchThisWeeksBylines(groupIds)
+        .then((data) => {
+          if (!cancelled) setBylines(data);
+        })
+        .catch(() => {
+          // Degrade to the no-bylines line rather than blocking Home.
+          if (!cancelled) setBylines([]);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [groups])
+  );
 
   return (
     <ScrollView style={styles.flex} contentContainerStyle={[styles.scroll, { paddingTop: insets.top + Layout.padding.lg }]}>
@@ -103,7 +124,14 @@ const HomeScreen = () => {
             </View>
           )}
           <View style={styles.featureBody}>
-            <ThemedText style={styles.featureKicker}>HOT OFF THE PRESS</ThemedText>
+            <View style={styles.featureKickerRow}>
+              <ThemedText style={styles.featureKicker}>HOT OFF THE PRESS</ThemedText>
+              {latestIsNew ? (
+                <View style={styles.newFlag}>
+                  <ThemedText style={styles.newFlagText}>{Strings.thisWeek.newFlag}</ThemedText>
+                </View>
+              ) : null}
+            </View>
             <ThemedText style={styles.featureTitle} numberOfLines={2}>
               {latest.group.name}
             </ThemedText>
@@ -122,6 +150,8 @@ const HomeScreen = () => {
         </Pressable>
       ) : null}
 
+      <ThisWeekStrip groups={groups} bylines={bylines} currentUserId={user?.id ?? null} />
+
       <Pressable
         onPress={openComposeSheet}
         accessibilityRole="button"
@@ -139,26 +169,6 @@ const HomeScreen = () => {
         </View>
         <MaterialCommunityIcons name="chevron-right" size={22} color={Colors.orange} />
       </Pressable>
-
-      <View style={styles.pills}>
-        {pills.map((pill) => (
-          <Pressable
-            key={pill.label}
-            onPress={pill.onPress}
-            accessibilityRole="button"
-            accessibilityLabel={pill.label}
-            style={({ pressed }) => [styles.pill, pressed && styles.pillPressed]}
-          >
-            <MaterialCommunityIcons name={pill.icon} size={22} color={Colors.orange} />
-            <ThemedText style={styles.pillLabel}>{pill.label}</ThemedText>
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={20}
-              color={Colors.orange + 'CC'}
-            />
-          </Pressable>
-        ))}
-      </View>
     </ScrollView>
   );
 };
@@ -216,11 +226,33 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.borderSoft,
   },
+  featureKickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Layout.padding.sm,
+  },
   featureKicker: {
     fontFamily: Typography.families.sansSemiBold,
     fontSize: Typography.sizes.xs,
     color: Colors.orange,
     letterSpacing: 2,
+  },
+  // Yellow is the brand's sparing highlight (BRAND §2) — exactly right for a
+  // once-a-week "fresh paper on the doorstep" flag. Clears once the edition
+  // has been opened on this device.
+  newFlag: {
+    backgroundColor: Colors.yellow,
+    borderRadius: Layout.borderRadius.full,
+    paddingHorizontal: Layout.padding.sm,
+    paddingVertical: 2,
+  },
+  newFlagText: {
+    fontFamily: Typography.families.sansBold,
+    fontSize: Typography.sizes.xs,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    color: Colors.ink,
   },
   featureTitle: {
     fontFamily: Typography.families.serifBlack,
@@ -281,30 +313,5 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.body,
     lineHeight: 22,
     color: Colors.inkSoft,
-  },
-  pills: {
-    gap: Layout.padding.md,
-  },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Layout.padding.md,
-    paddingHorizontal: Layout.padding.lg,
-    paddingVertical: Layout.padding.md,
-    minHeight: Layout.touchTargetMin + 8,
-    borderRadius: Layout.borderRadius.full,
-    backgroundColor: Colors.peachWash,
-  },
-  pillPressed: {
-    backgroundColor: Colors.peach,
-  },
-  pillLabel: {
-    flex: 1,
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.body,
-    // Ink, not orange: orange at 16px on the peach wash fails AA for body text
-    // (BRAND §9 reserves orange for 18px+/icons/interactive). The orange icon +
-    // chevron carry the accent; the label is content and reads at ink.
-    color: Colors.ink,
   },
 });

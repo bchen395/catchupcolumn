@@ -33,19 +33,22 @@ Still open: store icons / splash polish, App Store and Play Store metadata, an e
 ```
 app/                       Expo Router file-based routes
   (auth)/                  login, signup, onboarding, reset-password
-  (tabs)/                  home, inbox, post (compose), mail, profile
+  (tabs)/                  home, inbox, post (compose), groups, profile
   group/                   create, join, [id] detail
-  edition/[id].tsx         newspaper-styled reading view
+  edition/[id]/            front page (index) + story reader ([postId])
 components/                Reusable UI (themed-text, edition-post, tab bar, etc.)
-constants/                 colors, typography, layout, strings, icons, loading
-hooks/                     use-auth, use-post-image-url
-lib/                       supabase client + domain modules (auth, groups,
-                           posts, editions, notifications, image)
+constants/                 colors, typography, layout, motion, strings, icons, loading
+hooks/                     use-auth, use-post-image-url, use-image-orientation,
+                           use-reduce-motion
+lib/                       supabase client + domain modules (auth, groups, posts,
+                           editions, notifications, image, edition-layout,
+                           edition-seen, haptics)
 types/                     Shared DB + domain types
 supabase/
-  migrations/              22 SQL migrations (schema → security hardening)
+  migrations/              24 SQL migrations (schema → security hardening)
   functions/
     compile-editions/      Cron-driven compile + email + push
+    publish-edition-now/   Moderator-only immediate publish
     delete-account/        Auth-aware account deletion
     unsubscribe/           Token-based per-group unsubscribe endpoint
     _shared/               Shared HTML email rendering
@@ -93,6 +96,7 @@ This creates all tables, RLS policies, storage buckets (`avatars`, `post-images`
 
 ```bash
 npx supabase functions deploy compile-editions
+npx supabase functions deploy publish-edition-now
 npx supabase functions deploy delete-account
 npx supabase functions deploy unsubscribe
 ```

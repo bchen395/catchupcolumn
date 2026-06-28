@@ -25,11 +25,10 @@ catch-up-column/
 │   │   ├── home.tsx        # Home — brandmark, latest edition, entry to Groups
 │   │   ├── inbox.tsx       # "Editions" tab — weekly editions list
 │   │   ├── post.tsx        # Compose — reached via the center "+" sheet
-│   │   ├── mail.tsx        # Mail stub (empty state for now)
+│   │   ├── groups.tsx      # "Groups" tab — list of Groups you belong to
 │   │   └── profile.tsx     # User profile and settings
 │   ├── edition/[id]/       # Edition reading screens (front page + story reader)
-│   ├── group/              # Group create/detail screens
-│   ├── groups.tsx          # My Groups (un-tabbed; reached from Home/Profile)
+│   ├── group/              # Group create/join/detail screens
 │   └── _layout.tsx         # Root layout
 ├── components/             # Reusable UI components
 ├── lib/                    # Utilities, Supabase client, helpers
@@ -141,7 +140,7 @@ The full visual system lives in `design/BRAND.md` (source of truth for design de
 - **Accessibility first.** Minimum 16px body text, 48px touch targets, high contrast. Never set body copy in orange (fails AA below 18px). Test with larger system font sizes.
 - **Newspaper aesthetic.** Display slab serif: Superclarendon (iOS) / Roboto Slab (Android, web). UI sans: Futura (iOS) / Jost (Android, web). Taped polaroid photos, paper-grain texture, warm paper shadows.
 - **Warm color palette.** Orange `#FF7237` primary, peach + yellow accents, warm off-white (`paperWarm`) app background, black ink text. Always use tokens from `constants/colors.ts` — never raw hex in components.
-- **Minimal navigation.** 5-slot bottom bar: Home, Editions, raised orange "+" (opens the compose sheet), Mail, Profile. My Groups lives off-tab, reached from Home and Profile. No hamburger menus or deep nesting.
+- **Minimal navigation.** 5-slot bottom bar: Home, Editions, raised orange "+" (opens the compose sheet), Groups, Profile. The Group create/join/detail flow lives off-tab under `app/group/`, reached from the Groups tab and Home. No hamburger menus or deep nesting.
 - **Language tone.** Friendly, clear, non-technical. "Your Group is ready!" not "Edition #4 has been published." Say "Write something for this week" not "Create a new post."
 
 ## Supabase Setup Notes

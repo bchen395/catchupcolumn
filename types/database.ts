@@ -160,10 +160,6 @@ export type Database = {
           promoted_moderator_count: number;
         };
       };
-      get_groups_to_compile: {
-        Args: { p_tolerance_minutes?: number };
-        Returns: Pick<GroupRow, 'id' | 'name' | 'timezone' | 'publish_day' | 'publish_time'>[];
-      };
       compile_due_editions: {
         Args: { p_tolerance_minutes?: number };
         Returns: {

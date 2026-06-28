@@ -31,6 +31,48 @@ export const fetchCurrentPost = async (
   return data;
 };
 
+export type WeeklyByline = {
+  authorId: string;
+  /** First name only — bylines read warm ("Ruth"), never formal. */
+  firstName: string;
+};
+
+/**
+ * Who has written for the upcoming editions of these Groups — authors of
+ * uncompiled posts (edition_id IS NULL), deduped, in the order they first
+ * filed. Feeds Home's "Ruth and Sam have written this week" line; it never
+ * names who *hasn't* written.
+ */
+export const fetchThisWeeksBylines = async (groupIds: string[]): Promise<WeeklyByline[]> => {
+  if (groupIds.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from('posts')
+    .select('author_id, created_at, author:users(display_name)')
+    .in('group_id', groupIds)
+    .is('edition_id', null)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  const rows = (data ?? []) as unknown as {
+    author_id: string;
+    author: { display_name: string } | null;
+  }[];
+
+  const seen = new Set<string>();
+  const bylines: WeeklyByline[] = [];
+  for (const row of rows) {
+    if (seen.has(row.author_id)) continue;
+    seen.add(row.author_id);
+    const firstName = (row.author?.display_name ?? '').trim().split(/\s+/)[0];
+    bylines.push({ authorId: row.author_id, firstName: firstName || 'Someone' });
+  }
+  return bylines;
+};
+
 // ---------------------------------------------------------------------------
 // Create / Update / Delete
 // ---------------------------------------------------------------------------
@@ -102,6 +144,9 @@ export const uploadPostImage = async (
   // edge. Original camera shots are 4–6 MB and we don't need that fidelity.
   const resizedUri = await resizeImageForUpload(imageUri);
   const imageResponse = await fetch(resizedUri);
+  if (!imageResponse.ok) {
+    throw new Error(`Failed to read image for upload (${imageResponse.status})`);
+  }
   const imageBuffer = await imageResponse.arrayBuffer();
   // After resize we always have JPEG, so the extension is fixed.
   const storagePath = `${userId}/posts/${postId}/image.jpg`;

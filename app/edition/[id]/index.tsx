@@ -20,6 +20,7 @@ import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { orderEdition } from '@/lib/edition-layout';
+import { markEditionOpened } from '@/lib/edition-seen';
 import { fetchEditionWithPosts, fetchGroupForEdition } from '@/lib/editions';
 import type { EditionWithPosts, GroupRow } from '@/types';
 
@@ -88,6 +89,12 @@ const EditionFrontPage = () => {
     setLoading(true);
     load().finally(() => setLoading(false));
   }, [load]);
+
+  // Reaching the front page counts as "opened" — clears Home's NEW flag. Here
+  // rather than on Home's tap so deep links and the inbox path count too.
+  useEffect(() => {
+    if (id) markEditionOpened(id);
+  }, [id]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
