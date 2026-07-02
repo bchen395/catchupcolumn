@@ -7,6 +7,7 @@ import { displayRatioFor, useImageOrientation } from '@/hooks/use-image-orientat
 import { deckFor, headlineFor } from '@/lib/edition-layout';
 import type { PostWithAuthor } from '@/types';
 
+import { Avatar } from './avatar';
 import { GreekedLines } from './greeked-lines';
 import { Polaroid } from './polaroid-photo';
 import { ThemedText } from './themed-text';
@@ -47,7 +48,10 @@ export const EditionLead = ({ post, onPress }: Props) => {
     >
       <ThemedText style={styles.kicker}>LEAD STORY</ThemedText>
       <ThemedText style={styles.headline}>{headline}</ThemedText>
-      <ThemedText style={styles.byline}>By {post.author.display_name}</ThemedText>
+      <View style={styles.bylineRow}>
+        <Avatar uri={post.author.avatar_url} name={post.author.display_name} size={28} />
+        <ThemedText style={styles.byline}>By {post.author.display_name}</ThemedText>
+      </View>
 
       {post.image_url && portrait ? (
         // Portrait: the photo holds one column, the teaser runs beside it.
@@ -86,15 +90,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.lg,
     paddingTop: Layout.padding.lg,
     paddingBottom: Layout.padding.lg,
-    gap: Layout.padding.sm,
+    gap: Layout.padding.md,
   },
   pressed: {
     opacity: 0.7,
   },
-  // Extra bottom room so the tilted frame's shadow has space before the text.
+  // The lead photo runs a touch wider than the text column — front-page weight
+  // — and keeps extra bottom room so the tilted frame's shadow clears the text.
   photo: {
     marginTop: Layout.padding.xs,
-    marginBottom: Layout.padding.sm,
+    marginBottom: Layout.padding.md,
+    marginHorizontal: -Layout.padding.sm,
   },
   sideBySide: {
     flexDirection: 'row',
@@ -120,6 +126,11 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.headline,
     lineHeight: Typography.lineHeights.headline,
     color: Colors.ink,
+  },
+  bylineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Layout.padding.sm,
   },
   byline: {
     fontFamily: Typography.families.serif,

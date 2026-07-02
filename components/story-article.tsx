@@ -7,21 +7,13 @@ import { displayRatioFor, useImageOrientation } from '@/hooks/use-image-orientat
 import { headlineFor } from '@/lib/edition-layout';
 import type { PostWithAuthor } from '@/types';
 
-import { AppImage } from './app-image';
+import { Avatar } from './avatar';
 import { Polaroid } from './polaroid-photo';
 import { ThemedText } from './themed-text';
 
 type Props = {
   post: PostWithAuthor;
 };
-
-const getInitials = (name: string) =>
-  name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('');
 
 // One contributor's full story, as read in the reader. Headline (the post's
 // title or a warm byline fallback), an avatar byline, the taped photo when
@@ -45,13 +37,7 @@ export const StoryArticle = ({ post }: Props) => {
       <ThemedText style={styles.headline}>{headlineFor(post)}</ThemedText>
 
       <View style={styles.byline}>
-        {author.avatar_url ? (
-          <AppImage source={{ uri: author.avatar_url }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatar, styles.avatarFallback]}>
-            <ThemedText style={styles.initials}>{getInitials(author.display_name)}</ThemedText>
-          </View>
-        )}
+        <Avatar uri={author.avatar_url} name={author.display_name} size={48} />
         <View style={styles.bylineText}>
           <ThemedText style={styles.bylineKicker}>BY</ThemedText>
           <ThemedText style={styles.authorName} numberOfLines={2}>
@@ -95,23 +81,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Layout.padding.md,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-  },
-  avatarFallback: {
-    backgroundColor: Colors.paperWarm,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initials: {
-    fontFamily: Typography.families.serifBlack,
-    fontSize: Typography.sizes.lg,
-    color: Colors.orange,
   },
   bylineText: {
     flex: 1,

@@ -84,6 +84,18 @@ export const Strings = {
     newFlag: 'New',
   },
 
+  // The edition's closing folio — a newspaper's "end of the page, on purpose"
+  // mark. `brand` and `folio` print on every edition; `nextEdition` is the
+  // forward-looking loop line shown only on a Group's most-recent edition (the
+  // same day/time facts as Home's dateline, in a warmer register). Printing it
+  // under an archived edition would be wrong, so the screen gates it.
+  colophon: {
+    brand: 'Catch Up Column',
+    folio: (n: number) => `No. ${n}`,
+    // day arrives as "today"/"tomorrow"/weekday; time as "9 AM" / "9:30 AM".
+    nextEdition: (day: string, time: string) => `The next edition arrives ${day} at ${time}.`,
+  },
+
   push: {
     editionReady: {
       title: 'Your Group is ready!',

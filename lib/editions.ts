@@ -148,10 +148,16 @@ export const publishEditionNow = async (groupId: string): Promise<PublishEdition
   };
 };
 
-export const fetchGroupForEdition = async (groupId: string): Promise<Pick<GroupRow, 'id' | 'name' | 'cover_image_url' | 'timezone'>> => {
+// Includes publish_day/publish_time so the front page can compute the
+// colophon's "next edition arrives …" line (nextPublishForGroup).
+export const fetchGroupForEdition = async (
+  groupId: string,
+): Promise<
+  Pick<GroupRow, 'id' | 'name' | 'cover_image_url' | 'timezone' | 'publish_day' | 'publish_time'>
+> => {
   const { data, error } = await supabase
     .from('groups')
-    .select('id, name, cover_image_url, timezone')
+    .select('id, name, cover_image_url, timezone, publish_day, publish_time')
     .eq('id', groupId)
     .single();
 
@@ -159,5 +165,28 @@ export const fetchGroupForEdition = async (groupId: string): Promise<Pick<GroupR
     throw error;
   }
 
-  return data as Pick<GroupRow, 'id' | 'name' | 'cover_image_url' | 'timezone'>;
+  return data as Pick<
+    GroupRow,
+    'id' | 'name' | 'cover_image_url' | 'timezone' | 'publish_day' | 'publish_time'
+  >;
+};
+
+// The highest edition_number for a Group. edition_number is monotonic (max + 1
+// on each publish), so the *current* edition is the one whose number equals
+// this — the front page uses it to gate the colophon's forward-looking line to
+// the latest edition only (pointing ahead under an archived issue is wrong).
+export const fetchLatestEditionNumber = async (groupId: string): Promise<number> => {
+  const { data, error } = await supabase
+    .from('editions')
+    .select('edition_number')
+    .eq('group_id', groupId)
+    .order('edition_number', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.edition_number ?? 0;
 };
