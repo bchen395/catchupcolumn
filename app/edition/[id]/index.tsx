@@ -5,12 +5,14 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-n
 
 import { EditionBriefColumn } from '@/components/edition-brief-column';
 import { EditionBriefsGrid } from '@/components/edition-briefs-grid';
+import { EditionColophon } from '@/components/edition-colophon';
 import { EditionLead } from '@/components/edition-lead';
 import { EditionSecondary } from '@/components/edition-secondary';
 import { ErrorState } from '@/components/error-state';
 import { PaperGrain } from '@/components/paper-grain';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { StatusBanner } from '@/components/status-banner';
+import { StoryArticle } from '@/components/story-article';
 import { StoryReaderOverlay, type SectionFrame } from '@/components/story-reader-overlay';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
@@ -21,10 +23,14 @@ import { Typography } from '@/constants/typography';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { orderEdition } from '@/lib/edition-layout';
 import { markEditionOpened } from '@/lib/edition-seen';
-import { fetchEditionWithPosts, fetchGroupForEdition } from '@/lib/editions';
+import { fetchEditionWithPosts, fetchGroupForEdition, fetchLatestEditionNumber } from '@/lib/editions';
+import { nextPublishForGroup } from '@/lib/groups';
 import type { EditionWithPosts, GroupRow } from '@/types';
 
-type GroupSummary = Pick<GroupRow, 'id' | 'name' | 'cover_image_url' | 'timezone'>;
+type GroupSummary = Pick<
+  GroupRow,
+  'id' | 'name' | 'cover_image_url' | 'timezone' | 'publish_day' | 'publish_time'
+>;
 
 const formatWeekOf = (publishedAt: string, timezone?: string | null): string => {
   const tz = timezone || undefined;
@@ -60,6 +66,9 @@ const EditionFrontPage = () => {
 
   const [edition, setEdition] = useState<EditionWithPosts | null>(null);
   const [group, setGroup] = useState<GroupSummary | null>(null);
+  // Whether this is the Group's most-recent edition — gates the colophon's
+  // forward-looking "next edition" line (never shown on an archived issue).
+  const [isLatest, setIsLatest] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [screenError, setScreenError] = useState('');
@@ -79,6 +88,14 @@ const EditionFrontPage = () => {
       setEdition(data);
       const g = await fetchGroupForEdition(data.group_id);
       setGroup(g);
+      // Non-fatal: if we can't tell whether this is the latest edition, just
+      // fall back to hiding the forward-looking colophon line.
+      try {
+        const latest = await fetchLatestEditionNumber(data.group_id);
+        setIsLatest(latest === data.edition_number);
+      } catch {
+        setIsLatest(false);
+      }
       setScreenError('');
     } catch (_err) {
       setScreenError(Strings.error.editionLoad);
@@ -122,6 +139,14 @@ const EditionFrontPage = () => {
 
   const weekOf = formatWeekOf(edition.published_at, group.timezone);
   const { lead, secondary, briefs, ordered } = orderEdition(edition.posts);
+
+  // A one-post edition is the degenerate thin case: the cover IS the story, so
+  // it reads inline (full body, no teaser, no enlarge) rather than as a cover.
+  const isSingle = edition.posts.length === 1;
+
+  // The colophon's forward line, only on the Group's most-recent edition.
+  const next = isLatest ? nextPublishForGroup(group) : null;
+  const nextEditionLine = next ? Strings.colophon.nextEdition(next.dayLabel, next.timeLabel) : null;
 
   // Open a story by growing it out of its spot on the page. Falls back to the
   // plain reader route when Reduce Motion is on or the section couldn't be
@@ -194,10 +219,14 @@ const EditionFrontPage = () => {
           <ThemedText style={styles.mastheadTitle} numberOfLines={2}>
             {group.name.toUpperCase()}
           </ThemedText>
-          <View style={styles.mastheadRule} />
-          <ThemedText style={styles.mastheadDate}>{weekOf}</ThemedText>
+          {/* The dateline sits in a folio band — flanked by hairline rules. */}
+          <View style={styles.datelineRow}>
+            <View style={styles.datelineRule} />
+            <ThemedText style={styles.mastheadDate}>{weekOf}</ThemedText>
+            <View style={styles.datelineRule} />
+          </View>
           <ThemedText style={styles.mastheadMeta}>
-            Edition #{edition.edition_number}
+            Edition No. {edition.edition_number}
             {edition.posts.length > 0
               ? `  ·  ${plural(edition.posts.length, 'story', 'stories')}  ·  ${plural(
                   countContributors(edition),
@@ -209,11 +238,18 @@ const EditionFrontPage = () => {
         </View>
 
         {!lead ? (
+          // Rare: an already-published edition whose posts were all deleted.
+          // Keep the masthead + colophon around a warm line so it still reads
+          // as a page, not a broken screen.
           <View style={styles.emptyEdition}>
             <ThemedText variant="body" style={styles.emptyEditionText}>
               {Strings.empty.edition.body}
             </ThemedText>
           </View>
+        ) : isSingle ? (
+          // One-post edition: the cover is the whole story. Reuse the reader's
+          // article so it reads exactly as enlarging it would have. No enlarge.
+          <StoryArticle post={lead} />
         ) : (
           <>
             {/* Measurable wrappers give the enlarge overlay its launch frame. */}
@@ -233,9 +269,14 @@ const EditionFrontPage = () => {
               </>
             ) : null}
 
+            {/* A lone tertiary brief (3-post edition) drops the "IN BRIEF"
+                label, so add a rule to separate it from the secondary. */}
+            {briefs.length === 1 ? <View style={styles.sectionRule} /> : null}
             <EditionBriefsGrid briefs={briefs} onOpen={openStory} />
           </>
         )}
+
+        <EditionColophon editionNumber={edition.edition_number} nextEditionLine={nextEditionLine} />
       </ScrollView>
 
       {overlay ? (
@@ -299,11 +340,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 1,
   },
-  mastheadRule: {
-    width: 80,
+  // The dateline's folio band: the italic "Week of …" flanked by hairlines.
+  datelineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    gap: Layout.padding.md,
+    paddingHorizontal: Layout.padding.md,
+    marginVertical: Layout.padding.xs,
+  },
+  datelineRule: {
+    flex: 1,
     height: 1,
     backgroundColor: Colors.ink,
-    marginVertical: Layout.padding.xs,
   },
   mastheadDate: {
     fontFamily: Typography.families.serif,

@@ -22,6 +22,11 @@ type Props = {
 // with a vertical hairline between them — classic below-the-fold newsprint.
 // An odd final brief runs the full measure rather than leaving a dangling
 // half-column.
+//
+// The "IN BRIEF" label + grid only read as a section with two or more briefs.
+// A lone brief (the 3-post edition's third story) runs the full measure with
+// NO label — a section head over a single item reads thin. The host adds a
+// hairline rule above in that case so it still separates from the secondary.
 export const EditionBriefsGrid = ({ briefs, onOpen }: Props) => {
   const cellRefs = useRef(new Map<string, View | null>()).current;
 
@@ -57,11 +62,13 @@ export const EditionBriefsGrid = ({ briefs, onOpen }: Props) => {
 
   return (
     <View style={styles.section}>
-      <View style={styles.header}>
-        <View style={styles.headerRule} />
-        <ThemedText style={styles.label}>IN BRIEF</ThemedText>
-        <View style={styles.headerRule} />
-      </View>
+      {briefs.length >= 2 ? (
+        <View style={styles.header}>
+          <View style={styles.headerRule} />
+          <ThemedText style={styles.label}>IN BRIEF</ThemedText>
+          <View style={styles.headerRule} />
+        </View>
+      ) : null}
 
       {rows.map(([left, right], idx) => (
         <Fragment key={left.id}>

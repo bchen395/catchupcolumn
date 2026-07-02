@@ -7,6 +7,7 @@ import { displayRatioFor, useImageOrientation } from '@/hooks/use-image-orientat
 import { deckFor, headlineFor } from '@/lib/edition-layout';
 import type { PostWithAuthor } from '@/types';
 
+import { Avatar } from './avatar';
 import { GreekedLines } from './greeked-lines';
 import { Polaroid } from './polaroid-photo';
 import { ThemedText } from './themed-text';
@@ -48,7 +49,10 @@ export const EditionSecondary = ({ post, onPress }: Props) => {
       <ThemedText style={styles.headline} numberOfLines={3}>
         {headline}
       </ThemedText>
-      <ThemedText style={styles.byline}>By {post.author.display_name}</ThemedText>
+      <View style={styles.bylineRow}>
+        <Avatar uri={post.author.avatar_url} name={post.author.display_name} size={24} />
+        <ThemedText style={styles.byline}>By {post.author.display_name}</ThemedText>
+      </View>
 
       {/* Newsprint teaser — capped scaling so accessibility sizes grow it
           without blowing up the page; full reading is the 17px reader. */}
@@ -113,6 +117,11 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.xxl,
     lineHeight: 32,
     color: Colors.ink,
+  },
+  bylineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Layout.padding.sm,
   },
   byline: {
     fontFamily: Typography.families.serif,
