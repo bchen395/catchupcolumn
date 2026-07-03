@@ -50,7 +50,7 @@ export const EditionLead = ({ post, onPress }: Props) => {
       <ThemedText style={styles.headline}>{headline}</ThemedText>
       <View style={styles.bylineRow}>
         <Avatar uri={post.author.avatar_url} name={post.author.display_name} size={28} />
-        <ThemedText style={styles.byline}>By {post.author.display_name}</ThemedText>
+        <ThemedText style={styles.byline} numberOfLines={2}>By {post.author.display_name}</ThemedText>
       </View>
 
       {post.image_url && portrait ? (
@@ -133,6 +133,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   byline: {
+    flex: 1,
     fontFamily: Typography.families.serif,
     fontStyle: 'italic',
     fontSize: Typography.sizes.body,

@@ -51,7 +51,7 @@ export const EditionSecondary = ({ post, onPress }: Props) => {
       </ThemedText>
       <View style={styles.bylineRow}>
         <Avatar uri={post.author.avatar_url} name={post.author.display_name} size={24} />
-        <ThemedText style={styles.byline}>By {post.author.display_name}</ThemedText>
+        <ThemedText style={styles.byline} numberOfLines={2}>By {post.author.display_name}</ThemedText>
       </View>
 
       {/* Newsprint teaser — capped scaling so accessibility sizes grow it
@@ -124,6 +124,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   byline: {
+    flex: 1,
     fontFamily: Typography.families.serif,
     fontStyle: 'italic',
     fontSize: Typography.sizes.sm,

@@ -13,12 +13,29 @@ config, and hygiene.
 
 ---
 
+## Pre-launch pass — 2026-07-03
+
+A launch-prep review (four parallel audits: edition front-page revamp, backend
+security, client bugs, store readiness) plus fixes. **The two "pending deploy"
+items below are now confirmed LIVE** — migration `20260627000000` shows as `remote`
+in `supabase migration list`, and `compile-editions` is deployed at v13 (2026-06-27)
+with the 20-minute tolerance. All four edge functions were verified byte-identical
+to the repo via `supabase functions download`.
+
+New this pass — **all fixed in the working tree**, see the dated resolved section:
+
+- **HIGH — cross-group post injection** (`posts` UPDATE had no group-membership
+  `WITH CHECK`). Fixed in migration `20260703000000_security_hardening.sql`.
+- **MEDIUM — every user's email readable by any authenticated user** (`users`
+  SELECT `using(true)`). Fixed via column-privilege revoke + client changes.
+- **LOW/MED — `unsubscribe_token` readable by co-members.** Fixed via column revoke.
+- **LOW — `prepare_account_deletion` callable directly by `authenticated`.** Revoked.
+- **MEDIUM x2 — edition front-page byline & dateline clip** at long names / large
+  font scales. Fixed with `flexShrink`/`numberOfLines`.
+
 ## Pending deploy (fixed in repo, not yet live)
 
-These are fixed in the working tree but only take effect once shipped:
-
-- **PUBLIC-execute lockdown migration** — `supabase/migrations/20260627000000_revoke_public_execute_on_service_rpcs.sql`. Closes a PII leak where `get_edition_email_payload` (and the other email/compile RPCs) were callable by `anon`/`authenticated` via the default Postgres `PUBLIC` grant. **Apply with `npx supabase db push`.**
-- **Compile tolerance 15 → 20 min** — `supabase/functions/compile-editions/index.ts:39`. Stops a late/cold-start cron tick from missing a group's publish window. **Ships on next `npx supabase functions deploy compile-editions`.**
+- **Security hardening migration** — `supabase/migrations/20260703000000_security_hardening.sql`. **Apply with `npx supabase db push`.** Until applied, the HIGH cross-group post-injection hole is live. NOTE: this migration and the client changes in the same pass are coupled — deploy the app build and the migration together (the client stops reading `users.email` / embedding it; the migration revokes column access to it). Pushing the migration before the new build ships would break profile load on the *old* build's `select('*')`.
 
 ---
 
@@ -82,13 +99,33 @@ These are fixed in the working tree but only take effect once shipped:
 - **Where:** `supabase/migrations/20260525000000_manual_publish.sql:204`
 - `max(edition_number)+1` under a per-group `pg_try_advisory_xact_lock` is race-safe for every current writer (all edition inserts go through the locked RPC). It is **not** safe against a hypothetical future direct-insert path that skips the lock. No such path exists today — noted so it isn't introduced unknowingly.
 
+### D2. Auth: minimum password length 6, no email confirmation
+- **Where:** `supabase/config.toml` (`minimum_password_length = 6`, `[auth.email] enable_confirmations = false`). NOTE: `config.toml` governs **local** dev only — production auth settings live in the Supabase **dashboard** (Authentication → Providers/Policies). Changing the file does not change prod.
+- Weak passwords are accepted, and email ownership isn't verified before first sign-in (someone could sign up under another person's address). **Owner decision:** raise the minimum (8+) in the dashboard; weigh enabling email confirmation against the onboarding friction it adds for the older-adult audience (the app already has a resend-confirmation path if you enable it).
+
+### D3. `users.display_name`/`avatar_url`/`bio` still enumerable by any authenticated user
+- **Where:** `users` SELECT policy remains `using (true)` (only the `email` *column* was locked down this pass).
+- Deliberately left open: bylines and member previews need display_name/avatar across groups, and scoping the row policy to co-members risks breaking the invite-preview and author-embed paths. Residual is limited to display-name/avatar/bio enumeration, not contact info. Revisit only if profile enumeration becomes a concern.
+
+### D4. Do NOT revoke EXECUTE on `is_group_member` / `is_group_moderator` from `authenticated`
+- A prior audit suggested this as a membership-oracle hardening. **It would break the app:** these SECURITY DEFINER helpers are called inside RLS `USING`/`WITH CHECK` expressions, which evaluate with the *querying* role's privileges — revoking EXECUTE from `authenticated` yields "permission denied for function" on every groups/posts/editions/members read. The oracle risk (a boolean membership check) is negligible; leave the default grant in place.
+
 ---
 
 ## Top-priority list
 
-1. **Apply the security migration** (`db push`) and **redeploy `compile-editions`** — the two "pending deploy" fixes above. Until applied, the email/recipient-data leak is live.
-2. **M1** — decide whether weekly email needs per-recipient retry, or accept the documented trade-off.
-3. **L2** — set a production `EMAIL_FROM` before launch.
+1. **Apply the 2026-07-03 security migration** (`npx supabase db push`) — closes the
+   live HIGH cross-group post-injection hole. Ship it together with the app build
+   that contains the coupled client changes (see Pending deploy note).
+2. **Run `eas init`** — writes `owner` + `extra.eas.projectId` to app.json. Without
+   it, production push notifications silently never register (a core feature). See
+   `docs/STORE_LISTING.md` §11.
+3. **Host the legal/support docs** (`docs/PRIVACY.md`, `SUPPORT.md`, `DATA_DELETION.md`)
+   and enter the URLs in App Store Connect / Play Console — hard submission blockers.
+4. **L2** — set a production `EMAIL_FROM` (verified Resend domain) before launch.
+5. **M1** — decide whether weekly email needs per-recipient retry, or accept the trade-off.
+6. **Auth config (dashboard, not code):** raise minimum password length (currently 6)
+   and decide on email confirmation (currently off) — see D2/D3 below.
 
 Everything else is low-risk cleanup that can ride along with normal work.
 
@@ -140,3 +177,14 @@ tree (verified file-by-file during this pass):
 - `FiledStamp` re-animates on rapid saves and no longer latches when no group is selected.
 - Upload helpers check `fetch(...).ok` before uploading.
 - `use-auth` retries `ensureUserProfile` once (see L3 for the residual).
+
+**Fixed during the 2026-07-03 pre-launch pass (working tree):**
+- **HIGH: cross-group post injection** — `posts` UPDATE `WITH CHECK` now requires `is_group_member(group_id, auth.uid())` and `edition_id is null`; `USING` requires `edition_id is null` (drafts only). Compiler/publish RPCs are SECURITY DEFINER and bypass RLS, so they still set `edition_id`. (`20260703000000_security_hardening.sql`)
+- **MEDIUM: all users' emails readable** — table `SELECT` on `users` revoked from `authenticated`; column `SELECT` re-granted on `(id, display_name, avatar_url, bio, created_at)` only. Client stopped reading/embedding `users.email` (`lib/auth.ts`, `lib/editions.ts`, `lib/groups.ts`).
+- **LOW/MED: `unsubscribe_token` readable by co-members** — same column-grant treatment on `group_members` (every column except `unsubscribe_token`).
+- **LOW: `prepare_account_deletion` callable by `authenticated`** — revoked; `service_role` only (deletion routes through the edge function).
+- **MEDIUM: edition front-page byline clip** — `edition-lead.tsx` / `edition-secondary.tsx` bylines now `flex: 1` + `numberOfLines={2}`.
+- **MEDIUM: masthead dateline clip at large font scales** — `mastheadDate` now `flexShrink: 1` + centered so it wraps instead of colliding with the folio rules.
+- **LOW: initials broke on emoji names** — `getInitials` (`components/avatar.tsx`) spreads to code points.
+- **Store readiness:** icons regenerated in the orange brand palette (illegible wordmark dropped, main icon flattened to RGB for App Store), monochrome Android notification icon added and wired in `app.json`, `primaryColor` corrected to `#FF7237`, splash made transparent on `paperWarm`; `eas.json` created; legal/support/data-deletion docs and store-listing metadata drafted under `docs/`.
+- **Verified in sync:** all four deployed edge functions are byte-identical to the repo (`supabase functions download`); the `20260627000000` PUBLIC-execute migration is `remote` (live); `compile-editions` v13 carries the 20-min tolerance.

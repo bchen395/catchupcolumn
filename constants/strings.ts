@@ -14,6 +14,13 @@ export const Strings = {
     tagline: 'Your weekly newsletter, made together.',
   },
 
+  // Hosted legal/support pages (also entered in App Store Connect / Play Console).
+  legal: {
+    privacyUrl: 'https://catchupcolumn.com/privacy',
+    termsUrl: 'https://catchupcolumn.com/terms',
+    supportUrl: 'https://catchupcolumn.com/support',
+  },
+
   loading: {
     default: 'Setting the type…',
     inbox: 'Pulling this week’s edition…',
