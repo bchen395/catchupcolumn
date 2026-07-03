@@ -1,5 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as ImagePicker from 'expo-image-picker';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -404,6 +405,26 @@ const ProfileScreen = () => {
               </ThemedText>
             </Pressable>
           </View>
+
+          <View style={styles.legalRow}>
+            <Pressable
+              onPress={() => WebBrowser.openBrowserAsync(Strings.legal.privacyUrl)}
+              accessibilityRole="link"
+              accessibilityLabel="Read the privacy policy"
+              hitSlop={8}
+            >
+              <ThemedText style={styles.legalLink}>Privacy Policy</ThemedText>
+            </Pressable>
+            <ThemedText style={styles.legalDot}>·</ThemedText>
+            <Pressable
+              onPress={() => WebBrowser.openBrowserAsync(Strings.legal.termsUrl)}
+              accessibilityRole="link"
+              accessibilityLabel="Read the terms of service"
+              hitSlop={8}
+            >
+              <ThemedText style={styles.legalLink}>Terms of Service</ThemedText>
+            </Pressable>
+          </View>
         </>
       )}
     </ScrollView>
@@ -552,6 +573,24 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.sm,
     color: Colors.error,
     textDecorationLine: 'underline',
+  },
+  legalRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Layout.padding.sm,
+    marginTop: Layout.padding.md,
+  },
+  legalLink: {
+    fontFamily: Typography.families.sansMedium,
+    fontSize: Typography.sizes.body,
+    color: Colors.inkSoft,
+    textDecorationLine: 'underline',
+  },
+  legalDot: {
+    fontFamily: Typography.families.sansMedium,
+    fontSize: Typography.sizes.body,
+    color: Colors.inkSoft,
   },
 });
 

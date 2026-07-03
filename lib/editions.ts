@@ -56,7 +56,7 @@ export const fetchEditionWithPosts = async (editionId: string): Promise<EditionW
       `id, group_id, edition_number, published_at, created_at,
        posts(
          id, group_id, author_id, title, body, image_url, edition_id, created_at, updated_at,
-         author:users(id, display_name, avatar_url, bio, email, created_at)
+         author:users(id, display_name, avatar_url, bio, created_at)
        )`,
     )
     .eq('id', editionId)

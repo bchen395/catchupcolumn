@@ -104,14 +104,24 @@ export const ensureUserProfile = async (user: User) => {
   }
 };
 
+// Column list excludes `email`: authenticated has no column privilege on it
+// (see 20260703000000_security_hardening.sql), and the app reads the signed-in
+// user's email from the auth session, never from this table. Casting back to
+// UserRow keeps callers' types stable — the absent email field is never read.
+const PROFILE_SELECT = 'id, display_name, avatar_url, bio, created_at';
+
 export const fetchCurrentUserProfile = async (userId: string) => {
-  const { data, error } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
+  const { data, error } = await supabase
+    .from('users')
+    .select(PROFILE_SELECT)
+    .eq('id', userId)
+    .maybeSingle();
 
   if (error) {
     throw error;
   }
 
-  return data;
+  return (data as UserRow | null);
 };
 
 export const updateCurrentUserProfile = async (userId: string, updates: UserUpdate) => {
@@ -119,7 +129,7 @@ export const updateCurrentUserProfile = async (userId: string, updates: UserUpda
     .from('users')
     .update(updates)
     .eq('id', userId)
-    .select('*')
+    .select(PROFILE_SELECT)
     .maybeSingle();
 
   if (error) {
@@ -132,7 +142,7 @@ export const updateCurrentUserProfile = async (userId: string, updates: UserUpda
     throw new Error('Profile update was not applied. Please sign in again.');
   }
 
-  return data satisfies UserRow;
+  return data as UserRow;
 };
 
 export const uploadUserAvatar = async ({ userId, imageUri }: UploadAvatarInput) => {

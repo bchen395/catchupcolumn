@@ -87,8 +87,8 @@ Mark phases as [x] when complete. Work through them in order.
 - [x] Push notifications: "Your Group is ready!" on edition publish
 - [ ] Onboarding improvements based on testing with a real family member
 - [x] Error states and empty states for every screen
-- [x] App icon and splash screen
-- [ ] App Store / Play Store metadata
+- [x] App icon and splash screen (brand-orange icon set regenerated 2026-07-03; monochrome Android notification icon added)
+- [~] App Store / Play Store metadata — drafted in `docs/STORE_LISTING.md` (descriptions, keywords, privacy-label + data-safety answers, checklist). Still needs: owner to run `eas init`, host `docs/PRIVACY.md`/`SUPPORT.md`/`DATA_DELETION.md`, capture screenshots, and fill store-console fields.
 - [x] Performance pass: image optimization, lazy loading
 
 **Test:** Hand the app to a non-technical family member. Can they sign up, join a Group, write a post, and read an edition without asking you for help?

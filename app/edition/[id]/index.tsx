@@ -355,10 +355,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.ink,
   },
   mastheadDate: {
+    flexShrink: 1,
     fontFamily: Typography.families.serif,
     fontSize: Typography.sizes.lg,
     fontStyle: 'italic',
     color: Colors.ink,
+    textAlign: 'center',
   },
   mastheadMeta: {
     fontFamily: Typography.families.sansMedium,

@@ -154,7 +154,7 @@ export const fetchUserGroups = async (userId: string): Promise<GroupWithMembers[
       `group_id, groups!inner(
         id, name, description, cover_image_url, publish_day, publish_time,
         timezone, created_by, invite_code, created_at,
-        group_members(group_id, user_id, role, joined_at, users(id, display_name, avatar_url, bio, email, created_at))
+        group_members(group_id, user_id, role, joined_at, users(id, display_name, avatar_url, bio, created_at))
       )`
     )
     .eq('user_id', userId);
@@ -174,7 +174,7 @@ export const fetchGroupDetails = async (groupId: string): Promise<GroupWithMembe
     .select(
       `id, name, description, cover_image_url, publish_day, publish_time,
        timezone, created_by, invite_code, created_at,
-       group_members(group_id, user_id, role, joined_at, users(id, display_name, avatar_url, bio, email, created_at))`
+       group_members(group_id, user_id, role, joined_at, users(id, display_name, avatar_url, bio, created_at))`
     )
     .eq('id', groupId)
     .single();
