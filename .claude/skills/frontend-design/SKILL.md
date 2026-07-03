@@ -15,8 +15,10 @@ You're working on the UI of a warm, paperish family-newsletter app built for old
    - `typography.ts` — platform-conditional families (iOS: Superclarendon/Futura; Android/web: Roboto Slab/Jost) + type scale.
    - `layout.ts` — spacing, radii (read the Shape Consistency Lock comment), input metrics, warm paper shadows.
    - `icons.ts` — semantic icon registry. Add glyphs there, reference by key.
-   - `strings.ts` — reusable, tone-sensitive user-facing copy.
+   - `strings.ts` — reusable, tone-sensitive user-facing copy (incl. `Strings.thisWeek`, the weekly-ritual voice).
    - `loading.ts` — printing-press loader knobs.
+   - `motion.ts` — animation durations + easing, and the house motion style comment (BRAND §11).
+3. **`lib/haptics.ts`** — the three haptic verbs (`tap`/`select`/`confirm`) and when each fires (BRAND §11).
 
 **Conflict rule:** CLAUDE.md carries only a headline summary of the design system (synced 2026-06-04). If it ever disagrees with BRAND.md or `constants/`, those win — they're updated most often. Re-sync CLAUDE.md's summary when the drift is user-visible (fonts, palette, navigation).
 
@@ -29,6 +31,9 @@ You're working on the UI of a warm, paperish family-newsletter app built for old
 - Pressed states: `Colors.orange + 'CC'` on filled controls, or opacity ~0.7 on content blocks — not new colors.
 - Styles in `StyleSheet.create()` at the bottom of the file; break up components past ~150 lines.
 - Tone: warm and plain-spoken ("Write something for this week"), never technical or apologetic.
+- Motion: durations from `Motion.duration`, never hardcoded ms; ease-out timing, no springs (sole exception: the compose sheet); every animation respects Reduce Motion. The loader's knobs stay in `loading.ts`.
+- Haptics only through `lib/haptics.ts`'s three verbs — `tap` for key actions, `select` for value changes (never on re-selecting the same value), `confirm` reserved for save/publish moments. When in doubt, no haptic.
+- Engagement = ritual devices (datelines, stamps, bylines), never gamification — no streaks, badges, counters, or confetti (BRAND §10, rejected on principle).
 
 ## Component inventory — check here before building anything new
 
@@ -58,6 +63,8 @@ You're working on the UI of a warm, paperish family-newsletter app built for old
 | `avatar-picker` | Profile avatar selection. |
 | `day-selector` | The 7-day publish-day picker (create-group and settings share it). |
 | `time-picker-modal` / `snap-column` | Scroll-wheel time picker (`snap-column` is its internal wheel). |
+| `this-week-strip` | Home's rule-framed dateline: next publish moment + who's written (never who hasn't). |
+| `filed-stamp` | The rubber-stamp "Filed for Sunday's edition" confirmation on explicit post save. |
 
 ## Decisions newer than BRAND.md (drift notes)
 
