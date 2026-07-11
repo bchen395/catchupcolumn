@@ -1,0 +1,5 @@
+# Cloudflare Pages routing for catchupcolumn.com
+# /start is the colophon link target in the edition email — same pitch as the root.
+/start / 301
+# Any /edition/{id} serves the deep-link bouncer (id parsed client-side).
+/edition/* /edition/index.html 200

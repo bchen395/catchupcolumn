@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Catch Up Column — a weekly newspaper, written by your family</title>
+    <meta name="description" content="Everyone writes a little during the week. On Sunday it arrives as one beautiful edition — your family's own newspaper.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700;900&family=Jost:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/config.js"></script>
+  </head>
+  <body>
+    <main class="sheet">
+      <p class="kicker">Est. every Sunday morning</p>
+      <h1 class="masthead-name">Catch Up Column</h1>
+      <p class="dateline">A weekly newspaper, written by your family</p>
+      <hr class="masthead-rule">
+
+      <p>The group text scrolls away. This doesn't. Everyone writes a little during the week — a story, a photo, a small victory — and at week's end it arrives for the whole family as one beautiful edition.</p>
+
+      <ol class="steps">
+        <li>Start a column and invite your people with one link.</li>
+        <li>Everyone writes when they like, all week long.</li>
+        <li>Sunday morning, the edition arrives — in the app and by email.</li>
+      </ol>
+
+      <div id="store-buttons"></div>
+      <p id="coming-soon" class="muted small hidden">The app is arriving soon — check back shortly.</p>
+
+      <footer class="colophon">
+        <div class="ornament">❦</div>
+        <p class="folio">Catch Up Column</p>
+        <p class="small" style="font-style: italic; margin-top: 12px;">Written by families. Printed by us.</p>
+      </footer>
+    </main>
+
+    <script>
+      (function () {
+        var c = window.CUC || {};
+        var wrap = document.getElementById('store-buttons');
+        var any = false;
+        if (c.appStoreUrl) {
+          wrap.insertAdjacentHTML('beforeend', '<a class="btn" href="' + c.appStoreUrl + '">Get it on the App Store</a>');
+          any = true;
+        }
+        if (c.playStoreUrl) {
+          wrap.insertAdjacentHTML('beforeend', '<a class="btn btn-secondary" href="' + c.playStoreUrl + '">Get it on Google Play</a>');
+          any = true;
+        }
+        if (!any) document.getElementById('coming-soon').classList.remove('hidden');
+      })();
+    </script>
+  </body>
+</html>

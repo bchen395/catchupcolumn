@@ -4,6 +4,10 @@
 // Edition email. Identifies the group_members row by an opaque uuid token
 // and flips email_subscribed=false. Returns a small HTML confirmation page.
 //
+// GET  — a human clicking the footer link (HTML confirmation page).
+// POST — RFC 8058 one-click unsubscribe: mail providers POST to the same
+//        URL from the List-Unsubscribe header; only the status code matters.
+//
 // Deploy with:
 //   npx supabase functions deploy unsubscribe --no-verify-jwt
 //
@@ -52,8 +56,15 @@ const html = (status: number, title: string, body: string): Response =>
     headers: { 'Content-Type': 'text/html; charset=utf-8' },
   });
 
+const text = (status: number, body: string): Response =>
+  new Response(body, {
+    status,
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+  });
+
 Deno.serve(async (req: Request) => {
-  if (req.method !== 'GET') {
+  const isOneClick = req.method === 'POST';
+  if (req.method !== 'GET' && !isOneClick) {
     return html(405, 'Method Not Allowed', '<h1>Method Not Allowed</h1>');
   }
 
@@ -61,6 +72,7 @@ Deno.serve(async (req: Request) => {
   const token = url.searchParams.get('token')?.trim();
 
   if (!token || !UUID_REGEX.test(token)) {
+    if (isOneClick) return text(400, 'invalid token');
     return html(
       400,
       'Invalid Link',
@@ -74,6 +86,7 @@ Deno.serve(async (req: Request) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!supabaseUrl || !serviceKey) {
+    if (isOneClick) return text(500, 'service unavailable');
     return html(
       500,
       'Service Unavailable',
@@ -89,6 +102,7 @@ Deno.serve(async (req: Request) => {
 
   if (error) {
     console.error('unsubscribe_by_token failed:', error.message);
+    if (isOneClick) return text(500, 'error');
     return html(
       500,
       'Something went wrong',
@@ -99,6 +113,7 @@ Deno.serve(async (req: Request) => {
   const result = data as { ok: boolean; reason?: string; group_name?: string; already_unsubscribed?: boolean };
 
   if (!result?.ok) {
+    if (isOneClick) return text(404, 'not found');
     return html(
       404,
       'Link Not Found',
@@ -108,6 +123,8 @@ Deno.serve(async (req: Request) => {
       `,
     );
   }
+
+  if (isOneClick) return text(200, 'unsubscribed');
 
   const groupName = result.group_name ?? 'this group';
   const heading = result.already_unsubscribed ? 'You were already unsubscribed' : 'You have been unsubscribed';

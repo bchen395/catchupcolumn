@@ -121,7 +121,7 @@ Use this language consistently in code, UI, and comments:
 3. **Post composer** — Simple text editor with optional single photo upload. No rich text formatting in v1. Posts are tied to the current (unpublished) edition window.
 4. **Weekly compilation** — A Supabase Edge Function runs on a cron schedule, groups all uncompiled posts for each Group into an Edition, and triggers delivery.
 5. **Inbox / reading view** — Newspaper-styled layout showing the latest Edition. Each contributor's post is a "section." Prioritize readability and warmth.
-6. **Email delivery** — When an Edition publishes, send an email to all Group members with the content (via Resend).
+6. **Email delivery** — When an Edition publishes, send an email to all Group members (via Resend). The email is a first-class design surface: full content including photos (signed URLs, 1-year TTL), brand-styled newspaper layout, content-led subject, and https links to `WEB_BASE_URL` (catchupcolumn.com). See `supabase/functions/_shared/edition-email.ts` and the `edge-functions` skill.
 
 ## NOT in MVP (future phases)
 
