@@ -6,6 +6,8 @@ import type {
     GroupRow,
     GroupUpdate,
     GroupWithMembers,
+    InvitePreview,
+    InvitePreviewDetails,
     UserRow,
 } from '@/types';
 
@@ -124,6 +126,27 @@ export const nextPublishForGroup = (
     daysAway * 24 * 60 + (pubHour * 60 + pubMinute) - (nowHour * 60 + nowMinute);
 
   return { daysAway, dayLabel, timeLabel: formatClock(pubHour, pubMinute), minutesUntil };
+};
+
+/**
+ * The publish rhythm as speech — "Sunday" + "morning" — for the invitation
+ * screen's cadence line (Strings.invite.cadence). Cadence describes the
+ * ritual, not the next instant, so it always uses the weekday name (never
+ * "today"/"tomorrow" — that's nextPublishForGroup's job).
+ */
+export const publishCadenceParts = (
+  group: Pick<GroupRow, 'publish_day' | 'publish_time'>,
+): { dayName: string; daypart: string } => {
+  const hour = toMinuteOfDay((group.publish_time ?? '09:00').split(':')[0], 9);
+  const daypart =
+    hour >= 5 && hour < 12
+      ? 'morning'
+      : hour >= 12 && hour < 17
+        ? 'afternoon'
+        : hour >= 17 && hour < 21
+          ? 'evening'
+          : 'night';
+  return { dayName: DAY_NAMES[group.publish_day ?? 0] ?? 'Sunday', daypart };
 };
 
 /** The Group whose presses roll soonest — what Home's dateline announces. */
@@ -300,19 +323,43 @@ export const isGroupMember = async (
   return data !== null;
 };
 
-export const lookupGroupByInviteCode = async (
+// Minimal preview — works without a session so an invite link can show a
+// logged-out invitee what they're joining before asking them to sign up.
+export const fetchInvitePreview = async (
   inviteCode: string
-): Promise<GroupRow | null> => {
+): Promise<InvitePreview | null> => {
   const { data, error } = await supabase
-    .rpc('find_group_by_invite_code', { p_invite_code: normalizeInviteCode(inviteCode) });
+    .rpc('get_invite_preview', { p_invite_code: normalizeInviteCode(inviteCode) });
 
   if (error) {
     throw error;
   }
 
-  const rows = data as GroupRow[] | null;
+  const rows = data as InvitePreview[] | null;
   return rows?.[0] ?? null;
 };
+
+// Rich preview for signed-in invitees: cadence, is_member, member sample.
+export const fetchInvitePreviewDetails = async (
+  inviteCode: string
+): Promise<InvitePreviewDetails | null> => {
+  const { data, error } = await supabase
+    .rpc('get_invite_preview_details', { p_invite_code: normalizeInviteCode(inviteCode) });
+
+  if (error) {
+    throw error;
+  }
+
+  const rows = data as InvitePreviewDetails[] | null;
+  return rows?.[0] ?? null;
+};
+
+// The single seam for the invite-link format. Hardcoded scheme on purpose:
+// Linking.createURL would yield an exp:// URL in dev, which is wrong for a
+// link sent to someone else's phone. A future https universal link changes
+// only this function.
+export const buildInviteLink = (inviteCode: string): string =>
+  `catchupcolumn://group/join?code=${encodeURIComponent(normalizeInviteCode(inviteCode))}`;
 
 export const joinGroupByInviteCode = async (
   inviteCode: string

@@ -65,6 +65,11 @@ You're working on the UI of a warm, paperish family-newsletter app built for old
 | `time-picker-modal` / `snap-column` | Scroll-wheel time picker (`snap-column` is its internal wheel). |
 | `this-week-strip` | Home's rule-framed dateline: next publish moment + who's written (never who hasn't). |
 | `filed-stamp` | The rubber-stamp "Filed for Sunday's edition" confirmation on explicit post save. |
+| `invite-hero` | The invitation as a one-page special edition (kicker, masthead, taped-polaroid cover, member byline, cadence dateline) — see BRAND §12. |
+| `avatar-stack` | Overlapping member faces for the invitation byline; decorative (hidden from screen readers). |
+| `pending-invite-banner` | The peach "Joining {name}" strip on auth screens while an invite is pending. |
+| `joined-stamp` | The persistent "JOINED · {date}" stamp on the welcome screen (+3° tilt; FiledStamp owns −4°). |
+| `invite-family-card` | The group screen's sender-side invite card: tap-to-copy code, code-first share, QR on a hard-white paper card. |
 
 ## Decisions newer than BRAND.md (drift notes)
 

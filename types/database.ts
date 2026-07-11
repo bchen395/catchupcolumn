@@ -111,6 +111,30 @@ export type GroupWithMembers = GroupRow & {
   members: (GroupMemberRow & { user: UserRow })[];
 };
 
+// Invite-link previews (get_invite_preview / get_invite_preview_details).
+// The anon tier deliberately carries no invite_code, created_by, or member
+// identities — see 20260710000000_invite_preview_rpcs.sql.
+export type InvitePreview = {
+  group_id: string;
+  name: string;
+  description: string | null;
+  cover_image_url: string | null;
+  member_count: number;
+};
+
+export type InvitePreviewMember = {
+  display_name: string;
+  avatar_url: string | null;
+};
+
+export type InvitePreviewDetails = InvitePreview & {
+  publish_day: number;
+  publish_time: string;
+  timezone: string;
+  is_member: boolean;
+  member_sample: InvitePreviewMember[];
+};
+
 export type EditionWithPosts = EditionRow & {
   posts: (PostRow & { author: UserRow })[];
 };
@@ -144,6 +168,14 @@ export type Database = {
       find_group_by_invite_code: {
         Args: { p_invite_code: string };
         Returns: GroupRow[];
+      };
+      get_invite_preview: {
+        Args: { p_invite_code: string };
+        Returns: InvitePreview[];
+      };
+      get_invite_preview_details: {
+        Args: { p_invite_code: string };
+        Returns: InvitePreviewDetails[];
       };
       delete_group_as_moderator: {
         Args: { p_group_id: string };

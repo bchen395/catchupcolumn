@@ -48,6 +48,11 @@ export const Icons = {
   errorGeneric: mci('alert-circle-outline'),
   errorNetwork: mci('wifi-off'),
 
+  // Invitations (join flow + the group screen's invite card)
+  invite: mci('email-open-outline'),
+  qr: mci('qrcode'),
+  copy: mci('content-copy'),
+
   // Tab bar (kept here so a future redesign is one file)
   tabInbox: mci('newspaper-variant-outline'),
   tabPost: mci('pencil-outline'),
