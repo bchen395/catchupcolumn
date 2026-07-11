@@ -9,14 +9,18 @@ import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
+import { PendingInviteBanner } from '@/components/pending-invite-banner';
 import { Layout } from '@/constants/layout';
+import { Strings } from '@/constants/strings';
 import { useAuth } from '@/hooks/use-auth';
+import { usePendingInvite } from '@/hooks/use-pending-invite';
 import {
     clearNeedsOnboardingFlag,
     fetchCurrentUserProfile,
     updateCurrentUserProfile,
     uploadUserAvatar,
 } from '@/lib/auth';
+import { getPendingInvite } from '@/lib/pending-invite';
 
 type OnboardingErrors = {
   displayName?: string;
@@ -35,6 +39,7 @@ type SelectedAvatar = {
 const OnboardingScreen = () => {
   const router = useRouter();
   const { user } = useAuth();
+  const { invite } = usePendingInvite();
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
@@ -186,7 +191,12 @@ const OnboardingScreen = () => {
         bio: trimmedBio || null,
       });
       await clearNeedsOnboardingFlag();
-      router.replace('/(tabs)/home');
+      // With an invite pending, the root layout's use-auto-join-invite owns
+      // navigation from here (join → welcome screen); replacing to home now
+      // would race it.
+      if (!(await getPendingInvite())) {
+        router.replace('/(tabs)/home');
+      }
     } catch (_error) {
       setScreenError('We could not save your profile yet. Please try again.');
     } finally {
@@ -198,6 +208,11 @@ const OnboardingScreen = () => {
     <AuthScreenShell
       title="Set up your profile"
       subtitle="Add the name your family will see. A photo is optional and you can always add one later."
+      banner={
+        invite ? (
+          <PendingInviteBanner message={Strings.invite.joiningBannerSignup(invite.groupName)} />
+        ) : null
+      }
     >
       <View style={styles.form}>
         {screenError ? <StatusBanner variant="error" message={screenError} /> : null}

@@ -20,6 +20,9 @@ type AuthScreenShellProps = {
   subtitle: string;
   children: ReactNode;
   footer?: ReactNode;
+  // Persistent context above the header — the pending-invite "Joining {name}"
+  // strip, so an invitee never loses sight of why they're filling in forms.
+  banner?: ReactNode;
   contentContainerStyle?: StyleProp<ViewStyle>;
 };
 
@@ -28,6 +31,7 @@ export const AuthScreenShell = ({
   subtitle,
   children,
   footer,
+  banner,
   contentContainerStyle,
 }: AuthScreenShellProps) => {
   return (
@@ -41,6 +45,7 @@ export const AuthScreenShell = ({
           contentContainerStyle={[styles.content, contentContainerStyle]}
           showsVerticalScrollIndicator={false}
         >
+          {banner}
           <View style={styles.header}>
             <AppImage
               source={require('@/assets/brand/logo.png')}

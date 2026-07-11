@@ -5,9 +5,12 @@ import { StyleSheet, View } from 'react-native';
 import { AuthScreenShell } from '@/components/auth-screen-shell';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
+import { PendingInviteBanner } from '@/components/pending-invite-banner';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { Layout } from '@/constants/layout';
+import { Strings } from '@/constants/strings';
+import { usePendingInvite } from '@/hooks/use-pending-invite';
 import { mapAuthErrorMessage, resendConfirmationEmail, signUpWithEmail } from '@/lib/auth';
 
 type SignupErrors = {
@@ -17,6 +20,7 @@ type SignupErrors = {
 
 const SignupScreen = () => {
   const router = useRouter();
+  const { invite } = usePendingInvite();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<SignupErrors>({});
@@ -71,6 +75,11 @@ const SignupScreen = () => {
     <AuthScreenShell
       title="Create your account"
       subtitle="Start with your email and password. You can add your name and photo on the next screen."
+      banner={
+        invite ? (
+          <PendingInviteBanner message={Strings.invite.joiningBannerSignup(invite.groupName)} />
+        ) : null
+      }
       footer={
         <>
           <ThemedText variant="caption">Already have an account?</ThemedText>
