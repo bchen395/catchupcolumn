@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Your edition — Catch Up Column</title>
+    <meta name="robots" content="noindex">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700;900&family=Jost:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/config.js"></script>
+  </head>
+  <body>
+    <main class="sheet">
+      <p class="kicker">Special delivery</p>
+      <h1 class="masthead-name">Your edition is ready</h1>
+      <p class="dateline">Catch Up Column</p>
+      <hr class="masthead-rule">
+
+      <p id="status" class="muted">Opening it in the app…</p>
+
+      <div id="actions" class="hidden">
+        <p><a id="open-app" class="btn" href="#">Open in the app</a></p>
+        <div id="store-block" class="hidden">
+          <h2 style="margin-top: 24px;">Don't have the app yet?</h2>
+          <p class="muted small">Get Catch Up Column, sign in, and this week's edition will be waiting for you.</p>
+          <div id="store-buttons"></div>
+          <p id="coming-soon" class="muted small hidden">The app is arriving soon. In the meantime, the full edition is in the email this link came from.</p>
+        </div>
+      </div>
+
+      <footer class="colophon">
+        <div class="ornament">❦</div>
+        <p class="folio">Catch Up Column</p>
+        <p class="small" style="margin-top: 12px;"><a href="/" style="color: inherit;">What is Catch Up Column?</a></p>
+      </footer>
+    </main>
+
+    <script>
+      // Deep-link bouncer: /edition/{id} → catchupcolumn://edition/{id}.
+      // If the app doesn't take over within a beat, show manual buttons.
+      // Upgrade path: once AASA/assetlinks + associatedDomains ship in the
+      // app, this URL becomes a universal link and users skip this page.
+      (function () {
+        var c = window.CUC || {};
+        var match = location.pathname.match(/\/edition\/([0-9a-f-]{36})/i);
+        var deepLink = match ? c.appScheme + '://edition/' + match[1] : c.appScheme + '://';
+
+        document.getElementById('open-app').setAttribute('href', deepLink);
+
+        var wrap = document.getElementById('store-buttons');
+        var any = false;
+        if (c.appStoreUrl) {
+          wrap.insertAdjacentHTML('beforeend', '<a class="btn" href="' + c.appStoreUrl + '">Get it on the App Store</a>');
+          any = true;
+        }
+        if (c.playStoreUrl) {
+          wrap.insertAdjacentHTML('beforeend', '<a class="btn btn-secondary" href="' + c.playStoreUrl + '">Get it on Google Play</a>');
+          any = true;
+        }
+        if (!any) document.getElementById('coming-soon').classList.remove('hidden');
+
+        function showFallback(message) {
+          document.getElementById('status').textContent = message;
+          document.getElementById('actions').classList.remove('hidden');
+          document.getElementById('store-block').classList.remove('hidden');
+        }
+
+        // Auto-attempt the deep link only on phones/tablets — desktop
+        // browsers either ignore custom schemes or throw an error dialog.
+        // If we're still visible shortly after, the app isn't installed
+        // (or the browser blocked it) — show the buttons.
+        var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+          setTimeout(function () {
+            showFallback('If the app didn’t open on its own, use the button below.');
+          }, 1600);
+          try {
+            location.href = deepLink;
+          } catch (e) {
+            showFallback('If the app didn’t open on its own, use the button below.');
+          }
+        } else {
+          showFallback('This edition lives in the Catch Up Column app on your phone or tablet.');
+        }
+      })();
+    </script>
+  </body>
+</html>

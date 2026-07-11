@@ -10,11 +10,11 @@ These are Deno functions that run server-side with elevated privileges: edition 
 ## Read first (sources of truth, in order)
 
 1. **`supabase/functions/_shared/edition-dispatch.ts`** — the reusable email + push engine. Read this before touching any delivery path; it owns the claim/lease idempotency.
-2. **`supabase/functions/_shared/edition-email.ts`** — the email HTML/subject renderers (table-based, email-safe).
+2. **`supabase/functions/_shared/edition-email.ts`** — the email subject/HTML/plain-text renderers (table-based, email-safe, full brand treatment). Design decisions (photos, full content, colophon, subject chain) are documented in the file header; preview fixtures live in `_shared/preview/render-email-fixtures.ts` (dev-only, `deno run --allow-write`).
 3. **A function that matches your trigger model:**
    - `compile-editions/index.ts` — cron + manual, `CRON_SECRET` auth, sweeps all pending editions.
    - `publish-edition-now/index.ts` — caller-JWT auth, single edition, then service-role dispatch.
-   - `unsubscribe/index.ts` — public GET, token-based, returns HTML.
+   - `unsubscribe/index.ts` — public GET (human click → HTML page) **and** POST (RFC 8058 one-click from the `List-Unsubscribe` header → plain text), token-based.
    - `delete-account/index.ts` — caller-verified then service-role cleanup + auth deletion.
 4. **`supabase/functions/deno.json`** and **`supabase/config.toml`** (`[edge_runtime]`, per-function `verify_jwt`).
 
@@ -25,7 +25,8 @@ These are Deno functions that run server-side with elevated privileges: edition 
   - **Service-role client** (`createClient(url, SERVICE_ROLE_KEY, { auth: { autoRefreshToken: false, persistSession: false } })`) — bypasses RLS; required for the dispatch RPCs granted only `to service_role` (`claim_edition_for_email`, `get_edition_*`, `mark_*`). Use for all worker/cron/dispatch work.
   - **Caller-scoped client** (anon key + `global: { headers: { Authorization: authHeader } }`) — preserves the user's identity so `auth.uid()` resolves inside the RPC. Required when an RPC enforces a per-user check (e.g. `publish_edition_now`'s moderator gate). `publish-edition-now` uses the caller client for the RPC, then a service-role client for dispatch.
   - Using the wrong key fails as a *permissions* error, often silently — verify before debugging anything else.
-- **Validate env up front, fail with 500.** Every function reads its env (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `RESEND_API_KEY`, `CRON_SECRET`, optional `FUNCTIONS_PUBLIC_URL`/`EMAIL_FROM`) and returns a clear 500 if a required one is missing. `SUPABASE_*` are auto-injected; `RESEND_API_KEY` and `CRON_SECRET` are manual secrets.
+- **Validate env up front, fail with 500.** Every function reads its env (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `RESEND_API_KEY`, `CRON_SECRET`, optional `FUNCTIONS_PUBLIC_URL`/`EMAIL_FROM`/`WEB_BASE_URL`) and returns a clear 500 if a required one is missing. `SUPABASE_*` are auto-injected; `RESEND_API_KEY` and `CRON_SECRET` are manual secrets. `WEB_BASE_URL` (default `https://catchupcolumn.com`) is the base for every link in the edition email — links are https on purpose (Gmail blocks `catchupcolumn://` deep links); the web pages hand off to the app.
+- **Edition-email photos are signed at send time.** `sendEditionEmail` batch-signs each post's `image_url` from the private `post-images` bucket (`createSignedUrls`, 1-year TTL — deliberate: emails are re-read and forwarded) and attaches `image_signed_url`. Photo failures are logged and skipped; a send never fails over a photo. The payload RPC returns the raw stored value (path or legacy public URL) — normalization lives in `toStoragePath` (mirrors `lib/posts.ts`).
 - **CORS + response helpers are boilerplate — copy them.** Handle `OPTIONS` → `corsHeaders`; reject non-target methods with `json(405, …)`; wrap JSON responses in the `json(status, body)` helper (spreads `corsHeaders` + `Content-Type`). `unsubscribe` returns HTML via its `html()`/`page()` helpers instead.
 - **Authenticate per the trigger model:**
   - Cron/manual-internal (`compile-editions`) → match `Authorization: Bearer <CRON_SECRET>`; `verify_jwt = false` in `config.toml`.
@@ -47,7 +48,7 @@ These are Deno functions that run server-side with elevated privileges: edition 
 | `sendEditionEmail` (`edition-dispatch.ts`) | Email one edition to all recipients (mark-once). |
 | `pushEdition` (`edition-dispatch.ts`) | Push one edition (batch ≤100, ticket inspection, retry accounting). |
 | `dispatchSingleEdition` (`edition-dispatch.ts`) | Email + push one edition with the same claim/lease — used by manual publish. |
-| `renderEditionEmailHtml` / `renderEditionEmailSubject` (`edition-email.ts`) | Newspaper-style, email-safe HTML + `"Group — Edition #N"` subject. |
+| `renderEditionEmailHtml` / `renderEditionEmailText` / `renderEditionEmailSubject` (`edition-email.ts`) | Brand-styled email HTML + plain-text part + content-led subject (first titled post → names fallback). |
 | `MAX_PUSH_ATTEMPTS`, `EMAIL_FROM` (`edition-dispatch.ts`) | Shared constants. |
 
 ## Deploy & local test
@@ -64,7 +65,8 @@ npx supabase functions deploy unsubscribe --no-verify-jwt   # public/cron fns sk
 ```
 
 - **`config.toml` gotcha:** any function not verifying a Supabase JWT needs `[functions.<name>] verify_jwt = false` (set for `compile-editions` and `unsubscribe`). Forgetting it makes cron/public calls 401.
-- **Secrets:** set `RESEND_API_KEY` and `CRON_SECRET` (and `EMAIL_FROM`/`FUNCTIONS_PUBLIC_URL` if overriding) in the Supabase dashboard / `supabase secrets set`. They are *not* in `.env`.
+- **Secrets:** set `RESEND_API_KEY` and `CRON_SECRET` (and `EMAIL_FROM`/`FUNCTIONS_PUBLIC_URL`/`WEB_BASE_URL` if overriding) in the Supabase dashboard / `supabase secrets set`. They are *not* in `.env`.
+- **Email preview:** `deno run --allow-write=preview-out supabase/functions/_shared/preview/render-email-fixtures.ts preview-out` renders fixture editions (thin/full/untitled/long) to HTML+text with byte sizes (Gmail clips at ~102KB). Eyeball in a browser at 600px and ~375px before shipping renderer changes.
 - **Typecheck:** `npm run typecheck` does **not** cover these (`tsconfig.json` excludes `supabase/functions/**`). Use `deno check supabase/functions/**/*.ts` if you want type checking.
 
 ## Workflow for a function change

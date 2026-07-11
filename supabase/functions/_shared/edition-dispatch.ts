@@ -16,12 +16,19 @@ import {
   EditionEmailPost,
   renderEditionEmailHtml,
   renderEditionEmailSubject,
+  renderEditionEmailText,
 } from './edition-email.ts';
 
 export const MAX_PUSH_ATTEMPTS = 3;
 export const EMAIL_FROM =
   Deno.env.get('EMAIL_FROM') ?? 'Catch Up Column <onboarding@resend.dev>';
-const APP_SCHEME = 'catchupcolumn';
+
+// Base for every link in the email. Custom-scheme deep links are blocked by
+// Gmail, so the email points at the web domain; the pages there hand off to
+// the app (or the store) and can be upgraded to universal links without
+// touching sent-email code.
+const WEB_BASE_URL =
+  (Deno.env.get('WEB_BASE_URL') ?? 'https://catchupcolumn.com').replace(/\/+$/, '');
 
 type EmailRecipient = {
   user_id: string;
@@ -66,6 +73,64 @@ export type PushResult = {
 };
 
 // ---------------------------------------------------------------------------
+// Email — photo signing
+// ---------------------------------------------------------------------------
+
+const POST_IMAGE_BUCKET = 'post-images';
+// Emails are re-read for a long time (and forwarded); photos stay live for a
+// year, then degrade to alt text. Chosen deliberately — see design/BRAND.md
+// audience notes: the email is the whole product for some members.
+const PHOTO_URL_TTL_SECONDS = 60 * 60 * 24 * 365;
+
+// Legacy rows stored the full public URL; extract the storage path so we can
+// sign it. Mirrors lib/posts.ts (edge functions can't import app code).
+const LEGACY_PUBLIC_URL_RE = /\/storage\/v1\/object\/public\/post-images\/(.+)$/;
+
+const toStoragePath = (raw: string): string | null => {
+  if (!/^https?:/i.test(raw)) return raw;
+  const match = raw.match(LEGACY_PUBLIC_URL_RE);
+  return match ? match[1] : null;
+};
+
+// Attach `image_signed_url` to every post whose photo we can sign. Photo
+// failures are logged and skipped — a send never fails over a photo.
+async function attachSignedPhotoUrls(
+  client: SupabaseClient,
+  posts: EditionEmailPost[],
+): Promise<EditionEmailPost[]> {
+  const pathByPostId = new Map<string, string>();
+  for (const post of posts) {
+    if (!post.image_url) continue;
+    const path = toStoragePath(post.image_url);
+    if (path) pathByPostId.set(post.id, path);
+  }
+  if (pathByPostId.size === 0) return posts;
+
+  const uniquePaths = [...new Set(pathByPostId.values())];
+  const { data, error } = await client.storage
+    .from(POST_IMAGE_BUCKET)
+    .createSignedUrls(uniquePaths, PHOTO_URL_TTL_SECONDS);
+
+  if (error || !data) {
+    console.error(`createSignedUrls failed for edition photos: ${error?.message ?? 'no data'}`);
+    return posts;
+  }
+
+  const signedByPath = new Map<string, string>();
+  for (const item of data) {
+    if (item.path && item.signedUrl && !item.error) {
+      signedByPath.set(item.path, item.signedUrl);
+    }
+  }
+
+  return posts.map((post) => {
+    const path = pathByPostId.get(post.id);
+    const signed = path ? signedByPath.get(path) : undefined;
+    return signed ? { ...post, image_signed_url: signed } : post;
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Email — single edition
 // ---------------------------------------------------------------------------
 
@@ -74,6 +139,8 @@ async function sendOneEmail(
   to: string,
   subject: string,
   html: string,
+  text: string,
+  unsubscribeUrl: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -81,7 +148,17 @@ async function sendOneEmail(
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from: EMAIL_FROM, to: [to], subject, html }),
+    body: JSON.stringify({
+      from: EMAIL_FROM,
+      to: [to],
+      subject,
+      html,
+      text,
+      headers: {
+        'List-Unsubscribe': `<${unsubscribeUrl}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
+    }),
   });
 
   if (!res.ok) {
@@ -120,7 +197,9 @@ export async function sendEditionEmail(
   }
 
   const subject = renderEditionEmailSubject(payload);
-  const appDeepLink = `${APP_SCHEME}://edition/${payload.edition_id}`;
+  const posts = await attachSignedPhotoUrls(client, payload.posts);
+  const editionWebUrl = `${WEB_BASE_URL}/edition/${payload.edition_id}`;
+  const startYourOwnUrl = `${WEB_BASE_URL}/start`;
 
   let sent = 0;
   let failed = 0;
@@ -133,14 +212,23 @@ export async function sendEditionEmail(
       published_at: payload.published_at,
       group_id: payload.group_id,
       group_name: payload.group_name,
-      posts: payload.posts,
+      posts,
       recipient_display_name: recipient.display_name,
       unsubscribe_url: unsubscribeUrl,
-      app_deep_link: appDeepLink,
+      edition_web_url: editionWebUrl,
+      start_your_own_url: startYourOwnUrl,
     };
     const html = renderEditionEmailHtml(emailPayload);
+    const text = renderEditionEmailText(emailPayload);
 
-    const result = await sendOneEmail(resendApiKey, recipient.email, subject, html);
+    const result = await sendOneEmail(
+      resendApiKey,
+      recipient.email,
+      subject,
+      html,
+      text,
+      unsubscribeUrl,
+    );
     if (result.ok) {
       sent++;
     } else {
