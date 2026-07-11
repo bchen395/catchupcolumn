@@ -103,7 +103,7 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - PK: (user_id, token)
 
 ### Notable RPCs
-`compile_due_editions` (cron compilation, slot-scoped duplicate guard), `publish_edition_now` (moderator-only immediate publish, shares the compile lock), `join_group_by_invite_code`, `delete_group_as_moderator`, `prepare_account_deletion`, `get_edition_email_payload` (service-role; feeds the email renderer). Full definitions in `supabase/migrations/`.
+`compile_due_editions` (cron compilation, slot-scoped duplicate guard), `publish_edition_now` (moderator-only immediate publish, shares the compile lock), `join_group_by_invite_code`, `get_invite_preview` (anon-callable minimal invite preview: name/description/cover/member count), `get_invite_preview_details` (authenticated: adds cadence, is_member, member sample), `delete_group_as_moderator`, `prepare_account_deletion`, `get_edition_email_payload` (service-role; feeds the email renderer). Full definitions in `supabase/migrations/`.
 
 ## Key Terminology
 

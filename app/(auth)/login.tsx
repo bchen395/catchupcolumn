@@ -5,10 +5,14 @@ import { StyleSheet, View } from 'react-native';
 import { AuthScreenShell } from '@/components/auth-screen-shell';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
+import { PendingInviteBanner } from '@/components/pending-invite-banner';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { Layout } from '@/constants/layout';
+import { Strings } from '@/constants/strings';
+import { usePendingInvite } from '@/hooks/use-pending-invite';
 import { mapAuthErrorMessage, sendPasswordResetEmail, signInWithEmail } from '@/lib/auth';
+import { getPendingInvite } from '@/lib/pending-invite';
 
 type LoginErrors = {
   email?: string;
@@ -17,6 +21,7 @@ type LoginErrors = {
 
 const LoginScreen = () => {
   const router = useRouter();
+  const { invite } = usePendingInvite();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<LoginErrors>({});
@@ -38,7 +43,11 @@ const LoginScreen = () => {
     try {
       setSubmitting(true);
       await signInWithEmail({ email, password });
-      router.replace('/(tabs)/home');
+      // With an invite pending, the root layout's use-auto-join-invite owns
+      // navigation (join → welcome); replacing to home now would race it.
+      if (!(await getPendingInvite())) {
+        router.replace('/(tabs)/home');
+      }
     } catch (error) {
       setFormError(mapAuthErrorMessage(error, 'We could not sign you in right now.'));
     } finally {
@@ -74,6 +83,11 @@ const LoginScreen = () => {
     <AuthScreenShell
       title="Welcome back"
       subtitle="Sign in to read the latest edition and write something for this week."
+      banner={
+        invite ? (
+          <PendingInviteBanner message={Strings.invite.joiningBannerLogin(invite.groupName)} />
+        ) : null
+      }
       footer={
         <>
           <ThemedText variant="caption">Need an account?</ThemedText>

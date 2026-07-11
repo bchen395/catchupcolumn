@@ -16,10 +16,11 @@ import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { useAuth } from '@/hooks/use-auth';
+import { useAutoJoinInvite } from '@/hooks/use-auto-join-invite';
 import { needsOnboarding } from '@/lib/auth';
 
 export { ErrorBoundary } from 'expo-router';
@@ -76,39 +77,69 @@ const RootLayout = () => {
     return () => sub.remove();
   }, [router]);
 
+  const ready = fontsLoaded && !loading;
+  const requiresOnboarding = needsOnboarding(session?.user);
+
+  // Consumes a pending invite (saved by the join screen before signup) once
+  // the user is signed in and onboarded; owns navigation while it runs.
+  const { consumingInvite, holdAuthRedirect } = useAutoJoinInvite(
+    session,
+    requiresOnboarding,
+    ready,
+  );
+
   useEffect(() => {
-    if (loading || !fontsLoaded) return;
+    if (!ready) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const onOnboardingScreen = inAuthGroup && segments[1] === 'onboarding';
     const onResetPasswordScreen = inAuthGroup && (segments[1] as string) === 'reset-password';
-    const requiresOnboarding = needsOnboarding(session?.user);
+    // The join screen is the invite-link landing page — it must work without
+    // a session so a logged-out invitee can see what they were invited to.
+    const onJoinScreen = segments[0] === 'group' && (segments[1] as string) === 'join';
 
     if (onResetPasswordScreen) return;
 
-    if (!session && (!inAuthGroup || onOnboardingScreen)) {
+    if (!session && (!inAuthGroup || onOnboardingScreen) && !onJoinScreen) {
       router.replace('/(auth)/login');
     } else if (session && requiresOnboarding && !onOnboardingScreen) {
       router.replace('/(auth)/onboarding');
-    } else if (session && inAuthGroup && (!onOnboardingScreen || !requiresOnboarding)) {
+    } else if (
+      session &&
+      inAuthGroup &&
+      (!onOnboardingScreen || !requiresOnboarding) &&
+      // holdAuthRedirect covers the async gap while the pending-invite check
+      // runs — redirecting home here would race the auto-join navigation.
+      !holdAuthRedirect
+    ) {
       router.replace('/(tabs)/home');
     }
-  }, [session, loading, fontsLoaded, segments]);
+  }, [session, ready, requiresOnboarding, holdAuthRedirect, segments]);
 
-  if (!fontsLoaded || loading) {
+  if (!ready) {
     // Fonts not ready → render nothing to avoid FOUC. Once fonts are loaded
     // but auth is still resolving, show the press animation.
     return fontsLoaded ? <PrintingPressLoading /> : null;
   }
 
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="group" options={{ headerShown: false }} />
-      <Stack.Screen name="edition" options={{ headerShown: false }} />
-    </Stack>
+    <>
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="group" options={{ headerShown: false }} />
+        <Stack.Screen name="edition" options={{ headerShown: false }} />
+      </Stack>
+      {consumingInvite ? (
+        // Joining the pending invite — hold the press animation over the
+        // navigator (never unmount it mid-navigation) so home doesn't flash
+        // before the welcome screen takes over.
+        <View style={StyleSheet.absoluteFill}>
+          <PrintingPressLoading />
+        </View>
+      ) : null}
+    </>
   );
 };
 

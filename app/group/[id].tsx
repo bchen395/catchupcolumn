@@ -7,7 +7,6 @@ import {
     Pressable,
     RefreshControl,
     ScrollView,
-    Share,
     StyleSheet,
     View
 } from 'react-native';
@@ -17,6 +16,7 @@ import { DaySelector } from '@/components/day-selector';
 import { ErrorState } from '@/components/error-state';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
+import { InviteFamilyCard } from '@/components/invite-family-card';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { StatusBanner } from '@/components/status-banner';
 import { TimeField } from '@/components/time-picker-modal';
@@ -199,17 +199,6 @@ const GroupDetailScreen = () => {
     setRefreshing(true);
     await load();
     setRefreshing(false);
-  };
-
-  const handleShare = async () => {
-    if (!group) return;
-    try {
-      await Share.share({
-        message: `Join my family Group "${group.name}" on Catch Up Column!\nUse invite code: ${group.invite_code}`,
-      });
-    } catch (_err) {
-      // User cancelled share; ignore
-    }
   };
 
   const handleStartEdit = () => {
@@ -501,27 +490,9 @@ const GroupDetailScreen = () => {
       </View>
 
       {/* Invite section */}
-      <ThemedView variant="card" style={styles.section}>
-        <ThemedText variant="label" style={styles.sectionTitle}>
-          Invite Code
-        </ThemedText>
-        <View style={styles.inviteRow}>
-          <View style={styles.inviteCodeChip}>
-            <ThemedText variant="body" style={styles.inviteCode}>
-              {group.invite_code}
-            </ThemedText>
-          </View>
-          <Pressable onPress={handleShare} style={styles.shareButton} accessibilityRole="button">
-            <Ionicons name="share-social-outline" size={18} color={Colors.orange} />
-            <ThemedText variant="label" style={styles.shareText}>
-              Share
-            </ThemedText>
-          </Pressable>
-        </View>
-        <ThemedText variant="caption" style={styles.inviteHelp}>
-          Share this code with family to invite them to your Group.
-        </ThemedText>
-      </ThemedView>
+      <View style={styles.section}>
+        <InviteFamilyCard groupName={group.name} inviteCode={group.invite_code} />
+      </View>
 
       {/* Members section */}
       <View style={styles.section}>
@@ -668,38 +639,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: Colors.orange,
     marginBottom: Layout.padding.xs,
-  },
-  inviteRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Layout.padding.md,
-  },
-  inviteCodeChip: {
-    flex: 1,
-    backgroundColor: Colors.peach,
-    borderRadius: Layout.borderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    paddingHorizontal: Layout.padding.md,
-    paddingVertical: Layout.padding.sm,
-  },
-  inviteCode: {
-    fontFamily: Typography.families.sansBold,
-    letterSpacing: 2,
-    color: Colors.orange,
-  },
-  shareButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Layout.padding.xs,
-    minHeight: Layout.touchTargetMin,
-    paddingHorizontal: Layout.padding.md,
-  },
-  shareText: {
-    color: Colors.orange,
-  },
-  inviteHelp: {
-    color: Colors.inkSoft,
   },
   publishNowHelp: {
     color: Colors.inkSoft,
