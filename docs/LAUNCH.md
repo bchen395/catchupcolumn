@@ -62,20 +62,24 @@ Commit the `app.json` change that `eas init` makes (the new `owner` +
 
 ## 3. Host the legal & support docs **[owner]**
 
-Publish these four files at `catchupcolumn.com` (the in-app Profile links and the
-store consoles point here):
+Done in-repo: the four docs are now built as styled HTML pages in `web/`
+(`privacy.html`, `terms.html`, `support.html`, `delete-account.html`), the owner
+placeholders are resolved (support email `support@catchupcolumn.com`; TERMS
+governed by California, USA), and the in-app links already point at these URLs:
 
-| File | URL |
+| Page | URL |
 | --- | --- |
-| `docs/PRIVACY.md` | `https://catchupcolumn.com/privacy` |
-| `docs/TERMS.md` | `https://catchupcolumn.com/terms` |
-| `docs/SUPPORT.md` | `https://catchupcolumn.com/support` |
-| `docs/DATA_DELETION.md` | `https://catchupcolumn.com/delete-account` |
+| `web/privacy.html` | `https://catchupcolumn.com/privacy` |
+| `web/terms.html` | `https://catchupcolumn.com/terms` |
+| `web/support.html` | `https://catchupcolumn.com/support` |
+| `web/delete-account.html` | `https://catchupcolumn.com/delete-account` |
 
-Before publishing, do a find-and-replace pass for the `**Owner action**` notes in
-each file (confirm the support email `support@catchupcolumn.com` exists and, for
-TERMS, set your governing-law jurisdiction). A static host (Vercel, Netlify, GitHub
-Pages, or your existing site) rendering the Markdown is fine.
+They deploy with the rest of `web/` — import the repo into Vercel with **Root
+Directory `web`** and add the `catchupcolumn.com` domain (full steps in
+`web/README.md`). Routing (clean URLs, `/start`, `/edition/*`) lives in
+`web/vercel.json`. Remaining owner action: confirm the `support@catchupcolumn.com`
+inbox actually exists/forwards, and keep the `.md` sources in `docs/` and the
+`.html` pages in sync on future edits.
 
 ## 4. Email deliverability — Resend **[owner]**
 

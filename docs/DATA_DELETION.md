@@ -1,11 +1,5 @@
 # Data Deletion Request — Catch Up Column
 
-> **Owner action before publishing:** replace `support@catchupcolumn.com` with your
-> real address and host at a stable public URL (e.g.
-> `https://catchupcolumn.com/delete-account`). Google Play's Data safety form
-> requires a **web-accessible** account-deletion path (not only in-app); enter this
-> URL there.
-
 ## Delete your account from the app (fastest)
 
 1. Open Catch Up Column and go to the **Profile** tab.
