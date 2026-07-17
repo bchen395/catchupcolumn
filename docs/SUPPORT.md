@@ -1,10 +1,5 @@
 # Catch Up Column — Support
 
-> **Owner action before publishing:** replace `support@catchupcolumn.com` with your
-> real support address and host at a stable public URL (e.g.
-> `https://catchupcolumn.com/support`). Enter that URL in App Store Connect
-> (Support URL) and Google Play Console.
-
 Need a hand? We're happy to help.
 
 **Email:** `support@catchupcolumn.com`

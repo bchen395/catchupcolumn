@@ -2,10 +2,6 @@
 
 **Effective date:** July 3, 2026
 
-> **Owner action before publishing:** replace `support@catchupcolumn.com` with your
-> real contact address, set your governing-law jurisdiction, and host at a stable
-> public URL (e.g. `https://catchupcolumn.com/terms`).
-
 By creating an account or using Catch Up Column ("the app"), you agree to these
 terms. If you do not agree, do not use the app.
 
@@ -57,11 +53,18 @@ uninterrupted or error-free service.
 To the fullest extent permitted by law, the app and its operator are not liable for
 indirect, incidental, or consequential damages arising from your use of the app.
 
-## 9. Changes to these terms
+## 9. Governing law
+
+These terms are governed by the laws of the State of California, USA, without regard
+to its conflict-of-laws rules. Any dispute arising from these terms or your use of the
+app will be subject to the exclusive jurisdiction of the state and federal courts
+located in California.
+
+## 10. Changes to these terms
 
 We may update these terms; continued use after an update means you accept the
 revised terms. We will update the effective date above.
 
-## 10. Contact
+## 11. Contact
 
 Questions: `support@catchupcolumn.com`

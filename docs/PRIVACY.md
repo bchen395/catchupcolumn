@@ -3,12 +3,6 @@
 **Effective date:** July 3, 2026
 **Last updated:** July 3, 2026
 
-> **Owner action before publishing:** replace `support@catchupcolumn.com` with your
-> real contact address and, if you incorporate, add your legal entity name and
-> address. Host this page at a stable public URL (e.g.
-> `https://catchupcolumn.com/privacy`) and enter that URL in App Store Connect and
-> Google Play Console.
-
 Catch Up Column ("the app", "we", "us") is a private group newsletter you write
 together with family and friends. This policy explains what we collect, why, and
 your choices. We do **not** sell your data, and we do **not** use it for

@@ -45,6 +45,18 @@ Four-color core palette pulled from the brand sheet, plus a small set of neutral
 - Represent opacity-based variants as `base color + alpha at point of use` (e.g. `rgba(0,0,0,0.6)` or `Colors.ink + '99'`), not as separate tokens — keeps the token list honest.
 - `error` and `success` aren't in the brand palette — keep the existing semantic values, but if they clash with the orange-forward UI, prefer a deeper red for error (`#C7361B`) and reuse `orange` itself sparingly for success-adjacent confirmations.
 
+**Orange as text — accepted below WCAG AA (decided 2026-07-17).** `orange` (`#FF7237`)
+on `paper`/`paperWarm` is ~2.6:1, below the AA 4.5:1 threshold for normal text. We
+knowingly keep it for the short, decorative "newspaper voice" moments it already
+owns — kickers, section titles, byline accents, the active tab label, links, and
+secondary/ghost button labels — because the orange-forward kicker is core to the
+brand and these usages are never long-form body copy (which is always `ink`). This
+is not an App Store gate (Apple doesn't enforce contrast). **Rejected alternative:**
+darkening to an AA-passing burnt orange (~`#B23A0E`), either globally or via a
+separate `orangeInk` text token — it dimmed the identity for a compliance win we
+didn't need. If a future usage puts `orange` on *sustained reading text*, that's the
+line: switch it to `ink`. The floor rule stands — never set body copy in orange.
+
 ## 3. Typography
 
 - **Display serif: Superclarendon.** Heavy slab serif used for the logotype, edition headlines, group mastheads, and any "newspaper voice" moment. Superclarendon ships with macOS/iOS but is **not** a free webfont and not bundled with Android. Embed it natively on iOS where available; on Android and web, fall back to **Roboto Slab (700/900)** loaded via `@expo-google-fonts/roboto-slab`. Roboto Slab at 900 weight is the closest free analog and reads as the same family at a glance.

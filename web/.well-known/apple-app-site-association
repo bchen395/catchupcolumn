@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["TEAMID.com.catchupcolumn.app"],
+        "components": [
+          {
+            "/": "/edition/*",
+            "comment": "Edition permalinks open directly in the app; everything else (/, /privacy, /terms, /support, /delete-account) stays in the browser."
+          }
+        ]
+      }
+    ]
+  }
+}
