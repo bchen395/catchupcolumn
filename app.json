@@ -31,7 +31,10 @@
         "backgroundColor": "#FAF7F2"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -58,6 +61,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c9be4074-4916-4e94-9276-811bbe8a05dc"
+      }
+    },
+    "owner": "bchen395"
   }
 }
