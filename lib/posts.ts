@@ -35,6 +35,9 @@ export type WeeklyByline = {
   authorId: string;
   /** First name only — bylines read warm ("Ruth"), never formal. */
   firstName: string;
+  /** Full name + avatar feed the dateline strip's decorative face row. */
+  displayName: string;
+  avatarUrl: string | null;
 };
 
 /**
@@ -48,7 +51,7 @@ export const fetchThisWeeksBylines = async (groupIds: string[]): Promise<WeeklyB
 
   const { data, error } = await supabase
     .from('posts')
-    .select('author_id, created_at, author:users(display_name)')
+    .select('author_id, created_at, author:users(display_name, avatar_url)')
     .in('group_id', groupIds)
     .is('edition_id', null)
     .order('created_at', { ascending: true });
@@ -59,7 +62,7 @@ export const fetchThisWeeksBylines = async (groupIds: string[]): Promise<WeeklyB
 
   const rows = (data ?? []) as unknown as {
     author_id: string;
-    author: { display_name: string } | null;
+    author: { display_name: string; avatar_url: string | null } | null;
   }[];
 
   const seen = new Set<string>();
@@ -67,8 +70,14 @@ export const fetchThisWeeksBylines = async (groupIds: string[]): Promise<WeeklyB
   for (const row of rows) {
     if (seen.has(row.author_id)) continue;
     seen.add(row.author_id);
-    const firstName = (row.author?.display_name ?? '').trim().split(/\s+/)[0];
-    bylines.push({ authorId: row.author_id, firstName: firstName || 'Someone' });
+    const displayName = (row.author?.display_name ?? '').trim();
+    const firstName = displayName.split(/\s+/)[0];
+    bylines.push({
+      authorId: row.author_id,
+      firstName: firstName || 'Someone',
+      displayName: displayName || 'Someone',
+      avatarUrl: row.author?.avatar_url ?? null,
+    });
   }
   return bylines;
 };
