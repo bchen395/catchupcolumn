@@ -8,7 +8,7 @@ const ColumnLayout = () => {
     <Stack
       screenOptions={{
         headerStyle: { backgroundColor: Colors.paperWarm },
-        headerTintColor: Colors.orange,
+        headerTintColor: Colors.ink,
         headerTitleStyle: {
           fontFamily: Typography.families.sansSemiBold,
           color: Colors.ink,

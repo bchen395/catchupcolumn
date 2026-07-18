@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
-import { Typography } from '@/constants/typography';
 import { soonestPublish } from '@/lib/groups';
 import type { WeeklyByline } from '@/lib/posts';
 import type { GroupWithMembers } from '@/types';
@@ -63,10 +62,12 @@ export const ThisWeekStrip = ({ groups, bylines, currentUserId }: ThisWeekStripP
   return (
     <View style={styles.strip}>
       <View style={styles.rule} />
-      <ThemedText style={styles.dateline}>
+      <ThemedText variant="kicker" style={styles.dateline}>
         {Strings.thisWeek.dateline(next.dayLabel, next.timeLabel)}
       </ThemedText>
-      <ThemedText style={styles.bylines}>{sentence}</ThemedText>
+      <ThemedText variant="deck" style={styles.bylines}>
+        {sentence}
+      </ThemedText>
       <View style={styles.rule} />
     </View>
   );
@@ -79,24 +80,17 @@ const styles = StyleSheet.create({
   },
   rule: {
     alignSelf: 'stretch',
-    height: 1,
-    backgroundColor: Colors.borderSoft,
+    height: Layout.rule.hairline,
+    backgroundColor: Colors.hairline,
   },
-  // Kicker register (matches Home's "HOT OFF THE PRESS"): orange small caps —
-  // a label, not body copy, so orange at this size is fine per BRAND §9.
+  // The "arriving Sunday" dateline accent — a sanctioned vermilion moment
+  // (BRAND §2); Home's only other vermilion is the NEW pill, and the two
+  // never both demand attention (the pill clears once the edition is read).
   dateline: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.xs,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    color: Colors.orange,
+    color: Colors.vermilion,
+    textAlign: 'center',
   },
   bylines: {
-    fontFamily: Typography.families.serif,
-    fontStyle: 'italic',
-    fontSize: Typography.sizes.body,
-    lineHeight: 22,
-    color: Colors.inkSoft,
     textAlign: 'center',
   },
 });

@@ -8,8 +8,8 @@ import { deckFor, headlineFor } from '@/lib/edition-layout';
 import type { PostWithAuthor } from '@/types';
 
 import { Avatar } from './avatar';
+import { EditorialPhoto } from './editorial-photo';
 import { GreekedLines } from './greeked-lines';
-import { Polaroid } from './polaroid-photo';
 import { ThemedText } from './themed-text';
 
 type Props = {
@@ -19,10 +19,9 @@ type Props = {
 
 // The second story on the front page: mid-weight between the lead and the
 // in-brief grid. A landscape/square photo runs full-width above the headline
-// (tilted opposite the lead so no two frames sit at the same angle, and
-// photo-first so its silhouette differs from the lead's headline-first block);
-// a portrait photo drops into a column beside the excerpt instead. The excerpt
-// dissolves into greeked lines. The whole block is the tap target.
+// (photo-first so its silhouette differs from the lead's headline-first
+// block); a portrait photo drops into a column beside the excerpt instead.
+// The excerpt dissolves into greeked lines. The whole block is the tap target.
 export const EditionSecondary = ({ post, onPress }: Props) => {
   const headline = headlineFor(post);
   const { orientation, onNaturalSize } = useImageOrientation(post.image_url);
@@ -37,9 +36,8 @@ export const EditionSecondary = ({ post, onPress }: Props) => {
       style={({ pressed }) => [styles.wrap, pressed && styles.pressed]}
     >
       {post.image_url && !portrait ? (
-        <Polaroid
+        <EditorialPhoto
           imageUrl={post.image_url}
-          rotate={1.5}
           photoAspectRatio={displayRatioFor(orientation ?? 'landscape')}
           onNaturalSize={onNaturalSize}
           style={styles.photo}
@@ -58,9 +56,8 @@ export const EditionSecondary = ({ post, onPress }: Props) => {
           without blowing up the page; full reading is the 17px reader. */}
       {post.image_url && portrait ? (
         <View style={styles.sideBySide}>
-          <Polaroid
+          <EditorialPhoto
             imageUrl={post.image_url}
-            rotate={1.5}
             photoAspectRatio={displayRatioFor('portrait')}
             onNaturalSize={onNaturalSize}
             style={styles.portraitPhoto}
@@ -95,7 +92,6 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.7,
   },
-  // Extra bottom room so the tilted frame's shadow has space before the text.
   photo: {
     marginBottom: Layout.padding.md,
   },
@@ -112,10 +108,9 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: Layout.padding.sm,
   },
+  // §3 names `title` for secondary story headlines explicitly.
   headline: {
-    fontFamily: Typography.families.serifBold,
-    fontSize: Typography.sizes.xxl,
-    lineHeight: 32,
+    ...Typography.scale.title,
     color: Colors.ink,
   },
   bylineRow: {
@@ -123,11 +118,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Layout.padding.sm,
   },
+  // True-italic Lora byline at the 16px floor (BRAND §3).
   byline: {
     flex: 1,
-    fontFamily: Typography.families.serif,
-    fontStyle: 'italic',
-    fontSize: Typography.sizes.sm,
+    fontFamily: Typography.families.serifItalic,
+    fontSize: Typography.sizes.body,
     color: Colors.inkSoft,
   },
   excerpt: {
@@ -140,12 +135,11 @@ const styles = StyleSheet.create({
   greek: {
     marginTop: 2,
   },
-  // An affordance label, not body copy — orange is allowed here.
+  // Tertiary-button voice: bare ink small caps. The cover's vermilion budget
+  // is spent on the lead's kicker (BRAND §2).
   readCue: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.xs,
-    letterSpacing: 1.5,
-    color: Colors.orange,
+    ...Typography.scale.meta,
+    color: Colors.ink,
     marginTop: Layout.padding.xs,
   },
 });

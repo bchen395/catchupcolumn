@@ -1,5 +1,6 @@
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 
 type Props = {
@@ -62,8 +63,8 @@ const styles = StyleSheet.create({
   segment: {
     height: 7,
     borderRadius: Layout.borderRadius.full,
-    // Ink at ~16% — darker than a hairline, lighter than secondary text, so it
-    // reads as distant type rather than a border or a loading state.
-    backgroundColor: 'rgba(0,0,0,0.16)',
+    // Re-tokened to `hairline` per BRAND §14 — the device survives v2; the
+    // bars read as distant type rather than a border or a loading state.
+    backgroundColor: Colors.hairline,
   },
 });

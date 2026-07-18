@@ -1,5 +1,19 @@
+import { Colors } from './colors';
+
 export const Layout = {
   touchTargetMin: 48,
+  // List rows are whole-row targets and sit one notch above the 48px floor
+  // (BRAND §6, the grandparent clause).
+  rowMinHeight: 56,
+  // Primary/secondary pill buttons (BRAND §9).
+  buttonMinHeight: 52,
+  // Rule weights (BRAND §2): `hairline` (with Colors.hairline) draws list
+  // dividers, outlines, and photo edges; `heavy` (with Colors.ink) draws
+  // masthead and section-opening rules — structural, not decorative.
+  rule: {
+    hairline: 1,
+    heavy: 2,
+  },
   padding: {
     xs: 4,
     sm: 8,
@@ -23,20 +37,21 @@ export const Layout = {
     paddingV: 14,
     multilineMinHeight: 88,
   },
-  // Warm-tinted elevation. Shadows carry a soft warm-brown hue (not pure black)
-  // so lifted surfaces read as a sheet of paper resting on a warm desk, per the
-  // brand's warmth. `paper` is the resting state; `paperRaised` deepens it while
-  // the surface is focused/active.
+  // Elevation exists only for true overlays — sheets and modals (BRAND §6);
+  // content never floats. Neutral ink shadows (decided 2026-07-17): v1's
+  // warm-brown tint retired with the rest of the warm palette — warmth is the
+  // illustration world's job now. `paper` is the resting state; `paperRaised`
+  // deepens it while the surface is focused/active.
   shadow: {
     paper: {
-      shadowColor: '#5A3A28',
+      shadowColor: Colors.ink,
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.12,
       shadowRadius: 16,
       elevation: 3,
     },
     paperRaised: {
-      shadowColor: '#5A3A28',
+      shadowColor: Colors.ink,
       shadowOffset: { width: 0, height: 12 },
       shadowOpacity: 0.18,
       shadowRadius: 28,

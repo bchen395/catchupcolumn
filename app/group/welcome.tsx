@@ -3,8 +3,8 @@ import { useEffect } from 'react';
 import { AccessibilityInfo, BackHandler, StyleSheet, View } from 'react-native';
 
 import { FormButton } from '@/components/form-button';
-import { JoinedStamp } from '@/components/joined-stamp';
-import { PaperGrain } from '@/components/paper-grain';
+import { RolledPaperGlyph } from '@/components/illustrations/rolled-paper-glyph';
+import { InkStamp } from '@/components/ink-stamp';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
@@ -68,15 +68,22 @@ const WelcomeScreen = () => {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.flex}>
-        <PaperGrain />
         <View style={styles.content}>
           <View style={styles.ornamentRow}>
             <View style={styles.ornamentRule} />
-            <ThemedText style={styles.ornament}>◆</ThemedText>
+            <RolledPaperGlyph size={14} />
             <View style={styles.ornamentRule} />
           </View>
 
-          <JoinedStamp label={Strings.welcome.stamp(stampDate)} reduceMotion={reduceMotion} />
+          {/* JOINED owns +3°; FILED owns −4° (BRAND §11). */}
+          <InkStamp
+            label={Strings.welcome.stamp(stampDate)}
+            tilt={3}
+            behavior="record"
+            size="md"
+            reduceMotion={reduceMotion}
+            style={styles.stamp}
+          />
 
           <ThemedText variant="headline" accessibilityRole="header" style={styles.headline}>
             {Strings.welcome.headline}
@@ -132,20 +139,17 @@ const styles = StyleSheet.create({
   },
   ornamentRule: {
     flex: 1,
-    height: 1,
-    backgroundColor: Colors.borderSoft,
+    height: Layout.rule.hairline,
+    backgroundColor: Colors.hairline,
   },
-  ornament: {
-    fontFamily: Typography.families.serif,
-    fontSize: Typography.sizes.sm,
-    color: Colors.inkMuted,
+  stamp: {
+    alignSelf: 'center',
   },
   headline: {
     textAlign: 'center',
   },
   subline: {
-    fontFamily: Typography.families.serif,
-    fontStyle: 'italic',
+    fontFamily: Typography.families.serifItalic,
     fontSize: Typography.sizes.xl,
     lineHeight: 30,
     color: Colors.ink,
@@ -153,10 +157,7 @@ const styles = StyleSheet.create({
   },
   forward: {
     marginTop: -Layout.padding.sm,
-    fontFamily: Typography.families.serif,
-    fontStyle: 'italic',
-    fontSize: Typography.sizes.body,
-    lineHeight: Typography.lineHeights.body,
+    ...Typography.scale.deck,
     color: Colors.inkSoft,
     textAlign: 'center',
   },
@@ -167,8 +168,7 @@ const styles = StyleSheet.create({
   },
   folio: {
     paddingBottom: Layout.padding.xl,
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.xs,
+    ...Typography.scale.meta,
     letterSpacing: 2,
     color: Colors.inkSoft,
     textAlign: 'center',

@@ -158,14 +158,15 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   fieldLabel: {
-    color: Colors.orange,
+    color: Colors.ink,
   },
+  // Boxed, not ruled: the value opens a modal, so it reads as a control.
   timeButton: {
     minHeight: Layout.touchTargetMin,
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    backgroundColor: Colors.paper,
+    borderColor: Colors.hairline,
+    backgroundColor: 'transparent',
     paddingHorizontal: Layout.padding.md,
     paddingVertical: Layout.input.paddingV,
     justifyContent: 'center',
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalCard: {
-    backgroundColor: Colors.paperWarm,
+    backgroundColor: Colors.paper,
     borderRadius: Layout.borderRadius.xl,
     width: '100%',
     maxWidth: 320,
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
   },
   modalTitle: {
-    color: Colors.orange,
+    color: Colors.ink,
     textAlign: 'center',
   },
   modalColumns: {
@@ -213,7 +214,7 @@ const styles = StyleSheet.create({
     borderRadius: Layout.borderRadius.md,
   },
   doneButton: {
-    backgroundColor: Colors.orange,
+    backgroundColor: Colors.ink,
     paddingHorizontal: Layout.padding.lg,
   },
   cancelText: {

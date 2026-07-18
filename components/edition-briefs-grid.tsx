@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
-import { Typography } from '@/constants/typography';
 import type { PostWithAuthor } from '@/types';
 
 import { EditionBriefColumn } from './edition-brief-column';
@@ -65,7 +64,9 @@ export const EditionBriefsGrid = ({ briefs, onOpen }: Props) => {
       {briefs.length >= 2 ? (
         <View style={styles.header}>
           <View style={styles.headerRule} />
-          <ThemedText style={styles.label}>IN BRIEF</ThemedText>
+          {/* Section label in the ink kicker voice — the cover's vermilion is
+              already spent on the lead's kicker (BRAND §2). */}
+          <ThemedText variant="kicker">In Brief</ThemedText>
           <View style={styles.headerRule} />
         </View>
       ) : null}
@@ -107,14 +108,8 @@ const styles = StyleSheet.create({
   },
   headerRule: {
     flex: 1,
-    height: 1,
-    backgroundColor: Colors.borderSoft,
-  },
-  label: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.xs,
-    letterSpacing: 2,
-    color: Colors.inkSoft,
+    height: Layout.rule.hairline,
+    backgroundColor: Colors.hairline,
   },
   row: {
     flexDirection: 'row',
@@ -132,14 +127,14 @@ const styles = StyleSheet.create({
   },
   // Vertical hairline between the two columns, spanning the taller cell.
   columnRule: {
-    width: 1,
-    backgroundColor: Colors.borderSoft,
+    width: Layout.rule.hairline,
+    backgroundColor: Colors.hairline,
     alignSelf: 'stretch',
     marginHorizontal: Layout.padding.md,
   },
   rowDivider: {
-    height: 1,
-    backgroundColor: Colors.borderSoft,
+    height: Layout.rule.hairline,
+    backgroundColor: Colors.hairline,
     marginHorizontal: Layout.padding.lg,
   },
 });

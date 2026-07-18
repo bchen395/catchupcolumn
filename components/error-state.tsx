@@ -4,7 +4,6 @@ import { Colors } from '@/constants/colors';
 import { Icons, type IconDescriptor } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
-import { Typography } from '@/constants/typography';
 
 import { Icon } from './icon';
 import { ThemedText } from './themed-text';
@@ -18,6 +17,9 @@ interface ErrorStateProps {
   style?: ViewStyle;
 }
 
+// The error twin of EmptyState: same v2 shell (Lora Bold headline, Jost body,
+// one ink-pill action). The icon speaks in the error color — the one signal
+// that something's wrong; the shell itself never turns alarming.
 export const ErrorState = ({
   icon = Icons.errorGeneric,
   title = Strings.error.generic.title,
@@ -28,18 +30,22 @@ export const ErrorState = ({
 }: ErrorStateProps) => {
   return (
     <View style={[styles.container, style]}>
-      <View style={styles.iconBubble}>
-        <Icon icon={icon} size={32} color={Colors.error} />
-      </View>
-      <ThemedText style={styles.title}>{title}</ThemedText>
-      <ThemedText style={styles.body}>{body}</ThemedText>
+      <Icon icon={icon} size={36} color={Colors.error} />
+      <ThemedText variant="title" style={styles.title}>
+        {title}
+      </ThemedText>
+      <ThemedText variant="ui" style={styles.body}>
+        {body}
+      </ThemedText>
       {onRetry ? (
         <Pressable
           onPress={onRetry}
           accessibilityRole="button"
           style={({ pressed }) => [styles.cta, pressed ? styles.ctaPressed : null]}
         >
-          <ThemedText style={styles.ctaText}>{ctaLabel}</ThemedText>
+          <ThemedText variant="uiStrong" style={styles.ctaText}>
+            {ctaLabel}
+          </ThemedText>
         </Pressable>
       ) : null}
     </View>
@@ -56,46 +62,26 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
     backgroundColor: Colors.paperWarm,
   },
-  // Keep the bubble on the peach wash to match EmptyState. The icon color is
-  // what signals "error" (red) without making the whole shell feel alarming.
-  iconBubble: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.peachWash,
-    marginBottom: Layout.padding.sm,
-  },
   title: {
-    fontFamily: Typography.families.serifBlack,
-    fontSize: Typography.sizes.xxl,
-    lineHeight: 32,
-    color: Colors.ink,
     textAlign: 'center',
   },
   body: {
-    fontFamily: Typography.families.sans,
-    fontSize: Typography.sizes.body,
-    lineHeight: Typography.lineHeights.body,
     color: Colors.inkSoft,
     textAlign: 'center',
   },
   cta: {
-    minHeight: Layout.touchTargetMin + 4,
+    minHeight: Layout.buttonMinHeight,
     paddingHorizontal: Layout.padding.lg,
     borderRadius: Layout.borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Layout.padding.md,
-    backgroundColor: Colors.orange,
+    backgroundColor: Colors.ink,
   },
   ctaPressed: {
-    backgroundColor: Colors.orange + 'CC',
+    opacity: 0.92,
   },
   ctaText: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.body,
     color: Colors.paper,
   },
 });

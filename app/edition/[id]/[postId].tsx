@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ErrorState } from '@/components/error-state';
-import { PaperGrain } from '@/components/paper-grain';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { StoryReader } from '@/components/story-reader';
 import { Colors } from '@/constants/colors';
@@ -72,17 +71,18 @@ const StoryReaderScreen = () => {
 
   return (
     <View style={styles.flex}>
-      <PaperGrain />
       <Stack.Screen
         options={{
-          title: `${headerIndex + 1} of ${posts.length}`,
+          // Uppercased by hand — the native header can't apply the meta
+          // variant's textTransform.
+          title: `${headerIndex + 1} of ${posts.length}`.toUpperCase(),
           headerStyle: { backgroundColor: Colors.paperWarm },
           headerShadowVisible: false,
           headerTintColor: Colors.ink,
           headerTitleStyle: {
-            fontFamily: Typography.families.sansMedium,
+            fontFamily: Typography.families.sansSemiBold,
             color: Colors.inkSoft,
-            fontSize: Typography.sizes.sm,
+            fontSize: Typography.scale.meta.fontSize,
           },
           headerLeft: () => (
             <Pressable
@@ -91,7 +91,7 @@ const StoryReaderScreen = () => {
               accessibilityLabel="Back to the front page"
               style={styles.backButton}
             >
-              <Ionicons name="chevron-back" size={22} color={Colors.orange} />
+              <Ionicons name="chevron-back" size={22} color={Colors.ink} />
             </Pressable>
           ),
         }}

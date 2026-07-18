@@ -49,12 +49,12 @@ const styles = StyleSheet.create({
   fallback: {
     backgroundColor: Colors.paperWarm,
     borderWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderColor: Colors.hairline,
     alignItems: 'center',
     justifyContent: 'center',
   },
   initials: {
-    fontFamily: Typography.families.serifBlack,
-    color: Colors.orange,
+    fontFamily: Typography.families.serifBold,
+    color: Colors.ink,
   },
 });

@@ -30,7 +30,9 @@ export const AppImage = ({
       transition={transition}
       cachePolicy={cachePolicy}
       placeholderContentFit={placeholderContentFit}
-      style={[{ backgroundColor: Colors.peach }, style]}
+      // A quiet ink-wash placeholder — reads as an unloaded printed photo in
+      // both the v2 and remaining v1 surfaces (peach retired, BRAND §14).
+      style={[{ backgroundColor: Colors.hairline }, style]}
       {...props}
     />
   );

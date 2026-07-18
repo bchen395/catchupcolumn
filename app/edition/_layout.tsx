@@ -12,7 +12,7 @@ const EditionLayout = () => {
         // its data has loaded.
         title: '',
         headerStyle: { backgroundColor: Colors.paperWarm },
-        headerTintColor: Colors.orange,
+        headerTintColor: Colors.ink,
         headerTitleStyle: {
           fontFamily: Typography.families.sansSemiBold,
           color: Colors.ink,

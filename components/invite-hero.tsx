@@ -8,6 +8,7 @@ import type { InvitePreviewMember } from '@/types';
 
 import { AppImage } from './app-image';
 import { AvatarStack } from './avatar-stack';
+import { RolledPaperGlyph } from './illustrations/rolled-paper-glyph';
 import { ThemedText } from './themed-text';
 
 type Props = {
@@ -40,11 +41,11 @@ const memberByline = (
 };
 
 // The invitation rendered as a one-page special edition of the Group's own
-// paper: kicker band, the group name set as a masthead, the cover as a taped
-// polaroid, the description as an italic deck, the members as a byline, and
-// the publish rhythm as a dateline. Flat on paperWarm like the edition front
-// page — a page being handed over, not a card floating on one. CTAs belong
-// to the host screen.
+// paper: kicker band, the group name set as a masthead, the cover as a flat
+// editorial photo, the description as an italic deck, the members as a
+// byline, and the publish rhythm as a dateline. Flat on paperWarm like the
+// edition front page — a page being handed over, not a card floating on one.
+// CTAs belong to the host screen.
 export const InviteHero = ({
   name,
   description,
@@ -60,41 +61,35 @@ export const InviteHero = ({
     <View style={styles.wrap}>
       <View style={styles.kickerRow}>
         <View style={styles.kickerRule} />
-        <ThemedText style={styles.kicker}>{Strings.invite.kicker.toUpperCase()}</ThemedText>
+        <ThemedText variant="kicker" style={styles.kicker}>
+          {Strings.invite.kicker}
+        </ThemedText>
         <View style={styles.kickerRule} />
       </View>
 
-      <ThemedText
-        accessibilityRole="header"
-        style={styles.masthead}
-        numberOfLines={3}
-      >
-        {name.toUpperCase()}
+      {/* Title case, not caps — uppercasing long family names hurts warmth
+          (BRAND §6); set exactly like an edition masthead. */}
+      <ThemedText accessibilityRole="header" style={styles.masthead} numberOfLines={3}>
+        {name}
       </ThemedText>
       <View style={styles.mastheadRule} />
 
       {coverImageUrl ? (
-        // The group cover as a taped polaroid. Frame recipe matches
-        // polaroid-photo.tsx exactly, but rendered here around a plain
-        // AppImage — covers are public URLs, not post-storage paths, so they
-        // must not go through Polaroid's usePostImageUrl signing.
-        <View style={styles.polaroidWrap}>
-          <View style={styles.tape} />
-          <View style={styles.polaroidFrame}>
-            <AppImage
-              source={{ uri: coverImageUrl }}
-              style={styles.coverPhoto}
-              accessibilityIgnoresInvertColors
-              accessibilityLabel={Strings.invite.a11yCover(name)}
-            />
-          </View>
-        </View>
+        // The cover as a flat editorial photo (BRAND §5). Rendered around a
+        // plain AppImage — covers are public URLs, not post-storage paths,
+        // so no usePostImageUrl signing.
+        <AppImage
+          source={{ uri: coverImageUrl }}
+          style={styles.coverPhoto}
+          accessibilityIgnoresInvertColors
+          accessibilityLabel={Strings.invite.a11yCover(name)}
+        />
       ) : (
         // No cover — the colophon's ornament seats the space so the page
         // still reads composed.
         <View style={styles.ornamentRow}>
           <View style={styles.ornamentRule} />
-          <ThemedText style={styles.ornament}>◆</ThemedText>
+          <RolledPaperGlyph size={14} />
           <View style={styles.ornamentRule} />
         </View>
       )}
@@ -135,9 +130,8 @@ const styles = StyleSheet.create({
   wrap: {
     alignItems: 'stretch',
   },
-  // "YOU'RE INVITED" between ink hairlines — the edition dateline band
-  // promoted to a kicker. Orange at 12px small caps is the affordance
-  // register (same as the front page's "LEAD STORY"), never body copy.
+  // "YOU'RE INVITED" between ink hairlines — a sanctioned vermilion kicker
+  // (BRAND §8's own example), the page's single accent.
   kickerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -146,64 +140,30 @@ const styles = StyleSheet.create({
   },
   kickerRule: {
     flex: 1,
-    height: 1,
+    height: Layout.rule.hairline,
     backgroundColor: Colors.ink,
   },
   kicker: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.xs,
-    letterSpacing: 2,
-    color: Colors.orange,
+    color: Colors.vermilion,
   },
   // The group name set exactly like an edition masthead — this IS their paper.
   masthead: {
     marginTop: Layout.padding.sm,
-    fontFamily: Typography.families.serifBlack,
-    fontSize: Typography.sizes.headline,
-    lineHeight: Typography.lineHeights.headline,
+    ...Typography.scale.display,
     color: Colors.ink,
     textAlign: 'center',
-    letterSpacing: 1,
   },
   mastheadRule: {
     marginTop: Layout.padding.md,
-    height: 3,
+    height: Layout.rule.heavy,
     backgroundColor: Colors.ink,
   },
-  // Polaroid recipe copied from polaroid-photo.tsx — keep the two in step.
-  polaroidWrap: {
-    ...Layout.shadow.paper,
-    marginTop: Layout.padding.lg,
-    // Bleed slightly past the page padding for front-page weight, the
-    // edition-lead trick.
-    marginHorizontal: -Layout.padding.sm,
-    transform: [{ rotate: '-2deg' }],
-  },
-  tape: {
-    position: 'absolute',
-    top: -9,
-    left: '50%',
-    width: 58,
-    height: 20,
-    backgroundColor: 'rgba(250,247,242,0.7)',
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    transform: [{ translateX: -29 }, { rotate: '-4deg' }],
-    zIndex: 2,
-  },
-  polaroidFrame: {
-    backgroundColor: Colors.paper,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    borderRadius: Layout.borderRadius.sm,
-    paddingTop: Layout.padding.sm,
-    paddingHorizontal: Layout.padding.sm,
-    paddingBottom: Layout.padding.md,
-  },
   coverPhoto: {
+    marginTop: Layout.padding.lg,
     width: '100%',
     aspectRatio: 16 / 9,
-    backgroundColor: Colors.peachWash,
+    borderWidth: Layout.rule.hairline,
+    borderColor: Colors.hairline,
   },
   ornamentRow: {
     marginTop: Layout.padding.lg,
@@ -214,21 +174,13 @@ const styles = StyleSheet.create({
   },
   ornamentRule: {
     flex: 1,
-    height: 1,
-    backgroundColor: Colors.borderSoft,
+    height: Layout.rule.hairline,
+    backgroundColor: Colors.hairline,
   },
-  ornament: {
-    fontFamily: Typography.families.serif,
-    fontSize: Typography.sizes.sm,
-    color: Colors.inkMuted,
-  },
-  // The description as an italic serif deck under the masthead.
+  // The description as the Lora-italic deck under the masthead.
   deck: {
     marginTop: Layout.padding.lg,
-    fontFamily: Typography.families.serif,
-    fontStyle: 'italic',
-    fontSize: Typography.sizes.body,
-    lineHeight: Typography.lineHeights.body,
+    ...Typography.scale.deck,
     color: Colors.inkSoft,
     textAlign: 'center',
   },
@@ -238,10 +190,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   membersLine: {
-    fontFamily: Typography.families.serif,
-    fontStyle: 'italic',
-    fontSize: Typography.sizes.body,
-    lineHeight: Typography.lineHeights.body,
+    ...Typography.scale.deck,
     color: Colors.inkSoft,
     textAlign: 'center',
   },
@@ -256,13 +205,12 @@ const styles = StyleSheet.create({
   },
   datelineRule: {
     flex: 1,
-    height: 1,
+    height: Layout.rule.hairline,
     backgroundColor: Colors.ink,
   },
   dateline: {
     flexShrink: 1,
-    fontFamily: Typography.families.serif,
-    fontStyle: 'italic',
+    fontFamily: Typography.families.serifItalic,
     fontSize: Typography.sizes.lg,
     color: Colors.ink,
     textAlign: 'center',

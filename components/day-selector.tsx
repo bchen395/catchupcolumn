@@ -16,7 +16,8 @@ type DaySelectorProps = {
   label?: string;
 };
 
-// Seven equal-width day buttons, the selected one filled orange. Shared by the
+// Seven equal-width day buttons, the selected one filled ink (the primary-
+// button voice). Shared by the
 // create-group and group-settings screens so the picker stays identical in both.
 export const DaySelector = ({ value, onChange, label = 'Publish day' }: DaySelectorProps) => {
   return (
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
   },
   fieldLabel: {
-    color: Colors.orange,
+    color: Colors.ink,
   },
   dayRow: {
     flexDirection: 'row',
@@ -73,12 +74,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    backgroundColor: Colors.paper,
+    borderColor: Colors.hairline,
+    backgroundColor: 'transparent',
   },
   dayButtonActive: {
-    backgroundColor: Colors.orange,
-    borderColor: Colors.orange,
+    backgroundColor: Colors.ink,
+    borderColor: Colors.ink,
   },
   dayButtonText: {
     color: Colors.inkSoft,

@@ -5,10 +5,10 @@ import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { EmptyState } from '@/components/empty-state';
 import { FormButton } from '@/components/form-button';
 import { GroupCard } from '@/components/group-card';
+import { DogWithPaperScene } from '@/components/illustrations/dog-with-paper-scene';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { StatusBanner } from '@/components/status-banner';
 import { Colors } from '@/constants/colors';
-import { Icons } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { useAuth } from '@/hooks/use-auth';
@@ -72,7 +72,7 @@ const GroupsScreen = () => {
         <PrintingPressLoading />
       ) : !loading && groups.length === 0 && !screenError ? (
         <EmptyState
-          icon={Icons.emptyGroups}
+          scene={<DogWithPaperScene />}
           title={Strings.empty.groups.title}
           body={Strings.empty.groups.body}
         />
@@ -90,7 +90,7 @@ const GroupsScreen = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={Colors.orange}
+              tintColor={Colors.ink}
             />
           }
           style={styles.flex}
@@ -113,8 +113,8 @@ const styles = StyleSheet.create({
     gap: Layout.padding.sm,
     paddingHorizontal: Layout.padding.lg,
     paddingVertical: Layout.padding.md,
-    borderBottomWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderBottomWidth: Layout.rule.hairline,
+    borderColor: Colors.hairline,
     backgroundColor: Colors.paperWarm,
   },
   actionButton: {

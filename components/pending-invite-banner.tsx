@@ -25,17 +25,17 @@ export const PendingInviteBanner = ({ message }: Props) => (
 );
 
 const styles = StyleSheet.create({
+  // A hairline-ruled band, not a tinted slab (BRAND §9) — persistent context
+  // in the quiet info voice.
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Layout.padding.sm,
     minHeight: Layout.touchTargetMin,
-    paddingHorizontal: Layout.padding.md,
     paddingVertical: Layout.padding.sm,
-    backgroundColor: Colors.peach,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    borderRadius: Layout.borderRadius.md,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: Colors.hairline,
   },
   text: {
     flex: 1,

@@ -1,82 +1,53 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
-import { Typography } from '@/constants/typography';
+import { Strings } from '@/constants/strings';
 
 type StatusVariant = 'error' | 'success' | 'info';
 
 type StatusBannerProps = {
   message: string;
   variant?: StatusVariant;
+  // Small-caps lead-in above the message; defaults per variant from Strings.
+  kicker?: string;
   style?: ViewStyle;
 };
 
-const ICON_BY_VARIANT: Record<
-  StatusVariant,
-  React.ComponentProps<typeof MaterialCommunityIcons>['name']
-> = {
-  error: 'alert-circle-outline',
-  success: 'check-circle-outline',
-  info: 'information-outline',
-};
-
-const ICON_COLOR: Record<StatusVariant, string> = {
+// Text-first on a hairline-ruled band (BRAND §9): a kicker + one Jost line,
+// no icons, no tinted background slabs. The kicker color is the voice —
+// info speaks in ink, errors in the error color. `success` has no color of
+// its own (decided 2026-07-17): it wears the info dress and lets the warm
+// words carry it; true celebrations belong to the stamp system (§11).
+const KICKER_COLOR: Record<StatusVariant, string> = {
   error: Colors.error,
-  success: Colors.success,
+  success: Colors.ink,
   info: Colors.ink,
 };
 
-const TEXT_COLOR: Record<StatusVariant, string> = {
-  error: Colors.error,
-  success: Colors.success,
-  info: Colors.ink,
-};
-
-export const StatusBanner = ({ message, variant = 'info', style }: StatusBannerProps) => {
+export const StatusBanner = ({ message, variant = 'info', kicker, style }: StatusBannerProps) => {
   return (
-    <View style={[styles.container, variantStyles[variant], style]}>
-      <MaterialCommunityIcons
-        name={ICON_BY_VARIANT[variant]}
-        size={20}
-        color={ICON_COLOR[variant]}
-      />
-      <ThemedText style={[styles.message, { color: TEXT_COLOR[variant] }]}>{message}</ThemedText>
+    <View style={[styles.band, style]}>
+      <ThemedText variant="kicker" style={{ color: KICKER_COLOR[variant] }}>
+        {kicker ?? Strings.banner[variant]}
+      </ThemedText>
+      <ThemedText variant="ui" style={styles.message}>
+        {message}
+      </ThemedText>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Layout.padding.sm,
-    borderRadius: Layout.borderRadius.md,
-    borderWidth: 1,
-    paddingHorizontal: Layout.padding.md,
+  band: {
+    borderTopWidth: Layout.rule.hairline,
+    borderBottomWidth: Layout.rule.hairline,
+    borderColor: Colors.hairline,
     paddingVertical: Layout.padding.md,
+    gap: Layout.padding.xs,
   },
   message: {
-    flex: 1,
-    fontFamily: Typography.families.sansMedium,
-    fontSize: Typography.sizes.body,
-    lineHeight: Typography.lineHeights.body,
-  },
-});
-
-const variantStyles = StyleSheet.create({
-  error: {
-    backgroundColor: Colors.paper,
-    borderColor: Colors.error,
-  },
-  success: {
-    backgroundColor: Colors.paper,
-    borderColor: Colors.success,
-  },
-  info: {
-    backgroundColor: Colors.peach,
-    borderColor: Colors.peach,
+    color: Colors.ink,
   },
 });

@@ -25,6 +25,16 @@ export const Strings = {
     default: 'Setting the type…',
     inbox: 'Pulling this week’s edition…',
     edition: 'Inking the page…',
+    // The press-variant loader's line while publish-now compiles and delivers.
+    publishing: 'Printing this week’s edition…',
+  },
+
+  // StatusBanner kicker lead-ins (BRAND §9) — warm small-caps voices, never
+  // technical. Success wears the info dress; the words carry the good news.
+  banner: {
+    info: 'A quick note',
+    success: 'All set',
+    error: 'Something went wrong',
   },
 
   empty: {
@@ -71,6 +81,14 @@ export const Strings = {
     editionLoad: 'Could not load this edition. Try again in a moment.',
     profileLoad: 'Could not load your profile right now.',
     profileSave: 'Could not save your profile. Please try again.',
+  },
+
+  // Home's time-aware greeting (BRAND §8) — NYT's "You" hub warmth, no
+  // engagement mechanics. Falls back to a nameless greeting pre-profile.
+  greeting: {
+    morning: (name: string) => (name ? `Good morning, ${name}` : 'Good morning'),
+    afternoon: (name: string) => (name ? `Good afternoon, ${name}` : 'Good afternoon'),
+    evening: (name: string) => (name ? `Good evening, ${name}` : 'Good evening'),
   },
 
   // The weekly-ritual voice. Home's dateline strip, the composer's
@@ -162,7 +180,9 @@ export const Strings = {
   inviteCard: {
     title: 'Invite your family',
     body: 'Anyone with this code can join. Read it out over the phone, text it, or show the code below to scan.',
-    copyHint: 'Tap the code to copy it',
+    // Small-caps label inside the §11 ticket, above the code.
+    ticketLabel: 'Invite code',
+    copyHint: 'Tap the ticket to copy the code',
     copied: 'Copied!',
     a11yCopied: 'Code copied.',
     shareCta: 'Share an invitation',

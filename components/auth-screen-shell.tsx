@@ -9,11 +9,11 @@ import {
     type ViewStyle,
 } from 'react-native';
 
-import { AppImage } from '@/components/app-image';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
+import { Strings } from '@/constants/strings';
 
 type AuthScreenShellProps = {
   title: string;
@@ -26,6 +26,10 @@ type AuthScreenShellProps = {
   contentContainerStyle?: StyleProp<ViewStyle>;
 };
 
+// Shared chrome for auth/onboarding: the wordmark set as a small masthead
+// (BRAND §12 — Lora Bold ink on paper, no container; the v1 box-and-bag
+// brandmark is retired), a rule, then the screen's headline and deck. Form
+// fields sit directly on the page as ruled lines (§9) — no card box.
 export const AuthScreenShell = ({
   title,
   subtitle,
@@ -47,20 +51,13 @@ export const AuthScreenShell = ({
         >
           {banner}
           <View style={styles.header}>
-            <AppImage
-              source={require('@/assets/brand/logo.png')}
-              style={styles.brandmark}
-              contentFit="contain"
-            />
+            <ThemedText variant="title">{Strings.brand.name}</ThemedText>
+            <View style={styles.mastheadRule} />
             <ThemedText variant="headline">{title}</ThemedText>
-            <ThemedText variant="body" style={styles.subtitle}>
-              {subtitle}
-            </ThemedText>
+            <ThemedText variant="deck">{subtitle}</ThemedText>
           </View>
 
-          <ThemedView variant="card" style={styles.card}>
-            {children}
-          </ThemedView>
+          <View style={styles.form}>{children}</View>
 
           {footer ? <View style={styles.footer}>{footer}</View> : null}
         </ScrollView>
@@ -83,19 +80,12 @@ const styles = StyleSheet.create({
   header: {
     gap: Layout.padding.sm,
   },
-  // Brandmark above the headline grounds the auth screens in the brand instead
-  // of opening on bare text. Left-aligned to match the Home masthead.
-  brandmark: {
-    width: 132,
-    aspectRatio: 315 / 266,
-    backgroundColor: 'transparent',
-    marginBottom: Layout.padding.xs,
+  mastheadRule: {
+    height: Layout.rule.heavy,
+    backgroundColor: Colors.ink,
+    marginBottom: Layout.padding.sm,
   },
-  subtitle: {
-    color: Colors.inkSoft,
-  },
-  card: {
-    padding: Layout.padding.lg,
+  form: {
     gap: Layout.padding.md,
   },
   footer: {

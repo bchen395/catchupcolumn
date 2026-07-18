@@ -14,10 +14,12 @@ const styles = StyleSheet.create({
   base: {
     backgroundColor: Colors.paperWarm,
   },
+  // v2: content never sits in tinted slabs — 'card' is a paper surface with
+  // a hairline edge, for true overlays and boxed sheet content only.
   card: {
-    backgroundColor: Colors.peach,
+    backgroundColor: Colors.paper,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderColor: Colors.hairline,
   },
 });

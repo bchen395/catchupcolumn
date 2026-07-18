@@ -79,7 +79,7 @@ export const StoryReader = ({ posts, initialIndex, onExit, reduceMotion, onIndex
             accessibilityLabel="Previous story"
             style={({ pressed }) => [styles.navButton, pressed && styles.navPressed]}
           >
-            <Ionicons name="chevron-back" size={18} color={Colors.orange} />
+            <Ionicons name="chevron-back" size={18} color={Colors.ink} />
             <ThemedText style={styles.navLabel}>Previous</ThemedText>
           </Pressable>
         )}
@@ -129,8 +129,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.lg,
     paddingTop: Layout.padding.md,
     paddingBottom: Layout.padding.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderSoft,
+    borderTopWidth: Layout.rule.hairline,
+    borderTopColor: Colors.hairline,
     backgroundColor: Colors.paperWarm,
     gap: Layout.padding.md,
   },
@@ -141,27 +141,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Layout.padding.xs,
-    minHeight: Layout.touchTargetMin,
+    minHeight: Layout.buttonMinHeight,
     paddingHorizontal: Layout.padding.lg,
     borderRadius: Layout.borderRadius.full,
   },
   navPressed: {
     opacity: 0.6,
   },
+  // "Previous" is the tertiary voice: bare ink text, SemiBold (BRAND §9).
   navLabel: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.body,
-    color: Colors.orange,
+    ...Typography.scale.uiStrong,
+    color: Colors.ink,
   },
+  // "Next story" / "Front page" is the page's primary action: the ink pill.
   navPrimary: {
-    backgroundColor: Colors.orange,
+    backgroundColor: Colors.ink,
   },
   navPrimaryPressed: {
-    backgroundColor: Colors.orange + 'CC',
+    opacity: 0.92,
   },
   navPrimaryLabel: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.body,
+    ...Typography.scale.uiStrong,
     color: Colors.paper,
   },
 });

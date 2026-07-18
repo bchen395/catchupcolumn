@@ -14,10 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Motion } from '@/constants/motion';
-import { Typography } from '@/constants/typography';
 import type { PostWithAuthor } from '@/types';
 
-import { PaperGrain } from './paper-grain';
 import { StoryReader } from './story-reader';
 import { ThemedText } from './themed-text';
 
@@ -104,8 +102,6 @@ export const StoryReaderOverlay = ({
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={close}>
       <Animated.View style={[styles.page, frameStyle]}>
-        <PaperGrain />
-
         {/* The real reader, laid out at full-screen size from the start so
             text never reflows mid-grow — the page reveals it as it enlarges. */}
         <Animated.View
@@ -118,9 +114,11 @@ export const StoryReaderOverlay = ({
               accessibilityLabel="Back to the front page"
               style={styles.backButton}
             >
-              <Ionicons name="chevron-back" size={22} color={Colors.orange} />
+              <Ionicons name="chevron-back" size={22} color={Colors.ink} />
             </Pressable>
-            <ThemedText style={styles.topBarTitle}>{`${index + 1} of ${posts.length}`}</ThemedText>
+            <ThemedText variant="meta" style={styles.topBarTitle}>
+              {`${index + 1} of ${posts.length}`}
+            </ThemedText>
             {/* Mirrors the back button so the title stays centered. */}
             <View style={styles.backButton} />
           </View>
@@ -169,10 +167,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.xs,
     backgroundColor: Colors.paperWarm,
   },
+  // The "2 of 5" folio in the meta dress code.
   topBarTitle: {
-    fontFamily: Typography.families.sansMedium,
-    fontSize: Typography.sizes.sm,
-    color: Colors.inkSoft,
+    textAlign: 'center',
   },
   backButton: {
     width: Layout.touchTargetMin,

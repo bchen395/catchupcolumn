@@ -4,11 +4,11 @@ import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
 import { displayRatioFor, useImageOrientation } from '@/hooks/use-image-orientation';
-import { headlineFor } from '@/lib/edition-layout';
+import { firstName, headlineFor } from '@/lib/edition-layout';
 import type { PostWithAuthor } from '@/types';
 
 import { Avatar } from './avatar';
-import { Polaroid } from './polaroid-photo';
+import { EditorialPhoto } from './editorial-photo';
 import { ThemedText } from './themed-text';
 
 type Props = {
@@ -16,7 +16,7 @@ type Props = {
 };
 
 // One contributor's full story, as read in the reader. Headline (the post's
-// title or a warm byline fallback), an avatar byline, the taped photo when
+// title or a warm byline fallback), an avatar byline, the credited photo when
 // present, then the body set for long-form reading with a raised initial.
 //
 // The raised initial is an inline "lettrine", not a true CSS-float drop cap
@@ -47,10 +47,9 @@ export const StoryArticle = ({ post }: Props) => {
       </View>
 
       {image_url ? (
-        <Polaroid
+        <EditorialPhoto
           imageUrl={image_url}
-          rotate={1.5}
-          caption={author.display_name}
+          credit={`Photo by ${firstName(author.display_name)}`}
           photoAspectRatio={displayRatioFor(orientation ?? 'landscape')}
           onNaturalSize={onNaturalSize}
           style={[styles.photo, orientation === 'portrait' && styles.photoPortrait]}
@@ -72,9 +71,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
   },
   headline: {
-    fontFamily: Typography.families.serifBlack,
-    fontSize: Typography.sizes.headline,
-    lineHeight: Typography.lineHeights.headline,
+    ...Typography.scale.headline,
     color: Colors.ink,
   },
   byline: {
@@ -87,18 +84,15 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   bylineKicker: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.xs,
-    letterSpacing: 2,
+    ...Typography.scale.meta,
     color: Colors.inkSoft,
   },
   authorName: {
-    fontFamily: Typography.families.serifBlack,
+    fontFamily: Typography.families.serifBold,
     fontSize: Typography.sizes.xl,
     lineHeight: 28,
     color: Colors.ink,
   },
-  // Slightly extra bottom space so the tilted frame's shadow clears the body.
   photo: {
     marginTop: Layout.padding.xs,
     marginBottom: Layout.padding.md,
@@ -115,10 +109,12 @@ const styles = StyleSheet.create({
     lineHeight: Typography.lineHeights.read,
     color: Colors.ink,
   },
+  // The lettrine is set in ink — vermilion never decorates reading copy
+  // (BRAND §2), and the reader page spends no accent at all.
   dropCap: {
-    fontFamily: Typography.families.serifBlack,
+    fontFamily: Typography.families.serifBold,
     fontSize: 36,
     lineHeight: 40,
-    color: Colors.orange,
+    color: Colors.ink,
   },
 });

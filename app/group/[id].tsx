@@ -24,6 +24,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
+import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
 import { PublishNowError, publishEditionNow } from '@/lib/editions';
@@ -107,14 +108,14 @@ const memberStyles = StyleSheet.create({
     borderRadius: 22,
   },
   fallback: {
-    backgroundColor: Colors.peach,
+    backgroundColor: Colors.hairline,
     borderWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderColor: Colors.hairline,
     alignItems: 'center',
     justifyContent: 'center',
   },
   initials: {
-    color: Colors.orange,
+    color: Colors.ink,
     fontFamily: Typography.families.sansBold,
   },
   info: {
@@ -124,21 +125,22 @@ const memberStyles = StyleSheet.create({
   name: {
     fontFamily: Typography.families.sansMedium,
   },
+  // Role tags as §9 chips: outlined hairline pills, no fills. The moderator
+  // tag speaks with an ink outline + SemiBold; contributors stay quiet.
   badge: {
     alignSelf: 'flex-start',
     paddingHorizontal: Layout.padding.sm,
     paddingVertical: 2,
-    borderRadius: Layout.borderRadius.sm,
-    backgroundColor: Colors.peach,
+    borderRadius: Layout.borderRadius.full,
+    backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderColor: Colors.hairline,
   },
   badgeMod: {
-    backgroundColor: Colors.badgeMod,
-    borderColor: Colors.orange,
+    borderColor: Colors.ink,
   },
   badgeModText: {
-    color: Colors.orange,
+    color: Colors.ink,
     fontFamily: Typography.families.sansSemiBold,
   },
   badgeContribText: {
@@ -372,6 +374,12 @@ const GroupDetailScreen = () => {
     return <PrintingPressLoading />;
   }
 
+  // Publishing compiles and delivers the edition — the one true long wait in
+  // the app, so the printing press runs (BRAND §4/§10).
+  if (publishingNow) {
+    return <PrintingPressLoading variant="press" message={Strings.loading.publishing} />;
+  }
+
   if (!group) {
     return (
       <ErrorState
@@ -390,7 +398,7 @@ const GroupDetailScreen = () => {
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.orange} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.ink} />}
       >
       <Stack.Screen
         options={{
@@ -403,7 +411,7 @@ const GroupDetailScreen = () => {
               style={styles.backButton}
               hitSlop={8}
             >
-              <Ionicons name="chevron-back" size={26} color={Colors.orange} />
+              <Ionicons name="chevron-back" size={26} color={Colors.ink} />
             </Pressable>
           ),
         }}
@@ -591,15 +599,15 @@ const styles = StyleSheet.create({
   coverPlaceholder: {
     width: '100%',
     height: 120,
-    backgroundColor: Colors.peach,
+    backgroundColor: Colors.hairline,
     borderBottomWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderColor: Colors.hairline,
   },
   header: {
     paddingHorizontal: Layout.padding.lg,
     paddingVertical: Layout.padding.lg,
     borderBottomWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderColor: Colors.hairline,
     gap: Layout.padding.sm,
   },
   columnName: {
@@ -633,11 +641,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.padding.lg,
     paddingVertical: Layout.padding.md,
     borderBottomWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderColor: Colors.hairline,
     gap: Layout.padding.sm,
   },
   sectionTitle: {
-    color: Colors.orange,
+    color: Colors.ink,
     marginBottom: Layout.padding.xs,
   },
   publishNowHelp: {
@@ -647,7 +655,7 @@ const styles = StyleSheet.create({
   },
   dangerZone: {
     borderTopWidth: 1,
-    borderTopColor: Colors.borderSoft,
+    borderTopColor: Colors.hairline,
     borderBottomWidth: 0,
     marginTop: Layout.padding.lg,
   },

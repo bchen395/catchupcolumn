@@ -139,7 +139,7 @@ const CreateGroupScreen = () => {
               style={styles.backButton}
               hitSlop={8}
             >
-              <Ionicons name="chevron-back" size={28} color={Colors.orange} />
+              <Ionicons name="chevron-back" size={28} color={Colors.ink} />
             </Pressable>
           ),
         }}
@@ -243,9 +243,11 @@ const styles = StyleSheet.create({
   banner: {
     margin: Layout.padding.md,
   },
+  // A quiet ink-wash well with a hairline edge — reads as the empty plate
+  // where the cover photo will print.
   coverPickerWrapper: {
     height: 180,
-    backgroundColor: Colors.peach,
+    backgroundColor: Colors.hairline,
     marginBottom: Layout.padding.md,
     overflow: 'hidden',
   },
@@ -258,7 +260,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderColor: Colors.hairline,
   },
   coverPlaceholderText: {
     color: Colors.inkSoft,

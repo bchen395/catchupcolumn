@@ -1,12 +1,11 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   cancelAnimation,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
@@ -16,133 +15,197 @@ import { LoadingConfig } from '@/constants/loading';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
+import { useReduceMotion } from '@/hooks/use-reduce-motion';
 
+import {
+  PRESS_FLYWHEEL,
+  PRESS_SHEET,
+  PRESS_VIEWBOX,
+  FlywheelSpokes,
+  PressSheet,
+  PrintingPressScene,
+} from './illustrations/printing-press-scene';
+import { PaperboyMark, RIDER_VIEWBOX, RIDER_WHEELS, WheelSpokes } from './illustrations/paperboy-mark';
 import { ThemedText } from './themed-text';
 
 /**
- * Spinning printing-press style loading indicator.
+ * The branded loading screen (BRAND §4/§10): the paperboy rides while the app
+ * fetches (`ride`, the default); the printing press runs for the long
+ * compile/publish waits (`press`). Under Reduce Motion both park as static
+ * scenes. Sizing, timing, and colors read from `constants/loading.ts` — to
+ * retune the loader, edit that config, not this file.
  *
- * All sizes, colors, and timing are read from `constants/loading.ts`. To retheme
- * the loader (different palette, faster spin, larger press) edit that config —
- * not this file.
+ * The splash screen (BRAND §12) is this screen's static twin: wordmark
+ * masthead with the paperboy beneath. The dateline lives here, as live text,
+ * because a baked splash PNG can't know today's date.
  */
 
 interface PrintingPressLoadingProps {
   message?: string;
   caption?: string;
+  variant?: 'ride' | 'press';
 }
 
-const PAPER_OFFSCREEN_OFFSET = 60;
+// The paperboy rides: the mark with its wheel spokes replaced by spinning
+// overlays. One shared rotation drives both wheels.
+const RideScene = () => {
+  const height = LoadingConfig.riderHeight;
+  const scale = height / RIDER_VIEWBOX.h;
+  const spin = useSharedValue(0);
+
+  useEffect(() => {
+    spin.value = withRepeat(
+      withTiming(360, { duration: LoadingConfig.wheelSpinMs, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(spin);
+  }, []);
+
+  const spinStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${spin.value}deg` }],
+  }));
+
+  return (
+    <View
+      style={{ width: RIDER_VIEWBOX.w * scale, height }}
+      aria-hidden
+    >
+      <PaperboyMark height={height} spokes={false} />
+      {RIDER_WHEELS.map((wheel) => (
+        <Animated.View
+          key={wheel.cx}
+          style={[
+            styles.overlay,
+            {
+              left: (wheel.cx - wheel.r) * scale,
+              top: (wheel.cy - wheel.r) * scale,
+            },
+            spinStyle,
+          ]}
+        >
+          <WheelSpokes size={wheel.r * 2 * scale} />
+        </Animated.View>
+      ))}
+    </View>
+  );
+};
+
+// The press runs: flywheel turns while printed sheets slide out of the slot.
+const PressRunScene = () => {
+  const width = LoadingConfig.pressWidth;
+  const scale = width / PRESS_VIEWBOX.w;
+  const spin = useSharedValue(0);
+  const feed = useSharedValue(0);
+
+  useEffect(() => {
+    spin.value = withRepeat(
+      withTiming(360, { duration: LoadingConfig.flywheelSpinMs, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    feed.value = withRepeat(
+      withTiming(1, { duration: LoadingConfig.sheetCycleMs, easing: Easing.inOut(Easing.quad) }),
+      -1,
+      false,
+    );
+    return () => {
+      cancelAnimation(spin);
+      cancelAnimation(feed);
+    };
+  }, []);
+
+  const spinStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${spin.value}deg` }],
+  }));
+
+  // The sheet starts tucked at the slot and slides clear, fading at both ends
+  // of the cycle so the loop never pops.
+  const sheetStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: interpolate(feed.value, [0, 1], [-10 * scale, 26 * scale]) }],
+    opacity: interpolate(feed.value, [0, 0.15, 0.8, 1], [0, 1, 1, 0]),
+  }));
+
+  return (
+    <View
+      style={{ width, height: PRESS_VIEWBOX.h * scale }}
+      aria-hidden
+    >
+      <PrintingPressScene width={width} spokes={false} sheet={false} />
+      <Animated.View
+        style={[
+          styles.overlay,
+          {
+            left: (PRESS_FLYWHEEL.cx - PRESS_FLYWHEEL.r) * scale,
+            top: (PRESS_FLYWHEEL.cy - PRESS_FLYWHEEL.r) * scale,
+          },
+          spinStyle,
+        ]}
+      >
+        <FlywheelSpokes size={PRESS_FLYWHEEL.r * 2 * scale} />
+      </Animated.View>
+      <Animated.View
+        style={[
+          styles.overlay,
+          { left: (PRESS_SHEET.x - 2) * scale, top: (PRESS_SHEET.y - 2) * scale },
+          sheetStyle,
+        ]}
+      >
+        <PressSheet width={(PRESS_SHEET.w + 4) * scale} />
+      </Animated.View>
+    </View>
+  );
+};
 
 export const PrintingPressLoading = ({
   message = Strings.loading.default,
   caption,
+  variant = 'ride',
 }: PrintingPressLoadingProps) => {
-  const rotation = useSharedValue(0);
-  const paper1 = useSharedValue(0);
-  const paper2 = useSharedValue(0);
-  const paper3 = useSharedValue(0);
+  const reduceMotion = useReduceMotion();
   const mastheadOpacity = useSharedValue(0);
 
   useEffect(() => {
-    rotation.value = withRepeat(
-      withTiming(360, {
-        duration: LoadingConfig.cylinderRotationMs,
-        easing: Easing.linear,
-      }),
-      -1,
-      false,
-    );
-
-    const feed = (sv: typeof paper1, delay: number) => {
-      sv.value = withDelay(
-        delay,
-        withRepeat(
-          withTiming(1, {
-            duration: LoadingConfig.paperFeedMs,
-            easing: Easing.inOut(Easing.quad),
-          }),
-          -1,
-          false,
-        ),
-      );
-    };
-
-    feed(paper1, 0);
-    feed(paper2, LoadingConfig.paperStaggerMs);
-    feed(paper3, LoadingConfig.paperStaggerMs * 2);
-
     mastheadOpacity.value = withTiming(1, { duration: LoadingConfig.mastheadFadeMs });
-
-    return () => {
-      cancelAnimation(rotation);
-      cancelAnimation(paper1);
-      cancelAnimation(paper2);
-      cancelAnimation(paper3);
-      cancelAnimation(mastheadOpacity);
-    };
+    return () => cancelAnimation(mastheadOpacity);
   }, []);
-
-  const cylinderStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-  }));
-
-  const paper1Style = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: -PAPER_OFFSCREEN_OFFSET + paper1.value * (PAPER_OFFSCREEN_OFFSET * 2) },
-    ],
-    opacity: paper1.value < 0.05 || paper1.value > 0.95 ? 0 : 1,
-  }));
-  const paper2Style = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: -PAPER_OFFSCREEN_OFFSET + paper2.value * (PAPER_OFFSCREEN_OFFSET * 2) },
-    ],
-    opacity: paper2.value < 0.05 || paper2.value > 0.95 ? 0 : 1,
-  }));
-  const paper3Style = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: -PAPER_OFFSCREEN_OFFSET + paper3.value * (PAPER_OFFSCREEN_OFFSET * 2) },
-    ],
-    opacity: paper3.value < 0.05 || paper3.value > 0.95 ? 0 : 1,
-  }));
 
   const mastheadStyle = useAnimatedStyle(() => ({ opacity: mastheadOpacity.value }));
 
+  // The splash's NYT dateline (BRAND §12), rendered live. `meta` uppercases.
+  const dateline = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  let scene;
+  if (reduceMotion) {
+    // Parked pose (BRAND §10): the full static scene, nothing moves.
+    scene =
+      variant === 'press' ? (
+        <PrintingPressScene width={LoadingConfig.pressWidth} />
+      ) : (
+        <PaperboyMark height={LoadingConfig.riderHeight} />
+      );
+  } else {
+    scene = variant === 'press' ? <PressRunScene /> : <RideScene />;
+  }
+
   return (
     <View style={styles.container}>
-      <View style={styles.press}>
-        {/* Paper sheets feeding through (rendered behind the cylinder) */}
-        <Animated.View style={[styles.paper, paper1Style]}>
-          <PaperSheet />
-        </Animated.View>
-        <Animated.View style={[styles.paper, paper2Style]}>
-          <PaperSheet />
-        </Animated.View>
-        <Animated.View style={[styles.paper, paper3Style]}>
-          <PaperSheet />
-        </Animated.View>
-
-        {/* Spinning cylinder */}
-        <Animated.View style={[styles.cylinder, cylinderStyle]}>
-          <View style={styles.cylinderInner}>
-            <FontAwesome
-              name="cog"
-              size={LoadingConfig.cylinderSize * 0.85}
-              color={LoadingConfig.cylinderColor}
-            />
-          </View>
-        </Animated.View>
-      </View>
-
+      {scene}
       <Animated.View style={[styles.text, mastheadStyle]}>
         <ThemedText variant="label" style={styles.masthead}>
           {Strings.brand.masthead}
         </ThemedText>
+        <ThemedText variant="meta">{dateline}</ThemedText>
         <ThemedText variant="caption" style={styles.message}>
           {message}
         </ThemedText>
         {caption ? (
-          <ThemedText variant="caption" style={styles.caption}>
+          <ThemedText variant="caption" style={styles.message}>
             {caption}
           </ThemedText>
         ) : null}
@@ -150,15 +213,6 @@ export const PrintingPressLoading = ({
     </View>
   );
 };
-
-const PaperSheet = () => (
-  <View style={styles.paperSheet}>
-    <View style={[styles.paperLine, { width: '70%' }]} />
-    <View style={[styles.paperLine, { width: '90%' }]} />
-    <View style={[styles.paperLine, { width: '60%' }]} />
-    <View style={[styles.paperLine, { width: '80%' }]} />
-  </View>
-);
 
 const styles = StyleSheet.create({
   container: {
@@ -168,47 +222,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.paperWarm,
     padding: Layout.padding.xl,
   },
-  press: {
-    width: LoadingConfig.pressSize,
-    height: LoadingConfig.pressSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cylinder: {
-    width: LoadingConfig.cylinderSize,
-    height: LoadingConfig.cylinderSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cylinderInner: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  paper: {
+  overlay: {
     position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: -1,
-  },
-  paperSheet: {
-    width: LoadingConfig.paperWidth,
-    height: LoadingConfig.paperHeight,
-    backgroundColor: LoadingConfig.paperColor,
-    borderWidth: 1,
-    borderColor: LoadingConfig.paperBorderColor,
-    borderRadius: Layout.borderRadius.sm,
-    padding: Layout.padding.sm,
-    gap: 6,
-    justifyContent: 'flex-start',
-  },
-  paperLine: {
-    height: 3,
-    backgroundColor: LoadingConfig.paperLineColor,
-    opacity: 0.5,
-    borderRadius: 1.5,
   },
   text: {
-    marginTop: LoadingConfig.spacingBetweenPressAndText,
+    marginTop: LoadingConfig.spacingBetweenSceneAndText,
     alignItems: 'center',
     gap: Layout.padding.xs,
   },
@@ -221,10 +239,5 @@ const styles = StyleSheet.create({
   message: {
     color: LoadingConfig.captionColor,
     textAlign: 'center',
-  },
-  caption: {
-    color: LoadingConfig.captionColor,
-    textAlign: 'center',
-    fontStyle: 'italic',
   },
 });

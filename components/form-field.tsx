@@ -13,30 +13,39 @@ type FormFieldProps = ComponentProps<typeof TextInput> & {
   label: string;
   error?: string | null;
   helperText?: string;
+  // BRAND §9: fields are ruled lines on the page by default (hairline
+  // underline, no box). Pass `boxed` inside sheets/modals on `paper`, or for
+  // tall multiline bodies where an underline reads as a stray rule.
+  boxed?: boolean;
 };
 
 const FormFieldComponent = (
-  { label, error, helperText, style, ...props }: FormFieldProps,
+  { label, error, helperText, boxed = false, style, ...props }: FormFieldProps,
   ref: ForwardedRef<TextInput>,
 ) => {
   return (
     <View style={styles.wrapper}>
-      <ThemedText variant="label" style={styles.label}>
+      <ThemedText variant="uiStrong" style={styles.label}>
         {label}
       </ThemedText>
       <TextInput
         ref={ref}
-        style={[styles.input, error ? styles.inputError : null, style as InputStyle]}
-        placeholderTextColor={Colors.inkSoft}
-        selectionColor={Colors.orange}
+        style={[
+          styles.input,
+          boxed ? styles.inputBoxed : styles.inputRuled,
+          error ? (boxed ? styles.boxedError : styles.ruledError) : null,
+          style as InputStyle,
+        ]}
+        placeholderTextColor={Colors.inkMuted}
+        selectionColor={Colors.vermilion}
         {...props}
       />
       {error ? (
-        <ThemedText variant="caption" style={styles.errorText}>
+        <ThemedText variant="ui" style={styles.errorText}>
           {error}
         </ThemedText>
       ) : helperText ? (
-        <ThemedText variant="caption" style={styles.helperText}>
+        <ThemedText variant="ui" style={styles.helperText}>
           {helperText}
         </ThemedText>
       ) : null}
@@ -57,17 +66,30 @@ const styles = StyleSheet.create({
   },
   input: {
     minHeight: Layout.touchTargetMin,
-    borderRadius: Layout.borderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    backgroundColor: Colors.paper,
-    paddingHorizontal: Layout.padding.md,
     paddingVertical: Layout.input.paddingV,
     color: Colors.ink,
     fontFamily: Typography.families.sans,
     fontSize: Typography.sizes.body,
   },
-  inputError: {
+  // The default: a ruled line on the page (BRAND §9) — the writing sits on
+  // the rule like a form filled in by hand.
+  inputRuled: {
+    paddingHorizontal: 0,
+    borderBottomWidth: Layout.rule.hairline,
+    borderBottomColor: Colors.hairline,
+    backgroundColor: 'transparent',
+  },
+  inputBoxed: {
+    borderRadius: Layout.borderRadius.md,
+    borderWidth: Layout.rule.hairline,
+    borderColor: Colors.hairline,
+    backgroundColor: Colors.paper,
+    paddingHorizontal: Layout.padding.md,
+  },
+  ruledError: {
+    borderBottomColor: Colors.error,
+  },
+  boxedError: {
     borderColor: Colors.error,
   },
   helperText: {

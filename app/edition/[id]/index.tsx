@@ -9,7 +9,6 @@ import { EditionColophon } from '@/components/edition-colophon';
 import { EditionLead } from '@/components/edition-lead';
 import { EditionSecondary } from '@/components/edition-secondary';
 import { ErrorState } from '@/components/error-state';
-import { PaperGrain } from '@/components/paper-grain';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { StatusBanner } from '@/components/status-banner';
 import { StoryArticle } from '@/components/story-article';
@@ -183,13 +182,12 @@ const EditionFrontPage = () => {
 
   return (
     <View style={styles.flex}>
-      <PaperGrain />
       <ScrollView
         style={styles.scrollFlex}
         contentContainerStyle={styles.scroll}
         scrollEnabled={!overlay}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.orange} />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.ink} />
         }
       >
         <Stack.Screen
@@ -205,7 +203,7 @@ const EditionFrontPage = () => {
                 accessibilityLabel="Go back"
                 style={styles.backButton}
               >
-                <Ionicons name="chevron-back" size={22} color={Colors.orange} />
+                <Ionicons name="chevron-back" size={22} color={Colors.ink} />
               </Pressable>
             ),
           }}
@@ -216,8 +214,10 @@ const EditionFrontPage = () => {
         ) : null}
 
         <View style={styles.masthead}>
+          {/* Title case, not caps — uppercasing long family names hurts
+              warmth (BRAND §6); the masthead is Lora Bold `display`. */}
           <ThemedText style={styles.mastheadTitle} numberOfLines={2}>
-            {group.name.toUpperCase()}
+            {group.name}
           </ThemedText>
           {/* The dateline sits in a folio band — flanked by hairline rules. */}
           <View style={styles.datelineRow}>
@@ -323,24 +323,23 @@ const styles = StyleSheet.create({
   banner: {
     margin: Layout.padding.md,
   },
+  // The masthead closes with a structural ink rule (BRAND §2).
   masthead: {
     paddingHorizontal: Layout.padding.lg,
     paddingTop: Layout.padding.xl,
     paddingBottom: Layout.padding.lg,
     alignItems: 'center',
     gap: Layout.padding.xs,
-    borderBottomWidth: 3,
+    borderBottomWidth: Layout.rule.heavy,
     borderBottomColor: Colors.ink,
   },
   mastheadTitle: {
-    fontFamily: Typography.families.serifBlack,
-    fontSize: Typography.sizes.headline,
-    lineHeight: Typography.lineHeights.headline,
+    ...Typography.scale.display,
     color: Colors.ink,
     textAlign: 'center',
-    letterSpacing: 1,
   },
-  // The dateline's folio band: the italic "Week of …" flanked by hairlines.
+  // The dateline's folio band: the italic "week of" line flanked by short ink
+  // rules. Datelines are the Lora-italic voice (BRAND §3).
   datelineRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -351,29 +350,25 @@ const styles = StyleSheet.create({
   },
   datelineRule: {
     flex: 1,
-    height: 1,
+    height: Layout.rule.hairline,
     backgroundColor: Colors.ink,
   },
   mastheadDate: {
     flexShrink: 1,
-    fontFamily: Typography.families.serif,
+    fontFamily: Typography.families.serifItalic,
     fontSize: Typography.sizes.lg,
-    fontStyle: 'italic',
     color: Colors.ink,
     textAlign: 'center',
   },
   mastheadMeta: {
-    fontFamily: Typography.families.sansMedium,
-    fontSize: Typography.sizes.xs,
-    letterSpacing: 1,
+    ...Typography.scale.meta,
     color: Colors.inkSoft,
-    textTransform: 'uppercase',
     textAlign: 'center',
   },
   // Hairline between the lead and the second story.
   sectionRule: {
-    height: 1,
-    backgroundColor: Colors.borderSoft,
+    height: Layout.rule.hairline,
+    backgroundColor: Colors.hairline,
     marginHorizontal: Layout.padding.lg,
   },
   emptyEdition: {
@@ -381,8 +376,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyEditionText: {
-    fontFamily: Typography.families.serif,
-    fontStyle: 'italic',
+    ...Typography.scale.deck,
     color: Colors.inkSoft,
     textAlign: 'center',
   },

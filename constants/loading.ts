@@ -1,36 +1,33 @@
 /**
- * Configuration for the printing-press loading animation.
+ * Configuration for the branded loading screens (BRAND §4/§10).
  *
- * All visual and timing knobs live here. To restyle the loader, change values
- * in this file — the component itself reads everything from here.
+ * Two scenes, both monoline illustrations: the paperboy rides (wheels spin)
+ * for ordinary waits, and the printing press runs (flywheel turns, sheets
+ * come off) for the long compile/publish waits. All visual and timing knobs
+ * live here — the component reads everything from this file. Illustration
+ * motion is ambient (BRAND §10): it loops on linear time, never blocks, and
+ * parks as a static scene under Reduce Motion.
  */
 
 import { Colors } from './colors';
 
 export const LoadingConfig = {
-  // Press dimensions (in dp)
-  pressSize: 140,
-  cylinderSize: 96,
-  paperWidth: 80,
-  paperHeight: 110,
+  // Scene sizes (in dp): the rider's height / the press's width.
+  riderHeight: 150,
+  pressWidth: 220,
 
   // Timing
-  cylinderRotationMs: 1800,    // one full rotation
-  paperFeedMs: 1400,           // one paper feed cycle
-  paperStaggerMs: 400,         // delay between successive paper sheets
+  wheelSpinMs: 900, // one wheel revolution — a brisk, cheerful ride
+  flywheelSpinMs: 1400, // one flywheel turn — the press works at its own pace
+  sheetCycleMs: 1400, // one printed sheet sliding out (synced to the wheel)
   mastheadFadeMs: 600,
 
-  // Visuals
-  cylinderColor: Colors.orange,
-  cylinderAccent: Colors.orange,
-  paperColor: Colors.paper,
-  paperBorderColor: Colors.borderSoft,
-  paperLineColor: Colors.inkSoft,
+  // Text under the scene
   mastheadColor: Colors.ink,
   captionColor: Colors.inkSoft,
 
   // Layout
-  spacingBetweenPressAndText: 32,
+  spacingBetweenSceneAndText: 32,
 };
 
 export type LoadingConfigType = typeof LoadingConfig;

@@ -6,8 +6,8 @@ import { Typography } from '@/constants/typography';
 import { deckFor, headlineFor } from '@/lib/edition-layout';
 import type { PostWithAuthor } from '@/types';
 
+import { EditorialPhoto } from './editorial-photo';
 import { GreekedLines } from './greeked-lines';
-import { Polaroid } from './polaroid-photo';
 import { ThemedText } from './themed-text';
 
 type Props = {
@@ -15,19 +15,11 @@ type Props = {
   onPress: () => void;
 };
 
-// Small deterministic tilt from the post id — brief thumbs vary in angle (no
-// two frames at the same angle, per the brand) without two renders of the
-// same cell ever disagreeing (the enlarge overlay re-renders this markup).
-const TILTS = [-2.5, -1.5, 1.5, 2.5];
-const tiltFor = (id: string) =>
-  TILTS[(id.charCodeAt(0) + id.charCodeAt(id.length - 1)) % TILTS.length];
-
-// One cell of the "in brief" grid: a small square photo when the post has one
-// (untaped — a contact print, not the lead's pinned polaroid), then headline,
-// byline, a few lines of newsprint excerpt dissolving into greeked lines. No
-// read cue at half-column width; the whole cell is the tap target and the
-// headline signals it. The grid owns the column geometry — this cell just
-// fills whatever width it's given.
+// One cell of the "in brief" grid: a small square photo when the post has
+// one, then headline, byline, a few lines of newsprint excerpt dissolving
+// into greeked lines. No read cue at half-column width; the whole cell is the
+// tap target and the headline signals it. The grid owns the column geometry —
+// this cell just fills whatever width it's given.
 export const EditionBriefColumn = ({ post, onPress }: Props) => {
   const headline = headlineFor(post);
   return (
@@ -38,13 +30,7 @@ export const EditionBriefColumn = ({ post, onPress }: Props) => {
       style={({ pressed }) => [styles.wrap, pressed && styles.pressed]}
     >
       {post.image_url ? (
-        <Polaroid
-          imageUrl={post.image_url}
-          rotate={tiltFor(post.id)}
-          tape={false}
-          photoAspectRatio={1}
-          style={styles.thumb}
-        />
+        <EditorialPhoto imageUrl={post.image_url} photoAspectRatio={1} style={styles.thumb} />
       ) : null}
       <ThemedText style={styles.headline} numberOfLines={3}>
         {headline}
@@ -69,8 +55,7 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.6,
   },
-  // Slightly inset from the column edges so the tilt never clips against the
-  // grid's vertical rule.
+  // A contact-print-sized thumb — kept small so briefs stay text-led.
   thumb: {
     width: '88%',
     maxWidth: 150,
@@ -78,15 +63,13 @@ const styles = StyleSheet.create({
     marginBottom: Layout.padding.sm,
   },
   headline: {
-    fontFamily: Typography.families.serifBold,
-    fontSize: Typography.sizes.lg,
-    lineHeight: 22,
+    ...Typography.scale.rowTitle,
     color: Colors.ink,
   },
+  // True-italic Lora byline at the 16px floor (BRAND §3).
   byline: {
-    fontFamily: Typography.families.serif,
-    fontStyle: 'italic',
-    fontSize: Typography.sizes.sm,
+    fontFamily: Typography.families.serifItalic,
+    fontSize: Typography.sizes.body,
     color: Colors.inkSoft,
   },
   excerpt: {

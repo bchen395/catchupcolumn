@@ -1,14 +1,17 @@
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { Colors } from '@/constants/colors';
 import type { IconDescriptor } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
-import { Typography } from '@/constants/typography';
 
 import { Icon } from './icon';
 import { ThemedText } from './themed-text';
 
 interface EmptyStateProps {
+  // A §4 doodle scene (a components/illustrations component). Wins over
+  // `icon`, which remains the quiet fallback for surfaces without a scene.
+  scene?: ReactNode;
   icon?: IconDescriptor;
   title: string;
   body?: string;
@@ -17,23 +20,38 @@ interface EmptyStateProps {
   style?: ViewStyle;
 }
 
-export const EmptyState = ({ icon, title, body, ctaLabel, onCtaPress, style }: EmptyStateProps) => {
+// BRAND §9: doodle scene + Lora Bold headline + Jost body + one primary
+// action — warm, never apologetic. Scenes sit directly on paperWarm (§4):
+// no bubble, no tinted container.
+export const EmptyState = ({
+  scene,
+  icon,
+  title,
+  body,
+  ctaLabel,
+  onCtaPress,
+  style,
+}: EmptyStateProps) => {
   return (
     <View style={[styles.container, style]}>
-      {icon ? (
-        <View style={styles.iconBubble}>
-          <Icon icon={icon} size={36} color={Colors.orange} />
-        </View>
+      {scene ?? (icon ? <Icon icon={icon} size={40} color={Colors.inkSoft} /> : null)}
+      <ThemedText variant="title" style={styles.title}>
+        {title}
+      </ThemedText>
+      {body ? (
+        <ThemedText variant="ui" style={styles.body}>
+          {body}
+        </ThemedText>
       ) : null}
-      <ThemedText style={styles.title}>{title}</ThemedText>
-      {body ? <ThemedText style={styles.body}>{body}</ThemedText> : null}
       {ctaLabel && onCtaPress ? (
         <Pressable
           onPress={onCtaPress}
           accessibilityRole="button"
           style={({ pressed }) => [styles.cta, pressed ? styles.ctaPressed : null]}
         >
-          <ThemedText style={styles.ctaText}>{ctaLabel}</ThemedText>
+          <ThemedText variant="uiStrong" style={styles.ctaText}>
+            {ctaLabel}
+          </ThemedText>
         </Pressable>
       ) : null}
     </View>
@@ -50,47 +68,27 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
     backgroundColor: Colors.paperWarm,
   },
-  // The icon bubble matches the new "blue chip" pill language used on Home /
-  // Inbox so empty states feel like the same family of UI, not a separate
-  // legacy shell.
-  iconBubble: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.peachWash,
-    marginBottom: Layout.padding.sm,
-  },
   title: {
-    fontFamily: Typography.families.serifBlack,
-    fontSize: Typography.sizes.xxl,
-    lineHeight: Typography.sizes.xxl * 1.3,
-    color: Colors.ink,
     textAlign: 'center',
   },
   body: {
-    fontFamily: Typography.families.sans,
-    fontSize: Typography.sizes.body,
-    lineHeight: Typography.lineHeights.body,
     color: Colors.inkSoft,
     textAlign: 'center',
   },
+  // The one primary action — the §9 ink pill.
   cta: {
-    minHeight: Layout.touchTargetMin + 4,
+    minHeight: Layout.buttonMinHeight,
     paddingHorizontal: Layout.padding.lg,
     borderRadius: Layout.borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Layout.padding.md,
-    backgroundColor: Colors.orange,
+    backgroundColor: Colors.ink,
   },
   ctaPressed: {
-    backgroundColor: Colors.orange + 'CC',
+    opacity: 0.92,
   },
   ctaText: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.body,
     color: Colors.paper,
   },
 });

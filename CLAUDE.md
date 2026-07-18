@@ -137,10 +137,10 @@ Use this language consistently in code, UI, and comments:
 
 The full visual system lives in `design/BRAND.md` (source of truth for design decisions — update it as decisions evolve), with token values in `constants/`. The `frontend-design` skill (`.claude/skills/frontend-design/`) catches a session up before UI work. Headlines:
 
-- **Accessibility first.** Minimum 16px body text, 48px touch targets, high contrast. Never set body copy in orange (fails AA below 18px). Test with larger system font sizes.
-- **Newspaper aesthetic.** Display slab serif: Superclarendon (iOS) / Roboto Slab (Android, web). UI sans: Futura (iOS) / Jost (Android, web). Taped polaroid photos, paper-grain texture, warm paper shadows.
-- **Warm color palette.** Orange `#FF7237` primary, peach + yellow accents, warm off-white (`paperWarm`) app background, black ink text. Always use tokens from `constants/colors.ts` — never raw hex in components.
-- **Minimal navigation.** 5-slot bottom bar: Home, Editions, raised orange "+" (opens the compose sheet), Groups, Profile. The Group create/join/detail flow lives off-tab under `app/group/`, reached from the Groups tab and Home. No hamburger menus or deep nesting.
+- **Accessibility first.** Minimum 16px body text, 48px touch targets (rows ≥56px), high contrast. Vermilion text only in bold small-caps kicker/stamp roles, never body copy. Test with larger system font sizes.
+- **Editorial aesthetic (v2, 2026-07-17).** "NYT structure, HeyTea charm": near-monochrome ink-on-paper, hairline rules, no cards or pills for content. Serif: Lora; UI sans: Jost (same on every platform). Warmth comes from a hand-drawn monoline illustration world (the paperboy and his dog) that lives in app chrome only — never inside editions.
+- **Near-monochrome palette.** Ink `#1A1A1A` on warm paper `paperWarm`, structure drawn with `hairline` rules, one scarce vermilion `#E8442E` accent (kickers, stamps, live moments — never fills or surfaces). Always use tokens from `constants/colors.ts` — never raw hex in components.
+- **Minimal navigation.** 5-slot bottom bar: Home, Editions, raised ink-black "+" (opens the compose sheet), Groups, Profile. The Group create/join/detail flow lives off-tab under `app/group/`, reached from the Groups tab and Home. No hamburger menus or deep nesting.
 - **Language tone.** Friendly, clear, non-technical. "Your Group is ready!" not "Edition #4 has been published." Say "Write something for this week" not "Create a new post."
 
 ## Supabase Setup Notes

@@ -8,8 +8,8 @@ import { deckFor, headlineFor } from '@/lib/edition-layout';
 import type { PostWithAuthor } from '@/types';
 
 import { Avatar } from './avatar';
+import { EditorialPhoto } from './editorial-photo';
 import { GreekedLines } from './greeked-lines';
-import { Polaroid } from './polaroid-photo';
 import { ThemedText } from './themed-text';
 
 type Props = {
@@ -56,9 +56,8 @@ export const EditionLead = ({ post, onPress }: Props) => {
       {post.image_url && portrait ? (
         // Portrait: the photo holds one column, the teaser runs beside it.
         <View style={styles.sideBySide}>
-          <Polaroid
+          <EditorialPhoto
             imageUrl={post.image_url}
-            rotate={-1.5}
             photoAspectRatio={displayRatioFor('portrait')}
             onNaturalSize={onNaturalSize}
             style={styles.portraitPhoto}
@@ -68,9 +67,8 @@ export const EditionLead = ({ post, onPress }: Props) => {
       ) : (
         <>
           {post.image_url ? (
-            <Polaroid
+            <EditorialPhoto
               imageUrl={post.image_url}
-              rotate={-1.5}
               photoAspectRatio={displayRatioFor(orientation ?? 'landscape')}
               onNaturalSize={onNaturalSize}
               style={styles.photo}
@@ -95,12 +93,11 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.7,
   },
-  // The lead photo runs a touch wider than the text column — front-page weight
-  // — and keeps extra bottom room so the tilted frame's shadow clears the text.
+  // Flat editorial photo on the text measure — v2 photos align to the column
+  // like a printed plate, no bleed, no tilt (BRAND §5).
   photo: {
     marginTop: Layout.padding.xs,
     marginBottom: Layout.padding.md,
-    marginHorizontal: -Layout.padding.sm,
   },
   sideBySide: {
     flexDirection: 'row',
@@ -115,16 +112,14 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: Layout.padding.sm,
   },
+  // The front page's one vermilion kicker (BRAND §2 budget) — the lead earns
+  // the accent; every other cover label stays ink.
   kicker: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.xs,
-    letterSpacing: 2,
-    color: Colors.orange,
+    ...Typography.scale.kicker,
+    color: Colors.vermilion,
   },
   headline: {
-    fontFamily: Typography.families.serifBlack,
-    fontSize: Typography.sizes.headline,
-    lineHeight: Typography.lineHeights.headline,
+    ...Typography.scale.headline,
     color: Colors.ink,
   },
   bylineRow: {
@@ -132,10 +127,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Layout.padding.sm,
   },
+  // Bylines are the Lora-italic voice (BRAND §3) — a true italic face, since
+  // custom fonts don't synthesize fontStyle on native.
   byline: {
     flex: 1,
-    fontFamily: Typography.families.serif,
-    fontStyle: 'italic',
+    fontFamily: Typography.families.serifItalic,
     fontSize: Typography.sizes.body,
     color: Colors.inkSoft,
   },
@@ -149,12 +145,11 @@ const styles = StyleSheet.create({
   greek: {
     marginTop: 2,
   },
-  // An affordance label, not body copy — orange is allowed here.
+  // An affordance label in the tertiary-button voice: bare ink small caps.
+  // Not vermilion — the kicker already spends the lead's accent (BRAND §2).
   readCue: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.xs,
-    letterSpacing: 1.5,
-    color: Colors.orange,
+    ...Typography.scale.meta,
+    color: Colors.ink,
     marginTop: Layout.padding.xs,
   },
 });

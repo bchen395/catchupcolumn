@@ -14,6 +14,7 @@ import { buildInviteLink } from '@/lib/groups';
 import { Haptics } from '@/lib/haptics';
 
 import { FormButton } from './form-button';
+import { InviteTicket } from './illustrations/invite-ticket';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
@@ -72,14 +73,16 @@ export const InviteFamilyCard = ({ groupName, inviteCode }: Props) => {
         {Strings.inviteCard.body}
       </ThemedText>
 
+      {/* The §11 ticket carries the code; tap-to-copy stays the whole-object
+          gesture. Content block, so pressed = 0.7 opacity. */}
       <Pressable
         onPress={handleCopy}
         accessibilityRole="button"
         // Spaced characters so a screen reader spells the code out.
         accessibilityLabel={`Invite code ${displayCode.split('').join(' ')}. Double tap to copy.`}
-        style={({ pressed }) => [styles.codeChip, pressed ? styles.codeChipPressed : null]}
+        style={({ pressed }) => (pressed ? styles.ticketPressed : null)}
       >
-        <ThemedText style={styles.code}>{displayCode}</ThemedText>
+        <InviteTicket code={displayCode} />
       </Pressable>
       <ThemedText variant="caption" style={[styles.hint, copied ? styles.hintCopied : null]}>
         {copied ? Strings.inviteCard.copied : Strings.inviteCard.copyHint}
@@ -131,36 +134,19 @@ const styles = StyleSheet.create({
   body: {
     lineHeight: Typography.lineHeights.body,
   },
-  // Ink-on-white like set type — the code is content, not chrome; orange
-  // stays on the affordances around it.
-  codeChip: {
-    minHeight: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.paper,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    borderRadius: Layout.borderRadius.md,
-    paddingHorizontal: Layout.padding.md,
-  },
-  codeChipPressed: {
-    backgroundColor: Colors.peachWash,
-  },
-  code: {
-    fontFamily: Typography.families.sansBold,
-    fontSize: Typography.sizes.xl,
-    letterSpacing: 4,
-    color: Colors.ink,
+  ticketPressed: {
+    opacity: 0.7,
   },
   hint: {
     textAlign: 'center',
     marginTop: -Layout.padding.sm,
   },
+  // "Copied" is a live moment — a sanctioned vermilion flash (BRAND §2).
   hintCopied: {
     fontFamily: Typography.families.sansSemiBold,
-    color: Colors.orange,
+    color: Colors.vermilion,
   },
-  // A little paper card resting on the peach mat.
+  // A little paper card; the QR keeps its true-paper quiet zone (BRAND §11).
   qrCard: {
     alignSelf: 'center',
     alignItems: 'center',
@@ -168,7 +154,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.paper,
     padding: Layout.padding.lg,
     borderWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderColor: Colors.hairline,
     borderRadius: Layout.borderRadius.md,
     ...Layout.shadow.paper,
   },

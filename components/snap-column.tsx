@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     color: Colors.inkSoft,
   },
   textActive: {
-    color: Colors.orange,
+    color: Colors.ink,
     fontFamily: Typography.families.sansSemiBold,
   },
   highlight: {
@@ -115,6 +115,6 @@ const styles = StyleSheet.create({
     height: ITEM_H,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderColor: Colors.hairline,
   },
 });

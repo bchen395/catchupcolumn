@@ -8,6 +8,7 @@ import { AppImage } from '@/components/app-image';
 import { AvatarPicker } from '@/components/avatar-picker';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
+import { MugDoodle } from '@/components/illustrations/mug-doodle';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
@@ -303,6 +304,7 @@ const ProfileScreen = () => {
             label="Bio"
             value={editBio}
             onChangeText={setEditBio}
+            boxed
             multiline
             numberOfLines={3}
             maxLength={BIO_MAX}
@@ -354,7 +356,10 @@ const ProfileScreen = () => {
               </View>
             </Pressable>
 
-            <ThemedText style={styles.kicker}>FROM THE DESK OF</ThemedText>
+            {/* The screen's one vermilion moment — a §8 kicker. */}
+            <ThemedText variant="kicker" style={styles.kicker}>
+              From the desk of
+            </ThemedText>
             <ThemedText style={styles.displayName} numberOfLines={2}>
               {profile?.display_name ?? 'Your account'}
             </ThemedText>
@@ -379,7 +384,7 @@ const ProfileScreen = () => {
             variant="secondary"
             onPress={handleStartEdit}
             accessory={
-              <MaterialCommunityIcons name="pencil-outline" size={18} color={Colors.orange} />
+              <MaterialCommunityIcons name="pencil-outline" size={18} color={Colors.ink} />
             }
           />
 
@@ -425,6 +430,12 @@ const ProfileScreen = () => {
               <ThemedText style={styles.legalLink}>Terms of Service</ThemedText>
             </Pressable>
           </View>
+
+          {/* Hidden corner doodle (BRAND §11): a mug by the settings footer.
+              Delight, zero function. */}
+          <View style={styles.footerDoodle}>
+            <MugDoodle />
+          </View>
         </>
       )}
     </ScrollView>
@@ -461,16 +472,16 @@ const styles = StyleSheet.create({
     width: 112,
     height: 112,
     borderRadius: 56,
-    backgroundColor: Colors.peach,
+    backgroundColor: Colors.hairline,
   },
   avatarFallback: {
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderColor: Colors.hairline,
   },
-  // Small orange disc pinned to the avatar's lower-right so the photo clearly
-  // reads as tap-to-change. Paper ring separates it from the avatar edge.
+  // Ink disc pinned to the avatar's lower-right so the photo clearly reads as
+  // tap-to-change. Paper ring separates it from the avatar edge.
   cameraBadge: {
     position: 'absolute',
     right: -2,
@@ -478,36 +489,29 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.orange,
+    backgroundColor: Colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
     borderColor: Colors.paperWarm,
   },
   initials: {
-    fontFamily: Typography.families.serifBlack,
+    fontFamily: Typography.families.serifBold,
     fontSize: Typography.sizes.xxl,
     lineHeight: Typography.sizes.xxl,
-    color: Colors.orange,
+    color: Colors.ink,
   },
   kicker: {
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.xs,
-    letterSpacing: 2,
-    color: Colors.orange,
+    color: Colors.vermilion,
     marginTop: Layout.padding.xs,
   },
   displayName: {
-    fontFamily: Typography.families.serifBlack,
-    fontSize: Typography.sizes.xxl,
-    lineHeight: 34,
-    color: Colors.ink,
+    ...Typography.scale.title,
     textAlign: 'center',
   },
   memberSince: {
-    fontFamily: Typography.families.serif,
+    fontFamily: Typography.families.serifItalic,
     fontSize: Typography.sizes.body,
-    fontStyle: 'italic',
     color: Colors.inkSoft,
   },
   email: {
@@ -516,9 +520,8 @@ const styles = StyleSheet.create({
     color: Colors.inkSoft,
   },
   bio: {
-    fontFamily: Typography.families.serif,
+    fontFamily: Typography.families.serifItalic,
     fontSize: Typography.sizes.body,
-    fontStyle: 'italic',
     color: Colors.ink,
     textAlign: 'center',
     marginTop: Layout.padding.sm,
@@ -533,10 +536,7 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
   },
   editHeading: {
-    fontFamily: Typography.families.serifBlack,
-    fontSize: Typography.sizes.xl,
-    lineHeight: 30,
-    color: Colors.ink,
+    ...Typography.scale.title,
     marginBottom: Layout.padding.xs,
   },
   bioInput: {
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
   },
   deleteLinkText: {
     fontFamily: Typography.families.sansMedium,
-    fontSize: Typography.sizes.sm,
+    fontSize: Typography.sizes.body,
     color: Colors.error,
     textDecorationLine: 'underline',
   },
@@ -591,6 +591,10 @@ const styles = StyleSheet.create({
     fontFamily: Typography.families.sansMedium,
     fontSize: Typography.sizes.body,
     color: Colors.inkSoft,
+  },
+  footerDoodle: {
+    alignItems: 'center',
+    marginTop: Layout.padding.lg,
   },
 });
 

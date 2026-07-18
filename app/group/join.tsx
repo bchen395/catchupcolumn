@@ -16,7 +16,6 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
 import { InviteHero } from '@/components/invite-hero';
-import { PaperGrain } from '@/components/paper-grain';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
@@ -176,7 +175,7 @@ const JoinGroupScreen = () => {
               style={styles.backButton}
               hitSlop={8}
             >
-              <Ionicons name="chevron-back" size={26} color={Colors.orange} />
+              <Ionicons name="chevron-back" size={26} color={Colors.ink} />
             </Pressable>
           ),
         }}
@@ -189,7 +188,6 @@ const JoinGroupScreen = () => {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <View style={styles.flex}>
-            {inInvitationMode ? <PaperGrain /> : null}
             <ScrollView
               style={styles.scrollFlex}
               contentContainerStyle={styles.scroll}
@@ -334,10 +332,7 @@ const styles = StyleSheet.create({
   },
   // The one editorial flourish in entry mode — the drama waits for the reveal.
   intro: {
-    fontFamily: Typography.families.serif,
-    fontStyle: 'italic',
-    fontSize: Typography.sizes.body,
-    lineHeight: Typography.lineHeights.body,
+    ...Typography.scale.deck,
     color: Colors.inkSoft,
   },
   codeInput: {
@@ -360,17 +355,13 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   alreadyMember: {
-    fontFamily: Typography.families.serif,
-    fontStyle: 'italic',
-    fontSize: Typography.sizes.body,
-    lineHeight: Typography.lineHeights.body,
+    ...Typography.scale.deck,
     color: Colors.inkSoft,
     textAlign: 'center',
   },
   folio: {
     marginTop: Layout.padding.md,
-    fontFamily: Typography.families.sansSemiBold,
-    fontSize: Typography.sizes.xs,
+    ...Typography.scale.meta,
     letterSpacing: 2,
     color: Colors.inkSoft,
     textAlign: 'center',

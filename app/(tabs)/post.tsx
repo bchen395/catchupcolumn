@@ -16,8 +16,9 @@ import {
 import { AppImage } from '@/components/app-image';
 import { useComposeSheet } from '@/components/compose-sheet-provider';
 import { EmptyState } from '@/components/empty-state';
-import { FiledStamp } from '@/components/filed-stamp';
 import { FormButton } from '@/components/form-button';
+import { DogWithPaperScene } from '@/components/illustrations/dog-with-paper-scene';
+import { InkStamp } from '@/components/ink-stamp';
 import { Icon } from '@/components/icon';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
@@ -411,7 +412,7 @@ const PostScreen = () => {
     if (groups.length === 0) {
       return (
         <EmptyState
-          icon={Icons.emptyGroups}
+          scene={<DogWithPaperScene />}
           title={Strings.empty.postNoGroups.title}
           body={Strings.empty.postNoGroups.body}
           ctaLabel={Strings.empty.postNoGroups.cta}
@@ -444,7 +445,7 @@ const PostScreen = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={Colors.orange}
+            tintColor={Colors.ink}
           />
         }
       >
@@ -492,7 +493,7 @@ const PostScreen = () => {
                 onChangeText={handleChangeTitle}
                 placeholder="Headline"
                 placeholderTextColor={Colors.inkMuted}
-                selectionColor={Colors.orange}
+                selectionColor={Colors.vermilion}
                 editable={!isBusy}
                 maxLength={80}
                 returnKeyType="next"
@@ -508,7 +509,7 @@ const PostScreen = () => {
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
                   multiline
-                  selectionColor={Colors.orange}
+                  selectionColor={Colors.vermilion}
                   editable={!isBusy}
                   textAlignVertical="top"
                 />
@@ -524,11 +525,17 @@ const PostScreen = () => {
                 ) : null}
               </View>
               {stampVisible && nextPublish ? (
-                <FiledStamp
+                // FILED owns −4°; JOINED owns +3° (BRAND §11). Overlaps the
+                // page's top-right corner like a stamp that didn't quite line
+                // up — deliberate.
+                <InkStamp
                   key={stampKey}
                   label={Strings.thisWeek.filedStamp(nextPublish.dayLabel)}
+                  tilt={-4}
+                  behavior="moment"
                   reduceMotion={reduceMotion}
                   onDone={() => setStampVisible(false)}
+                  style={styles.stamp}
                 />
               ) : null}
             </View>
@@ -554,9 +561,7 @@ const PostScreen = () => {
             </View>
 
             <View style={styles.section}>
-              <ThemedText variant="label" style={styles.sectionLabel}>
-                Photo
-              </ThemedText>
+              <ThemedText variant="kicker">Photo</ThemedText>
               {imageUri ? (
                 <View style={styles.imagePreviewWrapper}>
                   <AppImage
@@ -627,10 +632,13 @@ const styles = StyleSheet.create({
   section: {
     gap: Layout.padding.sm,
   },
-  sectionLabel: {
-    color: Colors.orange,
-  },
   banner: {},
+  // Overlaps the page's top-right corner (host is position: relative).
+  stamp: {
+    position: 'absolute',
+    top: -10,
+    right: 12,
+  },
   // Masthead above the page.
   composeHeader: {
     gap: Layout.padding.xs,
@@ -652,34 +660,35 @@ const styles = StyleSheet.create({
   composeSubtitle: {
     color: Colors.inkSoft,
   },
-  // The page — a white sheet on the warm desk, soft rounded corners, hairline
-  // edge, and a warm-tinted lift. Generous min-height invites a blank start.
+  // The page — a white sheet on the warm desk. The one content surface that
+  // keeps its lift in v2: the sheet IS the composing metaphor, and it behaves
+  // like a true overlay (a page laid on the desk, not a card in a feed).
   composeCard: {
     ...Layout.shadow.paper,
     position: 'relative',
     backgroundColor: Colors.paper,
     borderRadius: Layout.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderWidth: Layout.rule.hairline,
+    borderColor: Colors.hairline,
     minHeight: 360,
     padding: Layout.padding.lg,
   },
   composeCardFocused: {
     ...Layout.shadow.paperRaised,
   },
-  // Headline line at the top of the page — heavy serif, sized between body and
+  // Headline line at the top of the page — Lora Bold, sized between body and
   // a real headline so it reads as a title without dwarfing the writing area.
   titleInput: {
     color: Colors.ink,
-    fontFamily: Typography.families.serifBlack,
+    fontFamily: Typography.families.serifBold,
     fontSize: Typography.sizes.xl,
     lineHeight: 28,
     paddingVertical: Layout.padding.xs,
   },
   // Hairline separating the headline from the body, echoing the masthead rule.
   titleRule: {
-    height: 1,
-    backgroundColor: Colors.borderSoft,
+    height: Layout.rule.hairline,
+    backgroundColor: Colors.hairline,
     marginTop: Layout.padding.xs,
     marginBottom: Layout.padding.md,
   },
@@ -702,10 +711,9 @@ const styles = StyleSheet.create({
     right: 0,
   },
   placeholder: {
-    fontFamily: Typography.families.serif,
+    fontFamily: Typography.families.serifItalic,
     fontSize: Typography.sizes.lg,
     lineHeight: 30,
-    fontStyle: 'italic',
     color: Colors.inkSoft,
   },
   saveStatusRow: {
@@ -721,11 +729,12 @@ const styles = StyleSheet.create({
   imagePreviewWrapper: {
     gap: Layout.padding.sm,
   },
+  // Flat editorial preview (BRAND §5): square corners, hairline edge.
   imagePreview: {
     width: '100%',
     height: 200,
-    borderRadius: Layout.borderRadius.md,
-    backgroundColor: Colors.peach,
+    borderWidth: Layout.rule.hairline,
+    borderColor: Colors.hairline,
   },
   imageActions: {
     flexDirection: 'row',

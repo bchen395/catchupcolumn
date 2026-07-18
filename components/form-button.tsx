@@ -64,10 +64,14 @@ export const FormButton = ({
   );
 };
 
+// BRAND §9: primary = ink-filled pill, secondary = hairline-outlined pill,
+// ghost = bare ink text (tertiary). Vermilion never fills a button.
+// Destructive isn't in the v2 spec; it wears the secondary (outlined) shape
+// with the `error` voice on the label so danger reads in words, not a slab.
 const styles = StyleSheet.create({
   base: {
-    minHeight: Layout.touchTargetMin,
-    borderRadius: Layout.borderRadius.md,
+    minHeight: Layout.buttonMinHeight,
+    borderRadius: Layout.borderRadius.full,
     paddingHorizontal: Layout.padding.lg,
     paddingVertical: Layout.padding.md,
     alignItems: 'center',
@@ -75,8 +79,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Layout.padding.sm,
   },
+  // Pressed = 92% opacity, no motion (BRAND §9).
   pressed: {
-    opacity: 0.9,
+    opacity: 0.92,
   },
   disabled: {
     opacity: 0.55,
@@ -85,12 +90,12 @@ const styles = StyleSheet.create({
 
 const variantStyles = StyleSheet.create({
   primary: {
-    backgroundColor: Colors.orange,
+    backgroundColor: Colors.ink,
   },
   secondary: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: Colors.orange,
+    borderColor: Colors.hairline,
   },
   ghost: {
     backgroundColor: 'transparent',
@@ -99,9 +104,9 @@ const variantStyles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   destructive: {
-    backgroundColor: Colors.peach,
+    backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: Colors.error,
+    borderColor: Colors.hairline,
   },
 });
 
@@ -110,7 +115,7 @@ const textStyles = StyleSheet.create({
     color: Colors.paper,
   },
   secondary: {
-    color: Colors.orange,
+    color: Colors.ink,
   },
   ghost: {
     color: Colors.ink,
@@ -122,7 +127,7 @@ const textStyles = StyleSheet.create({
 
 const indicatorColors: Record<FormButtonVariant, string> = {
   primary: Colors.paper,
-  secondary: Colors.orange,
-  ghost: Colors.orange,
+  secondary: Colors.ink,
+  ghost: Colors.ink,
   destructive: Colors.error,
 };

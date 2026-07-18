@@ -1,4 +1,3 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -13,6 +12,8 @@ import { AppImage } from '@/components/app-image';
 import { useComposeSheet } from '@/components/compose-sheet-provider';
 import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
+import { PaperboyMailboxScene } from '@/components/illustrations/paperboy-mailbox-scene';
+import { SleepingDogDoodle } from '@/components/illustrations/sleeping-dog-doodle';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
@@ -20,7 +21,6 @@ import { Colors } from '@/constants/colors';
 import { Icons } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
-import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
 import { headlineFor, orderEdition } from '@/lib/edition-layout';
 import { fetchEditionsForUser, type EditionListItem } from '@/lib/editions';
@@ -46,6 +46,24 @@ const formatWeekOf = (publishedAt: string, timezone?: string | null): string => 
     return `${startMonth} ${startDay}\u2013${endDay}, ${year}`;
   }
   return `${startMonth} ${startDay} \u2013 ${endMonth} ${endDay}, ${year}`;
+};
+
+// The row's folio line, in the NYT metadata dress (BRAND §6/§8):
+// `FEB 9 · 6 STORIES · 4 WRITERS`. The meta variant does the uppercasing.
+const folioFor = (item: EditionListItem): string => {
+  const date = new Date(item.published_at).toLocaleDateString('en-US', {
+    timeZone: item.group.timezone || undefined,
+    month: 'short',
+    day: 'numeric',
+  });
+  const posts = item.posts ?? [];
+  if (posts.length === 0) {
+    return `${date} · Edition No. ${item.edition_number}`;
+  }
+  const writers = new Set(posts.map((p) => p.author?.display_name)).size;
+  const stories = `${posts.length} ${posts.length === 1 ? 'story' : 'stories'}`;
+  const bylines = `${writers} ${writers === 1 ? 'writer' : 'writers'}`;
+  return `${date} · ${stories} · ${bylines}`;
 };
 
 const buildSections = (editions: EditionListItem[]): Section[] => {
@@ -123,30 +141,35 @@ const InboxScreen = () => {
         style={({ pressed }) => [styles.row, pressed ? styles.rowPressed : null]}
       >
         <View style={styles.rowContent}>
-          <ThemedText style={styles.rowTitle} numberOfLines={2}>
+          <ThemedText variant="rowTitle" numberOfLines={2}>
             {headline ?? weekOf}
           </ThemedText>
-          <ThemedText variant="caption" style={styles.rowMeta}>
-            {headline ? `${weekOf} · Edition #${item.edition_number}` : `Edition #${item.edition_number}`}
+          <ThemedText variant="meta" numberOfLines={1}>
+            {folioFor(item)}
           </ThemedText>
         </View>
+        {lead?.image_url ? (
+          <AppImage source={{ uri: lead.image_url }} style={styles.rowThumb} />
+        ) : null}
       </Pressable>
     );
   };
 
+  // Each Group opens like a newspaper section front: a heavy ink rule, then
+  // the section title (BRAND §6). No placeholder art when a Group has no
+  // cover — the rule carries the structure.
   const renderSectionHeader = ({ section }: { section: Section }) => {
     return (
       <View style={styles.sectionHeader}>
-        {section.coverUrl ? (
-          <AppImage source={{ uri: section.coverUrl }} style={styles.sectionThumb} />
-        ) : (
-          <View style={styles.sectionThumbPlaceholder}>
-            <FontAwesome name="newspaper-o" size={18} color={Colors.orange} />
-          </View>
-        )}
-        <ThemedText style={styles.sectionLabel} numberOfLines={1}>
-          {section.groupName}
-        </ThemedText>
+        <View style={styles.sectionRule} />
+        <View style={styles.sectionTitleRow}>
+          <ThemedText variant="title" style={styles.sectionLabel} numberOfLines={1}>
+            {section.groupName}
+          </ThemedText>
+          {section.coverUrl ? (
+            <AppImage source={{ uri: section.coverUrl }} style={styles.sectionThumb} />
+          ) : null}
+        </View>
       </View>
     );
   };
@@ -168,7 +191,7 @@ const InboxScreen = () => {
     }
     return (
       <EmptyState
-        icon={Icons.emptyInbox}
+        scene={<PaperboyMailboxScene />}
         title={Strings.empty.inbox.title}
         body={Strings.empty.inbox.body}
         ctaLabel={Strings.empty.inbox.cta}
@@ -184,19 +207,24 @@ const InboxScreen = () => {
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
       renderSectionHeader={renderSectionHeader}
-      SectionSeparatorComponent={({ trailingItem }) =>
-        trailingItem ? <View style={styles.rowSpacer} /> : null
-      }
-      ItemSeparatorComponent={() => <View style={styles.rowSpacer} />}
+      ItemSeparatorComponent={() => <View style={styles.rowRule} />}
       stickySectionHeadersEnabled={false}
       contentContainerStyle={styles.listContent}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.orange} />
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.ink} />
       }
       ListHeaderComponent={
         screenError ? (
           <StatusBanner variant="error" message={screenError} style={styles.banner} />
         ) : null
+      }
+      ListFooterComponent={
+        // Hidden corner doodle (BRAND §11): the dog asleep under the list's
+        // final hairline. Delight, zero function.
+        <View style={styles.listFooter}>
+          <View style={styles.rowRule} />
+          <SleepingDogDoodle width={84} />
+        </View>
       }
     />
   );
@@ -217,63 +245,61 @@ const styles = StyleSheet.create({
     marginBottom: Layout.padding.md,
   },
   sectionHeader: {
+    paddingTop: Layout.padding.xl,
+    gap: Layout.padding.md,
+  },
+  // Section-opening rule: full-strength ink, structural (BRAND §2).
+  sectionRule: {
+    height: Layout.rule.heavy,
+    backgroundColor: Colors.ink,
+  },
+  sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Layout.padding.md,
-    paddingTop: Layout.padding.lg,
     paddingBottom: Layout.padding.sm,
   },
+  sectionLabel: {
+    flex: 1,
+  },
+  // Group covers are photos, so they take the square, hairline-edged
+  // treatment (BRAND §5) — round shapes stay reserved for byline avatars.
   sectionThumb: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.hairline,
   },
-  sectionThumbPlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.peachWash,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Section label is the group name in display serif — matches the masthead
-  // styling on the edition reader so the inbox feels like a stack of papers.
-  sectionLabel: {
-    flex: 1,
-    color: Colors.ink,
-    fontFamily: Typography.families.serifBlack,
-    fontSize: Typography.sizes.xl,
-    lineHeight: 28,
-  },
-  // Row is a soft pill on the peach wash, no chevron, generous height. Pressed
-  // state deepens to solid peach for tactile feedback.
+  // Hairline-separated row (BRAND §6): headline left, square lead-photo
+  // thumbnail right, no chevron, whole row is the target.
   row: {
-    minHeight: Layout.touchTargetMin + 8,
+    minHeight: Layout.rowMinHeight,
     paddingVertical: Layout.padding.md,
-    paddingHorizontal: Layout.padding.lg,
-    backgroundColor: Colors.peachWash,
-    borderRadius: Layout.borderRadius.full,
-    gap: 2,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Layout.padding.md,
   },
   rowPressed: {
-    backgroundColor: Colors.peach,
+    // Content blocks press at ~0.7 opacity — no new colors (BRAND §10 / v1 rule).
+    opacity: 0.7,
   },
   rowContent: {
-    gap: 2,
+    flex: 1,
+    gap: 4,
   },
-  rowTitle: {
-    fontFamily: Typography.families.serifBold,
-    fontSize: Typography.sizes.lg,
-    // The edition date is the row's content, not a link: set it in ink so it
-    // reads like a newspaper dateline and clears AA on the peach wash.
-    color: Colors.ink,
+  rowThumb: {
+    width: 56,
+    height: 56,
+    borderWidth: 1,
+    borderColor: Colors.hairline,
   },
-  rowMeta: {
-    color: Colors.inkSoft,
-    fontStyle: 'italic',
+  rowRule: {
+    height: Layout.rule.hairline,
+    backgroundColor: Colors.hairline,
   },
-  rowSpacer: {
-    height: Layout.padding.sm,
+  listFooter: {
+    marginTop: Layout.padding.lg,
+    gap: Layout.padding.sm,
+    alignItems: 'flex-start',
   },
 });

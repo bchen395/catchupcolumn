@@ -12,26 +12,14 @@ import { ThemedText } from './themed-text';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
-const TAB_META: Record<
-  string,
-  { label: string; iconActive: IconName; iconInactive: IconName }
-> = {
-  home: { label: 'Home', iconActive: 'home', iconInactive: 'home-outline' },
-  inbox: {
-    label: 'Editions',
-    iconActive: 'newspaper-variant',
-    iconInactive: 'newspaper-variant-outline',
-  },
-  groups: {
-    label: 'Groups',
-    iconActive: 'account-group',
-    iconInactive: 'account-group-outline',
-  },
-  profile: {
-    label: 'Profile',
-    iconActive: 'account',
-    iconInactive: 'account-outline',
-  },
+// One outline glyph per tab (BRAND §7): the icon set stays outline in both
+// states — active is told by ink color + SemiBold label, not a filled glyph —
+// so the bar keeps a consistent stroke weight with the illustration world.
+const TAB_META: Record<string, { label: string; icon: IconName }> = {
+  home: { label: 'Home', icon: 'home-outline' },
+  inbox: { label: 'Editions', icon: 'newspaper-variant-outline' },
+  groups: { label: 'Groups', icon: 'account-group-outline' },
+  profile: { label: 'Profile', icon: 'account-outline' },
 };
 
 export const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
@@ -88,9 +76,9 @@ export const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
               style={styles.slot}
             >
               <MaterialCommunityIcons
-                name={focused ? meta.iconActive : meta.iconInactive}
+                name={meta.icon}
                 size={26}
-                color={focused ? Colors.orange : Colors.inkSoft}
+                color={focused ? Colors.ink : Colors.inkSoft}
               />
               <ThemedText style={[styles.label, focused && styles.labelFocused]}>
                 {meta.label}
@@ -113,7 +101,7 @@ const styles = StyleSheet.create({
   barWrap: {
     backgroundColor: Colors.paper,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderSoft,
+    borderTopColor: Colors.hairline,
   },
   bar: {
     flexDirection: 'row',
@@ -134,7 +122,7 @@ const styles = StyleSheet.create({
     color: Colors.inkSoft,
   },
   labelFocused: {
-    color: Colors.orange,
+    color: Colors.ink,
     fontFamily: Typography.families.sansSemiBold,
   },
   // The center cell takes a slot's width but renders the raised circle that
@@ -146,11 +134,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
+  // The ink-black raised circle — the only black-filled object on most
+  // screens: THE button (BRAND §7). Vermilion stays out of the bar.
   raised: {
     width: RAISED_DIAMETER,
     height: RAISED_DIAMETER,
     borderRadius: RAISED_DIAMETER / 2,
-    backgroundColor: Colors.orange,
+    backgroundColor: Colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -RAISED_LIFT,
@@ -161,6 +151,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   raisedPressed: {
-    backgroundColor: Colors.orange + 'CC',
+    // Filled controls press at 92% opacity, no motion (BRAND §9).
+    opacity: 0.92,
   },
 });

@@ -7,16 +7,17 @@ import {
   Jost_700Bold,
 } from '@expo-google-fonts/jost';
 import {
-  RobotoSlab_400Regular,
-  RobotoSlab_700Bold,
-  RobotoSlab_900Black,
-} from '@expo-google-fonts/roboto-slab';
+  Lora_400Regular,
+  Lora_400Regular_Italic,
+  Lora_600SemiBold,
+  Lora_700Bold,
+} from '@expo-google-fonts/lora';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { useAuth } from '@/hooks/use-auth';
@@ -35,21 +36,18 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 const RootLayout = () => {
-  // iOS uses bundled Superclarendon/Futura — no loading needed. Android and
-  // web load Roboto Slab + Jost via @expo-google-fonts.
-  const [fontsLoaded, fontError] = useFonts(
-    Platform.OS === 'ios'
-      ? {}
-      : {
-          RobotoSlab_400Regular,
-          RobotoSlab_700Bold,
-          RobotoSlab_900Black,
-          Jost_400Regular,
-          Jost_500Medium,
-          Jost_600SemiBold,
-          Jost_700Bold,
-        },
-  );
+  // Lora + Jost load on every platform (BRAND §3 — one metric reality; the
+  // v1 iOS Superclarendon/Futura split is retired).
+  const [fontsLoaded, fontError] = useFonts({
+    Lora_400Regular,
+    Lora_400Regular_Italic,
+    Lora_600SemiBold,
+    Lora_700Bold,
+    Jost_400Regular,
+    Jost_500Medium,
+    Jost_600SemiBold,
+    Jost_700Bold,
+  });
   const { session, loading } = useAuth();
   const router = useRouter();
   const segments = useSegments();

@@ -139,24 +139,22 @@ export const ComposeGroupSheet = ({
           {/* Pan zone — the grab handle + title double as the drag target. */}
           <View {...pan.panHandlers} style={styles.header}>
             <View style={styles.grabber} />
-            <ThemedText variant="label" style={styles.title}>
+            <ThemedText variant="uiStrong" style={styles.title}>
               Write for…
             </ThemedText>
           </View>
 
           {loading && groups.length === 0 ? (
             <View style={styles.stateWrap}>
-              <ActivityIndicator color={Colors.orange} />
+              <ActivityIndicator color={Colors.ink} />
             </View>
           ) : groups.length === 0 ? (
             <View style={styles.stateWrap}>
-              <View style={styles.iconBubble}>
-                <Icon icon={Icons.emptyGroups} size={32} color={Colors.orange} />
-              </View>
+              <Icon icon={Icons.emptyGroups} size={36} color={Colors.inkSoft} />
               <ThemedText variant="subheadline" style={styles.emptyTitle}>
                 You&apos;re not in a Group yet
               </ThemedText>
-              <ThemedText variant="caption" style={styles.emptyBody}>
+              <ThemedText variant="ui" style={styles.emptyBody}>
                 Join or create a Group, then come back to write your first post.
               </ThemedText>
               <Pressable
@@ -184,14 +182,13 @@ export const ComposeGroupSheet = ({
                     style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
                   >
                     <View style={styles.rowText}>
-                      <ThemedText variant="label" style={styles.rowName} numberOfLines={1}>
+                      <ThemedText variant="uiStrong" numberOfLines={1}>
                         {g.name}
                       </ThemedText>
-                      <ThemedText variant="caption" style={styles.rowMeta}>
+                      <ThemedText variant="meta">
                         {count} {count === 1 ? 'member' : 'members'}
                       </ThemedText>
                     </View>
-                    <Icon icon={Icons.chevronRight} size={18} color={Colors.inkMuted} />
                   </Pressable>
                 );
               })}
@@ -207,13 +204,15 @@ const styles = StyleSheet.create({
   backdrop: {
     backgroundColor: Colors.scrim,
   },
+  // A true overlay (BRAND §9): `paper`, top-rounded, grab handle, hairline
+  // header rule.
   sheet: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
     maxHeight: '80%',
-    backgroundColor: Colors.paperWarm,
+    backgroundColor: Colors.paper,
     borderTopLeftRadius: Layout.borderRadius.xl,
     borderTopRightRadius: Layout.borderRadius.xl,
     paddingHorizontal: Layout.padding.lg,
@@ -224,6 +223,8 @@ const styles = StyleSheet.create({
     paddingTop: Layout.padding.sm,
     paddingBottom: Layout.padding.md,
     gap: Layout.padding.md,
+    borderBottomWidth: Layout.rule.hairline,
+    borderBottomColor: Colors.hairline,
   },
   grabber: {
     width: 40,
@@ -233,40 +234,32 @@ const styles = StyleSheet.create({
   },
   title: {
     alignSelf: 'flex-start',
-    color: Colors.orange,
+    color: Colors.ink,
   },
   list: {
     flexGrow: 0,
   },
   listContent: {
     paddingBottom: Layout.padding.sm,
-    gap: Layout.padding.sm,
   },
+  // Hairline-separated rows (BRAND §6): no boxes, no chevrons, the whole row
+  // is the target.
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 56,
+    minHeight: Layout.rowMinHeight,
     paddingVertical: Layout.padding.sm,
-    paddingHorizontal: Layout.padding.md,
-    borderRadius: Layout.borderRadius.md,
-    backgroundColor: Colors.paper,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderBottomWidth: Layout.rule.hairline,
+    borderBottomColor: Colors.hairline,
     gap: Layout.padding.md,
   },
   rowPressed: {
-    backgroundColor: Colors.peachWash,
+    opacity: 0.7,
   },
   rowText: {
     flex: 1,
     gap: 2,
-  },
-  rowName: {
-    color: Colors.ink,
-  },
-  rowMeta: {
-    color: Colors.inkSoft,
   },
   stateWrap: {
     alignItems: 'center',
@@ -274,28 +267,20 @@ const styles = StyleSheet.create({
     paddingVertical: Layout.padding.xl,
     gap: Layout.padding.sm,
   },
-  iconBubble: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.peachWash,
-    marginBottom: Layout.padding.xs,
-  },
   emptyTitle: {
     color: Colors.ink,
     textAlign: 'center',
   },
   emptyBody: {
+    color: Colors.inkSoft,
     textAlign: 'center',
     maxWidth: 280,
   },
   emptyCta: {
-    minHeight: Layout.touchTargetMin,
+    minHeight: Layout.buttonMinHeight,
     paddingHorizontal: Layout.padding.lg,
     borderRadius: Layout.borderRadius.full,
-    backgroundColor: Colors.orange,
+    backgroundColor: Colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Layout.padding.sm,
@@ -306,6 +291,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.body,
   },
   pressedDim: {
-    backgroundColor: Colors.orange + 'CC',
+    opacity: 0.92,
   },
 });

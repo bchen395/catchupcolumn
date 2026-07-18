@@ -1,11 +1,9 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppImage } from '@/components/app-image';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
-import { Typography } from '@/constants/typography';
 import type { GroupWithMembers } from '@/types';
 
 type GroupCardProps = {
@@ -13,6 +11,10 @@ type GroupCardProps = {
   onPress: () => void;
 };
 
+// A Group as a §6 list row: `rowTitle` headline left, square hairline-edged
+// cover right, meta folio below — hairline-separated, whole row the target,
+// no chevron. (No placeholder art when a Group has no cover; the rule
+// carries the structure.)
 export const GroupCard = ({ group, onPress }: GroupCardProps) => {
   const memberCount = group.members.length;
   const memberLabel = `${memberCount} ${memberCount === 1 ? 'member' : 'members'}`;
@@ -21,79 +23,51 @@ export const GroupCard = ({ group, onPress }: GroupCardProps) => {
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.card, pressed ? styles.pressed : null]}
+      style={({ pressed }) => [styles.row, pressed ? styles.pressed : null]}
     >
-      {group.cover_image_url ? (
-        <AppImage source={{ uri: group.cover_image_url }} style={styles.thumbnail} />
-      ) : (
-        <View style={styles.thumbnailPlaceholder}>
-          <FontAwesome name="newspaper-o" size={20} color={Colors.inkSoft} />
-        </View>
-      )}
       <View style={styles.content}>
-        <ThemedText variant="body" style={styles.name} numberOfLines={1}>
+        <ThemedText variant="rowTitle" numberOfLines={1}>
           {group.name}
         </ThemedText>
         {group.description ? (
-          <ThemedText variant="caption" style={styles.description} numberOfLines={1}>
+          <ThemedText variant="ui" style={styles.description} numberOfLines={1}>
             {group.description}
           </ThemedText>
         ) : null}
-        <ThemedText variant="caption" style={styles.meta}>
-          {memberLabel}
-        </ThemedText>
+        <ThemedText variant="meta">{memberLabel}</ThemedText>
       </View>
-      <FontAwesome name="chevron-right" size={14} color={Colors.inkSoft} style={styles.chevron} />
+      {group.cover_image_url ? (
+        <AppImage source={{ uri: group.cover_image_url }} style={styles.thumbnail} />
+      ) : null}
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: Layout.touchTargetMin * 1.5,
+    minHeight: Layout.rowMinHeight,
     paddingVertical: Layout.padding.md,
     paddingHorizontal: Layout.padding.lg,
-    backgroundColor: Colors.paperWarm,
-    borderBottomWidth: 1,
-    borderColor: Colors.borderSoft,
+    borderBottomWidth: Layout.rule.hairline,
+    borderColor: Colors.hairline,
     gap: Layout.padding.md,
   },
   pressed: {
-    backgroundColor: Colors.peach,
+    opacity: 0.7,
   },
   thumbnail: {
-    width: 52,
-    height: 52,
-    borderRadius: Layout.borderRadius.md,
-  },
-  thumbnailPlaceholder: {
-    width: 52,
-    height: 52,
-    borderRadius: Layout.borderRadius.md,
-    backgroundColor: Colors.peach,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 56,
+    height: 56,
+    borderWidth: Layout.rule.hairline,
+    borderColor: Colors.hairline,
   },
   content: {
     flex: 1,
     gap: 4,
   },
-  name: {
-    fontFamily: Typography.families.sansSemiBold,
-    color: Colors.ink,
-  },
   description: {
     color: Colors.inkSoft,
-  },
-  meta: {
-    color: Colors.inkSoft,
-    marginTop: 2,
-  },
-  chevron: {
-    marginLeft: Layout.padding.sm,
   },
 });
