@@ -17,7 +17,7 @@ You're working on the UI of a family-newsletter app built for older adults and G
    - `typography.ts` — Lora + Jost (identical on all platforms) and the v2 `scale` (exposed as ThemedText variants); legacy `sizes`/`lineHeights` linger where no scale token fits yet.
    - `layout.ts` — spacing, radii (read the Shape Consistency Lock comment), rule weights (`Layout.rule`), row/button heights, input metrics, shadows.
    - `icons.ts` — semantic icon registry. Add glyphs there, reference by key.
-   - `strings.ts` — reusable, tone-sensitive user-facing copy (incl. `Strings.thisWeek`, the weekly-ritual voice).
+   - `strings.ts` — reusable, tone-sensitive user-facing copy (incl. `Strings.thisWeek`, the weekly-ritual voice, and `Strings.home`'s rotating daily lines picked with `dailyPick` — day-seeded, never random per render).
    - `loading.ts` — printing-press loader knobs.
    - `motion.ts` — animation durations + easing, and the house motion style comment (BRAND §11).
 3. **`lib/haptics.ts`** — the three haptic verbs (`tap`/`select`/`confirm`) and when each fires (BRAND §11).
@@ -75,7 +75,8 @@ You're working on the UI of a family-newsletter app built for older adults and G
 | `avatar-picker` | Profile avatar selection. |
 | `day-selector` | The 7-day publish-day picker (create-group and settings share it). |
 | `time-picker-modal` / `snap-column` | Scroll-wheel time picker (`snap-column` is its internal wheel). |
-| `this-week-strip` | Home's rule-framed dateline: next publish moment + who's written (never who hasn't). |
+| `home-hero` | Home's hero slot (BRAND §8 "Home is a front page"): the latest edition as a story-led miniature front (lead photo → cover → type-only fallbacks), plus the `FirstEditionHero` coming-soon variant for week one. |
+| `this-week-strip` | Home's rule-framed dateline: next publish moment, decorative face row of this week's writers, the rule-riding paperboy (Home's one doodle), and the bylines sentence (never who hasn't written). |
 | `invite-hero` | The invitation as a one-page special edition (vermilion kicker, `display` masthead, flat cover photo, member byline, cadence dateline). |
 | `avatar-stack` | Overlapping member faces for the invitation byline; decorative (hidden from screen readers). |
 | `pending-invite-banner` | The hairline-band "Joining {name}" strip on auth screens while an invite is pending. |

@@ -91,6 +91,42 @@ export const Strings = {
     evening: (name: string) => (name ? `Good evening, ${name}` : 'Good evening'),
   },
 
+  // Home's editorial voice — the rotating lines that keep the screen feeling
+  // freshly typeset each day. These are flavor copy in the paper's own voice,
+  // NOT writing prompts (prompts are a deliberate non-feature): the CTA never
+  // changes, only the warmth around it. Each set rotates by day via
+  // `dailyIndex` so the whole day reads one edition of the copy.
+  home: {
+    kicker: 'Hot off the press',
+    // Under the greeting — the paper's masthead motto of the day.
+    deckLines: [
+      'Your weekly newsletter, made together.',
+      'Every family has stories worth printing.',
+      'The little things make the best headlines.',
+      'Ordinary weeks make wonderful reading.',
+      'Someone out there loves your news.',
+    ],
+    // The write block's subline — a warm nudge, never urgency.
+    writeLines: [
+      'Add your note before this week’s edition goes out.',
+      'What made you smile this week?',
+      'Even two sentences will make someone’s day.',
+      'The small stuff counts — tell them about your week.',
+      'A photo and a line or two is plenty.',
+      'What’s something they don’t know yet?',
+    ],
+    // The hero slot before a Group's first edition exists — a coming-soon
+    // front page (the one sanctioned illustration hero: no family photos yet).
+    firstEdition: {
+      kicker: 'Your first edition',
+      headline: 'The presses are warming up',
+      deck: 'Everything your family writes this week becomes your first edition.',
+    },
+    // Folio line under the hero story, small caps: group · week · story count.
+    folio: (groupName: string, weekOf: string, storyCount: number) =>
+      `${groupName} · ${weekOf}${storyCount > 1 ? ` · ${storyCount} stories` : ''}`,
+  },
+
   // The weekly-ritual voice. Home's dateline strip, the composer's
   // anticipation line, and the filed stamp all talk about the same upcoming
   // edition, so their copy lives together — keep the phrasing in one register
@@ -198,3 +234,13 @@ export const Strings = {
 };
 
 export type StringsType = typeof Strings;
+
+// Day-seeded pick from a rotating copy set (Strings.home). Deterministic by
+// calendar day — the line holds steady across re-renders and tab focuses, and
+// turns over with the date, like a paper's daily motto. Never Math.random:
+// copy that shuffles mid-session reads as a glitch, not freshness.
+export const dailyPick = <T,>(items: readonly T[], now: Date = new Date()): T => {
+  const startOfYear = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / 86_400_000);
+  return items[dayOfYear % items.length];
+};

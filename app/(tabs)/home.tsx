@@ -4,35 +4,18 @@ import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppImage } from '@/components/app-image';
 import { useComposeSheet } from '@/components/compose-sheet-provider';
+import { FirstEditionHero, HomeHero } from '@/components/home-hero';
 import { ThemedText } from '@/components/themed-text';
 import { ThisWeekStrip } from '@/components/this-week-strip';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
-import { Strings } from '@/constants/strings';
-import { Typography } from '@/constants/typography';
+import { dailyPick, Strings } from '@/constants/strings';
 import { useAuth } from '@/hooks/use-auth';
-import { firstName, headlineFor, orderEdition } from '@/lib/edition-layout';
+import { firstName } from '@/lib/edition-layout';
 import { hasOpenedEdition } from '@/lib/edition-seen';
 import { fetchEditionsForUser, type EditionListItem } from '@/lib/editions';
 import { fetchThisWeeksBylines, type WeeklyByline } from '@/lib/posts';
-
-const formatWeekOf = (publishedAt: string, timezone?: string | null): string => {
-  const tz = timezone || undefined;
-  const end = new Date(publishedAt);
-  const start = new Date(end);
-  start.setDate(start.getDate() - 6);
-  const startMonth = start.toLocaleDateString('en-US', { timeZone: tz, month: 'long' });
-  const endMonth = end.toLocaleDateString('en-US', { timeZone: tz, month: 'long' });
-  const startDay = start.toLocaleDateString('en-US', { timeZone: tz, day: 'numeric' });
-  const endDay = end.toLocaleDateString('en-US', { timeZone: tz, day: 'numeric' });
-  const year = end.toLocaleDateString('en-US', { timeZone: tz, year: 'numeric' });
-  if (startMonth === endMonth) {
-    return `${startMonth} ${startDay}\u2013${endDay}, ${year}`;
-  }
-  return `${startMonth} ${startDay} \u2013 ${endMonth} ${endDay}, ${year}`;
-};
 
 // Time-aware greeting per BRAND §8. Hour boundaries are the plain-spoken
 // ones: morning until noon, afternoon until 6pm, evening after.
@@ -42,6 +25,15 @@ const greetingFor = (name: string, now: Date): string => {
   if (hour < 18) return Strings.greeting.afternoon(name);
   return Strings.greeting.evening(name);
 };
+
+// The masthead's folio date — a daily paper prints its date (BRAND §8).
+const mastheadDate = (now: Date): string =>
+  now.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
 
 const HomeScreen = () => {
   const router = useRouter();
@@ -70,7 +62,7 @@ const HomeScreen = () => {
           }
         })
         .catch(() => {
-          // Home gracefully degrades: missing latest edition just hides the card.
+          // Home gracefully degrades: a failed fetch just hides the hero.
           if (!cancelled) setLatest(null);
         });
       return () => {
@@ -103,62 +95,37 @@ const HomeScreen = () => {
   );
 
   const displayName = (user?.user_metadata?.display_name as string | undefined) ?? '';
+  const now = new Date();
 
   return (
     <ScrollView style={styles.flex} contentContainerStyle={[styles.scroll, { paddingTop: insets.top + Layout.padding.lg }]}>
-      {/* The greeting IS Home's masthead (BRAND §8) — the v1 brandmark
-          retired with the box-and-bag identity (§12). */}
-      <View>
+      {/* The greeting IS Home's masthead (BRAND §8): folio date, greeting,
+          and the day's rotating motto — freshly typeset every morning. */}
+      <View style={styles.masthead}>
+        <ThemedText variant="meta">{mastheadDate(now)}</ThemedText>
         <ThemedText variant="headline" numberOfLines={1}>
-          {greetingFor(displayName ? firstName(displayName) : '', new Date())}
+          {greetingFor(displayName ? firstName(displayName) : '', now)}
         </ThemedText>
-        <ThemedText variant="deck">{Strings.brand.tagline}</ThemedText>
+        <ThemedText variant="deck">{dailyPick(Strings.home.deckLines, now)}</ThemedText>
       </View>
 
       {latest ? (
-        <Pressable
+        <HomeHero
+          edition={latest}
+          isNew={latestIsNew}
           onPress={() => router.push(`/edition/${latest.id}`)}
-          accessibilityRole="button"
-          accessibilityLabel={`Open the latest ${latest.group.name} edition`}
-          style={({ pressed }) => [styles.feature, pressed && styles.featurePressed]}
-        >
-          {/* A section front, not a card: heavy rule, kicker, title, the
-              cover as a flat hairline-edged photo (BRAND §6). */}
-          <View style={styles.featureRule} />
-          <View style={styles.featureKickerRow}>
-            <ThemedText variant="kicker">Hot off the press</ThemedText>
-            {latestIsNew ? (
-              // The NEW pill — a sanctioned vermilion live-moment (BRAND §2),
-              // outlined per §9's chip rule, never filled.
-              <View style={styles.newFlag}>
-                <ThemedText style={styles.newFlagText}>{Strings.thisWeek.newFlag}</ThemedText>
-              </View>
-            ) : null}
-          </View>
-          <ThemedText variant="title" numberOfLines={2}>
-            {latest.group.name}
-          </ThemedText>
-          {(() => {
-            const lead = orderEdition(latest.posts ?? []).lead;
-            return lead ? (
-              <ThemedText variant="deck" numberOfLines={2}>
-                “{headlineFor(lead)}”
-              </ThemedText>
-            ) : null;
-          })()}
-          {latest.group.cover_image_url ? (
-            <AppImage source={{ uri: latest.group.cover_image_url }} style={styles.coverImage} />
-          ) : null}
-          <ThemedText variant="meta">
-            {formatWeekOf(latest.published_at, latest.group.timezone)}
-          </ThemedText>
-        </Pressable>
+        />
+      ) : groups.length > 0 ? (
+        // No edition yet — the first-week coming-soon front (BRAND §8), so
+        // the hero slot is alive exactly when first impressions form.
+        <FirstEditionHero />
       ) : null}
 
       <ThisWeekStrip groups={groups} bylines={bylines} currentUserId={user?.id ?? null} />
 
       {/* The main thing to DO on Home — dressed as a big secondary button
-          (hairline outline, ink), not a tinted slab. */}
+          (hairline outline, ink), not a tinted slab. The CTA is constant;
+          only the warmth beneath it rotates. */}
       <Pressable
         onPress={openComposeSheet}
         accessibilityRole="button"
@@ -169,7 +136,7 @@ const HomeScreen = () => {
         <View style={styles.writeText}>
           <ThemedText variant="uiStrong">Write for this week</ThemedText>
           <ThemedText variant="ui" style={styles.writeBody}>
-            Add your note before this week's edition goes out.
+            {dailyPick(Strings.home.writeLines, now)}
           </ThemedText>
         </View>
       </Pressable>
@@ -186,40 +153,8 @@ const styles = StyleSheet.create({
     paddingBottom: Layout.padding.xl,
     gap: Layout.padding.xl,
   },
-  feature: {
-    gap: Layout.padding.sm,
-  },
-  featurePressed: {
-    opacity: 0.7,
-  },
-  featureRule: {
-    height: Layout.rule.heavy,
-    backgroundColor: Colors.ink,
-    marginBottom: Layout.padding.xs,
-  },
-  featureKickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Layout.padding.sm,
-  },
-  newFlag: {
-    borderWidth: 1,
-    borderColor: Colors.vermilion,
-    borderRadius: Layout.borderRadius.full,
-    paddingHorizontal: Layout.padding.sm,
-    paddingVertical: 2,
-  },
-  newFlagText: {
-    ...Typography.scale.meta,
-    color: Colors.vermilion,
-  },
-  coverImage: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    borderWidth: Layout.rule.hairline,
-    borderColor: Colors.hairline,
-    marginTop: Layout.padding.xs,
+  masthead: {
+    gap: Layout.padding.xs,
   },
   writeBlock: {
     flexDirection: 'row',
