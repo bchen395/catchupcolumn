@@ -176,6 +176,8 @@ Screen-by-screen mapping is in progress; this table is the contract for it.
 
 **Landed (Home front-page pass, 2026-07-18):** the §8 "Home is a front page" set — `home-hero` (story-led hero + first-edition variant), masthead date folio, rotating `Strings.home` copy via `dailyPick`, face row + rule-riding paperboy on the dateline strip, `WeeklyByline` extended with avatars.
 
+**Landed (edition-email pass, 2026-07-21):** the weekly edition email (`supabase/functions/_shared/edition-email.ts`) reskinned to v2 — ink `#1A1A1A` on `paperWarm`, hairline rules, Lora + Jost webfonts (Roboto Slab retired), title-case Lora masthead under a single vermilion `NEW EDITION` kicker, flat §5 photos with a "Photo by {name}" credit (the taped-polaroid stand-in + peach wash + warm shadow retired), and an ink-fill pill CTA (vermilion left to the kicker and the two links, never the button). Alpha tokens are pre-composited to opaque hex since email needs solids. Preview via the fixtures harness (edge-functions skill).
+
 **Still pending:** redefining `caption` to the 12px spec once the last v1 caption usages migrate.
 
 **Survives unchanged (logic and largely skin):** edition slot rules (`lib/edition-layout.ts`), thin-edition composition, orientation buckets, publish math + dateline strip concept, seen-tracking/NEW moment, haptics, motion tokens, enlarge/page-turn transitions, join-flow architecture (pending invite, two-mode screen, anonymous preview), no-gamification principle, warm copy in `Strings`.
