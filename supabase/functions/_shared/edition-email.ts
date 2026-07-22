@@ -7,9 +7,16 @@
 // worker signs them (`image_signed_url`) before rendering, and a post whose
 // photo can't be signed simply renders without it.
 //
+// Visual system: v2 editorial (design/BRAND.md) — "NYT structure, HeyTea
+// charm". Near-monochrome ink on warm paper, hairline rules, Lora serif over
+// Jost sans, one scarce vermilion accent (the masthead kicker + links; never
+// a button fill, never a surface tint). The v1 dress — orange, peach wash,
+// Roboto Slab, the taped polaroid — is fully retired; photos print flat and
+// square with a hairline edge, exactly as they do on the edition front page.
+//
 // Email-client ground rules baked in here:
 //   • Table layout + inline styles; the <style> block is progressive
-//     enhancement only (webfont + color-scheme) — Gmail strips it.
+//     enhancement only (webfonts + color-scheme) — Gmail strips it.
 //   • All links are https (Gmail blocks custom-scheme deep links); the web
 //     targets come from the dispatch layer via `edition_web_url` /
 //     `start_your_own_url`.
@@ -44,23 +51,24 @@ export type EditionEmailPayload = {
 };
 
 // ---------------------------------------------------------------------------
-// Brand tokens (mirrors design/BRAND.md §2 — the email must read as the app)
+// Brand tokens (mirrors design/BRAND.md §2 + constants/colors.ts — the email
+// must read as the app. Values are flattened to solids: email needs opaque
+// hex, so the ink-alpha tokens are pre-composited onto paperWarm.)
 // ---------------------------------------------------------------------------
 
-const INK = '#000000';
-const INK_SOFT = 'rgba(0, 0, 0, 0.62)';
-const INK_MUTED = 'rgba(0, 0, 0, 0.45)';
-const ORANGE = '#FF7237';
+const INK = '#1A1A1A'; // soft black — matches Colors.ink
+const INK_SOFT = '#706F6D'; // ink @ 62% on paperWarm — secondary text, decks, bylines (AA for body)
+const INK_MUTED = '#A6A4A1'; // ink @ 38% on paperWarm — footer / unsubscribe
+const VERMILION = '#E8442E'; // THE accent — kickers + links only, never a fill
 const PAPER = '#FFFFFF';
-const PAPER_WARM = '#FAF7F2'; // the sheet — same paper as the app background
-const PEACH_WASH = '#FFEDE7'; // peach @ 40% flattened onto white (email needs solids)
-const BORDER_SOFT = 'rgba(0, 0, 0, 0.12)';
-const SHADOW_WARM = 'rgba(63, 42, 24, 0.14)';
+const PAPER_WARM = '#FBF9F4'; // the sheet — same warm paper as the app background
+const HAIRLINE = '#DCDAD5'; // ink @ 14% on paperWarm — rules, dividers, photo edges
+const RULE = INK; // structural masthead/section rules (2–3px), full-strength ink
 
-// Superclarendon isn't embeddable; Roboto Slab is the sanctioned analog
-// (loaded via @import for clients that honor <style>, Georgia otherwise).
-const SERIF = `'Roboto Slab', Georgia, 'Times New Roman', serif`;
-const SANS = `'Jost', 'Futura', 'Avenir Next', 'Helvetica Neue', Arial, sans-serif`;
+// Lora + Jost, the app's two families (BRAND §3), both embeddable via Google
+// Fonts (@import for clients that honor <style>; Georgia/Arial otherwise).
+const SERIF = `'Lora', Georgia, 'Times New Roman', serif`;
+const SANS = `'Jost', 'Helvetica Neue', Arial, sans-serif`;
 
 const escape = (s: string): string =>
   s.replace(/&/g, '&amp;')
@@ -156,9 +164,9 @@ const renderPreheader = (payload: EditionEmailPayload): string => {
 const flankedRow = (inner: string, ruleWidth = 56): string => `
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
     <tr>
-      <td width="${ruleWidth}" style="border-top: 1px solid ${BORDER_SOFT}; font-size: 0; line-height: 0;">&nbsp;</td>
+      <td width="${ruleWidth}" style="border-top: 1px solid ${HAIRLINE}; font-size: 0; line-height: 0;">&nbsp;</td>
       <td style="padding: 0 12px;">${inner}</td>
-      <td width="${ruleWidth}" style="border-top: 1px solid ${BORDER_SOFT}; font-size: 0; line-height: 0;">&nbsp;</td>
+      <td width="${ruleWidth}" style="border-top: 1px solid ${HAIRLINE}; font-size: 0; line-height: 0;">&nbsp;</td>
     </tr>
   </table>`;
 
@@ -169,35 +177,41 @@ const renderMasthead = (payload: EditionEmailPayload): string => {
   const writers = writerCount === 1 ? '1 writer' : `${writerCount} writers`;
   const dateline = `<span style="font-family: ${SERIF}; font-size: 14px; font-style: italic; color: ${INK_SOFT}; white-space: nowrap;">${escape(formatPublishedDate(payload.published_at))}</span>`;
 
+  // The email's "new moment" — the app's DELIVERED stamp equivalent. A single
+  // vermilion small-caps kicker (BRAND §8); the masthead's one accent.
   return `
-    <td align="center" style="padding: 36px 36px 0 36px;">
-      <h1 style="margin: 0 0 10px 0; font-family: ${SERIF}; font-size: 34px; line-height: 1.12; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; color: ${INK};">${escape(payload.group_name)}</h1>
+    <td align="center" style="padding: 40px 36px 0 36px;">
+      <p style="margin: 0 0 12px 0; font-family: ${SANS}; font-size: 12px; font-weight: 600; letter-spacing: 2.4px; text-transform: uppercase; color: ${VERMILION};">New Edition</p>
+      <h1 style="margin: 0 0 12px 0; font-family: ${SERIF}; font-size: 36px; line-height: 1.14; font-weight: 700; letter-spacing: -0.5px; color: ${INK};">${escape(payload.group_name)}</h1>
       ${flankedRow(dateline)}
-      <p style="margin: 10px 0 0 0; font-family: ${SANS}; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${INK_SOFT};">Edition No. ${payload.edition_number} &nbsp;·&nbsp; ${stories} &nbsp;·&nbsp; ${writers}</p>
-      <div style="margin: 16px 0 0 0; border-top: 3px solid ${INK}; font-size: 0; line-height: 0;">&nbsp;</div>
+      <p style="margin: 12px 0 0 0; font-family: ${SANS}; font-size: 12px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase; color: ${INK_SOFT};">Edition No. ${payload.edition_number} &nbsp;·&nbsp; ${stories} &nbsp;·&nbsp; ${writers}</p>
+      <div style="margin: 18px 0 0 0; border-top: 3px solid ${RULE}; font-size: 0; line-height: 0;">&nbsp;</div>
     </td>`;
 };
 
-// Taped-polaroid stand-in that survives email clients: a white padded frame
-// (thicker chin, like a real polaroid) with a hairline edge and a warm
-// shadow. No CSS transforms — tilt degrades unpredictably in Gmail/Outlook.
-const renderPolaroid = (src: string, authorName: string): string => `
+// Flat editorial photo (BRAND §5): square corners, no rotation, no frame, no
+// shadow — just a hairline edge (newsprint photos have edges) and a Jost
+// credit below, left-aligned, "Photo by Ruth". The taped polaroid is retired.
+const renderPhoto = (src: string, authorName: string): string => `
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 4px 0 18px 0;">
     <tr>
-      <td style="background-color: ${PAPER}; border: 1px solid ${BORDER_SOFT}; padding: 10px 10px 16px 10px; box-shadow: 0 3px 10px ${SHADOW_WARM};">
-        <img src="${escape(src)}" alt="Photo from ${escape(authorName)}" width="100%" style="display: block; width: 100%; height: auto; border: 0;">
+      <td style="font-size: 0; line-height: 0;">
+        <img src="${escape(src)}" alt="Photo by ${escape(authorName)}" width="100%" style="display: block; width: 100%; height: auto; border: 1px solid ${HAIRLINE};">
       </td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 0 0 0; font-family: ${SANS}; font-size: 12px; letter-spacing: 0.4px; color: ${INK_SOFT};">Photo by ${escape(firstName(authorName))}</td>
     </tr>
   </table>`;
 
 const renderByline = (post: EditionEmailPost): string => {
   const hasTitle = Boolean(post.title?.trim());
   const avatar = post.author_avatar_url
-    ? `<img src="${escape(post.author_avatar_url)}" alt="" width="40" height="40" style="display: block; border-radius: 20px; border: 1px solid ${BORDER_SOFT};">`
+    ? `<img src="${escape(post.author_avatar_url)}" alt="" width="40" height="40" style="display: block; border-radius: 20px; border: 1px solid ${HAIRLINE};">`
     : '';
   const name = hasTitle
     ? `<span style="font-family: ${SERIF}; font-size: 15px; font-style: italic; color: ${INK_SOFT};">By ${escape(post.author_name)}</span>`
-    : `<span style="font-family: ${SERIF}; font-size: 19px; font-weight: 700; color: ${INK};">${escape(post.author_name)}</span>`;
+    : `<span style="font-family: ${SERIF}; font-size: 19px; font-weight: 600; color: ${INK};">${escape(post.author_name)}</span>`;
 
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 14px 0;">
@@ -215,7 +229,7 @@ const renderPost = (post: EditionEmailPost, isLast: boolean): string => {
     : '';
 
   const photo = post.image_signed_url
-    ? renderPolaroid(post.image_signed_url, post.author_name)
+    ? renderPhoto(post.image_signed_url, post.author_name)
     : '';
 
   const paragraphs = post.body
@@ -225,7 +239,7 @@ const renderPost = (post: EditionEmailPost, isLast: boolean): string => {
     .map((p) => `<p style="margin: 0 0 16px 0; font-family: ${SERIF}; font-size: 17px; line-height: 26px; color: ${INK};">${escape(p).replace(/\n/g, '<br>')}</p>`)
     .join('');
 
-  const divider = isLast ? '' : `border-bottom: 1px solid ${BORDER_SOFT};`;
+  const divider = isLast ? '' : `border-bottom: 1px solid ${HAIRLINE};`;
 
   return `
     <tr>
@@ -238,13 +252,15 @@ const renderPost = (post: EditionEmailPost, isLast: boolean): string => {
     </tr>`;
 };
 
+// Primary button (BRAND §9): ink fill, paper label, full-round pill. Vermilion
+// never fills a button — the accent lives in the masthead kicker and links.
 const renderCta = (payload: EditionEmailPayload): string => `
   <tr>
-    <td align="center" style="padding: 12px 36px 8px 36px;">
+    <td align="center" style="padding: 16px 36px 8px 36px;">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td align="center" style="background-color: ${ORANGE}; border-radius: 12px;">
-            <a href="${escape(payload.edition_web_url)}" style="display: inline-block; padding: 15px 32px; font-family: ${SANS}; font-size: 17px; font-weight: 600; color: #FFFFFF; text-decoration: none; border-radius: 12px; white-space: nowrap;">Open in Catch Up Column</a>
+          <td align="center" style="background-color: ${INK}; border-radius: 28px;">
+            <a href="${escape(payload.edition_web_url)}" style="display: inline-block; padding: 16px 34px; font-family: ${SANS}; font-size: 17px; font-weight: 600; color: ${PAPER}; text-decoration: none; border-radius: 28px; white-space: nowrap;">Open in Catch Up Column</a>
           </td>
         </tr>
       </table>
@@ -261,7 +277,7 @@ const renderColophon = (payload: EditionEmailPayload): string => {
       ${flankedRow(ornament, 72)}
       <p style="margin: 12px 0 0 0; font-family: ${SANS}; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${INK_SOFT};">Catch Up Column &nbsp;·&nbsp; No. ${payload.edition_number}</p>
       <p style="margin: 14px 0 0 0; font-family: ${SERIF}; font-size: 14px; line-height: 22px; font-style: italic; color: ${INK_SOFT};">This newspaper was written by ${escape(payload.group_name)}<br>and printed by Catch Up Column.</p>
-      <p style="margin: 10px 0 0 0; font-family: ${SANS}; font-size: 16px; font-weight: 600;"><a href="${escape(payload.start_your_own_url)}" style="color: ${ORANGE}; text-decoration: none;">Start one for your people &rarr;</a></p>
+      <p style="margin: 10px 0 0 0; font-family: ${SANS}; font-size: 16px; font-weight: 600;"><a href="${escape(payload.start_your_own_url)}" style="color: ${VERMILION}; text-decoration: none;">Start one for your people &rarr;</a></p>
     </td>
   </tr>`;
 };
@@ -280,16 +296,16 @@ export const renderEditionEmailHtml = (payload: EditionEmailPayload): string => 
     <meta name="supported-color-schemes" content="light">
     <title>${escape(payload.group_name)} — Edition No. ${payload.edition_number}</title>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700;900&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@400;500;600&display=swap');
       :root { color-scheme: light; supported-color-schemes: light; }
     </style>
   </head>
-  <body style="margin: 0; padding: 0; background-color: ${PEACH_WASH};">
+  <body style="margin: 0; padding: 0; background-color: ${PAPER_WARM};">
     <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">${escape(renderPreheader(payload))}&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${PEACH_WASH};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${PAPER_WARM};">
       <tr>
         <td align="center" style="padding: 28px 12px;">
-          <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; background-color: ${PAPER_WARM}; border: 1px solid ${BORDER_SOFT};">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; background-color: ${PAPER_WARM}; border: 1px solid ${HAIRLINE};">
             <tr>
               ${renderMasthead(payload)}
             </tr>
