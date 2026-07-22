@@ -1,18 +1,23 @@
 /* catchupcolumn.com — shared styles for the static pages.
-   Mirrors design/BRAND.md: warm paper, ink, orange, slab-serif newspaper voice.
-   Audience skews older — large type, high contrast, big tap targets. */
+   Mirrors design/BRAND.md v2 (2026-07-17): near-monochrome ink on warm paper,
+   structure drawn with hairlines, one scarce vermilion accent. Serif Lora,
+   UI sans Jost. Audience skews older — large type, high contrast, big tap
+   targets. Token values mirror constants/colors.ts and constants/typography.ts;
+   keep them in sync when the app palette changes. */
 
 :root {
-  --ink: #000000;
-  --ink-soft: rgba(0, 0, 0, 0.62);
-  --ink-muted: rgba(0, 0, 0, 0.45);
-  --orange: #ff7237;
-  --peach: #ffd3c2;
-  --peach-wash: #ffede7;
+  /* Palette — mirrors constants/colors.ts. Soft black ink, never pure #000. */
+  --ink: #1a1a1a;
+  --ink-soft: rgba(26, 26, 26, 0.62);
+  --ink-muted: rgba(26, 26, 26, 0.38);
+  /* THE accent. A rubber stamp, not a paint bucket: kickers, links, live
+     moments. Never fills a button, never tints a surface. */
+  --vermilion: #e8442e;
   --paper: #ffffff;
-  --paper-warm: #faf7f2;
-  --border-soft: rgba(0, 0, 0, 0.12);
-  --serif: 'Roboto Slab', Georgia, 'Times New Roman', serif;
+  --paper-warm: #fbf9f4;
+  /* Rules, dividers, outlines, photo edges (1px). */
+  --hairline: rgba(26, 26, 26, 0.14);
+  --serif: 'Lora', Georgia, 'Times New Roman', serif;
   --sans: 'Jost', 'Futura', 'Avenir Next', 'Helvetica Neue', Arial, sans-serif;
 }
 
@@ -20,29 +25,30 @@
 
 body {
   margin: 0;
-  background: var(--peach-wash);
+  background: var(--paper-warm);
   color: var(--ink);
   font-family: var(--serif);
   font-size: 18px;
-  line-height: 1.6;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
 }
 
 .sheet {
   max-width: 640px;
   margin: 32px auto;
   background: var(--paper-warm);
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--hairline);
   padding: 48px 32px 40px;
   text-align: center;
 }
 
 .masthead-name {
   margin: 0 0 10px;
-  font-size: clamp(30px, 7vw, 42px);
-  font-weight: 900;
-  line-height: 1.1;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  font-family: var(--serif);
+  font-size: clamp(32px, 7vw, 44px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.5px;
 }
 
 .dateline {
@@ -52,32 +58,35 @@ body {
   justify-content: center;
   color: var(--ink-soft);
   font-style: italic;
-  font-size: 15px;
+  font-size: 16px;
 }
 .dateline::before,
 .dateline::after {
   content: '';
   width: 56px;
-  border-top: 1px solid var(--border-soft);
+  border-top: 1px solid var(--hairline);
 }
 
+/* Structural masthead rule — full-strength ink (BRAND §2 `rule`), 2px. */
 .masthead-rule {
   border: 0;
-  border-top: 3px solid var(--ink);
+  border-top: 2px solid var(--ink);
   margin: 18px 0 28px;
 }
 
+/* Small-caps kicker — the "NYT dress code", one of vermilion's sanctioned uses. */
 .kicker {
   font-family: var(--sans);
-  font-size: 12px;
-  letter-spacing: 2px;
+  font-size: 13px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--orange);
+  color: var(--vermilion);
   font-weight: 600;
   margin: 0 0 8px;
 }
 
 h2 {
+  font-family: var(--serif);
   font-size: 26px;
   font-weight: 700;
   margin: 0 0 12px;
@@ -88,30 +97,35 @@ p { margin: 0 0 16px; }
 .muted { color: var(--ink-soft); }
 .small { font-size: 15px; }
 
+/* Buttons — ink-filled pill (primary) / hairline-outlined pill (secondary),
+   mirroring the app's FormButton. Vermilion never fills a button. */
 .btn {
   display: inline-block;
-  background: var(--orange);
-  color: #fff;
+  background: var(--ink);
+  color: var(--paper);
   font-family: var(--sans);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   text-decoration: none;
-  padding: 16px 34px;
-  border-radius: 12px;
+  padding: 15px 34px;
+  border-radius: 999px;
   margin: 6px;
   min-height: 48px;
+  transition: opacity 0.15s ease-out;
 }
-.btn:hover { opacity: 0.88; }
+.btn:hover { opacity: 0.92; }
 
 .btn-secondary {
   background: transparent;
-  color: var(--orange);
-  border: 2px solid var(--orange);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
 }
 
+/* Numbered steps — hairline-ruled rows with editorial serif numerals
+   (no filled circle pills; structure is drawn with rules). */
 .steps {
   text-align: left;
-  max-width: 440px;
+  max-width: 460px;
   margin: 0 auto 28px;
   padding: 0;
   list-style: none;
@@ -120,27 +134,21 @@ p { margin: 0 0 16px; }
 .steps li {
   counter-increment: step;
   display: flex;
-  gap: 14px;
+  gap: 16px;
   align-items: baseline;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border-soft);
+  padding: 14px 0;
+  border-bottom: 1px solid var(--hairline);
 }
 .steps li:last-child { border-bottom: 0; }
 .steps li::before {
   content: counter(step);
-  font-family: var(--sans);
-  font-weight: 600;
-  color: var(--paper);
-  background: var(--orange);
-  border-radius: 999px;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--ink);
   min-width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex: none;
-  position: relative;
-  top: 4px;
 }
 
 .colophon {
@@ -158,12 +166,14 @@ p { margin: 0 0 16px; }
 .colophon .ornament::after {
   content: '';
   width: 72px;
-  border-top: 1px solid var(--border-soft);
+  border-top: 1px solid var(--hairline);
 }
+/* Folio — Jost small-caps, the metadata dress. */
 .colophon .folio {
   font-family: var(--sans);
-  font-size: 11px;
-  letter-spacing: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
   margin: 10px 0 0;
 }
@@ -171,7 +181,8 @@ p { margin: 0 0 16px; }
 .hidden { display: none; }
 
 /* Long-form document pages: /privacy, /terms, /support, /delete-account.
-   Left-aligned reading measure; body stays ink (never orange) for contrast. */
+   Left-aligned reading measure; body stays ink (never vermilion) for contrast.
+   Vermilion is reserved for links and the kicker/back-link voice. */
 .doc {
   max-width: 720px;
   text-align: left;
@@ -182,15 +193,17 @@ p { margin: 0 0 16px; }
   font-family: var(--sans);
   font-size: 15px;
   font-weight: 600;
-  color: var(--orange);
+  color: var(--vermilion);
   text-decoration: none;
   margin-bottom: 20px;
 }
 .back-link:hover { opacity: 0.8; }
 .doc-title {
-  font-size: clamp(28px, 6vw, 38px);
-  font-weight: 900;
-  line-height: 1.15;
+  font-family: var(--serif);
+  font-size: clamp(28px, 6vw, 40px);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.5px;
   margin: 0 0 8px;
 }
 .doc-meta {
@@ -217,12 +230,13 @@ p { margin: 0 0 16px; }
   margin: 0 0 16px;
 }
 .doc li { margin-bottom: 8px; }
-.doc a { color: var(--orange); text-decoration: underline; }
+.doc a { color: var(--vermilion); text-decoration: underline; }
 .doc a:hover { opacity: 0.8; }
 .doc strong { font-weight: 700; }
 .doc code {
   font-family: var(--sans);
-  background: var(--peach-wash);
+  background: var(--paper);
+  border: 1px solid var(--hairline);
   padding: 1px 5px;
   border-radius: 4px;
   font-size: 0.94em;
@@ -232,10 +246,10 @@ p { margin: 0 0 16px; }
   font-size: 15px;
   margin: 36px 0 0;
   padding-top: 20px;
-  border-top: 1px solid var(--border-soft);
+  border-top: 1px solid var(--hairline);
 }
 .doc-nav a {
-  color: var(--orange);
+  color: var(--vermilion);
   text-decoration: none;
   font-weight: 600;
   white-space: nowrap;
