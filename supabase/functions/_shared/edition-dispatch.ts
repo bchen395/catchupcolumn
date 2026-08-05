@@ -27,8 +27,9 @@ export const EMAIL_FROM =
 // Gmail, so the email points at the web domain; the pages there hand off to
 // the app (or the store) and can be upgraded to universal links without
 // touching sent-email code.
+// The www host is canonical — the apex 308-redirects to it on Vercel.
 const WEB_BASE_URL =
-  (Deno.env.get('WEB_BASE_URL') ?? 'https://catchupcolumn.com').replace(/\/+$/, '');
+  (Deno.env.get('WEB_BASE_URL') ?? 'https://www.catchupcolumn.com').replace(/\/+$/, '');
 
 type EmailRecipient = {
   user_id: string;

@@ -71,25 +71,41 @@ harmless — links just fall through to the `/edition/{id}` bouncer):
    in `assetlinks.json` with your app-signing cert's SHA-256 (colon-separated hex).
    Get it from `eas credentials` (Android) or Play Console → App integrity.
 
-Then wire the app side in `app.json`:
+Then wire the app side in `app.json`. **Use the `www` host, not the apex** — the
+apex 308-redirects to `www` on Vercel, and neither Apple nor Google follows
+redirects when fetching these files, so `applinks:catchupcolumn.com` would fail
+verification silently:
 
 ```jsonc
-"ios":     { "associatedDomains": ["applinks:catchupcolumn.com"] },
+"ios":     { "associatedDomains": ["applinks:www.catchupcolumn.com"] },
 "android": { "intentFilters": [{
   "action": "VIEW", "autoVerify": true,
-  "data": [{ "scheme": "https", "host": "catchupcolumn.com", "pathPrefix": "/edition" }],
+  "data": [{ "scheme": "https", "host": "www.catchupcolumn.com", "pathPrefix": "/edition" }],
   "category": ["BROWSABLE", "DEFAULT"]
 }] }
 ```
 
-The email's `https://catchupcolumn.com/edition/{id}` links then open the app
+(If you'd rather claim the apex, make the apex the primary domain in Vercel so
+`www` redirects to it instead, and flip `WEB_BASE_URL` plus `Strings.legal.*`
+back to the apex.)
+
+The email's `https://www.catchupcolumn.com/edition/{id}` links then open the app
 directly, and the bouncer becomes the no-app fallback — no email or edge-function
 changes needed.
 
-**Verify after deploy** (Apple/Google fetch over HTTPS with no redirects):
+**Verify after deploy** (Apple/Google fetch over HTTPS with no redirects — note
+the `www`; the apex returns 308, not 200):
 
 ```bash
-curl -sI https://catchupcolumn.com/.well-known/apple-app-site-association | grep -i content-type
+curl -sI https://www.catchupcolumn.com/.well-known/apple-app-site-association | grep -i content-type
 # → content-type: application/json
-curl -s https://catchupcolumn.com/.well-known/assetlinks.json | head
+curl -s https://www.catchupcolumn.com/.well-known/assetlinks.json | head
+```
+
+Also verify the edition bouncer actually resolves — the rewrite must land on the
+clean `/edition` path, not `/edition/index.html`:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' https://www.catchupcolumn.com/edition/00000000-0000-0000-0000-000000000000
+# → 200 (a 404 means the rewrite destination regressed)
 ```

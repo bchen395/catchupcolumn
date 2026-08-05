@@ -72,14 +72,21 @@ Best storytelling shot: a compiled edition front page (the product's payoff).
 
 | Field | Store | Value |
 | --- | --- | --- |
-| Privacy Policy URL | Both (required) | `https://catchupcolumn.com/privacy` — host `docs/PRIVACY.md` |
-| Support URL | iOS (required) | `https://catchupcolumn.com/support` — host `docs/SUPPORT.md` |
-| Marketing URL | iOS (optional) | `https://catchupcolumn.com` |
-| Account deletion URL | Google Play (required) | `https://catchupcolumn.com/delete-account` — host `docs/DATA_DELETION.md` |
+All live and returning 200 as of 2026-08-04. Use the `www` host — the apex
+308-redirects to it.
+
+| Field | Store | Value |
+| --- | --- | --- |
+| Privacy Policy URL | Both (required) | `https://www.catchupcolumn.com/privacy` |
+| Support URL | iOS (required) | `https://www.catchupcolumn.com/support` |
+| Marketing URL | iOS (optional) | `https://www.catchupcolumn.com` |
+| Account deletion URL | Google Play (required) | `https://www.catchupcolumn.com/delete-account` |
 | Support email | Google Play (required) | `support@catchupcolumn.com` |
 
 > These URLs are also wired into the app's Profile screen (Privacy / Terms links)
-> via `Strings.legal` in `constants/strings.ts`. Host the docs at these paths.
+> via `Strings.legal` in `constants/strings.ts`. The pages are served from `web/`
+> (`privacy.html`, `terms.html`, `support.html`, `delete-account.html`) — the
+> `docs/*.md` files are the source copy those were built from.
 
 ---
 
@@ -129,6 +136,11 @@ Data types to declare (Collected, processed for app functionality, not for ads/t
 - The app has **user-generated content** shared within private invited groups (no
   public feed, no discovery). Answer the UGC questions accordingly; there is no
   moderation of public content because content is not public.
+- ⚠️ **Apple Guideline 1.2 exposure:** the app has published acceptable-use terms but
+  **no in-app report path and no way to remove/block a member** (`lib/groups.ts` has
+  only `leaveGroup`/`deleteGroup`). Reviewers frequently require both for social
+  apps. Either add them or prepare a reviewer note explaining the invite-only model —
+  see `docs/LAUNCH.md` step 9.
 - No violence, sexual content, profanity, gambling, or drugs in the app itself.
 - Expected outcome: **4+ (Apple)** / **Everyone (Google)**, with the UGC disclosure.
 
@@ -139,15 +151,8 @@ standard HTTPS/TLS. No extra export documentation is required.
 
 ## 11. Pre-submission checklist (technical)
 
-- [ ] `eas init` run → `owner` + `extra.eas.projectId` written to app.json (this is
-      also what makes production push notifications register — without it push
-      silently fails in release builds).
-- [ ] `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` set as EAS
-      environment variables (the app throws at launch if they're missing in the build).
-- [ ] APNs key (iOS) and FCM credentials (Android) uploaded via `eas credentials`.
-- [x] Security migration applied to production DB (`supabase db push`) — done 2026-07-03.
-- [x] All 4 edge functions deployed and verified byte-identical to the repo.
-- [ ] `EMAIL_FROM` points at a verified Resend domain (not the sandbox sender).
-- [ ] Reset-password redirect URL allowlisted in Supabase Auth settings.
-- [ ] Privacy / Support / Data-deletion docs hosted and their URLs entered above.
-- [ ] Screenshots captured for required device sizes.
+➡️ **The checklist lives in [PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md)**
+— gates 1–9, with the verified-as-of statuses and the exact verification commands.
+
+Keep it there rather than duplicating it here: this doc owns *metadata and
+questionnaire answers*, the checklist owns *what to run and in what order*.
