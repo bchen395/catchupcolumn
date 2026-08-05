@@ -53,8 +53,8 @@ const payload = (
     posts,
     recipient_display_name: 'Ruth',
     unsubscribe_url: 'https://example.supabase.co/functions/v1/unsubscribe?token=00000000-0000-0000-0000-000000000000',
-    edition_web_url: 'https://catchupcolumn.com/edition/00000000-0000-0000-0000-000000000000',
-    start_your_own_url: 'https://catchupcolumn.com/start',
+    edition_web_url: 'https://www.catchupcolumn.com/edition/00000000-0000-0000-0000-000000000000',
+    start_your_own_url: 'https://www.catchupcolumn.com/start',
     ...overrides,
   },
 ];

@@ -31,10 +31,7 @@
         "backgroundColor": "#FBF9F4"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "bundler": "metro",
@@ -57,7 +54,8 @@
           "icon": "./assets/images/notification-icon.png",
           "color": "#E8442E"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

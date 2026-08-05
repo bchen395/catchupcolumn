@@ -15,10 +15,12 @@ export const Strings = {
   },
 
   // Hosted legal/support pages (also entered in App Store Connect / Play Console).
+  // Use the www host: the apex 308-redirects to www on Vercel, so linking the
+  // apex costs an extra round trip before the page paints.
   legal: {
-    privacyUrl: 'https://catchupcolumn.com/privacy',
-    termsUrl: 'https://catchupcolumn.com/terms',
-    supportUrl: 'https://catchupcolumn.com/support',
+    privacyUrl: 'https://www.catchupcolumn.com/privacy',
+    termsUrl: 'https://www.catchupcolumn.com/terms',
+    supportUrl: 'https://www.catchupcolumn.com/support',
   },
 
   loading: {
