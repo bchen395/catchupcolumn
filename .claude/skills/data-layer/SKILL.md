@@ -24,7 +24,7 @@ This is the app-side data layer: the `supabase-js` client, the `lib/` functions 
   if (error) throw error;
   return data; // PostRow | null
   ```
-- **RPC vs table query.** A mutation that is role-gated (moderator-only), atomic/transactional, or blocked by RLS goes through `supabase.rpc('fn', { p_x: value })` — not a direct write. Direct inserts to `group_members` fail by design (`with check (false)`); joins/publishes/deletes are RPCs (`join_group_by_invite_code`, `delete_group_as_moderator`, and `publish_edition_now` via the edge function). When in doubt, check the RLS policy in `db-migrations` — if the policy forbids the direct write, there's an RPC for it.
+- **RPC vs table query.** A mutation that is role-gated (moderator-only), atomic/transactional, or blocked by RLS goes through `supabase.rpc('fn', { p_x: value })` — not a direct write. Direct inserts to `group_members` fail by design (`with check (false)`), and its DELETE policy is self-only — a moderator ejecting someone else goes through `remove_group_member`. Joins/publishes/deletes are RPCs (`join_group_by_invite_code`, `delete_group_as_moderator`, and `publish_edition_now` via the edge function). When in doubt, check the RLS policy in `db-migrations` — if the policy forbids the direct write, there's an RPC for it.
 - **Nested selects need a cast.** `Relationships: []` is intentionally hardcoded in `types/database.ts` (Supabase `gen types` bug **#29**), so `supabase-js` can't infer joined/embedded shapes. Cast the result to a derived type: `data as unknown as GroupRowWithMembers` (see `lib/groups.ts`, `lib/editions.ts`). Don't fight the inference or invent inline shapes — add the derived type to `types/database.ts` and cast to it.
 - **Storage stores paths, not URLs.** Columns like `posts.image_url` hold the **storage path** (`<userId>/posts/<postId>/image.jpg`), never a signed or public URL. Buckets are private — sign at read time with `createSignedUrl(path, ttl)`. Uploads use `{ upsert: true }`.
 - **The first path segment(s) gate RLS — get them wrong and the upload silently becomes unreadable.** Conventions enforced by storage policies (see `db-migrations`):
@@ -40,7 +40,8 @@ This is the app-side data layer: the `supabase-js` client, the `lib/` functions 
 | --- | --- |
 | `supabase.ts` | The client singleton + platform storage adapters. |
 | `auth.ts` | Sign-up/in/out, profile sync (`ensureUserProfile`), avatar upload, auth error mapping. |
-| `groups.ts` | Group CRUD, membership, invite-code join/lookup (RPCs), cover upload. |
+| `groups.ts` | Group CRUD, membership, invite-code join/lookup (RPCs), moderator member-removal, cover upload. |
+| `report.ts` | Content reporting — drafts the support mailto for a post. Not Supabase; the seam to swap if reports ever get a real endpoint. |
 | `posts.ts` | Post CRUD, image upload + signed display URLs, current-post lookup. |
 | `editions.ts` | Edition list/detail queries, publish-now invoke, edition error parsing. |
 | `edition-seen.ts` | Local per-device "seen" state (AsyncStorage) — not Supabase. |

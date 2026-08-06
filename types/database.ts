@@ -185,6 +185,10 @@ export type Database = {
         Args: { p_invite_code: string };
         Returns: string;
       };
+      remove_group_member: {
+        Args: { p_group_id: string; p_user_id: string };
+        Returns: void;
+      };
       prepare_account_deletion: {
         Args: { p_user_id: string };
         Returns: {

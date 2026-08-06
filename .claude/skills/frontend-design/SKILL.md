@@ -62,6 +62,7 @@ You're working on the UI of a family-newsletter app built for older adults and G
 | `edition-briefs-grid` | The "IN BRIEF" section: labeled rule header + two-column rows with hairline rules; odd last brief runs full-width. Reports tapped-cell frames for the enlarge overlay. |
 | `story-article` | One full post in the reader: headline, avatar byline, credited photo, lettrine body. |
 | `story-reader` | Host-agnostic reader body + Next/Previous paging; rendered by both the `[postId]` route and the enlarge overlay. |
+| `report-story-link` | The BRAND §9 report affordance at the foot of a story. Renders nothing on your own post; drafts a support mailto via `lib/report.ts`. |
 | `story-reader-overlay` | The enlarge transition: tapped cover section grows into the full-screen reader (Modal + reanimated); reverse-shrinks on close. |
 | `custom-tab-bar` | The 5-slot bar with the raised ink-black "+". |
 | `compose-sheet-provider` / `compose-group-sheet` | The "write for…" group-picker sheet the "+" opens. |

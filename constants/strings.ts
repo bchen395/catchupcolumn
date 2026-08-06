@@ -21,6 +21,26 @@ export const Strings = {
     privacyUrl: 'https://www.catchupcolumn.com/privacy',
     termsUrl: 'https://www.catchupcolumn.com/terms',
     supportUrl: 'https://www.catchupcolumn.com/support',
+    supportEmail: 'support@catchupcolumn.com',
+  },
+
+  // Reporting a story. Groups are private and invite-only, so this is a rare
+  // path — the language stays calm and non-accusatory, and the action is a
+  // quiet link rather than a button (BRAND §9).
+  report: {
+    link: 'Report this story',
+    confirmTitle: 'Report this story?',
+    confirmBody:
+      'We’ll open an email to our team with this story’s details attached. Someone will read it and get back to you.',
+    confirmCta: 'Write the email',
+    emailSubject: 'Reporting a story in Catch Up Column',
+    // Sits above the details block in the drafted email.
+    emailIntro:
+      'Please tell us what’s wrong with this story, and we’ll take a look:',
+    // Shown when the device has no mail app to hand the draft to.
+    noMailTitle: 'No email app found',
+    noMailBody: (address: string) =>
+      `Please email us at ${address} and we'll take a look.`,
   },
 
   loading: {
