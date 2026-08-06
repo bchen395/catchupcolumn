@@ -131,6 +131,9 @@ Flat editorial. **The polaroid (tape, tilt, white frame) is fully retired** — 
 - **Status/banners:** text-first on a hairline-ruled band: `kicker` + one Jost line. Info = ink kicker; warning = vermilion kicker; error = `error` kicker. No tinted background slabs. **There is no success color** (v1 green retired, decided 2026-07-17): success banners use the info voice — the warm words carry it — and true celebration moments belong to the stamp system (§11).
 - **Sheets/modals:** `paper`, top-rounded 20, grab handle, hairline header rule. The compose sheet keeps its sanctioned spring (§10).
 - **Empty states:** doodle scene (§4) + Lora Bold headline + Jost body + one primary action.
+- **Moderation affordances** (added 2026-08-05, for App Review Guideline 1.2): these are rare, sober actions and must never compete with the page's real work, so both are **quiet text, not buttons** — quiet by *color and placement*, never by shrinking below the reading floor.
+  - *Report this story* sits at the foot of every story in the reader, under a hairline rule: `ui` (Jost 16) in `inkSoft`, centered, 48px target. Hidden on your own post. It spends no accent — reporting is not a live moment, so vermilion stays out of it (§2).
+  - *Remove* sits at the right edge of a member's row on the group screen, moderator-only and never on your own row: `caption` in `error`, matching the destructive voice above. Confirmation names what else goes (the member's unpublished writing) so removal is never a surprise.
 
 ## 10. Motion & interaction feel
 

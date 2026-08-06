@@ -106,21 +106,26 @@ Authentication:
 ## Gate 6 — App Review risk: user-generated content
 
 Apple Guideline 1.2 expects three things from an app where users publish content
-others see. The app has **one**:
+others see. **Decided 2026-08-05: build all three** rather than argue the
+invite-only model — a rejection costs a review cycle, and both affordances were
+cheap.
 
 - [x] Published acceptable-use terms — `docs/TERMS.md §4` / `web/terms.html`
-- [ ] A way to **report** objectionable content — does not exist anywhere in the app
-- [ ] A way to **block or eject** an abusive user — `lib/groups.ts` has only
-      `leaveGroup` / `deleteGroup`; a moderator cannot remove anyone, so the only
-      escape is for the victim to leave. (The DB side is ready — see
-      `prevent_last_moderator_removal`.)
+      (both now describe the report path and the moderator's removal power)
+- [x] A way to **report** objectionable content — "Report this story" at the foot of
+      every story in the reader (`components/report-story-link.tsx`), which drafts a
+      mailto to `support@catchupcolumn.com` with the story/group/edition ids
+      attached. Hidden on your own posts. `lib/report.ts` is the seam to swap for a
+      real endpoint if volume ever justifies one.
+- [x] A way to **block or eject** an abusive user — moderators get a "Remove" action
+      on every other member's row in `app/group/[id].tsx`, backed by the
+      `remove_group_member` RPC (`20260806003026_member_moderation.sql`). Removal
+      also deletes the member's *uncompiled* posts, so an ejected member's pending
+      story can't still land in tomorrow's edition; published editions are untouched.
+      `prevent_last_moderator_removal` still guards the sole-moderator case.
 
-"Groups are private and invite-only" is a legitimate argument and reviewers sometimes
-accept it, but it's a coin flip and a rejection costs a review cycle. Cheap insurance
-is a moderator "remove member" action plus a report affordance on a post (even one
-that just opens a support email).
-
-- [ ] **Decide:** build it, or write the reviewer note explaining the invite-only model
+- [ ] Re-run the Gate 1 automated checks — this code landed after Gate 1 passed
+- [ ] Smoke-test both affordances on device (folded into Gate 7 below)
 
 ## Gate 7 — On-device smoke test
 
@@ -136,6 +141,10 @@ Using the TestFlight / internal-testing build, with two accounts:
       app — **not a 404**
 - [ ] Push notification fires
 - [ ] Unsubscribe link → styled confirmation page
+- [ ] **Report this story** → drafts an email to support with the ids attached, and
+      is absent on your own post
+- [ ] **Moderator removes the second account** → they lose access, their unpublished
+      post disappears from the next edition, and the published edition is unchanged
 - [ ] Profile → Delete account → completes and signs out
 
 ## Gate 8 — Store consoles

@@ -9,6 +9,7 @@ import type { PostWithAuthor } from '@/types';
 
 import { Avatar } from './avatar';
 import { EditorialPhoto } from './editorial-photo';
+import { ReportStoryLink } from './report-story-link';
 import { ThemedText } from './themed-text';
 
 type Props = {
@@ -60,6 +61,8 @@ export const StoryArticle = ({ post }: Props) => {
         {showCap ? <ThemedText style={styles.dropCap}>{initial}</ThemedText> : null}
         {rest}
       </ThemedText>
+
+      <ReportStoryLink post={post} />
     </View>
   );
 };

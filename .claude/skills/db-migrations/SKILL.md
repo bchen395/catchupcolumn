@@ -31,7 +31,12 @@ Migrations are the **source of truth** for the schema, RLS, and every RPC. The a
     where group_id = p_group_id and user_id = p_user_id and role = 'moderator'
   ); $$;
   ```
-- **Authorize inside the function, against `auth.uid()`.** RPCs that mutate on behalf of a role check membership/moderator status explicitly and `raise exception` with a **stable, parseable code** (the app matches on the message string): `not_authenticated`, `not_moderator`, `no_posts_to_publish`, `publish_in_progress`, `invalid_invite_code`. Reuse existing codes; don't invent synonyms.
+- **Authorize inside the function, against `auth.uid()`.** RPCs that mutate on behalf of a role check membership/moderator status explicitly and `raise exception` with a **stable, parseable code** (the app matches on the message string): `not_authenticated`, `not_moderator`, `no_posts_to_publish`, `publish_in_progress`, `invalid_invite_code`, `cannot_remove_self`, `not_a_member`. Reuse existing codes; don't invent synonyms.
+
+  Raise them with a **valid 5-character SQLSTATE** — `P0001` unless you have a
+  reason. Several pre-2026-07 RPCs use `errcode = 'PGRST301'`, which is 8 characters
+  and therefore not a legal SQLSTATE; don't copy that from the migration you're
+  reading next to.
 - **Lock down privileged tables; route writes through RPCs.** Direct client inserts that could escalate privilege are denied with `with check (false)` (see `group_members`), and the only legitimate writers are a `security definer` trigger or RPC. If you add a table where the client shouldn't write directly, do the same.
 - **`grant execute` deliberately.** Caller-facing RPCs → `to authenticated`. Worker/dispatch RPCs called only by edge functions with the service role → `to service_role` (e.g. `compile_due_editions`). Don't over-grant.
 - **Storage policies gate on path segments.** Buckets are private; policies parse the object path with `(storage.foldername(name))[n]`. Match the app's path conventions exactly:

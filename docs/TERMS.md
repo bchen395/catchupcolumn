@@ -31,10 +31,17 @@ infringes someone else's rights, and don't attempt to access other users' data,
 disrupt the service, or misuse invite links. Groups are private spaces among people
 who invite each other; treat other members with the warmth the app is built for.
 
+If you see a story that breaks these rules, tap **Report this story** at the bottom
+of it, or email `support@catchupcolumn.com`. We read every report and may remove
+content or accounts that violate these terms.
+
 ## 5. Moderators
 
 A group's creator is its moderator and can manage group settings and membership.
-Moderators are responsible for the groups they run and the members they invite.
+A moderator can remove any member of their group at any time; removing someone also
+deletes anything they have written for the upcoming edition, and already-published
+editions are left unchanged. Moderators are responsible for the groups they run and
+the members they invite.
 
 ## 6. Deleting content and accounts
 

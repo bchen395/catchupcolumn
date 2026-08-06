@@ -32,7 +32,9 @@ import {
     deleteGroup,
     fetchGroupDetails,
     leaveGroup,
+    RemoveMemberError,
     removeGroupCover,
+    removeGroupMember,
     updateGroupSettings,
     uploadGroupCover,
 } from '@/lib/groups';
@@ -59,9 +61,12 @@ type MemberRowProps = {
   avatarUrl: string | null;
   role: 'moderator' | 'contributor';
   isCurrentUser: boolean;
+  // Present only for a moderator looking at somebody else — the row is
+  // read-only for everyone else.
+  onRemove?: () => void;
 };
 
-const MemberRow = ({ displayName, avatarUrl, role, isCurrentUser }: MemberRowProps) => {
+const MemberRow = ({ displayName, avatarUrl, role, isCurrentUser, onRemove }: MemberRowProps) => {
   const initials = displayName
     .trim()
     .split(/\s+/)
@@ -91,6 +96,19 @@ const MemberRow = ({ displayName, avatarUrl, role, isCurrentUser }: MemberRowPro
           </ThemedText>
         </View>
       </View>
+      {onRemove ? (
+        <Pressable
+          onPress={onRemove}
+          accessibilityRole="button"
+          accessibilityLabel={`Remove ${displayName} from this Group`}
+          hitSlop={8}
+          style={({ pressed }) => [memberStyles.remove, pressed && memberStyles.removePressed]}
+        >
+          <ThemedText variant="caption" style={memberStyles.removeLabel}>
+            Remove
+          </ThemedText>
+        </Pressable>
+      ) : null}
     </View>
   );
 };
@@ -146,6 +164,21 @@ const memberStyles = StyleSheet.create({
   badgeContribText: {
     color: Colors.inkSoft,
   },
+  // A quiet text action, not a button: ejecting someone is rare and shouldn't
+  // compete with the invite card for attention. Error red (never vermilion —
+  // that's the editorial accent, §2) marks it destructive.
+  remove: {
+    minHeight: Layout.touchTargetMin,
+    justifyContent: 'center',
+    paddingLeft: Layout.padding.md,
+  },
+  removePressed: {
+    opacity: 0.6,
+  },
+  removeLabel: {
+    color: Colors.error,
+    fontFamily: Typography.families.sansSemiBold,
+  },
 });
 
 // ---------------------------------------------------------------------------
@@ -174,6 +207,7 @@ const GroupDetailScreen = () => {
   const [pickingCover, setPickingCover] = useState(false);
 
   const [leaving, setLeaving] = useState(false);
+  const [removingUserId, setRemovingUserId] = useState<string | null>(null);
   const [deletingGroup, setDeletingGroup] = useState(false);
   const [publishingNow, setPublishingNow] = useState(false);
 
@@ -326,6 +360,49 @@ const GroupDetailScreen = () => {
           },
         },
       ]
+    );
+  };
+
+  const handleRemoveMember = (memberId: string, memberName: string) => {
+    if (!group) return;
+    Alert.alert(
+      `Remove ${memberName}?`,
+      `${memberName} will no longer be able to read or write for ${group.name}. Anything they've written for this week's edition will be removed too — past editions stay as they were. You can always invite them back.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            setScreenError('');
+            try {
+              setRemovingUserId(memberId);
+              await removeGroupMember(group.id, memberId);
+              setGroup((prev) =>
+                prev
+                  ? { ...prev, members: prev.members.filter((m) => m.user_id !== memberId) }
+                  : prev,
+              );
+            } catch (err) {
+              const code = err instanceof RemoveMemberError ? err.code : 'remove_failed';
+              setScreenError(
+                code === 'last_moderator'
+                  ? `${memberName} is the only moderator, so they can't be removed. Make someone else a moderator first.`
+                  : code === 'not_moderator'
+                    ? 'Only moderators can remove members.'
+                    : code === 'not_a_member'
+                      ? `${memberName} is no longer in this Group.`
+                      : `Could not remove ${memberName} right now. Please try again.`,
+              );
+              // A stale "not a member" means somebody else already left or was
+              // removed — refresh so the list stops disagreeing with the server.
+              if (code === 'not_a_member') void load();
+            } finally {
+              setRemovingUserId(null);
+            }
+          },
+        },
+      ],
     );
   };
 
@@ -514,6 +591,11 @@ const GroupDetailScreen = () => {
             avatarUrl={m.user.avatar_url}
             role={m.role}
             isCurrentUser={m.user_id === currentUserId}
+            onRemove={
+              isModerator && m.user_id !== currentUserId && !removingUserId
+                ? () => handleRemoveMember(m.user_id, m.user.display_name)
+                : undefined
+            }
           />
         ))}
       </View>

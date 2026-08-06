@@ -395,6 +395,58 @@ export const leaveGroup = async (groupId: string, userId: string): Promise<void>
 };
 
 // ---------------------------------------------------------------------------
+// Remove a member (moderator only)
+// ---------------------------------------------------------------------------
+
+export type RemoveMemberErrorCode =
+  | 'not_authenticated'
+  | 'not_moderator'
+  | 'cannot_remove_self'
+  | 'not_a_member'
+  | 'last_moderator'
+  | 'remove_failed';
+
+export class RemoveMemberError extends Error {
+  code: RemoveMemberErrorCode;
+  constructor(code: RemoveMemberErrorCode, message: string) {
+    super(message);
+    this.code = code;
+  }
+}
+
+// `remove_group_member` raises its stable codes as the exception *message*
+// (the house convention — see the RPCs in supabase/migrations/), while the
+// older prevent_last_moderator_removal trigger predates it and raises a
+// sentence. Match both.
+const parseRemoveMemberError = (message: string): RemoveMemberErrorCode => {
+  if (message.includes('last moderator')) return 'last_moderator';
+  if (message.includes('not_authenticated')) return 'not_authenticated';
+  if (message.includes('not_moderator')) return 'not_moderator';
+  if (message.includes('cannot_remove_self')) return 'cannot_remove_self';
+  if (message.includes('not_a_member')) return 'not_a_member';
+  return 'remove_failed';
+};
+
+/**
+ * Eject a member from a Group. Moderator-only, and it also deletes the removed
+ * member's *uncompiled* posts so nothing they wrote is still queued for the
+ * next edition — published editions are left untouched (see the migration).
+ */
+export const removeGroupMember = async (
+  groupId: string,
+  userId: string,
+): Promise<void> => {
+  const { error } = await supabase.rpc('remove_group_member', {
+    p_group_id: groupId,
+    p_user_id: userId,
+  });
+
+  if (error) {
+    throw new RemoveMemberError(parseRemoveMemberError(error.message), error.message);
+  }
+};
+
+// ---------------------------------------------------------------------------
 // Delete (moderator only)
 // ---------------------------------------------------------------------------
 
