@@ -1,7 +1,10 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
-node_modules/
+# No trailing slash: in a git worktree, node_modules is a *symlink* back to the
+# root install, and "node_modules/" only matches directories — so the symlink
+# showed up as untracked and committable. This form matches both.
+node_modules
 
 # Expo
 .expo/
@@ -43,3 +46,6 @@ yarn-error.*
 
 # design-reference screenshots (inspiration only — not shipped)
 /screenshots
+
+# git worktrees created inside the repo (Claude Code's EnterWorktree, etc.)
+/.claude/worktrees/
