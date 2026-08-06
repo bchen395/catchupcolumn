@@ -40,3 +40,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# design-reference screenshots (inspiration only — not shipped)
+/screenshots
