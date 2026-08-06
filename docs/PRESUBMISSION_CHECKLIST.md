@@ -29,8 +29,9 @@ older than your last deploy.
 
 ## Gate 2 — Backend parity with production
 
-- [ ] `npx supabase migration list --linked` — every local migration shows a `remote`
-      counterpart *(2026-08-04: all 27 applied ✅)*
+- [x] `npx supabase migration list --linked` — every local migration shows a `remote`
+      counterpart *(2026-08-05: all 29 applied ✅ — the two moderation migrations
+      pushed on top of the 27 verified 2026-08-04)*
 - [ ] `npx supabase functions list` — all 4 functions `ACTIVE`
       *(2026-08-04: deployed and current ✅)*
       > `delete-account` reports an `updated_at` **earlier** than its last code
