@@ -60,7 +60,9 @@ assets/                    Brand logo, app icons, splash, fonts
 
 ### Prerequisites
 
-- Node 18+ and npm
+- Node 20.19.4+ (Node 22 recommended — run `nvm use` to pick up `.nvmrc`) and npm.
+  Older Node fails at startup with `TypeError: configs.toReversed is not a function`,
+  thrown from Metro's config loader.
 - Expo CLI (`npx expo` is fine — no global install needed)
 - A Supabase project (cloud or local via `supabase` CLI)
 - A Resend account + API key (for email delivery)
