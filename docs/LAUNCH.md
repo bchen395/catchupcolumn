@@ -1,8 +1,14 @@
 # Launch Runbook — Catch Up Column
 
 Everything left to take Catch Up Column from "code-complete" to "live in the App
-Store and Play Store," in order. Steps marked **[owner]** need your accounts/logins
-and can't be automated from the repo.
+Store," in order. Steps marked **[owner]** need your accounts/logins and can't be
+automated from the repo.
+
+**Scope decision (2026-08-22): iOS first, Android later.** Every step below is
+iOS-only unless it says otherwise. Play Console, the FCM service account, and
+`assetlinks.json` are out of scope for this launch — see
+[Android — deferred](#android--deferred) at the bottom for what's already in place
+and what it will need when you pick it back up.
 
 Companion docs:
 
@@ -14,17 +20,33 @@ Companion docs:
 
 Project ref: `wvaxfyhihcfilewygtzp` · Bundle ID: `com.catchupcolumn.app`
 
-**Plan (as of the 2026-08-04 verification pass):** the backend, legal hosting, the
-UI redesign, and the EAS env vars are all done and verified against production. Two
-things stand between here and submission:
+**Plan (as of 2026-08-22):** the backend, legal hosting, the UI redesign, the EAS env
+vars, and **UGC moderation (step 9, shipped 2026-08-05)** are all done — the last of
+those was the likeliest App Review rejection, and it's closed.
 
-1. **A product decision on UGC moderation (step 9)** — there is no report/block or
-   remove-member path. This is the likeliest App Review rejection.
-2. **The first-ever release build (step 8)** — `eas build:list` is empty, so nothing
-   has run outside Expo Go. Push credentials get created during that first build.
+The active product work is now the **illustration rework (step 6b)**. Because
+screenshots freeze the final look, and because the Apple Developer enrollment only
+starts being useful once there's art worth building against, those are **deliberately
+deferred**:
 
-Store screenshots (step 7) need the build too. Steps 4–5 are dashboard-only and can
-happen in parallel.
+- ⏸ **Store screenshots (step 7)** — deferred until the illustrations land.
+- ⏸ **Apple Developer Program enrollment + push credentials (steps 3, 7)** — deferred
+  by choice. Nothing else is blocked on them; see step 3.
+
+So the order from here is: **illustrations (6b) → enroll + first build (7, 8) →
+screenshots → submit.**
+
+Cleared on 2026-08-22, both needing no Apple account: the **Vercel redeploy** (step 2
+— edition permalinks now 200 where they previously 404'd, so edition emails' primary
+CTA works) and the **Supabase Auth dashboard settings** (step 5).
+
+Still open and independent of Apple:
+
+1. **Resend** (step 4) — DNS is correctly provisioned; confirm Resend flipped the
+   domain to `verified`, re-set `EMAIL_FROM`, and add the missing DMARC record.
+2. **Confirm the `compile-editions` cron is firing** — see
+   [Verifying the compile-editions cron](#verifying-the-compile-editions-cron). If it
+   isn't, weekly compilation silently never runs and the core feature is dead.
 
 ---
 
@@ -123,7 +145,7 @@ not assumed. Where this doc previously disagreed with reality, reality won.
 Landed the legal/support pages, the Vercel config, and the `.well-known` files on
 `main`. (Universal-links placeholders in `.well-known/` remain — see step 2.)
 
-## 2. Site on Vercel + domain — ✅ deployed, one fix pending redeploy
+## 2. Site on Vercel + domain — ✅ done (edition permalinks verified 2026-08-22)
 
 The site is what `WEB_BASE_URL` and every email/edition link resolve to. It is live:
 `/privacy`, `/terms`, `/support`, `/delete-account` all return 200, and the
@@ -132,11 +154,14 @@ The site is what `WEB_BASE_URL` and every email/edition link resolve to. It is l
 **`www` is canonical** — the apex 308-redirects to it. All in-app and email links now
 target `www` directly.
 
-☐ **Redeploy to pick up the `/edition/*` rewrite fix** (see the 2026-08-04 pass), then:
+✅ **Redeployed 2026-08-22 to pick up the `/edition/*` rewrite fix** — the permalink
+now returns 200 where it previously 404'd, so every edition email's primary CTA works.
+Re-run this after any `web/vercel.json` change; it is the easiest thing in the project
+to regress silently:
 
 ```bash
 curl -s -o /dev/null -w '%{http_code}\n' https://www.catchupcolumn.com/edition/00000000-0000-0000-0000-000000000000
-# → 200. A 404 means the rewrite is still broken and every edition email's CTA is dead.
+# → 200. A 404 means the rewrite is broken and every edition email's CTA is dead.
 ```
 
 ☐ **Confirm the `WEB_BASE_URL` secret points at `www`** (the value is hashed in
@@ -152,28 +177,63 @@ SHA-256 in `assetlinks.json`, and (b) add `associatedDomains`/`intentFilters` to
 `app.json` (snippet in `web/README.md`). **Declare `www.catchupcolumn.com`, not the
 apex** — Apple and Google don't follow the 308.
 
-## 3. EAS project setup **[owner]** — ✅ except push credentials
+## 3. EAS project setup **[owner]** — ✅ done for now (credentials deferred)
 
 - ✅ **`eas init` done** — `owner` (`bchen395`) + `extra.eas.projectId`
   (`c9be4074-4916-4e94-9276-811bbe8a05dc`) are committed to `app.json`.
-- ✅ **Supabase env vars on EAS** — verified present in the `production` environment.
-- ☐ **Push credentials** — still needed. Without them production push silently never
-  registers.
+- ✅ **Supabase env vars on EAS** — verified present in the `production` environment
+  (2026-08-04). This was the part that would break the app at launch, and it's done.
+- ⏸ **Push credentials — deferred with the Apple enrollment.** The iOS APNs key can
+  only be created from an Apple Developer account, so this is blocked on step 7 by
+  choice, not by oversight. EAS creates it interactively during the first
+  `eas build`, so there is nothing to do ahead of time:
 
-```bash
-npx eas-cli credentials    # iOS: add an APNs key · Android: add the FCM v1 service account
+  ```bash
+  npx eas-cli credentials    # iOS: add an APNs key (needs Apple enrollment)
+  ```
+
+  **Consequence while deferred:** production push notifications won't register. Email
+  delivery is unaffected, so editions still reach people. Push is the only casualty.
+
+**Nothing else in step 3 is outstanding** — with the env vars set and the project
+linked, an unsigned iOS *simulator* build already works today if you want to smoke-test
+the binary before enrolling (see step 6b).
+
+## 4. Email deliverability — Resend **[owner]** — DNS verified, three checks left
+
+**DNS is correctly provisioned** (checked 2026-08-22). The records match Resend's
+standard layout for the **root** domain `catchupcolumn.com`:
+
+| Record | Value | Purpose |
+| --- | --- | --- |
+| `resend._domainkey.catchupcolumn.com` TXT | DKIM public key | message signing |
+| `send.catchupcolumn.com` TXT | `v=spf1 include:amazonses.com ~all` | SPF on the envelope domain |
+| `send.catchupcolumn.com` MX | `feedback-smtp.us-east-1.amazonses.com` | bounce handling |
+
+> **The missing SPF record on the root is correct, not a bug.** SPF is evaluated
+> against the envelope sender (`send.catchupcolumn.com`), which has it. Don't "fix"
+> this by adding an SPF record to the apex. Because DKIM sits on the root, `EMAIL_FROM`
+> must use the root domain (`@catchupcolumn.com`), not `@send.catchupcolumn.com`.
+
+☐ **Add a DMARC record.** There is none at `_dmarc.catchupcolumn.com`. Resend doesn't
+require it to verify, but Gmail's and Yahoo's bulk-sender rules lean on it, and this
+app mails newsletters to family inboxes. `p=none` is monitor-only and cannot break
+delivery:
+
+```
+_dmarc.catchupcolumn.com  TXT  "v=DMARC1; p=none; rua=mailto:support@catchupcolumn.com"
 ```
 
-These are normally created interactively during the first `eas build`, so step 8 will
-prompt for them if you skip this.
+☐ **Confirm Resend flipped the domain to `verified`.** Correct DNS is not the same as
+Resend having confirmed it:
 
-## 4. Email deliverability — Resend **[owner]** — mostly done
+```bash
+curl -s https://api.resend.com/domains -H "Authorization: Bearer $RESEND_API_KEY"
+# look for "status": "verified" on catchupcolumn.com
+```
 
-The `EMAIL_FROM` secret was updated 2026-07-17, so it is no longer the Resend sandbox
-default. Two things left to confirm (neither is readable from the CLI):
-
-- ☐ The sending domain is **verified in Resend** — otherwise deliverability still tanks.
-- ☐ `EMAIL_FROM` uses that verified domain:
+☐ **Re-set `EMAIL_FROM`.** The secret is hashed and can't be read back, and if it is
+unset, `_shared/edition-dispatch.ts` silently falls back to `onboarding@resend.dev`:
 
 ```bash
 npx supabase secrets set EMAIL_FROM='Catch Up Column <hello@catchupcolumn.com>'
@@ -181,17 +241,20 @@ npx supabase secrets set EMAIL_FROM='Catch Up Column <hello@catchupcolumn.com>'
 
 (No function redeploy needed — secrets are read at runtime.)
 
-## 5. Supabase Auth dashboard settings **[owner]**
+## 5. Supabase Auth dashboard settings **[owner]** — ✅ done (2026-08-22)
 
-These are **not** in `config.toml` (that governs local dev only) — set them in the
-Supabase dashboard → Authentication:
+These are **not** in `config.toml` (that governs local dev only) — they were set in the
+Supabase dashboard → Authentication. `config.toml` still shows the old local-dev values
+(`minimum_password_length = 6`, `enable_confirmations = false`); that is expected and
+is not a signal about production.
 
-- **Redirect URLs:** add `catchupcolumn://` (and `catchupcolumn://(auth)/reset-password`)
-  to the allowlist so password-reset deep links work in release builds.
-- **Minimum password length:** raise from 6 to at least 8.
-- **Email confirmation:** decide whether to require it. It prevents sign-ups under
-  someone else's address but adds a step for the older-adult audience; the app
-  already has a resend-confirmation path if you enable it. (See `bugs.md` D2.)
+- ✅ **Redirect URLs:** `catchupcolumn://` and `catchupcolumn://(auth)/reset-password`
+  allowlisted, so password-reset deep links work in release builds.
+- ✅ **Minimum password length** raised from 6.
+- ✅ **Email confirmation** decision made.
+
+Re-confirm the redirect allowlist after the first release build — it is the one
+setting whose breakage only shows up on a signed binary.
 
 ## 6. Redesign the UI — ✅ done (2026-07-18)
 
@@ -204,63 +267,154 @@ If you revisit the UI further, run the `verify-changes` checklist first — `npm
 typecheck` plus manual QA of every screen (auth, onboarding, group create/join,
 composer, editions list, edition reader, profile) at large system font sizes.
 
-## 7. Store accounts, assets, and metadata **[owner]**
+## 6b. Illustration rework — ⚠️ the active product gate
 
-- Enroll in the **Apple Developer Program** ($99/yr) and **Google Play Console**
-  ($25 one-time). Confirm the bundle ID `com.catchupcolumn.app` is final — it's
-  immutable after first submission. (You'll also need the Apple Team ID here for
-  step 2's universal links.)
-- Create the app records in App Store Connect and Play Console.
-- **Screenshots (redesign done — ready to capture):** iPhone 6.9" required (Home, an
-  edition front page, the composer, a group). No iPad shots needed (iPad support is
-  off). Android phone shots too. Note `/screenshots` holds design-reference images
-  only, so no store shots exist yet.
-- Paste the descriptions, keywords, and the privacy/data-safety answers from
-  [STORE_LISTING.md](./STORE_LISTING.md). Enter the URLs from step 2.
+Reworking the hand-drawn illustration world (the paperboy and his dog). This is the
+**last planned product change before launch**, and it's why steps 7–8 are deferred:
+screenshots and the store build both freeze the final look.
 
-## 8. Build & submit **[owner]** — note: this is the *first ever* release build
+**What exists today** — 9 components in `components/illustrations/`:
+`paperboy-mark`, `paperboy-mailbox-scene`, `dog-with-paper-scene`,
+`sleeping-dog-doodle`, `printing-press-scene`, `mug-doodle`, `rolled-paper-glyph`,
+`invite-ticket`, `sketch-border`. They're wired into the inbox empty state, the
+groups and post screens, the profile footer, the group welcome screen, and the
+loading screen (`printing-press-loading.tsx`, `ride` / `press` variants).
+
+**Scope: to be defined.** Nail down which illustrations change before starting so it
+doesn't sprawl — this is chrome, not a re-architecture.
+
+**Constraints from `design/BRAND.md` (§3, §4, §12, §13) — don't break these:**
+
+- Illustrations live in **app chrome only, never inside editions**.
+- Monoline strokes draw in `illustrationInk` (true `#000`), not text `ink`.
+- Hand-lettering is for **static words baked into art only** — never dynamic text
+  (that's why invite codes are live vermilion `Jost`, not lettering).
+- **Reduce Motion:** every animated illustration must park in a static pose (the
+  spinning wheels, the press flywheel, the welcome-screen dog leap). Verify this — no
+  automated check enforces it.
+- **Splash/icon lockstep:** `assets/images/icon.png` and `splash-icon.png` are
+  generated from the same rider geometry as `paperboy-mark.tsx`. If the mark changes,
+  **regenerate both** — nothing enforces this either, and a mismatched icon is very
+  visible.
+
+**When done:**
+
+- Run the `verify-changes` checklist (typecheck + manual QA at large font sizes).
+- Update `design/BRAND.md` in the same change as any decision that shifts — it's the
+  source of truth.
+- Optionally smoke-test on a simulator build without needing an Apple account
+  (`eas.json`'s `preview` profile is already `ios: { simulator: true }`):
+
+  ```bash
+  npx eas-cli build --platform ios --profile preview
+  ```
+
+  This exercises font loading and the splash on a real binary. It won't test push or
+  universal links — those need the signed production build.
+- **Then** unblock steps 7 and 8.
+
+## 7. Store account, assets, and metadata **[owner]** — ⏸ deferred until 6b lands
+
+iOS only. Deferred by choice until the illustration rework is done, since screenshots
+freeze the final look.
+
+- ⏸ Enroll in the **Apple Developer Program** ($99/yr). Confirm the bundle ID
+  `com.catchupcolumn.app` is final — it's **immutable after first submission**. This
+  is also where you get the **Apple Team ID** that step 2's universal links need, and
+  what unblocks the APNs key in step 3.
+- ⏸ Create the app record in App Store Connect.
+- ⏸ **Screenshots — capture after 6b:** iPhone 6.9" required (Home, an edition front
+  page, the composer, a group). No iPad shots needed (iPad support is off).
+  > `/screenshots` in the repo holds design-reference images only (and is untracked as
+  > of `bce0de3`) — no store shots exist yet.
+- ⏸ Paste the descriptions, keywords, and the privacy answers from
+  [STORE_LISTING.md](./STORE_LISTING.md). Enter the `www` URLs from step 2.
+- ⏸ Age rating questionnaire — **flag user-generated content** (the app has it, and
+  step 9's affordances are what make that answer safe).
+
+*Play Console enrollment and Android shots move to [Android — deferred](#android--deferred).*
+
+## 8. Build & submit **[owner]** — ⏸ deferred; also the *first ever* release build
 
 `eas build:list` is empty. Nothing in this app has run outside Expo Go, so the first
 build is also the first test of font loading, splash-hide, push registration, deep
 links, and the notification icon on a signed binary. Budget time for it to not work
 first try.
 
+iOS only, and deferred until 6b lands and you've enrolled (step 7).
+
 ```bash
-npx eas-cli build --platform all --profile production
+npx eas-cli build --platform ios --profile production
 npx eas-cli submit --platform ios --latest
-npx eas-cli submit --platform android --latest
 ```
+
+This is where EAS prompts for the **APNs key** (step 3's deferred item), so have the
+Apple account ready.
 
 Before submitting, install the build and confirm on-device: fonts load, the splash
 hides, a push token registers, `catchupcolumn://` deep links open, and the photo
 picker prompts with the expected permission copy.
 
-Then complete the store-console review forms (age rating / data safety — **flag
+Then complete the App Store Connect review forms (age rating / privacy — **flag
 user-generated content**) and submit for review.
 
-## 9. UGC moderation — ⚠️ open product decision, likeliest rejection cause
+## 9. UGC moderation — ✅ done (2026-08-05, PR #14)
 
 Apple Guideline 1.2 expects three things from an app where users publish content
-others see. The app currently has one of them:
+others see. **Decided 2026-08-05: build all three** rather than argue the invite-only
+model — a rejection costs a review cycle and both affordances were cheap. This was
+previously flagged as the likeliest rejection cause; it is now closed.
 
-- ✅ **Published acceptable-use terms** — `docs/TERMS.md §4` / `web/terms.html`.
-- ☐ **A way to report objectionable content** — does not exist anywhere in the app.
-- ☐ **A way to block/eject an abusive user** — `lib/groups.ts` has `leaveGroup` and
-  `deleteGroup`, but no remove-member. A moderator cannot eject anyone; the only
-  escape is for the victim to leave. (The DB side is ready — see
-  `prevent_last_moderator_removal`.)
+- ✅ **Published acceptable-use terms** — `docs/TERMS.md §4` / `web/terms.html`, both
+  now describing the report path and the moderator's removal power.
+- ✅ **A way to report objectionable content** — "Report this story" at the foot of
+  every story in the reader (`components/report-story-link.tsx`, wired in
+  `components/story-article.tsx`), drafting a mailto to `support@catchupcolumn.com`
+  with the story/group/edition ids. Hidden on your own posts. `lib/report.ts` is the
+  seam to swap for a real endpoint if volume ever justifies it.
+- ✅ **A way to block/eject an abusive user** — moderators get a "Remove" action on
+  every other member's row (`app/group/[id].tsx`), backed by the `remove_group_member`
+  RPC (`20260806003026_member_moderation.sql`, hardened by `20260806005907`). Removal
+  also deletes the member's *uncompiled* posts, so an ejected member's pending story
+  can't land in tomorrow's edition; published editions are untouched.
+  `prevent_last_moderator_removal` still guards the sole-moderator case.
 
-"Groups are private and invite-only" is a reasonable argument and reviewers sometimes
-accept it, but it's a coin flip. The cheap insurance is a moderator "remove member"
-action plus a report path on a post (even one that just emails support).
-
-Decide before submitting: build it, or write the reviewer note explaining the
-invite-only model.
+☐ **Still to do:** smoke-test both affordances on device (Gate 7 in
+[PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md)), and re-run the Gate 1
+automated checks — this code landed after Gate 1 last passed.
 
 ## 10. Post-approval
 
-☐ Fill `appStoreUrl` / `playStoreUrl` in `web/config.js` and redeploy, so the site's
-download buttons appear instead of the "coming soon" line.
+☐ Fill `appStoreUrl` in `web/config.js` and redeploy, so the site's App Store button
+appears instead of the "coming soon" line. (Leave `playStoreUrl` empty until Android
+ships.)
+
+---
+
+## Android — deferred
+
+Deferred as of 2026-08-22 to get iOS out first. Nothing here is broken; it's just out
+of scope. **Already in place** (no need to redo it):
+
+- `android.package` = `com.catchupcolumn.app` and the adaptive icon in `app.json`.
+- The monochrome notification icon (`assets/images/notification-icon.png`).
+- `web/.well-known/assetlinks.json` exists with a placeholder fingerprint.
+- The bogus `RECORD_AUDIO` permission was removed 2026-08-04 — **verify it hasn't come
+  back** when you resume, or Play will force a microphone disclosure.
+
+**What it will need when you pick it back up:**
+
+- Google Play Console enrollment ($25 one-time) and the app record.
+- The **FCM v1 service account** via `npx eas-cli credentials` (the Android half of
+  step 3's push credentials).
+- `assetlinks.json`: replace `REPLACE_WITH_YOUR_APP_SIGNING_SHA256_FINGERPRINT` with
+  the Play **app-signing** fingerprint (not the upload key), and add `intentFilters`
+  to `app.json` declaring **`www.catchupcolumn.com`** — Google does not follow the
+  apex→www 308.
+- Android phone screenshots, and the Play **data safety** form from
+  `STORE_LISTING.md §7–8`.
+- `npx eas-cli build --platform android --profile production` +
+  `submit --platform android --latest`.
 
 ---
 
@@ -277,7 +431,70 @@ Using a TestFlight / internal-testing build:
    hand off to the app, *not* a 404 (regression check for the `/edition/*` rewrite).
 6. Tap the email's unsubscribe link → confirm the styled confirmation page.
 7. Profile → Delete account → confirm it completes and signs out.
-8. Confirm the 15-minute `compile-editions` cron is actually firing — check
-   `cron.job_run_details` in the Supabase dashboard. The job depends on the Vault
-   secrets `project_url` and `compile_editions_cron_secret` existing; if either is
-   missing, weekly compilation silently never runs.
+8. Confirm the 15-minute `compile-editions` cron is actually firing — see
+   [Verifying the compile-editions cron](#verifying-the-compile-editions-cron) below.
+   If it isn't, weekly compilation silently never runs and the core feature is dead.
+
+---
+
+## Verifying the compile-editions cron
+
+⚠️ **`cron.job_run_details` showing `succeeded` does NOT mean the cron worked.** The
+job body is a `select net.http_post(...)`, and pg_net is *asynchronous* — it queues the
+request and returns immediately, so the SQL statement succeeds regardless of what the
+HTTP call does. If the `project_url` Vault secret is missing, the URL evaluates to
+`NULL` and the POST goes nowhere while the job still logs as healthy. Check the
+response table, not just the job table.
+
+Run these in the Supabase dashboard SQL editor, in order:
+
+```sql
+-- 1. Is the job scheduled and active?
+select jobid, jobname, schedule, active from cron.job
+where jobname = 'compile-editions-every-15-minutes';
+
+-- 2. Do both Vault secrets exist, with the right values? (the silent killer)
+--    project_url must have NO trailing slash — the job appends /functions/v1/...
+--    compile_editions_cron_secret must equal the function's CRON_SECRET, or every call 401s.
+--    NB: prints secrets in cleartext; don't screen-share.
+select name, decrypted_secret from vault.decrypted_secrets
+where name in ('project_url', 'compile_editions_cron_secret');
+
+-- 3. Is it firing every 15 minutes?
+select status, return_message, start_time from cron.job_run_details
+where jobid = (select jobid from cron.job where jobname = 'compile-editions-every-15-minutes')
+order by start_time desc limit 10;
+
+-- 4. Did the HTTP request actually succeed? ← the check that proves it
+select id, status_code, content, created from net._http_response
+order by created desc limit 10;
+```
+
+Reading step 4: `200` → working. `401` → the Vault secret doesn't match the function's
+`CRON_SECRET`. `500` "CRON_SECRET is not configured" → the function secret is missing.
+**No rows at all** → the request was never queued, almost certainly the missing
+`project_url`.
+
+If a secret is absent (use `vault.update_secret` if the row exists but is wrong):
+
+```sql
+select vault.create_secret('https://wvaxfyhihcfilewygtzp.supabase.co', 'project_url');
+select vault.create_secret('<same value as the CRON_SECRET function secret>', 'compile_editions_cron_secret');
+```
+
+To isolate function health from cron wiring, call the function directly. A `200` with
+`compiled` / `skipped_no_posts` counts means the function and RPC are fine and any
+problem is in the cron/Vault wiring:
+
+```bash
+curl -i -X POST https://wvaxfyhihcfilewygtzp.supabase.co/functions/v1/compile-editions \
+  -H "Authorization: Bearer $CRON_SECRET" -H "Content-Type: application/json" \
+  -d '{"source":"manual"}'
+```
+
+⚠️ That curl is *usually* a no-op — `compile_due_editions` only picks up groups whose
+`publish_day` is today and whose `publish_time` fell inside the last 15 minutes (in the
+group's own timezone), plus a 22-hour duplicate guard. **But if a group is inside its
+publish window right now, this really will publish an edition and email every member.**
+Check your groups' `publish_day`/`publish_time` first if any are real rather than test
+groups.
