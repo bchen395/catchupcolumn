@@ -75,7 +75,7 @@ The warmth engine, and the only place the app is allowed to be cute.
 - Every asset sits directly on `paperWarm`/`paper` — never in a colored container, never with a drop shadow.
 
 **Where doodles live (and don't).** Chrome only; **editions stay editorial** (decided 2026-07-17):
-- **Splash/loading:** the paperboy rides; wheels spin (§10). Long waits (compile, publish) get the printing press running.
+- **Splash/loading:** the paperboy rides; wheels spin (§10). Long waits (compile, publish) get the printing press running. **Narrowed 2026-08-22:** the rider now covers cold boot and invite arrival only — ordinary in-app navigation gets a skeleton instead (§9/§10).
 - **Empty states:** scene + Lora Bold headline + Jost body, warm and never apologetic. (Empty editions list: paperboy waiting at a mailbox. No groups: dog holding a rolled paper, "Start your family's paper.")
 - **Onboarding, invite, welcome:** the dog catches the paper on the welcome screen; the ticket carries the invite (§11).
 - **Profile/settings flourishes and hidden corners:** small easter-egg doodles in quiet corners — the dog asleep under the final hairline of the editions list, a mug by the settings footer. Delight, zero function.
@@ -131,6 +131,8 @@ Flat editorial. **The polaroid (tape, tilt, white frame) is fully retired** — 
 - **Status/banners:** text-first on a hairline-ruled band: `kicker` + one Jost line. Info = ink kicker; warning = vermilion kicker; error = `error` kicker. No tinted background slabs. **There is no success color** (v1 green retired, decided 2026-07-17): success banners use the info voice — the warm words carry it — and true celebration moments belong to the stamp system (§11).
 - **Sheets/modals:** `paper`, top-rounded 20, grab handle, hairline header rule. The compose sheet keeps its sanctioned spring (§10).
 - **Empty states:** doodle scene (§4) + Lora Bold headline + Jost body + one primary action.
+- **Skeletons** (added 2026-08-22): the affordance for ordinary in-app waits — see §10 for which wait gets which. Placeholder type is drawn as `hairline` bars at `borderRadius.sm`, sized from the real variant (`fontSize × 0.62`) inside a box of its real `lineHeight` and scaled by `PixelRatio.getFontScale()`, so content lands with **no layout shift**. Photos and covers become hairline-edged blocks (the fill `AppImage` already shows for an unloaded photo); avatars become circles; role chips keep their outline and stay unfilled (§9's no-filled-chips rule holds even in a placeholder). **Structure is drawn for real** — rules, gaps, and section bands don't depend on the fetch, so they render at full strength and only the data-shaped slots breathe. Primitives live in `components/skeleton.tsx`; per-screen compositions in `components/skeletons/`, each mirroring one screen's real geometry. Never a card, never a tinted slab, never vermilion.
+  - *Not to be confused with greeked lines* (§14): those are 7px `full`-radius pills, static, dissolving down a column, and they mean "the story continues" inside real content. Skeleton bars are taller, squared, and breathing. The two never appear on screen at the same time.
 - **Moderation affordances** (added 2026-08-05, for App Review Guideline 1.2): these are rare, sober actions and must never compete with the page's real work, so both are **quiet text, not buttons** — quiet by *color and placement*, never by shrinking below the reading floor.
   - *Report this story* sits at the foot of every story in the reader, under a hairline rule: `ui` (Jost 16) in `inkSoft`, centered, 48px target. Hidden on your own post. It spends no accent — reporting is not a live moment, so vermilion stays out of it (§2).
   - *Remove* sits at the right edge of a member's row on the group screen, moderator-only and never on your own row: `caption` in `error`, matching the destructive voice above. Confirmation names what else goes (the member's unpublished writing) so removal is never a surprise.
@@ -141,6 +143,18 @@ Flat editorial. **The polaroid (tape, tilt, white frame) is fully retired** — 
 
 1. **UI motion is editorial.** v1's system survives verbatim: durations `quick` 160 / `settle` 220 / `enlarge` 260 / `exit` 200, ease-out cubic, no bounces or physics — "a broadsheet being handled." The enlarge-to-read transition and the reader's page turn survive as-is. Sanctioned exception: the compose sheet's gentle spring. Reduce Motion always respected.
 2. **Playfulness is licensed only inside illustrations.** The paperboy's wheels spin while loading; the press cycles during compile waits; the dog leaps once on the welcome screen. Illustration motion is ambient — it never delays, blocks, or decorates a functional interaction, and it parks (static pose) under Reduce Motion.
+
+**Which affordance covers which wait** (decided 2026-08-22). Loading used to have one answer — the full-screen illustrated loader — which meant routine navigation blanked the screen and, on the tabs, re-blanked it on every visit. Now:
+
+| Wait | Affordance |
+| --- | --- |
+| Cold boot (fonts + auth), invite deep-link arrival, auto-join | the paperboy rides — no layout to preview, and it continues the splash (§12) |
+| Compile + deliver an edition (publish now) | the printing press runs — the one multi-second job |
+| Navigating to a screen whose layout we know | a **skeleton** of that screen (§9) |
+| Revalidating with content already on screen | **nothing** — never flash over what someone is reading |
+| A button-scoped action | the button's own spinner |
+
+The skeleton's breath is a **third motion register**, licensed here and nowhere else: a slow opacity pulse (~1100ms, trough 0.6) on placeholder fills only. It is ambient like illustration motion — it never blocks or delays, and it parks static under Reduce Motion — but it is allowed outside an illustration because it *is* the loading affordance rather than decoration on one. Nothing else in the UI may pulse or breathe.
 
 **Haptics:** v1 system survives verbatim — `tap()` / `select()` / `confirm()`, sparse on purpose, secondary buttons silent.
 
@@ -157,7 +171,7 @@ Physical-print objects rendered as monoline drawings. All four are in the compon
 
 - **Wordmark:** "Catch Up Column" set as a masthead in Lora Bold, ink on paper. No container, no yellow, no outline.
 - **Mark:** the paperboy-on-bike monoline doodle — the app's anchor character (§4).
-- **Splash:** NYT-style — masthead wordmark with the paperboy riding beneath; his wheels are the loading spinner. **The dateline renders live in the loading screen** (the splash's animated twin), not in the splash PNG — a baked image can't know today's date (decided 2026-07-17). The splash/icon PNGs are generated from the same rider geometry as `paperboy-mark.tsx` — keep them in lockstep when the mark changes.
+- **Splash:** NYT-style — masthead wordmark with the paperboy riding beneath; his wheels are the loading spinner. **The dateline renders live in the loading screen** (the splash's animated twin — still the cold-boot screen after the 2026-08-22 narrowing, so the pairing holds), not in the splash PNG — a baked image can't know today's date (decided 2026-07-17). The splash/icon PNGs are generated from the same rider geometry as `paperboy-mark.tsx` — keep them in lockstep when the mark changes.
 - **App icon:** paperboy mark, ink on `paperWarm`, vermilion cap — the icon's single accent.
 - The v1 brandmark (cardboard box + paper bag + peach/yellow discs) and the yellow logotype **retired**; `assets/brand/` was removed with the splash/icon regeneration (2026-07-17).
 
@@ -180,6 +194,10 @@ Screen-by-screen mapping is in progress; this table is the contract for it.
 **Landed (Home front-page pass, 2026-07-18):** the §8 "Home is a front page" set — `home-hero` (story-led hero + first-edition variant), masthead date folio, rotating `Strings.home` copy via `dailyPick`, face row + rule-riding paperboy on the dateline strip, `WeeklyByline` extended with avatars.
 
 **Landed (edition-email pass, 2026-07-21):** the weekly edition email (`supabase/functions/_shared/edition-email.ts`) reskinned to v2 — ink `#1A1A1A` on `paperWarm`, hairline rules, Lora + Jost webfonts (Roboto Slab retired), title-case Lora masthead under a single vermilion `NEW EDITION` kicker, flat §5 photos with a "Photo by {name}" credit (the taped-polaroid stand-in + peach wash + warm shadow retired), and an ink-fill pill CTA (vermilion left to the kicker and the two links, never the button). Alpha tokens are pre-composited to opaque hex since email needs solids. Preview via the fixtures harness (edge-functions skill).
+
+**Landed (loading pass, 2026-08-22):** skeleton placeholders (§9) replace the illustrated loader on the five in-app waits whose layout is knowable — Editions, Groups, the edition front page, the story reader, and group detail — and fill three screens that previously showed *nothing* while loading (Home's hero slot, the profile byline hero, the composer's page). `PrintingPressLoading` goes from 9 call sites to 4: cold boot and auto-join (`app/_layout.tsx`), invite deep-link arrival (`app/group/join.tsx`), and publish-now, which keeps the `press` variant. New: `components/skeleton.tsx` + `components/skeletons/`, `SkeletonConfig` in `constants/loading.ts`, `Strings.loading.*` a11y lines.
+
+Two behaviours changed alongside the visuals, because the swap is worthless without them: (1) the tab screens re-entered their loading state inside `useFocusEffect`, so the loader fired on **every** visit to Editions or Groups — the flag is now monotonic per account, and focus refetches revalidate silently behind the content; (2) the edition front page ran three sequential round trips before first paint, and the last two now go together (`Promise.all`), shortening the app's longest wait.
 
 **Still pending:** redefining `caption` to the 12px spec once the last v1 caption usages migrate.
 

@@ -1,11 +1,12 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useComposeSheet } from '@/components/compose-sheet-provider';
 import { FirstEditionHero, HomeHero } from '@/components/home-hero';
+import { HomeHeroSkeleton } from '@/components/skeletons/home-hero-skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThisWeekStrip } from '@/components/this-week-strip';
 import { Colors } from '@/constants/colors';
@@ -43,9 +44,19 @@ const HomeScreen = () => {
   const [latest, setLatest] = useState<EditionListItem | null>(null);
   const [latestIsNew, setLatestIsNew] = useState(false);
   const [bylines, setBylines] = useState<WeeklyByline[]>([]);
+  // Home's masthead and CTA are computed locally and render at once; only the
+  // hero and dateline strip wait on data. Monotonic, so coming back to the tab
+  // refreshes them in place instead of collapsing the page to placeholders.
+  const [hydrated, setHydrated] = useState(false);
 
-  // Reuse the inbox query and pluck the newest edition. Keeps Home a thin
-  // composition over data that's already cached on the inbox tab.
+  // A different account must not see the previous one's front page.
+  useEffect(() => {
+    setHydrated(false);
+    setLatest(null);
+  }, [user?.id]);
+
+  // Plucks the newest edition from the same query the Editions tab runs. Note
+  // these are two independent fetches — there is no shared cache yet.
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
@@ -64,6 +75,9 @@ const HomeScreen = () => {
         .catch(() => {
           // Home gracefully degrades: a failed fetch just hides the hero.
           if (!cancelled) setLatest(null);
+        })
+        .finally(() => {
+          if (!cancelled) setHydrated(true);
         });
       return () => {
         cancelled = true;
@@ -109,19 +123,25 @@ const HomeScreen = () => {
         <ThemedText variant="deck">{dailyPick(Strings.home.deckLines, now)}</ThemedText>
       </View>
 
-      {latest ? (
-        <HomeHero
-          edition={latest}
-          isNew={latestIsNew}
-          onPress={() => router.push(`/edition/${latest.id}`)}
-        />
-      ) : groups.length > 0 ? (
-        // No edition yet — the first-week coming-soon front (BRAND §8), so
-        // the hero slot is alive exactly when first impressions form.
-        <FirstEditionHero />
-      ) : null}
+      {!hydrated ? (
+        <HomeHeroSkeleton />
+      ) : (
+        <>
+          {latest ? (
+            <HomeHero
+              edition={latest}
+              isNew={latestIsNew}
+              onPress={() => router.push(`/edition/${latest.id}`)}
+            />
+          ) : groups.length > 0 ? (
+            // No edition yet — the first-week coming-soon front (BRAND §8), so
+            // the hero slot is alive exactly when first impressions form.
+            <FirstEditionHero />
+          ) : null}
 
-      <ThisWeekStrip groups={groups} bylines={bylines} currentUserId={user?.id ?? null} />
+          <ThisWeekStrip groups={groups} bylines={bylines} currentUserId={user?.id ?? null} />
+        </>
+      )}
 
       {/* The main thing to DO on Home — dressed as a big secondary button
           (hairline outline, ink), not a tinted slab. The CTA is constant;

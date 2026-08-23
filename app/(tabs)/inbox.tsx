@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Pressable,
   RefreshControl,
@@ -14,7 +14,7 @@ import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
 import { PaperboyMailboxScene } from '@/components/illustrations/paperboy-mailbox-scene';
 import { SleepingDogDoodle } from '@/components/illustrations/sleeping-dog-doodle';
-import { PrintingPressLoading } from '@/components/printing-press-loading';
+import { EditionsListSkeleton } from '@/components/skeletons/editions-list-skeleton';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
@@ -92,7 +92,10 @@ const InboxScreen = () => {
   const { user } = useAuth();
   const { openComposeSheet } = useComposeSheet();
   const [editions, setEditions] = useState<EditionListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Monotonic per account: the skeleton shows until the first load settles and
+  // never again, so returning to the tab revalidates silently behind the list
+  // instead of blanking it.
+  const [hydrated, setHydrated] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [screenError, setScreenError] = useState('');
 
@@ -107,12 +110,17 @@ const InboxScreen = () => {
     }
   }, [user]);
 
+  // A different account must not see the previous one's editions.
+  useEffect(() => {
+    setHydrated(false);
+    setEditions([]);
+  }, [user?.id]);
+
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      setLoading(true);
       load().finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setHydrated(true);
       });
       return () => {
         cancelled = true;
@@ -174,8 +182,8 @@ const InboxScreen = () => {
     );
   };
 
-  if (loading) {
-    return <PrintingPressLoading message={Strings.loading.inbox} />;
+  if (!hydrated) {
+    return <EditionsListSkeleton />;
   }
 
   if (sections.length === 0) {

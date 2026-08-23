@@ -49,6 +49,16 @@ export const Strings = {
     edition: 'Inking the page…',
     // The press-variant loader's line while publish-now compiles and delivers.
     publishing: 'Printing this week’s edition…',
+
+    // Skeleton announcements. A screen reader hears one of these in place of
+    // the whole placeholder page, so each says what is arriving — warm and
+    // plain, never 'loading content'.
+    home: 'Fetching your front page…',
+    groups: 'Gathering your Groups…',
+    group: 'Opening this Group…',
+    story: 'Turning to the story…',
+    profile: 'Finding your desk…',
+    composer: 'Getting your page ready…',
   },
 
   // StatusBanner kicker lead-ins (BRAND §9) — warm small-caps voices, never

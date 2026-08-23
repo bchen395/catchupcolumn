@@ -18,7 +18,7 @@ You're working on the UI of a family-newsletter app built for older adults and G
    - `layout.ts` — spacing, radii (read the Shape Consistency Lock comment), rule weights (`Layout.rule`), row/button heights, input metrics, shadows.
    - `icons.ts` — semantic icon registry. Add glyphs there, reference by key.
    - `strings.ts` — reusable, tone-sensitive user-facing copy (incl. `Strings.thisWeek`, the weekly-ritual voice, and `Strings.home`'s rotating daily lines picked with `dailyPick` — day-seeded, never random per render).
-   - `loading.ts` — printing-press loader knobs.
+   - `loading.ts` — printing-press loader knobs (`LoadingConfig`) and skeleton knobs (`SkeletonConfig`).
    - `motion.ts` — animation durations + easing, and the house motion style comment (BRAND §11).
 3. **`lib/haptics.ts`** — the three haptic verbs (`tap`/`select`/`confirm`) and when each fires (BRAND §11).
 
@@ -35,7 +35,8 @@ You're working on the UI of a family-newsletter app built for older adults and G
 - Pressed states: 92% opacity on filled controls, ~0.7 opacity on content blocks — never new colors.
 - Styles in `StyleSheet.create()` at the bottom of the file; break up components past ~150 lines.
 - Tone: warm and plain-spoken ("Write something for this week"), never technical or apologetic.
-- Motion: durations from `Motion.duration`, never hardcoded ms; ease-out timing, no springs (sole exception: the compose sheet); every animation respects Reduce Motion. The loader's knobs stay in `loading.ts`.
+- Motion: durations from `Motion.duration`, never hardcoded ms; ease-out timing, no springs (sole exception: the compose sheet); every animation respects Reduce Motion. Loader and skeleton knobs stay in `loading.ts` (they're ambient loops, not UI transitions).
+- **Loading: pick the affordance by the wait, not by habit** (BRAND §10). A screen whose layout you know gets a **skeleton** from `components/skeletons/` — not `PrintingPressLoading`, which is now only for cold boot, invite arrival, and publish-now. Never show a loading state over content already on screen: gate on a monotonic first-load flag, and let focus refetches revalidate silently. Reach for `FormButton loading` for button-scoped work.
 - Haptics only through `lib/haptics.ts`'s three verbs — `tap` for key actions, `select` for value changes (never on re-selecting the same value), `confirm` reserved for save/publish moments. When in doubt, no haptic.
 - Engagement = ritual devices (datelines, stamps, bylines), never gamification — no streaks, badges, counters, or confetti (BRAND §10, rejected on principle).
 
@@ -69,7 +70,9 @@ You're working on the UI of a family-newsletter app built for older adults and G
 | `empty-state` / `error-state` | Lora Bold headline + Jost body + ink-pill CTA. `EmptyState` takes a §4 doodle `scene` (falls back to a plain ink icon); error states keep the quiet `error`-color icon. Copy from `Strings`. |
 | `status-banner` | Text-first hairline band (BRAND §9): kicker voice + one Jost line. Success wears the info dress. |
 | `ink-stamp` | The §11 stamp system — one recipe, faces by props: FILED (tilt −4, 'moment'), JOINED (tilt +3, 'record'). Never two stamps on one screen. |
-| `printing-press-loading` | Branded loading screen: `ride` (paperboy, wheels spin — default) and `press` (flywheel + sheets, for compile/publish waits). Static under Reduce Motion; retune via `constants/loading.ts`, not the component. |
+| `printing-press-loading` | Branded loading screen: `ride` (paperboy, wheels spin — default) and `press` (flywheel + sheets, for compile/publish waits). **Only for cold boot, invite arrival, and publish-now** — everything else uses a skeleton. Static under Reduce Motion; retune via `constants/loading.ts`, not the component. |
+| `skeleton` | Skeleton primitives: `Skeleton` (wrapper — owns the one shared pulse and the single screen-reader announcement), `SkeletonBar`/`SkeletonLines` (type-shaped, sized from a `Typography.scale` variant so nothing shifts on arrival), `SkeletonBlock` (photos; `outlined` for chips), `SkeletonCircle`, `SkeletonRule` (a real rule — structure never pulses). |
+| `skeletons/*` | One per screen, mirroring its real geometry: `editions-list`, `groups-list`, `edition-page`, `story`, `group-detail`, plus the partial `home-hero`, `profile-hero`, and `composer`. Match the screen's own style values when you touch either side. |
 | `form-field` / `form-button` | Inputs and buttons in auth, group, and settings forms. |
 | `auth-screen-shell` | Shared chrome for auth/onboarding screens. |
 | `group-card` | A Group row/card in lists. |

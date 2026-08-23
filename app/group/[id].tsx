@@ -18,6 +18,7 @@ import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
 import { InviteFamilyCard } from '@/components/invite-family-card';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
+import { GroupDetailSkeleton } from '@/components/skeletons/group-detail-skeleton';
 import { StatusBanner } from '@/components/status-banner';
 import { TimeField } from '@/components/time-picker-modal';
 import { ThemedText } from '@/components/themed-text';
@@ -191,7 +192,7 @@ const GroupDetailScreen = () => {
   const { user } = useAuth();
 
   const [group, setGroup] = useState<GroupWithMembers | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [hydrated, setHydrated] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [screenError, setScreenError] = useState('');
 
@@ -227,8 +228,14 @@ const GroupDetailScreen = () => {
   }, [id]);
 
   useEffect(() => {
-    setLoading(true);
-    load().finally(() => setLoading(false));
+    let cancelled = false;
+    setHydrated(false);
+    load().finally(() => {
+      if (!cancelled) setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
   const handleRefresh = async () => {
@@ -447,8 +454,8 @@ const GroupDetailScreen = () => {
     );
   };
 
-  if (loading) {
-    return <PrintingPressLoading />;
+  if (!hydrated) {
+    return <GroupDetailSkeleton />;
   }
 
   // Publishing compiles and delivers the edition — the one true long wait in

@@ -9,7 +9,7 @@ import { EditionColophon } from '@/components/edition-colophon';
 import { EditionLead } from '@/components/edition-lead';
 import { EditionSecondary } from '@/components/edition-secondary';
 import { ErrorState } from '@/components/error-state';
-import { PrintingPressLoading } from '@/components/printing-press-loading';
+import { EditionPageSkeleton } from '@/components/skeletons/edition-page-skeleton';
 import { StatusBanner } from '@/components/status-banner';
 import { StoryArticle } from '@/components/story-article';
 import { StoryReaderOverlay, type SectionFrame } from '@/components/story-reader-overlay';
@@ -68,7 +68,9 @@ const EditionFrontPage = () => {
   // Whether this is the Group's most-recent edition — gates the colophon's
   // forward-looking "next edition" line (never shown on an archived issue).
   const [isLatest, setIsLatest] = useState(false);
-  const [loading, setLoading] = useState(true);
+  // Reset per edition id below, so navigating between editions shows the
+  // skeleton again rather than the previous issue's front page.
+  const [hydrated, setHydrated] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [screenError, setScreenError] = useState('');
 
@@ -85,16 +87,16 @@ const EditionFrontPage = () => {
     try {
       const data = await fetchEditionWithPosts(id);
       setEdition(data);
-      const g = await fetchGroupForEdition(data.group_id);
+      // Both of these need only `group_id`, so they go together rather than in
+      // series — this is the app's longest wait before first paint.
+      const [g, latest] = await Promise.all([
+        fetchGroupForEdition(data.group_id),
+        // Non-fatal: if we can't tell whether this is the latest edition, just
+        // fall back to hiding the forward-looking colophon line.
+        fetchLatestEditionNumber(data.group_id).catch(() => null),
+      ]);
       setGroup(g);
-      // Non-fatal: if we can't tell whether this is the latest edition, just
-      // fall back to hiding the forward-looking colophon line.
-      try {
-        const latest = await fetchLatestEditionNumber(data.group_id);
-        setIsLatest(latest === data.edition_number);
-      } catch {
-        setIsLatest(false);
-      }
+      setIsLatest(latest !== null && latest === data.edition_number);
       setScreenError('');
     } catch (_err) {
       setScreenError(Strings.error.editionLoad);
@@ -102,8 +104,14 @@ const EditionFrontPage = () => {
   }, [id]);
 
   useEffect(() => {
-    setLoading(true);
-    load().finally(() => setLoading(false));
+    let cancelled = false;
+    setHydrated(false);
+    load().finally(() => {
+      if (!cancelled) setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
   // Reaching the front page counts as "opened" — clears Home's NEW flag. Here
@@ -118,8 +126,8 @@ const EditionFrontPage = () => {
     setRefreshing(false);
   };
 
-  if (loading) {
-    return <PrintingPressLoading message={Strings.loading.edition} />;
+  if (!hydrated) {
+    return <EditionPageSkeleton />;
   }
 
   if (!edition || !group) {
@@ -129,8 +137,8 @@ const EditionFrontPage = () => {
         title={Strings.error.generic.title}
         body={screenError || 'Edition not found.'}
         onRetry={() => {
-          setLoading(true);
-          load().finally(() => setLoading(false));
+          setHydrated(false);
+          load().finally(() => setHydrated(true));
         }}
       />
     );
