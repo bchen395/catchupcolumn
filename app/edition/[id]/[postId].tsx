@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ErrorState } from '@/components/error-state';
-import { PrintingPressLoading } from '@/components/printing-press-loading';
+import { StorySkeleton } from '@/components/skeletons/story-skeleton';
 import { StoryReader } from '@/components/story-reader';
 import { Colors } from '@/constants/colors';
 import { Icons } from '@/constants/icons';
@@ -27,7 +27,7 @@ const StoryReaderScreen = () => {
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   const [start, setStart] = useState(0);
   const [headerIndex, setHeaderIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [hydrated, setHydrated] = useState(false);
   const [screenError, setScreenError] = useState('');
 
   const load = useCallback(async () => {
@@ -47,12 +47,18 @@ const StoryReaderScreen = () => {
   }, [id, postId]);
 
   useEffect(() => {
-    setLoading(true);
-    load().finally(() => setLoading(false));
+    let cancelled = false;
+    setHydrated(false);
+    load().finally(() => {
+      if (!cancelled) setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
-  if (loading) {
-    return <PrintingPressLoading message={Strings.loading.edition} />;
+  if (!hydrated) {
+    return <StorySkeleton />;
   }
 
   if (posts.length === 0) {
@@ -62,8 +68,8 @@ const StoryReaderScreen = () => {
         title={Strings.error.generic.title}
         body={screenError || 'Story not found.'}
         onRetry={() => {
-          setLoading(true);
-          load().finally(() => setLoading(false));
+          setHydrated(false);
+          load().finally(() => setHydrated(true));
         }}
       />
     );

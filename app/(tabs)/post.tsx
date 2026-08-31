@@ -20,6 +20,7 @@ import { FormButton } from '@/components/form-button';
 import { DogWithPaperScene } from '@/components/illustrations/dog-with-paper-scene';
 import { InkStamp } from '@/components/ink-stamp';
 import { Icon } from '@/components/icon';
+import { ComposerSkeleton } from '@/components/skeletons/composer-skeleton';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
@@ -407,7 +408,13 @@ const PostScreen = () => {
   // prompt to choose one (several).
   if (!selectedGroupId) {
     if (loadingGroups) {
-      return <View style={styles.flex} />;
+      return (
+        <View style={styles.flex}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <ComposerSkeleton withHeader />
+          </ScrollView>
+        </View>
+      );
     }
     if (groups.length === 0) {
       return (
@@ -611,7 +618,9 @@ const PostScreen = () => {
               ) : null}
             </View>
           </>
-        ) : null}
+        ) : (
+          <ComposerSkeleton />
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );

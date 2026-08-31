@@ -9,6 +9,7 @@ import { AvatarPicker } from '@/components/avatar-picker';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
 import { MugDoodle } from '@/components/illustrations/mug-doodle';
+import { ProfileHeroSkeleton } from '@/components/skeletons/profile-hero-skeleton';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
@@ -336,46 +337,47 @@ const ProfileScreen = () => {
         <>
           {/* Byline hero: a contributor's masthead. The kicker + serif name echo
               the newspaper voice used on Home, and the avatar carries a camera
-              badge so it reads as editable. */}
-          <View style={styles.heroBlock}>
-            <Pressable
-              onPress={handleStartEdit}
-              accessibilityRole="button"
-              accessibilityLabel="Change your profile photo"
-              style={({ pressed }) => [styles.avatarWrap, pressed && styles.avatarWrapPressed]}
-            >
-              {profile?.avatar_url ? (
-                <AppImage source={{ uri: profile.avatar_url }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatar, styles.avatarFallback]}>
-                  <ThemedText style={styles.initials}>{initials}</ThemedText>
+              badge so it reads as editable. Until the profile lands, a skeleton
+              stands in — otherwise real values visibly displace the `??`
+              fallbacks field by field. */}
+          {loadingProfile ? (
+            <ProfileHeroSkeleton />
+          ) : (
+            <View style={styles.heroBlock}>
+              <Pressable
+                onPress={handleStartEdit}
+                accessibilityRole="button"
+                accessibilityLabel="Change your profile photo"
+                style={({ pressed }) => [styles.avatarWrap, pressed && styles.avatarWrapPressed]}
+              >
+                {profile?.avatar_url ? (
+                  <AppImage source={{ uri: profile.avatar_url }} style={styles.avatar} />
+                ) : (
+                  <View style={[styles.avatar, styles.avatarFallback]}>
+                    <ThemedText style={styles.initials}>{initials}</ThemedText>
+                  </View>
+                )}
+                <View style={styles.cameraBadge}>
+                  <MaterialCommunityIcons name="camera-outline" size={18} color={Colors.paper} />
                 </View>
-              )}
-              <View style={styles.cameraBadge}>
-                <MaterialCommunityIcons name="camera-outline" size={18} color={Colors.paper} />
-              </View>
-            </Pressable>
+              </Pressable>
 
-            {/* The screen's one vermilion moment — a §8 kicker. */}
-            <ThemedText variant="kicker" style={styles.kicker}>
-              From the desk of
-            </ThemedText>
-            <ThemedText style={styles.displayName} numberOfLines={2}>
-              {profile?.display_name ?? 'Your account'}
-            </ThemedText>
-            {memberSince ? (
-              <ThemedText style={styles.memberSince}>Writing since {memberSince}</ThemedText>
-            ) : null}
-            <ThemedText style={styles.email} numberOfLines={1}>
-              {user?.email ?? 'No email available'}
-            </ThemedText>
-            {profile?.bio ? <ThemedText style={styles.bio}>{profile.bio}</ThemedText> : null}
-            {loadingProfile ? (
-              <ThemedText variant="caption" style={styles.loadingHint}>
-                Loading your account details…
+              {/* The screen's one vermilion moment — a §8 kicker. */}
+              <ThemedText variant="kicker" style={styles.kicker}>
+                From the desk of
               </ThemedText>
-            ) : null}
-          </View>
+              <ThemedText style={styles.displayName} numberOfLines={2}>
+                {profile?.display_name ?? 'Your account'}
+              </ThemedText>
+              {memberSince ? (
+                <ThemedText style={styles.memberSince}>Writing since {memberSince}</ThemedText>
+              ) : null}
+              <ThemedText style={styles.email} numberOfLines={1}>
+                {user?.email ?? 'No email available'}
+              </ThemedText>
+              {profile?.bio ? <ThemedText style={styles.bio}>{profile.bio}</ThemedText> : null}
+            </View>
+          )}
 
           {screenError ? <StatusBanner variant="error" message={screenError} /> : null}
 
@@ -526,9 +528,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: Layout.padding.sm,
     paddingHorizontal: Layout.padding.lg,
-  },
-  loadingHint: {
-    marginTop: Layout.padding.sm,
   },
   // Edit mode reuses the onboarding building blocks (AvatarPicker + FormField)
   // so the editing flow matches what people saw during setup.

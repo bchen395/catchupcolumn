@@ -1,12 +1,12 @@
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
 import { EmptyState } from '@/components/empty-state';
 import { FormButton } from '@/components/form-button';
 import { GroupCard } from '@/components/group-card';
 import { DogWithPaperScene } from '@/components/illustrations/dog-with-paper-scene';
-import { PrintingPressLoading } from '@/components/printing-press-loading';
+import { GroupsListSkeleton } from '@/components/skeletons/groups-list-skeleton';
 import { StatusBanner } from '@/components/status-banner';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
@@ -20,7 +20,9 @@ const GroupsScreen = () => {
   const { user } = useAuth();
 
   const [groups, setGroups] = useState<GroupWithMembers[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Only ever false→true, so returning to the tab refetches silently behind
+  // the list rather than replacing it with a placeholder.
+  const [hydrated, setHydrated] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [screenError, setScreenError] = useState('');
 
@@ -35,10 +37,15 @@ const GroupsScreen = () => {
     }
   }, [user]);
 
+  // A different account must not see the previous one's Groups.
+  useEffect(() => {
+    setHydrated(false);
+    setGroups([]);
+  }, [user?.id]);
+
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      load().finally(() => setLoading(false));
+      load().finally(() => setHydrated(true));
     }, [load])
   );
 
@@ -68,9 +75,9 @@ const GroupsScreen = () => {
         <StatusBanner variant="error" message={screenError} style={styles.banner} />
       ) : null}
 
-      {loading ? (
-        <PrintingPressLoading />
-      ) : !loading && groups.length === 0 && !screenError ? (
+      {!hydrated ? (
+        <GroupsListSkeleton />
+      ) : groups.length === 0 && !screenError ? (
         <EmptyState
           scene={<DogWithPaperScene />}
           title={Strings.empty.groups.title}
