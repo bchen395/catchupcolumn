@@ -48,6 +48,9 @@ export const Icons = {
   errorGeneric: mci('alert-circle-outline'),
   errorNetwork: mci('wifi-off'),
 
+  // Composer — the pinned action bar's labeled photo affordance
+  photo: mci('image-outline'),
+
   // Invitations (join flow + the group screen's invite card)
   invite: mci('email-open-outline'),
   qr: mci('qrcode'),

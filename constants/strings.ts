@@ -145,6 +145,19 @@ export const Strings = {
     composerSubtitleEditing: (day: string) => `Editing your story for ${day}’s edition.`,
     filedStamp: (day: string) => `Filed for ${day}’s edition`,
     newFlag: 'New',
+    // The composer's one finishing action (2026-07-18 redesign): "filing" your
+    // story, not "saving" a form. Autosave is the silent safety net; this is
+    // the ritual moment that stamps the page.
+    fileCta: 'File my story',
+    updateCta: 'Update my story',
+    headlinePlaceholder: 'Add a headline',
+    bodyPlaceholder: 'What’s been happening this week?',
+    addPhoto: 'Add a photo',
+    changePhoto: 'Change photo',
+    removePhoto: 'Remove photo',
+    removePostLink: 'Remove this week’s post',
+    // Autosave failed — reassure, never alarm; the words are still on screen.
+    autosaveError: 'Couldn’t save — your words are still here',
   },
 
   // The edition's closing folio — a newspaper's "end of the page, on purpose"

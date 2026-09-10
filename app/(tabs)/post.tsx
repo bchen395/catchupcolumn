@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     Alert,
+    Keyboard,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -14,9 +15,9 @@ import {
 } from 'react-native';
 
 import { AppImage } from '@/components/app-image';
+import { ComposeActionBar } from '@/components/compose-action-bar';
 import { useComposeSheet } from '@/components/compose-sheet-provider';
 import { EmptyState } from '@/components/empty-state';
-import { FormButton } from '@/components/form-button';
 import { DogWithPaperScene } from '@/components/illustrations/dog-with-paper-scene';
 import { InkStamp } from '@/components/ink-stamp';
 import { Icon } from '@/components/icon';
@@ -79,14 +80,20 @@ const PostScreen = () => {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [isFocused, setIsFocused] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  // The "filed" stamp shows once per explicit Save (never on autosave).
+  // The "filed" stamp shows once per explicit File/Update (never on autosave).
   const [stampVisible, setStampVisible] = useState(false);
   // Bumped on each save so FiledStamp remounts and replays its animation even
   // on rapid consecutive saves (a true→true flag flip would be a no-op).
   const [stampKey, setStampKey] = useState(0);
+  // The bar's settled state after filing: "Filed for {day}'s edition" holds
+  // until the next edit, so the reassurance outlives the stamp animation.
+  const [filed, setFiled] = useState(false);
   const reduceMotion = useReduceMotion();
 
   const bodyInputRef = useRef<TextInput>(null);
+  // Latched by loadPost when the week's page is blank; the effect below fires
+  // once the body input has mounted (it doesn't exist while loadingPost).
+  const shouldAutoFocusRef = useRef(false);
   // Resolves storage paths from the DB into signed URLs; passes local file://
   // URIs through unchanged for previewing freshly-picked images.
   const previewUri = usePostImageUrl(imageUri);
@@ -191,12 +198,14 @@ const PostScreen = () => {
   const handleChangeBody = (text: string) => {
     setBody(text);
     bodyRef.current = text;
+    setFiled(false);
     scheduleAutoSave();
   };
 
   const handleChangeTitle = (text: string) => {
     setTitle(text);
     titleRef.current = text;
+    setFiled(false);
     scheduleAutoSave();
   };
 
@@ -210,8 +219,12 @@ const PostScreen = () => {
     setLoadingPost(true);
     setScreenError('');
     setSaveStatus('idle');
+    setFiled(false);
     try {
       const post = await fetchCurrentPost(groupId, user.id);
+      // Writing starts immediately on a fresh page; an existing story opens
+      // calmly for reading first (no keyboard until the writer asks).
+      shouldAutoFocusRef.current = post === null;
       const loadedBody = post?.body ?? '';
       const loadedTitle = post?.title ?? '';
       setExistingPost(post);
@@ -238,6 +251,15 @@ const PostScreen = () => {
     }
   }, [selectedGroupId, loadPost]);
 
+  // Focus lands in the body on a fresh page. Deferred a beat so the input has
+  // finished mounting after the loading gate drops.
+  useEffect(() => {
+    if (loadingPost || !shouldAutoFocusRef.current) return;
+    shouldAutoFocusRef.current = false;
+    const timer = setTimeout(() => bodyInputRef.current?.focus(), 250);
+    return () => clearTimeout(timer);
+  }, [loadingPost]);
+
   // ── Refresh ───────────────────────────────────────────────────────────────
 
   const handleRefresh = async () => {
@@ -258,12 +280,24 @@ const PostScreen = () => {
     if (!result.canceled && result.assets[0]) {
       setImageUri(result.assets[0].uri);
       setImageChanged(true);
+      setFiled(false);
     }
   };
 
   const handleRemoveImage = () => {
     setImageUri(null);
     setImageChanged(true);
+    setFiled(false);
+  };
+
+  // The photo on the page is itself the control: tapping it offers the two
+  // things you could want to do with it.
+  const handlePressImage = () => {
+    Alert.alert('Your photo', undefined, [
+      { text: Strings.thisWeek.changePhoto, onPress: handlePickImage },
+      { text: Strings.thisWeek.removePhoto, style: 'destructive', onPress: handleRemoveImage },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   // ── Save / Update ─────────────────────────────────────────────────────────
@@ -273,9 +307,12 @@ const PostScreen = () => {
   const handleSave = async () => {
     if (!user || !selectedGroupId) return;
     if (body.trim() === '') {
-      setScreenError('Please write something before saving.');
+      setScreenError('Please write something before filing your story.');
       return;
     }
+    // Filing closes the writing moment — the keyboard drops so the stamp and
+    // the settled bar are in full view.
+    Keyboard.dismiss();
     clearAutoSaveTimer();
     setScreenError('');
     setSaving(true);
@@ -327,7 +364,8 @@ const PostScreen = () => {
       lastSavedBodyRef.current = body.trim();
       lastSavedTitleRef.current = title.trim();
       setSaveStatus('saved');
-      // The explicit Save is the "my story is in" moment — stamp the page.
+      setFiled(true);
+      // The explicit File/Update is the "my story is in" moment — stamp the page.
       // Only when a group (and thus a publish date) is selected, since the
       // stamp prints that date; otherwise the flag would latch with nothing
       // ever rendering it to reset. Bump the key so each save replays it.
@@ -375,6 +413,7 @@ const PostScreen = () => {
               lastSavedTitleRef.current = '';
               existingPostRef.current = null;
               setSaveStatus('idle');
+              setFiled(false);
             } catch {
               setScreenError(Strings.error.postDelete);
             } finally {
@@ -402,6 +441,20 @@ const PostScreen = () => {
     : isEditing
       ? 'Editing your entry for this week'
       : 'Your entry for this week';
+
+  // The bar's quiet status line: an autosave error outranks everything, the
+  // settled "Filed for…" reassurance outlives the stamp, and plain
+  // saving/saved reassurance covers the in-between.
+  const barStatusText =
+    saveStatus === 'error'
+      ? Strings.thisWeek.autosaveError
+      : filed && nextPublish
+        ? Strings.thisWeek.filedStamp(nextPublish.dayLabel)
+        : saveStatus === 'saving'
+          ? 'Saving…'
+          : saveStatus === 'saved'
+            ? 'Saved'
+            : '';
 
   // No group selected yet: resolve quietly, then either send to Groups (none) or
   // prompt to choose one (several).
@@ -482,8 +535,13 @@ const PostScreen = () => {
         {!loadingPost ? (
           <>
             {/* The page — a white sheet lifted off the warm desk. Shadow deepens
-                while focused so writing feels tactile. */}
-            <View style={[styles.composeCard, isFocused && styles.composeCardFocused]}>
+                while focused so writing feels tactile. Tapping any blank paper
+                puts the cursor in the body — the whole page is the input. */}
+            <Pressable
+              accessible={false}
+              onPress={() => bodyInputRef.current?.focus()}
+              style={[styles.composeCard, isFocused && styles.composeCardFocused]}
+            >
               {/* Optional headline. A short serif title that becomes the story's
                   headline on the front page and in the email; left blank, the
                   post just runs under the author's name. */}
@@ -491,7 +549,7 @@ const PostScreen = () => {
                 style={styles.titleInput}
                 value={title}
                 onChangeText={handleChangeTitle}
-                placeholder="Headline"
+                placeholder={Strings.thisWeek.headlinePlaceholder}
                 placeholderTextColor={Colors.inkMuted}
                 selectionColor={Colors.vermilion}
                 editable={!isBusy}
@@ -519,11 +577,27 @@ const PostScreen = () => {
                 {body === '' ? (
                   <View style={styles.placeholderWrap} pointerEvents="none">
                     <ThemedText style={styles.placeholder}>
-                      What&apos;s been happening this week?
+                      {Strings.thisWeek.bodyPlaceholder}
                     </ThemedText>
                   </View>
                 ) : null}
               </View>
+              {/* The photo runs with the story, on the page — exactly where it
+                  will appear in the edition. The photo itself is the control. */}
+              {imageUri ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Your photo. Tap to change or remove it."
+                  disabled={isBusy}
+                  onPress={handlePressImage}
+                  style={({ pressed }) => [styles.photoOnPage, pressed && styles.photoPressed]}
+                >
+                  <AppImage
+                    source={previewUri ? { uri: previewUri } : undefined}
+                    style={styles.imagePreview}
+                  />
+                </Pressable>
+              ) : null}
               {stampVisible && nextPublish ? (
                 // FILED owns −4°; JOINED owns +3° (BRAND §11). Overlaps the
                 // page's top-right corner like a stamp that didn't quite line
@@ -538,81 +612,41 @@ const PostScreen = () => {
                   style={styles.stamp}
                 />
               ) : null}
-            </View>
+            </Pressable>
 
-            {/* Quiet save status — reassurance, not a quota. */}
-            <View style={styles.saveStatusRow}>
-              {saveStatus === 'saving' ? (
-                <ThemedText variant="caption" style={styles.saveStatusText}>
-                  Saving…
-                </ThemedText>
-              ) : saveStatus === 'saved' ? (
-                <ThemedText variant="caption" style={styles.saveStatusText}>
-                  Saved
-                </ThemedText>
-              ) : saveStatus === 'error' ? (
-                <ThemedText
-                  variant="caption"
-                  style={[styles.saveStatusText, styles.saveStatusError]}
-                >
-                  Couldn&apos;t save — your words are still here
-                </ThemedText>
-              ) : null}
-            </View>
-
-            <View style={styles.section}>
-              <ThemedText variant="kicker">Photo</ThemedText>
-              {imageUri ? (
-                <View style={styles.imagePreviewWrapper}>
-                  <AppImage
-                    source={previewUri ? { uri: previewUri } : undefined}
-                    style={styles.imagePreview}
-                  />
-                  <View style={styles.imageActions}>
-                    <FormButton
-                      title="Change photo"
-                      variant="secondary"
-                      onPress={handlePickImage}
-                      disabled={isBusy}
-                    />
-                    <FormButton
-                      title="Remove photo"
-                      variant="ghost"
-                      onPress={handleRemoveImage}
-                      disabled={isBusy}
-                    />
-                  </View>
-                </View>
-              ) : (
-                <FormButton
-                  title="Add a photo"
-                  variant="secondary"
-                  onPress={handlePickImage}
-                  disabled={isBusy}
-                />
-              )}
-            </View>
-
-            <View style={styles.actions}>
-              <FormButton
-                title={isEditing ? 'Update' : 'Save'}
-                onPress={handleSave}
-                loading={saving || uploadingImage}
+            {/* Deleting is legitimate but never competes with writing — a
+                quiet line below the page, only once a post exists. */}
+            {isEditing ? (
+              <Pressable
+                accessibilityRole="button"
                 disabled={isBusy}
-              />
-              {isEditing ? (
-                <FormButton
-                  title="Delete this post"
-                  variant="destructive"
-                  onPress={handleDelete}
-                  loading={deleting}
-                  disabled={isBusy}
-                />
-              ) : null}
-            </View>
+                onPress={handleDelete}
+                style={({ pressed }) => [styles.removeLink, pressed && styles.removeLinkPressed]}
+              >
+                <ThemedText variant="ui" style={styles.removeLinkText}>
+                  {Strings.thisWeek.removePostLink}
+                </ThemedText>
+              </Pressable>
+            ) : null}
           </>
         ) : null}
       </ScrollView>
+
+      {/* Pinned above the keyboard while writing; resting on the tab bar
+          otherwise. Photo, reassurance, and the finishing action never require
+          scrolling away from your words. */}
+      {!loadingPost ? (
+        <ComposeActionBar
+          photoLabel={imageUri ? Strings.thisWeek.changePhoto : Strings.thisWeek.addPhoto}
+          onPickPhoto={handlePickImage}
+          statusText={barStatusText}
+          statusTone={saveStatus === 'error' ? 'error' : 'quiet'}
+          primaryLabel={isEditing ? Strings.thisWeek.updateCta : Strings.thisWeek.fileCta}
+          onPrimary={handleSave}
+          primaryLoading={saving || uploadingImage}
+          disabled={isBusy}
+        />
+      ) : null}
     </KeyboardAvoidingView>
   );
 };
@@ -628,9 +662,6 @@ const styles = StyleSheet.create({
     padding: Layout.padding.lg,
     gap: Layout.padding.lg,
     paddingBottom: Layout.padding.xl,
-  },
-  section: {
-    gap: Layout.padding.sm,
   },
   banner: {},
   // Overlaps the page's top-right corner (host is position: relative).
@@ -716,18 +747,13 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     color: Colors.inkSoft,
   },
-  saveStatusRow: {
-    minHeight: 22,
-    alignSelf: 'flex-end',
+  // The photo sits on the page under the writing, as it will run in print.
+  photoOnPage: {
+    marginTop: Layout.padding.md,
   },
-  saveStatusText: {
-    color: Colors.inkMuted,
-  },
-  saveStatusError: {
-    color: Colors.error,
-  },
-  imagePreviewWrapper: {
-    gap: Layout.padding.sm,
+  // Content-block press feedback (BRAND §9): opacity, never new colors.
+  photoPressed: {
+    opacity: 0.7,
   },
   // Flat editorial preview (BRAND §5): square corners, hairline edge.
   imagePreview: {
@@ -736,11 +762,18 @@ const styles = StyleSheet.create({
     borderWidth: Layout.rule.hairline,
     borderColor: Colors.hairline,
   },
-  imageActions: {
-    flexDirection: 'row',
-    gap: Layout.padding.sm,
+  // The quiet delete affordance — danger in words, not a slab; centered under
+  // the page with a full-height touch target.
+  removeLink: {
+    minHeight: Layout.touchTargetMin,
+    alignSelf: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Layout.padding.md,
   },
-  actions: {
-    gap: Layout.padding.sm,
+  removeLinkPressed: {
+    opacity: 0.7,
+  },
+  removeLinkText: {
+    color: Colors.error,
   },
 });

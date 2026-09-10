@@ -65,6 +65,7 @@ You're working on the UI of a family-newsletter app built for older adults and G
 | `story-reader-overlay` | The enlarge transition: tapped cover section grows into the full-screen reader (Modal + reanimated); reverse-shrinks on close. |
 | `custom-tab-bar` | The 5-slot bar with the raised ink-black "+". |
 | `compose-sheet-provider` / `compose-group-sheet` | The "write for…" group-picker sheet the "+" opens. |
+| `compose-action-bar` | The composer's pinned bar (BRAND §9): labeled photo button, quiet save status, and the "File my story" action, riding above the keyboard. |
 | `empty-state` / `error-state` | Lora Bold headline + Jost body + ink-pill CTA. `EmptyState` takes a §4 doodle `scene` (falls back to a plain ink icon); error states keep the quiet `error`-color icon. Copy from `Strings`. |
 | `status-banner` | Text-first hairline band (BRAND §9): kicker voice + one Jost line. Success wears the info dress. |
 | `ink-stamp` | The §11 stamp system — one recipe, faces by props: FILED (tilt −4, 'moment'), JOINED (tilt +3, 'record'). Never two stamps on one screen. |

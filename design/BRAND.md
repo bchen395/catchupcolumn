@@ -131,6 +131,12 @@ Flat editorial. **The polaroid (tape, tilt, white frame) is fully retired** — 
 - **Status/banners:** text-first on a hairline-ruled band: `kicker` + one Jost line. Info = ink kicker; warning = vermilion kicker; error = `error` kicker. No tinted background slabs. **There is no success color** (v1 green retired, decided 2026-07-17): success banners use the info voice — the warm words carry it — and true celebration moments belong to the stamp system (§11).
 - **Sheets/modals:** `paper`, top-rounded 20, grab handle, hairline header rule. The compose sheet keeps its sanctioned spring (§10).
 - **Empty states:** doodle scene (§4) + Lora Bold headline + Jost body + one primary action.
+- **The composer (redesigned 2026-07-18, benchmarked against are.na and Substack Notes):** the full-screen "page on the desk" stays — the white sheet with headline rule and serif body IS the product's writing metaphor; a sheet composer (are.na) and a full-bleed feed composer (Substack) were both considered and rejected as off-voice. What the references taught us is structural, and is now law for this screen:
+  - **Actions live at the thumbs.** A pinned action bar (`compose-action-bar`: `paper`, hairline top rule) rides above the keyboard and rests on the tab bar — the photo affordance, a quiet save-status line, and the one finishing action never require scrolling away from your words.
+  - **One finishing action: "File my story"** (editing: "Update my story"). Autosave is the silent safety net; filing uploads the photo, drops the keyboard, plays the FILED stamp + `confirm()`, and the bar settles into "Filed for {day}'s edition" until the next edit. No auto-navigation afterward — reassurance stays on screen.
+  - **The photo runs on the page**, under the writing, exactly as it will print — flat §5 treatment. The photo itself is the control (tap → change/remove). The bar's photo button is always labeled, never icon-only (rejected: Substack's icon toolbar, too opaque for the audience).
+  - **The headline stays but never blocks writing:** placeholder "Add a headline", and focus lands in the body on a fresh page (tapping blank paper also focuses the body). An existing story opens with no keyboard.
+  - **Deleting is demoted** to a quiet `error`-colored text line below the page ("Remove this week's post"), only once a post exists.
 
 ## 10. Motion & interaction feel
 
