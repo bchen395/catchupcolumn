@@ -2,7 +2,8 @@
 
 **Status:** scoped 2026-08-22, not started. Launch gate: `docs/LAUNCH.md` step 6b.
 
-A **execution-quality redraw of all 9 illustration assets**, inside BRAND §4's
+A **execution-quality redraw of all 8 illustration assets** (9 until `sketch-border`
+was deleted 2026-09-10), inside BRAND §4's
 existing style spec. This is the upgrade §4 anticipated when it shipped the set as
 in-house drafts: *"a commissioned illustrator can later redraw to the same spec
 without touching call sites."*
@@ -27,8 +28,8 @@ Naming these so the work can't sprawl; each was considered and set aside:
 - **Call sites and screen code.** No screen changes. Every asset keeps its current
   props and exports (see "Export contracts").
 - **New illustration moments.** The unbuilt welcome-screen dog catch (promised in §4)
-  and finding a home for the orphaned `sketch-border` are both real gaps, but they are
-  *new work*, not redraws. Tracked separately below.
+  is a real gap, but it is *new work*, not a redraw. Tracked separately below.
+  (`sketch-border`'s gap was closed 2026-09-10 — deleted, see below.)
 - **Editions stay illustration-free.** §4's hard line. The only mark allowed on an
   editorial surface is `rolled-paper-glyph`.
 
@@ -48,7 +49,6 @@ in `constants/`, unlike color, type, spacing, radii, and motion.
 | `invite-ticket` | 120 | 3.0 | 3.4, 3, 1.8, 1.4 |
 | `mug-doodle` | 48 | 1.2 | 2.4 (uniform) |
 | `sleeping-dog-doodle` | 44 | 1.1 | 2.4, 1.8, 1.2 |
-| `sketch-border` | n/a | n/a | 2.6 (uniform) |
 | `rolled-paper-glyph` | n/a | n/a | filled shape, no stroke |
 
 Three distinct problems, in priority order:
@@ -94,7 +94,6 @@ spokes spinning beside a wheel instead of inside it.
 | `paperboy-mailbox-scene` | `PaperboyMailboxScene({width=200})` |
 | `sleeping-dog-doodle` | `SleepingDogDoodle({width=96})` |
 | `mug-doodle` | `MugDoodle({size=40})` |
-| `sketch-border` | `SketchBorder({children, style})` |
 
 **Rules that follow from the table:**
 
@@ -123,7 +122,6 @@ high-stakes assets.
 | 1 | `mug-doodle` | profile footer | 28 lines, already uniform. Warm-up. |
 | 2 | `sleeping-dog-doodle` | editions-list end | ≤48px, never animated. Needs the optical-minimum rule. |
 | 3 | `rolled-paper-glyph` | welcome, invite-hero, edition-colophon | **Most constrained** — the only mark on an editorial surface. Must read as a dingbat at 14–16px. |
-| 4 | `sketch-border` | *(none — dead code)* | Redraw only if it's being kept; see "Adjacent gaps". |
 | 5 | `dog-with-paper-scene` | composer, groups | **In screenshots.** Keep the vermilion wrap band (§4's one-spot rule). |
 | 6 | `paperboy-mailbox-scene` | inbox, home-hero | **In screenshots.** |
 | 7 | `invite-ticket` | invite-family-card | Live-text alignment; vermilion is the code itself. |
@@ -146,9 +144,14 @@ most likely visible mistake in this whole rework.
 
 Neither is in scope as a redraw, but both need a call before screenshots:
 
-- **`sketch-border` is dead code.** 83 lines, documented in BRAND §11 and claimed as
-  landed in §14, imported nowhere. Either wire it to a real announcement moment or
-  delete it and remove it from §11/§14. Don't spend redraw effort on it undecided.
+- ~~**`sketch-border` is dead code.**~~ **Decided 2026-09-10: deleted.** 83 lines,
+  documented in BRAND §11 and claimed as landed in §14, imported nowhere. Rather
+  than carry an undecided asset through a redraw, the audit took the second
+  option this section offered: the component is gone, §11 records the rule and
+  the deletion, and §14 is annotated. One asset fewer to redraw — the table
+  above is now 8, not 9. Recover with
+  `git show 5c44dd9:components/illustrations/sketch-border.tsx` if an
+  announcement moment ever earns it.
 - **The welcome-screen dog catch was never built.** §4 promises "the dog catches the
   paper on the welcome screen"; `app/group/welcome.tsx:74` has only a 14px
   `RolledPaperGlyph`. Onboarding's emotional peak currently has the least warmth in

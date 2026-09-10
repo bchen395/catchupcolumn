@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs } from 'expo-router/js-tabs';
 
 import { ComposeSheetProvider } from '@/components/compose-sheet-provider';
 import { CustomTabBar } from '@/components/custom-tab-bar';

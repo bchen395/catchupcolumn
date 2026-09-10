@@ -2,6 +2,8 @@ import type { User } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 
 import { resizeImageForUpload } from '@/lib/image';
+import { unregisterPushAsync } from '@/lib/notifications';
+import { clearPostImageUrlCache } from '@/lib/posts';
 import { supabase } from '@/lib/supabase';
 import type { UserRow, UserUpdate } from '@/types';
 
@@ -13,7 +15,6 @@ type Credentials = {
 type UploadAvatarInput = {
   userId: string;
   imageUri: string;
-  mimeType?: string | null;
 };
 
 const AVATAR_MAX_EDGE = 512;
@@ -199,7 +200,26 @@ export const clearNeedsOnboardingFlag = async () => {
   return data;
 };
 
-export const deleteAccount = async () => {
+/**
+ * Sign out, and tear down the per-session state that outlives the JWT.
+ *
+ * Both of these matter for the next account signing in on this device: a push
+ * token left registered keeps delivering the previous user's editions, and a
+ * cached signed URL was minted under the previous session's credentials.
+ */
+export const signOut = async (userId?: string | null) => {
+  if (userId) {
+    await unregisterPushAsync(userId);
+  }
+  clearPostImageUrlCache();
+
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    throw error;
+  }
+};
+
+export const deleteAccount = async (userId?: string | null) => {
   // `functions.invoke` attaches the session JWT automatically; passing a
   // manual Authorization header collides with the SDK's own.
   const { error } = await supabase.functions.invoke('delete-account', {
@@ -210,7 +230,7 @@ export const deleteAccount = async () => {
     throw error;
   }
 
-  await supabase.auth.signOut();
+  await signOut(userId);
 };
 
 export const needsOnboarding = (user: User | null | undefined) => {

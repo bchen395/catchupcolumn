@@ -9,12 +9,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "catchupcolumn",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FBF9F4"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.catchupcolumn.app",
@@ -30,7 +24,6 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#FBF9F4"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -55,7 +48,18 @@
           "color": "#E8442E"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-image",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "backgroundColor": "#FBF9F4",
+          "resizeMode": "contain",
+          "enableFullScreenImage_legacy": true
+        }
+      ],
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true

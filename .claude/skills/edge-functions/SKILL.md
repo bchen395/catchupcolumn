@@ -32,10 +32,11 @@ These are Deno functions that run server-side with elevated privileges: edition 
   - Cron/manual-internal (`compile-editions`) → match `Authorization: Bearer <CRON_SECRET>`; `verify_jwt = false` in `config.toml`.
   - User action (`publish-edition-now`, `delete-account`) → require the `Authorization` header, `getUser()` on the caller client, let the RPC enforce the role.
   - Public link (`unsubscribe`) → no auth, opaque UUID token only; `verify_jwt = false`.
-- **Delivery is idempotent via claim/lease — never bypass it.** Claim before sending (`claim_edition_for_email` / `claim_edition_for_push`), do the work, then `mark_*` on success or `release_*` on failure. A 5-minute stale claim auto-recovers a crashed worker. **Email sends at most once** (`mark_edition_emailed` after the first attempt; per-recipient failures are logged, *not* retried, to avoid duplicates). **Push retries up to `MAX_PUSH_ATTEMPTS` (3)**, then is marked pushed despite failures.
+- **Delivery is idempotent via claim/lease — never bypass it.** Claim before sending (`claim_edition_for_email` / `claim_edition_for_push`), do the work, then `mark_*` on success or `release_*` on failure. A 5-minute stale claim auto-recovers a crashed worker. **Email sends at most once** (`mark_edition_emailed` after the first attempt; per-recipient failures are logged, *not* retried, to avoid duplicates). **Push retries up to `MAX_PUSH_ATTEMPTS` (3)**, then is marked pushed despite failures — but only *retriable* failures count; dead tokens are pruned and discounted (see below).
 - **Trust delivery-provider payloads, not just HTTP status:**
   - **Resend** — non-2xx is a hard fail; one POST per recipient.
-  - **Expo push** — a 200 can still contain per-ticket errors. Batch ≤ 100 and inspect the `data[]` ticket array (`status: 'ok' | 'error'`), don't assume success from the HTTP code.
+  - **Expo push** — a 200 can still contain per-ticket errors. Batch ≤ 100 and inspect the `data[]` ticket array (`status: 'ok' | 'error'`), don't assume success from the HTTP code. Tickets come back in request order, so the index identifies the token.
+  - **A `DeviceNotRegistered` ticket means delete the token, not retry it.** `details.error === 'DeviceNotRegistered'` (app uninstalled, permission revoked, token reissued) is permanent: `pushEdition` prunes those rows from `push_tokens` and excludes them from the retry budget, so one dead device can't burn all three attempts every week or accumulate garbage rows. Any new push path must do the same — Expo requires it.
 - **Reuse `_shared`, don't re-implement.** New delivery logic extends `edition-dispatch.ts`; new email markup extends `edition-email.ts`. Both `compile-editions` and `publish-edition-now` already depend on them.
 - **Map RPC exceptions to stable codes.** When an RPC can `raise exception` (e.g. `publish_edition_now`), parse `error.message` for the known codes and return a stable `{ code, status }` (see `mapRpcError` in `publish-edition-now`). The app switches on these.
 
@@ -46,7 +47,7 @@ These are Deno functions that run server-side with elevated privileges: edition 
 | `dispatchPendingEmails` (`edition-dispatch.ts`) | Cron sweep: claim + email up to 50 unsent editions. |
 | `dispatchPendingPushes` (`edition-dispatch.ts`) | Cron sweep: claim + push editions under the retry cap. |
 | `sendEditionEmail` (`edition-dispatch.ts`) | Email one edition to all recipients (mark-once). |
-| `pushEdition` (`edition-dispatch.ts`) | Push one edition (batch ≤100, ticket inspection, retry accounting). |
+| `pushEdition` (`edition-dispatch.ts`) | Push one edition (batch ≤100, ticket inspection, dead-token pruning, retry accounting). |
 | `dispatchSingleEdition` (`edition-dispatch.ts`) | Email + push one edition with the same claim/lease — used by manual publish. |
 | `renderEditionEmailHtml` / `renderEditionEmailText` / `renderEditionEmailSubject` (`edition-email.ts`) | Brand-styled email HTML + plain-text part + content-led subject (first titled post → names fallback). |
 | `MAX_PUSH_ATTEMPTS`, `EMAIL_FROM` (`edition-dispatch.ts`) | Shared constants. |

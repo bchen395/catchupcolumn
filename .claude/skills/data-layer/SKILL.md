@@ -27,6 +27,9 @@ This is the app-side data layer: the `supabase-js` client, the `lib/` functions 
 - **RPC vs table query.** A mutation that is role-gated (moderator-only), atomic/transactional, or blocked by RLS goes through `supabase.rpc('fn', { p_x: value })` — not a direct write. Direct inserts to `group_members` fail by design (`with check (false)`), and its DELETE policy is self-only — a moderator ejecting someone else goes through `remove_group_member`. Joins/publishes/deletes are RPCs (`join_group_by_invite_code`, `delete_group_as_moderator`, and `publish_edition_now` via the edge function). When in doubt, check the RLS policy in `db-migrations` — if the policy forbids the direct write, there's an RPC for it.
 - **Nested selects need a cast.** `Relationships: []` is intentionally hardcoded in `types/database.ts` (Supabase `gen types` bug **#29**), so `supabase-js` can't infer joined/embedded shapes. Cast the result to a derived type: `data as unknown as GroupRowWithMembers` (see `lib/groups.ts`, `lib/editions.ts`). Don't fight the inference or invent inline shapes — add the derived type to `types/database.ts` and cast to it.
 - **Storage stores paths, not URLs.** Columns like `posts.image_url` hold the **storage path** (`<userId>/posts/<postId>/image.jpg`), never a signed or public URL. Buckets are private — sign at read time with `createSignedUrl(path, ttl)`. Uploads use `{ upsert: true }`.
+- **Never hand a stored `image_url` to an `<Image>`.** It's a path, so the image silently renders as an empty box. Go through `EditorialPhoto`, or call `usePostImageUrl` yourself. (This was a live bug in the Editions list until 2026-09-10 — it's an easy one to reintroduce.)
+- **Signed URLs are cached** per storage path for the session in `lib/posts.ts` (`getPostImageDisplayUrl`), so an edition page doesn't re-sign every photo on every mount. `clearPostImageUrlCache()` runs on sign-out; call it from any new path that ends a session.
+- **Bound list queries.** `fetchEditionsForUser` takes a `limit` (default 60) because it embeds every post's full body for the lead picker. Callers that need one row pass `{ limit: 1 }` — Home does.
 - **The first path segment(s) gate RLS — get them wrong and the upload silently becomes unreadable.** Conventions enforced by storage policies (see `db-migrations`):
   - `avatars` → `<userId>/...`
   - `post-images` → `<userId>/posts/<postId>/...` (both the `<uid>` *and* the `posts` segment are checked)
@@ -41,6 +44,7 @@ This is the app-side data layer: the `supabase-js` client, the `lib/` functions 
 | `supabase.ts` | The client singleton + platform storage adapters. |
 | `auth.ts` | Sign-up/in/out, profile sync (`ensureUserProfile`), avatar upload, auth error mapping. |
 | `groups.ts` | Group CRUD, membership, invite-code join/lookup (RPCs), moderator member-removal, cover upload. |
+| `names.ts` | Display-name formatting (`getInitials`). Not Supabase — it exists because three components had drifting copies. |
 | `report.ts` | Content reporting — drafts the support mailto for a post. Not Supabase; the seam to swap if reports ever get a real endpoint. |
 | `posts.ts` | Post CRUD, image upload + signed display URLs, current-post lookup. |
 | `editions.ts` | Edition list/detail queries, publish-now invoke, edition error parsing. |

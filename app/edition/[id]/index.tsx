@@ -20,7 +20,7 @@ import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
-import { orderEdition } from '@/lib/edition-layout';
+import { formatWeekOf, orderEdition } from '@/lib/edition-layout';
 import { markEditionOpened } from '@/lib/edition-seen';
 import { fetchEditionWithPosts, fetchGroupForEdition, fetchLatestEditionNumber } from '@/lib/editions';
 import { nextPublishForGroup } from '@/lib/groups';
@@ -30,22 +30,6 @@ type GroupSummary = Pick<
   GroupRow,
   'id' | 'name' | 'cover_image_url' | 'timezone' | 'publish_day' | 'publish_time'
 >;
-
-const formatWeekOf = (publishedAt: string, timezone?: string | null): string => {
-  const tz = timezone || undefined;
-  const end = new Date(publishedAt);
-  const start = new Date(end);
-  start.setDate(start.getDate() - 6);
-  const startMonth = start.toLocaleDateString('en-US', { timeZone: tz, month: 'long' });
-  const endMonth = end.toLocaleDateString('en-US', { timeZone: tz, month: 'long' });
-  const startDay = start.toLocaleDateString('en-US', { timeZone: tz, day: 'numeric' });
-  const endDay = end.toLocaleDateString('en-US', { timeZone: tz, day: 'numeric' });
-  const year = end.toLocaleDateString('en-US', { timeZone: tz, year: 'numeric' });
-  if (startMonth === endMonth) {
-    return `${startMonth} ${startDay}–${endDay}, ${year}`;
-  }
-  return `${startMonth} ${startDay} – ${endMonth} ${endDay}, ${year}`;
-};
 
 const countContributors = (edition: EditionWithPosts): number =>
   new Set(edition.posts.map((p) => p.author_id)).size;
@@ -178,8 +162,10 @@ const EditionFrontPage = () => {
     node.measureInWindow((x, y, width, height) => openStory(postId, { x, y, width, height }));
   };
 
-  // Re-render the tapped section's markup for the overlay's cross-fade.
-  const snapshotFor = (postId: string) => () => {
+  // Re-render the tapped section's markup for the overlay's cross-fade. The
+  // inner function is a render callback, not a component — it's named so that
+  // it doesn't read as an anonymous component to tooling.
+  const snapshotFor = (postId: string) => function renderSectionSnapshot() {
     if (lead && postId === lead.id) return <EditionLead post={lead} onPress={noop} />;
     if (secondary && postId === secondary.id) {
       return <EditionSecondary post={secondary} onPress={noop} />;

@@ -76,3 +76,24 @@ export const deckFor = (post: LeadPostLike, maxChars = 140): string => {
   const cut = lastSpace > maxChars * 0.6 ? slice.slice(0, lastSpace) : slice;
   return `${cut.trimEnd()}…`;
 };
+
+// The "week of" dateline for an edition — "February 3–9, 2026", or
+// "January 28 – February 3, 2026" when the week straddles two months.
+// Formatted in the Group's own timezone, since that is where publish_day and
+// publish_time are defined (see the schema). Shared by the Editions list and
+// the edition front page's masthead, which must never disagree.
+export const formatWeekOf = (publishedAt: string, timezone?: string | null): string => {
+  const tz = timezone || undefined;
+  const end = new Date(publishedAt);
+  const start = new Date(end);
+  start.setDate(start.getDate() - 6);
+  const startMonth = start.toLocaleDateString('en-US', { timeZone: tz, month: 'long' });
+  const endMonth = end.toLocaleDateString('en-US', { timeZone: tz, month: 'long' });
+  const startDay = start.toLocaleDateString('en-US', { timeZone: tz, day: 'numeric' });
+  const endDay = end.toLocaleDateString('en-US', { timeZone: tz, day: 'numeric' });
+  const year = end.toLocaleDateString('en-US', { timeZone: tz, year: 'numeric' });
+  if (startMonth === endMonth) {
+    return `${startMonth} ${startDay}–${endDay}, ${year}`;
+  }
+  return `${startMonth} ${startDay} – ${endMonth} ${endDay}, ${year}`;
+};

@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
+import { getInitials } from '@/lib/names';
 
 type AvatarPickerProps = {
   label: string;
@@ -28,7 +29,7 @@ export const AvatarPicker = ({
   helperText,
   error,
 }: AvatarPickerProps) => {
-  const initials = getInitials(displayName);
+  const initials = getInitials(displayName, 'CU');
 
   return (
     <View style={styles.wrapper}>
@@ -68,24 +69,6 @@ export const AvatarPicker = ({
       ) : null}
     </View>
   );
-};
-
-const getInitials = (displayName?: string | null) => {
-  if (!displayName) {
-    return 'CU';
-  }
-
-  const parts = displayName
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2);
-
-  if (parts.length === 0) {
-    return 'CU';
-  }
-
-  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('');
 };
 
 const styles = StyleSheet.create({

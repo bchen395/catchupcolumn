@@ -9,8 +9,13 @@ node_modules
 # Expo
 .expo/
 dist/
+dist-ci/
 web-build/
 expo-env.d.ts
+
+# Edition-email preview output (render-email-fixtures.ts); CI uploads it as an
+# artifact instead of committing it.
+preview-out/
 
 # Native
 .kotlin/
@@ -49,3 +54,6 @@ yarn-error.*
 
 # git worktrees created inside the repo (Claude Code's EnterWorktree, etc.)
 /.claude/worktrees/
+
+# deno check writes this; `supabase functions deploy` does not use it
+deno.lock

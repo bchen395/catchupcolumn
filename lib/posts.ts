@@ -147,7 +147,6 @@ export const uploadPostImage = async (
   userId: string,
   postId: string,
   imageUri: string,
-  mimeType?: string | null
 ): Promise<string> => {
   // Resize + JPEG-recompress so we always upload at most ~1600px on the long
   // edge. Original camera shots are 4–6 MB and we don't need that fidelity.
@@ -175,6 +174,20 @@ export const uploadPostImage = async (
 // sign it. Matches `.../object/public/post-images/<path>`.
 const LEGACY_PUBLIC_URL_RE = /\/storage\/v1\/object\/public\/post-images\/(.+)$/;
 
+// Signed URLs, cached by storage path for the session.
+//
+// Without this, every mount of every photo costs a round-trip to Storage: an
+// edition front page signs the lead, the secondary, and each brief
+// separately, then signs them all again when you open a story and again when
+// you come back. The signature is valid for an hour and the same path always
+// signs to an equivalent URL, so there is nothing to gain from re-asking.
+// Module-level, matching the ratio cache in `use-image-orientation`.
+const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
+
+// Re-sign a minute early rather than handing out a URL that expires
+// mid-download on a slow connection.
+const SIGNED_URL_REFRESH_MARGIN_MS = 60 * 1000;
+
 export const getPostImageDisplayUrl = async (
   rawImageUrl: string | null | undefined,
 ): Promise<string | null> => {
@@ -190,6 +203,11 @@ export const getPostImageDisplayUrl = async (
     storagePath = match[1];
   }
 
+  const cached = signedUrlCache.get(storagePath);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.url;
+  }
+
   const { data, error } = await supabase.storage
     .from(POST_IMAGE_BUCKET)
     .createSignedUrl(storagePath, POST_IMAGE_SIGNED_TTL_SECONDS);
@@ -197,5 +215,16 @@ export const getPostImageDisplayUrl = async (
   if (error || !data?.signedUrl) {
     return null;
   }
+
+  signedUrlCache.set(storagePath, {
+    url: data.signedUrl,
+    expiresAt: Date.now() + POST_IMAGE_SIGNED_TTL_SECONDS * 1000 - SIGNED_URL_REFRESH_MARGIN_MS,
+  });
   return data.signedUrl;
+};
+
+// Drop every cached signature. Called on sign-out: the URLs were signed with
+// the previous session's credentials and must not leak into the next account.
+export const clearPostImageUrlCache = (): void => {
+  signedUrlCache.clear();
 };

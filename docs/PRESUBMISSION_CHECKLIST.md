@@ -17,15 +17,38 @@ older than your last deploy.
 
 ## Gate 1 — Code freeze
 
-- [ ] `npm run typecheck` clean
-- [ ] `npx expo-doctor` → 18/18
-- [ ] `deno check supabase/functions/**/index.ts` clean
-- [ ] `npx expo install --check` reports nothing to update
+**The static half is automated as of 2026-09-10.** `.github/workflows/ci.yml` runs it
+on every PR and push to `main`, so this gate is now *"CI is green on the commit
+you're shipping"* rather than a list to retype:
+
+```bash
+gh run list --branch main --limit 1
+```
+
+CI covers `npm run typecheck`, `npm run lint`, `npx expo-doctor`,
+`npx expo install --check`, `deno check` on **every** edge-function file, the
+edition-email fixture render (fails on Gmail's ~102KB clip limit), a real Metro
+bundle for **both** iOS and Android, and — when SQL changed — a from-scratch
+migration apply plus `supabase db lint`.
+
+> The old line here was `deno check supabase/functions/**/index.ts`, which only
+> reached the four `index.ts` files: `**` doesn't recurse in non-globstar bash, so
+> `_shared/` (the entire email + dispatch engine) was never type-checked by this
+> gate. CI uses `find … -print0 | xargs -0 deno check` instead.
+
+- [ ] CI green on the release commit
+- [ ] `npx expo-doctor` → **21/21** (it was 18 checks before SDK 57)
+- [ ] Bundle size sanity-checked from the CI run summary — it prints JS and asset
+      totals per platform
+- [ ] No `console.log` or `TODO` left in `app/`, `components/`, `lib/`, `hooks/`
+- [ ] **UGC moderation decision made** — see Gate 6; it can change what you ship
+
+**What CI cannot do — still on you.** It never renders a screen, sends a push, or
+touches a device:
+
 - [ ] Manual QA per the `verify-changes` skill: auth, onboarding, group create/join,
       composer, editions list, edition reader, profile — **each at large system font
       sizes** (the audience is older adults; this is not optional polish)
-- [ ] No `console.log` or `TODO` left in `app/`, `components/`, `lib/`, `hooks/`
-- [ ] **UGC moderation decision made** — see Gate 6; it can change what you ship
 
 ## Gate 2 — Backend parity with production
 

@@ -17,23 +17,18 @@ import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
-import { unregisterPushAsync } from '@/lib/notifications';
 import {
   deleteAccount,
   fetchCurrentUserProfile,
+  signOut,
   updateCurrentUserProfile,
   uploadUserAvatar,
 } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
+import { getInitials } from '@/lib/names';
 import type { UserRow } from '@/types';
 
 const DISPLAY_NAME_MAX = 60;
 const BIO_MAX = 200;
-
-type SelectedAvatar = {
-  uri: string;
-  mimeType?: string | null;
-};
 
 type EditErrors = {
   displayName?: string;
@@ -55,7 +50,8 @@ const ProfileScreen = () => {
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
-  const [selectedAvatar, setSelectedAvatar] = useState<SelectedAvatar | null>(null);
+  // A freshly picked local image URI, pending upload on save.
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   const [editErrors, setEditErrors] = useState<EditErrors>({});
   const [savingProfile, setSavingProfile] = useState(false);
   const [pickingImage, setPickingImage] = useState(false);
@@ -141,7 +137,7 @@ const ProfileScreen = () => {
       }
 
       const asset = result.assets[0];
-      setSelectedAvatar({ uri: asset.uri, mimeType: asset.mimeType });
+      setSelectedAvatar(asset.uri);
       setAvatarPreviewUrl(asset.uri);
     } catch (_error) {
       setEditErrors((current) => ({
@@ -187,8 +183,7 @@ const ProfileScreen = () => {
         try {
           const uploadResult = await uploadUserAvatar({
             userId: user.id,
-            imageUri: selectedAvatar.uri,
-            mimeType: selectedAvatar.mimeType,
+            imageUri: selectedAvatar,
           });
           nextAvatarUrl = uploadResult.publicUrl;
         } catch (_error) {
@@ -221,17 +216,9 @@ const ProfileScreen = () => {
       setSigningOut(true);
       setScreenError('');
 
-      // Drop this device's push token first so the signed-out account stops
-      // receiving pushes. Best-effort — never block sign-out on it.
-      if (user) {
-        await unregisterPushAsync(user.id);
-      }
-
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        throw error;
-      }
+      // lib/auth's signOut drops this device's push token and the cached
+      // signed photo URLs before ending the session.
+      await signOut(user?.id);
     } catch (_error) {
       setScreenError('We could not sign you out right now. Please try again.');
     } finally {
@@ -252,7 +239,7 @@ const ProfileScreen = () => {
             try {
               setDeletingAccount(true);
               setScreenError('');
-              await deleteAccount();
+              await deleteAccount(user?.id);
             } catch (_error) {
               setScreenError('We could not delete your account right now. Please try again.');
             } finally {
@@ -596,16 +583,6 @@ const styles = StyleSheet.create({
     marginTop: Layout.padding.lg,
   },
 });
-
-const getInitials = (value: string) => {
-  return value
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
-};
 
 const formatMemberSince = (createdAt?: string | null) => {
   if (!createdAt) {
