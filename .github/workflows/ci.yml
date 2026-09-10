@@ -18,6 +18,11 @@
 #                   which is the only behavioural check in the repo.
 #   migrations      only when SQL changed: refuses edits to already-merged
 #                   migrations, then applies the whole history from scratch.
+#
+# Actions are pinned to a major tag and kept current on purpose: GitHub retires
+# the Node runtime that older action majors are built on (Node 20 was deprecated
+# 2025-09), and a stale major eventually becomes a hard failure rather than a
+# warning. If a run starts warning about a deprecated runtime, bump them.
 
 name: CI
 
@@ -54,9 +59,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # .nvmrc is the single source of truth for the Node version; keep it
           # and package.json's `engines` in step.
@@ -96,9 +101,9 @@ jobs:
       matrix:
         platform: [ios, android]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -133,7 +138,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: denoland/setup-deno@v2
         with:
@@ -162,7 +167,7 @@ jobs:
       # Lets you eyeball the rendered email on a PR without running anything.
       - name: Upload rendered emails
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: edition-email-preview
           path: preview-out/
@@ -176,7 +181,7 @@ jobs:
     timeout-minutes: 20
     steps:
       # Full history so the base commit is available for the diff below.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -223,7 +228,7 @@ jobs:
           fi
           echo "Only new migrations added." >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         if: steps.changed.outputs.sql == 'true'
         with:
           # Pinned: a CLI release shouldn't be able to break the gate. Bump
