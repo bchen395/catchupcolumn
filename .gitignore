@@ -49,3 +49,6 @@ yarn-error.*
 
 # git worktrees created inside the repo (Claude Code's EnterWorktree, etc.)
 /.claude/worktrees/
+
+# deno check writes this; `supabase functions deploy` does not use it
+deno.lock

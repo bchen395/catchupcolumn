@@ -329,8 +329,16 @@ type ExpoPushMessage = {
 async function sendExpoPushBatch(messages: ExpoPushMessage[]): Promise<{
   sent: number;
   failed: number;
+  /**
+   * Tokens Expo reported as `DeviceNotRegistered` — the app was uninstalled,
+   * the notification permission was revoked, or the token was reissued. Expo
+   * requires that these stop being used; left in place they fail forever,
+   * burning the edition's three push attempts every week and slowly filling
+   * `push_tokens` with garbage.
+   */
+  deadTokens: string[];
 }> {
-  if (messages.length === 0) return { sent: 0, failed: 0 };
+  if (messages.length === 0) return { sent: 0, failed: 0, deadTokens: [] };
 
   const res = await fetch(EXPO_PUSH_ENDPOINT, {
     method: 'POST',
@@ -345,24 +353,53 @@ async function sendExpoPushBatch(messages: ExpoPushMessage[]): Promise<{
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     console.error(`Expo push batch failed: ${res.status}: ${body.slice(0, 300)}`);
-    return { sent: 0, failed: messages.length };
+    return { sent: 0, failed: messages.length, deadTokens: [] };
   }
 
   const json = (await res.json().catch(() => null)) as
-    | { data?: Array<{ status: 'ok' | 'error'; message?: string }> }
+    | {
+        data?: {
+          status: 'ok' | 'error';
+          message?: string;
+          details?: { error?: string };
+        }[];
+      }
     | null;
 
   if (!json?.data) {
-    return { sent: 0, failed: messages.length };
+    return { sent: 0, failed: messages.length, deadTokens: [] };
   }
 
   let sent = 0;
   let failed = 0;
-  for (const ticket of json.data) {
-    if (ticket.status === 'ok') sent++;
-    else failed++;
+  const deadTokens: string[] = [];
+  // Tickets come back in request order, so the index identifies the token.
+  json.data.forEach((ticket, i) => {
+    if (ticket.status === 'ok') {
+      sent++;
+      return;
+    }
+    failed++;
+    if (ticket.details?.error === 'DeviceNotRegistered' && messages[i]) {
+      deadTokens.push(messages[i].to);
+    }
+  });
+  return { sent, failed, deadTokens };
+}
+
+// Forget tokens Expo says are gone. Best-effort: a failure here is logged and
+// swallowed, since it must never turn a delivered push into a failed one.
+async function pruneDeadPushTokens(
+  client: SupabaseClient,
+  tokens: string[],
+): Promise<void> {
+  if (tokens.length === 0) return;
+  const { error } = await client.from('push_tokens').delete().in('token', tokens);
+  if (error) {
+    console.error(`Failed to prune ${tokens.length} dead push token(s): ${error.message}`);
+    return;
   }
-  return { sent, failed };
+  console.log(`Pruned ${tokens.length} dead push token(s) (DeviceNotRegistered).`);
 }
 
 export async function pushEdition(
@@ -393,16 +430,25 @@ export async function pushEdition(
 
   let sent = 0;
   let failed = 0;
+  const deadTokens: string[] = [];
   for (let i = 0; i < messages.length; i += EXPO_PUSH_BATCH_SIZE) {
     const batch = messages.slice(i, i + EXPO_PUSH_BATCH_SIZE);
     const result = await sendExpoPushBatch(batch);
     sent += result.sent;
     failed += result.failed;
+    deadTokens.push(...result.deadTokens);
   }
 
-  if (failed === 0) {
+  await pruneDeadPushTokens(client, deadTokens);
+
+  // A dead token is a permanent failure, not a transient one: retrying it
+  // next tick can only fail again. So it doesn't count against the retry
+  // budget — an edition whose *only* failures were dead devices is done.
+  const retriableFailures = failed - deadTokens.length;
+
+  if (retriableFailures <= 0) {
     await client.rpc('mark_edition_pushed', { p_edition_id: editionId });
-    return { sent, failed: 0, allSucceeded: true };
+    return { sent, failed, allSucceeded: true };
   }
 
   const { data: attemptsData, error: attemptsErr } = await client.rpc(

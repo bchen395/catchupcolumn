@@ -55,7 +55,6 @@ You're working on the UI of a family-newsletter app built for older adults and G
 | `illustrations/dog-with-paper-scene` | No-groups doodle: the dog holding a rolled paper (vermilion wrap band). |
 | `illustrations/printing-press-scene` | The long-wait scene (vermilion lever knob). Exports `FlywheelSpokes`/`PressSheet` for the loader's animation. |
 | `illustrations/invite-ticket` | The §11 perforated ticket: drawn frame + dog stub, live-text code (Jost Bold, vermilion). Lives inside `invite-family-card`. |
-| `illustrations/sketch-border` | The §11 wobbly announcement frame — special announcements only, never list content, never twice per screen. |
 | `illustrations/sleeping-dog-doodle` / `mug-doodle` | §11 hidden corner doodles (editions-list end, profile footer). ≤48px tall, never animated. |
 | `edition-lead` | The front-page lead story block (vermilion kicker — the cover's one accent, headline, byline, excerpt, read cue). |
 | `edition-secondary` | The cover's second story — mid-weight: optional photo, `title` headline, excerpt, read cue. |
@@ -65,6 +64,7 @@ You're working on the UI of a family-newsletter app built for older adults and G
 | `story-reader` | Host-agnostic reader body + Next/Previous paging; rendered by both the `[postId]` route and the enlarge overlay. |
 | `report-story-link` | The BRAND §9 report affordance at the foot of a story. Renders nothing on your own post; drafts a support mailto via `lib/report.ts`. |
 | `story-reader-overlay` | The enlarge transition: tapped cover section grows into the full-screen reader (Modal + reanimated); reverse-shrinks on close. |
+| `edition-row` | One row of the Editions list: headline, folio line, and the lead photo (which it signs itself — `posts.image_url` is a private storage path, never a URL). Memoised. |
 | `custom-tab-bar` | The 5-slot bar with the raised ink-black "+". |
 | `compose-sheet-provider` / `compose-group-sheet` | The "write for…" group-picker sheet the "+" opens. |
 | `empty-state` / `error-state` | Lora Bold headline + Jost body + ink-pill CTA. `EmptyState` takes a §4 doodle `scene` (falls back to a plain ink icon); error states keep the quiet `error`-color icon. Copy from `Strings`. |
@@ -91,7 +91,8 @@ You're working on the UI of a family-newsletter app built for older adults and G
 The implementation has evolved past `design/BRAND.md` in these places. **Treat the code as correct**; fold a note into BRAND.md when you touch its section, then delete it here.
 
 - **The center "+" opens a sheet, not a tab.** It opens `compose-group-sheet` to pick a Group first, then routes to Compose. Evolves BRAND §7.
-- **Tab icons bypass `constants/icons.ts`.** `custom-tab-bar.tsx` keeps its own outline glyphs in a local `TAB_META`. Known inconsistency with the registry — if you consolidate, registry wins.
+- **Tab icons bypass `constants/icons.ts`.** `custom-tab-bar.tsx` keeps its own outline glyphs in a local `TAB_META`. Known inconsistency with the registry — if you consolidate, registry wins. The registry's duplicate `tab*` tokens were deleted in the 2026-09-10 audit (they were dead), so `TAB_META` is now the only definition.
+- **`illustrations/sketch-border` was deleted** in the 2026-09-10 audit — the §11 announcement frame was never wired to a screen. BRAND §11 still describes it; re-create it from that section if a surface ever needs it.
 - **The Inbox tab is labeled "Editions."**
 - **`caption` is still the v1 16px variant.** Most v1 caption usages become `meta` under v2; once they've migrated, redefine `caption` to `Typography.scale.caption` (Jost 12) per BRAND §3.
 

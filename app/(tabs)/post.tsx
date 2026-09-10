@@ -277,31 +277,46 @@ const PostScreen = () => {
       setScreenError('Please write something before saving.');
       return;
     }
+    // Cancels a *scheduled* autosave. One already in flight can't be
+    // cancelled, so wait it out below.
     clearAutoSaveTimer();
     setScreenError('');
     setSaving(true);
     setSaveStatus('saving');
 
+    // A debounced autosave fires 1.2s after the last keystroke, so tapping
+    // Save right after typing can land while that request is still out. If it
+    // is a *create*, both calls would insert and the author would end up with
+    // two posts in one edition — so let it settle and pick up the row it made
+    // (existingPostRef, which the autosave keeps current), rather than the
+    // `existingPost` state, which is still null until its setState lands.
+    for (let waited = 0; isSavingRef.current && waited < 10000; waited += 50) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    isSavingRef.current = true;
+
     const titleValue = title.trim() === '' ? null : title.trim();
 
     try {
-      let finalImageUrl: string | null = existingPost?.image_url ?? null;
+      const saved = existingPostRef.current;
+      let finalImageUrl: string | null = saved?.image_url ?? null;
 
-      if (existingPost) {
+      if (saved) {
         if (imageChanged) {
           if (imageUri) {
             setUploadingImage(true);
-            finalImageUrl = await uploadPostImage(user.id, existingPost.id, imageUri);
+            finalImageUrl = await uploadPostImage(user.id, saved.id, imageUri);
             setUploadingImage(false);
           } else {
             finalImageUrl = null;
           }
         }
-        const updated = await updatePost(existingPost.id, {
+        const updated = await updatePost(saved.id, {
           title: titleValue,
           body: body.trim(),
           image_url: finalImageUrl,
         });
+        existingPostRef.current = updated;
         setExistingPost(updated);
         setImageUri(updated.image_url);
         setImageChanged(false);
@@ -312,12 +327,14 @@ const PostScreen = () => {
           title: titleValue,
           body: body.trim(),
         });
+        existingPostRef.current = created;
 
         if (imageUri && imageChanged) {
           setUploadingImage(true);
           finalImageUrl = await uploadPostImage(user.id, created.id, imageUri);
           setUploadingImage(false);
           const withImage = await updatePost(created.id, { image_url: finalImageUrl });
+          existingPostRef.current = withImage;
           setExistingPost(withImage);
           setImageUri(withImage.image_url);
         } else {
@@ -343,6 +360,7 @@ const PostScreen = () => {
       setScreenError(Strings.error.postSave);
       setSaveStatus('error');
     } finally {
+      isSavingRef.current = false;
       setSaving(false);
     }
   };

@@ -10,7 +10,7 @@ The primary audience is older adults (grandparents, older parents) who want to s
 
 ## Tech Stack
 
-- **Frontend:** React Native with Expo (managed workflow)
+- **Frontend:** React Native with Expo (managed workflow) — **SDK 57** (upgraded from 54 on 2026-09-10)
 - **Backend:** Supabase (Postgres DB, Auth, Storage, Edge Functions)
 - **Email Delivery:** Resend (for sending weekly edition emails)
 - **Language:** TypeScript throughout
@@ -30,6 +30,9 @@ catch-up-column/
 │   ├── edition/[id]/       # Edition reading screens (front page + story reader)
 │   ├── group/              # Group create/join/detail screens
 │   └── _layout.tsx         # Root layout
+│                           # NB: (tabs)/_layout.tsx imports Tabs from
+│                           # 'expo-router/js-tabs' — the plain `expo-router`
+│                           # export is deprecated as of SDK 57.
 ├── components/             # Reusable UI components
 ├── lib/                    # Utilities, Supabase client, helpers
 ├── hooks/                  # Custom React hooks
@@ -173,6 +176,9 @@ npx supabase functions deploy <function-name>
 
 # Type-check the app (strict, no emit; does not cover supabase/functions)
 npm run typecheck
+
+# Lint the app (eslint-config-expo; does not cover supabase/functions)
+npm run lint
 ```
 
 ## Code Style

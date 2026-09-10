@@ -2,6 +2,7 @@ import { ImageStyle, StyleProp, StyleSheet, View, ViewStyle } from 'react-native
 
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
+import { getInitials } from '@/lib/names';
 
 import { AppImage } from './app-image';
 import { ThemedText } from './themed-text';
@@ -14,16 +15,6 @@ type Props = {
   size?: number;
   style?: StyleProp<ViewStyle>;
 };
-
-const getInitials = (name: string) =>
-  name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    // Spread to code points so a leading emoji isn't split into a broken
-    // surrogate half (e.g. a name like "🌸 Rose").
-    .map((p) => [...p][0]?.toUpperCase() ?? '')
-    .join('');
 
 // One contributor's face — or their initials on a warm paper chip when they
 // have no avatar. Shared by the reader's `story-article` byline and the

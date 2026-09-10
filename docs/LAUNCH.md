@@ -273,12 +273,14 @@ Reworking the hand-drawn illustration world (the paperboy and his dog). This is 
 **last planned product change before launch**, and it's why steps 7–8 are deferred:
 screenshots and the store build both freeze the final look.
 
-**What exists today** — 9 components in `components/illustrations/`:
+**What exists today** — 8 components in `components/illustrations/`:
 `paperboy-mark`, `paperboy-mailbox-scene`, `dog-with-paper-scene`,
 `sleeping-dog-doodle`, `printing-press-scene`, `mug-doodle`, `rolled-paper-glyph`,
-`invite-ticket`, `sketch-border`. They're wired into the inbox empty state, the
-groups and post screens, the profile footer, the group welcome screen, and the
-loading screen (`printing-press-loading.tsx`, `ride` / `press` variants).
+`invite-ticket`. All 8 are wired: the inbox empty state, the groups and post
+screens, the profile footer, the group welcome screen, and the loading screen
+(`printing-press-loading.tsx`, `ride` / `press` variants). (A 9th,
+`sketch-border`, was listed here but had never been imported by any screen;
+deleted 2026-09-10 — see BRAND §11.)
 
 **Scope: to be defined.** Nail down which illustrations change before starting so it
 doesn't sprawl — this is chrome, not a re-architecture.

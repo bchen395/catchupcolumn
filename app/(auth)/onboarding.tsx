@@ -31,11 +31,6 @@ type OnboardingErrors = {
 const DISPLAY_NAME_MAX = 60;
 const BIO_MAX = 200;
 
-type SelectedAvatar = {
-  uri: string;
-  mimeType?: string | null;
-};
-
 const OnboardingScreen = () => {
   const router = useRouter();
   const { user } = useAuth();
@@ -43,7 +38,8 @@ const OnboardingScreen = () => {
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
-  const [selectedAvatar, setSelectedAvatar] = useState<SelectedAvatar | null>(null);
+  // A freshly picked local image URI, pending upload on save.
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   const [errors, setErrors] = useState<OnboardingErrors>({});
   const [screenError, setScreenError] = useState('');
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -128,7 +124,7 @@ const OnboardingScreen = () => {
       }
 
       const asset = result.assets[0];
-      setSelectedAvatar({ uri: asset.uri, mimeType: asset.mimeType });
+      setSelectedAvatar(asset.uri);
       setAvatarPreviewUrl(asset.uri);
     } catch (_error) {
       setErrors((currentErrors) => ({
@@ -171,8 +167,7 @@ const OnboardingScreen = () => {
         try {
           const uploadResult = await uploadUserAvatar({
             userId: user.id,
-            imageUri: selectedAvatar.uri,
-            mimeType: selectedAvatar.mimeType,
+            imageUri: selectedAvatar,
           });
 
           nextAvatarUrl = uploadResult.publicUrl;

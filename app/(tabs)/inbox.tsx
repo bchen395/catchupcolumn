@@ -1,15 +1,10 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Pressable,
-  RefreshControl,
-  SectionList,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { RefreshControl, SectionList, StyleSheet, View } from 'react-native';
 
 import { AppImage } from '@/components/app-image';
 import { useComposeSheet } from '@/components/compose-sheet-provider';
+import { EditionRow } from '@/components/edition-row';
 import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
 import { PaperboyMailboxScene } from '@/components/illustrations/paperboy-mailbox-scene';
@@ -22,7 +17,7 @@ import { Icons } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { useAuth } from '@/hooks/use-auth';
-import { headlineFor, orderEdition } from '@/lib/edition-layout';
+import { formatWeekOf, headlineFor, orderEdition } from '@/lib/edition-layout';
 import { fetchEditionsForUser, type EditionListItem } from '@/lib/editions';
 
 type Section = {
@@ -30,22 +25,6 @@ type Section = {
   groupName: string;
   coverUrl: string | null;
   data: EditionListItem[];
-};
-
-const formatWeekOf = (publishedAt: string, timezone?: string | null): string => {
-  const tz = timezone || undefined;
-  const end = new Date(publishedAt);
-  const start = new Date(end);
-  start.setDate(start.getDate() - 6);
-  const startMonth = start.toLocaleDateString('en-US', { timeZone: tz, month: 'long' });
-  const endMonth = end.toLocaleDateString('en-US', { timeZone: tz, month: 'long' });
-  const startDay = start.toLocaleDateString('en-US', { timeZone: tz, day: 'numeric' });
-  const endDay = end.toLocaleDateString('en-US', { timeZone: tz, day: 'numeric' });
-  const year = end.toLocaleDateString('en-US', { timeZone: tz, year: 'numeric' });
-  if (startMonth === endMonth) {
-    return `${startMonth} ${startDay}\u2013${endDay}, ${year}`;
-  }
-  return `${startMonth} ${startDay} \u2013 ${endMonth} ${endDay}, ${year}`;
 };
 
 // The row's folio line, in the NYT metadata dress (BRAND §6/§8):
@@ -81,9 +60,12 @@ const buildSections = (editions: EditionListItem[]): Section[] => {
       });
     }
   }
-  // Editions already sorted newest-first by query; sections ordered by their newest edition
-  return Array.from(map.values()).sort((a, b) =>
-    b.data[0].published_at.localeCompare(a.data[0].published_at)
+  // Editions already sorted newest-first by query; sections ordered by their
+  // newest edition. Compared as instants rather than strings — see the same
+  // note on `fetchEditionWithPosts`.
+  return Array.from(map.values()).sort(
+    (a, b) =>
+      new Date(b.data[0].published_at).getTime() - new Date(a.data[0].published_at).getTime(),
   );
 };
 
@@ -136,37 +118,27 @@ const InboxScreen = () => {
 
   const sections = useMemo(() => buildSections(editions), [editions]);
 
-  const renderItem = ({ item }: { item: EditionListItem }) => {
-    const weekOf = formatWeekOf(item.published_at, item.group.timezone);
-    // Lead with the edition's lead-story headline when there is one — it sells
-    // the issue far better than a bare date. Fall back to the date otherwise.
-    const lead = orderEdition(item.posts ?? []).lead;
-    const headline = lead ? headlineFor(lead) : null;
-    return (
-      <Pressable
-        onPress={() => router.push(`/edition/${item.id}`)}
-        accessibilityRole="button"
-        style={({ pressed }) => [styles.row, pressed ? styles.rowPressed : null]}
-      >
-        <View style={styles.rowContent}>
-          <ThemedText variant="rowTitle" numberOfLines={2}>
-            {headline ?? weekOf}
-          </ThemedText>
-          <ThemedText variant="meta" numberOfLines={1}>
-            {folioFor(item)}
-          </ThemedText>
-        </View>
-        {lead?.image_url ? (
-          <AppImage source={{ uri: lead.image_url }} style={styles.rowThumb} />
-        ) : null}
-      </Pressable>
-    );
-  };
+  const renderItem = useCallback(
+    ({ item }: { item: EditionListItem }) => {
+      // Lead with the edition's lead-story headline when there is one — it
+      // sells the issue far better than a bare date. Fall back to the date.
+      const lead = orderEdition(item.posts ?? []).lead;
+      return (
+        <EditionRow
+          headline={lead ? headlineFor(lead) : formatWeekOf(item.published_at, item.group.timezone)}
+          folio={folioFor(item)}
+          leadImageUrl={lead?.image_url ?? null}
+          onPress={() => router.push(`/edition/${item.id}`)}
+        />
+      );
+    },
+    [router],
+  );
 
   // Each Group opens like a newspaper section front: a heavy ink rule, then
   // the section title (BRAND §6). No placeholder art when a Group has no
   // cover — the rule carries the structure.
-  const renderSectionHeader = ({ section }: { section: Section }) => {
+  const renderSectionHeader = useCallback(({ section }: { section: Section }) => {
     return (
       <View style={styles.sectionHeader}>
         <View style={styles.sectionRule} />
@@ -180,7 +152,7 @@ const InboxScreen = () => {
         </View>
       </View>
     );
-  };
+  }, []);
 
   if (!hydrated) {
     return <EditionsListSkeleton />;
@@ -275,29 +247,6 @@ const styles = StyleSheet.create({
   sectionThumb: {
     width: 40,
     height: 40,
-    borderWidth: 1,
-    borderColor: Colors.hairline,
-  },
-  // Hairline-separated row (BRAND §6): headline left, square lead-photo
-  // thumbnail right, no chevron, whole row is the target.
-  row: {
-    minHeight: Layout.rowMinHeight,
-    paddingVertical: Layout.padding.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Layout.padding.md,
-  },
-  rowPressed: {
-    // Content blocks press at ~0.7 opacity — no new colors (BRAND §10 / v1 rule).
-    opacity: 0.7,
-  },
-  rowContent: {
-    flex: 1,
-    gap: 4,
-  },
-  rowThumb: {
-    width: 56,
-    height: 56,
     borderWidth: 1,
     borderColor: Colors.hairline,
   },

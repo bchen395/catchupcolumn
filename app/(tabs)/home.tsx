@@ -55,13 +55,14 @@ const HomeScreen = () => {
     setLatest(null);
   }, [user?.id]);
 
-  // Plucks the newest edition from the same query the Editions tab runs. Note
-  // these are two independent fetches — there is no shared cache yet.
+  // Home shows exactly one edition, so it asks for one. (The Editions tab runs
+  // the same query unbounded for its list — these are two independent fetches,
+  // there is no shared cache yet, so keeping this one to `limit: 1` matters.)
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       if (!user) return;
-      fetchEditionsForUser(user.id)
+      fetchEditionsForUser(user.id, { limit: 1 })
         .then(async (data) => {
           const newest = data[0] ?? null;
           // Re-checked on every focus so reading the edition (which marks it

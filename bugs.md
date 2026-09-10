@@ -33,9 +33,37 @@ New this pass — **all fixed in the working tree**, see the dated resolved sect
 - **MEDIUM x2 — edition front-page byline & dateline clip** at long names / large
   font scales. Fixed with `flexShrink`/`numberOfLines`.
 
-## Pending deploy (fixed in repo, not yet live)
+## ~~Pending deploy~~ — cleared
 
-- **Security hardening migration** — `supabase/migrations/20260703000000_security_hardening.sql`. **Apply with `npx supabase db push`.** Until applied, the HIGH cross-group post-injection hole is live. NOTE: this migration and the client changes in the same pass are coupled — deploy the app build and the migration together (the client stops reading `users.email` / embedding it; the migration revokes column access to it). Pushing the migration before the new build ships would break profile load on the *old* build's `select('*')`.
+The 2026-07-03 security-hardening migration is **live**. `docs/PRESUBMISSION_CHECKLIST.md`
+Gate 2 records all 29 local migrations as having a `remote` counterpart as of
+2026-08-05, which includes `20260703000000_security_hardening.sql`. The
+coupled client changes shipped in the same tree. Nothing is pending here.
+
+---
+
+## Audit pass — 2026-09-10
+
+A full-repo audit ahead of App Store submission (dependencies, dead code,
+client bugs, query cost, delivery). **Fixed in the working tree** — see
+[Resolved in the 2026-09-10 pass](#resolved-in-the-2026-09-10-pass).
+
+Two corrections to *this document*, which had drifted:
+
+- **L5 is wrong — do not act on it.** It advises dropping `created_by` from
+  `createGroup`'s insert "and letting the trigger own it." `groups.created_by`
+  has **no DB default** (checked in `001_initial_schema.sql` and
+  `20260426000001_fix_group_created_trigger.sql`), and `handle_new_group()`
+  reads `new.created_by` to insert the moderator row. Dropping it would insert
+  NULL and fail the `group_members.user_id` FK — every group creation would
+  break. The column is *required*, not redundant, and RLS already constrains
+  it (`with check (created_by = auth.uid())`). L5 is struck below.
+- **The "Resolved" list references v1 tokens that no longer exist** — e.g.
+  "Hardcoded `#2e78b7` not-found link color — now `Colors.orange`". There is no
+  `Colors.orange`; the v1 orange/peach palette was deleted in the v2 reskin and
+  `+not-found.tsx` uses `Colors.ink`. Likewise the icon set is no longer
+  "brand-orange". Those entries describe a state two design systems ago — kept
+  only as history, not as a description of the current tree.
 
 ---
 
@@ -66,10 +94,13 @@ New this pass — **all fixed in the working tree**, see the dated resolved sect
 - **Where:** `lib/posts.ts:46`
 - Passed all of the user's group ids and dedupes by `author_id` globally, so someone who wrote in two of your groups this week collapses into a single byline carrying their **earliest** timestamp. Acceptable for the Home "this week" strip, but confirm it's intended — a per-group byline would read more accurately.
 
-### L5. `createGroup` still passes `created_by` to the insert
-- **Where:** `lib/groups.ts:174`
-- A DB trigger derives the moderator from `created_by`. The dangerous footgun is closed — there's now an assertion that `created_by === auth.uid()` before insert — but the column is still passed redundantly.
-- **Fix:** drop `created_by` from the insert payload and let the trigger own it.
+### ~~L5. `createGroup` still passes `created_by` to the insert~~ — WITHDRAWN 2026-09-10
+- **Where:** `lib/groups.ts` (`createGroup`)
+- This finding was **incorrect**. `groups.created_by` has no DB default, and
+  `handle_new_group()` reads `new.created_by` to create the moderator row —
+  so omitting it inserts NULL and breaks group creation with an FK error.
+  Passing it is required. The pre-insert `created_by === auth.uid()` assertion
+  plus the RLS `with check` are the correct belt-and-braces. **No change.**
 
 ---
 
@@ -79,17 +110,20 @@ New this pass — **all fixed in the working tree**, see the dated resolved sect
 - **Where:** `types/database.ts`, forcing `as unknown as GroupRowWithMembers` casts in `lib/groups.ts:21`/`:148`.
 - **Fix:** generate via `supabase gen types typescript` so joined selects type without casts. (Carried over from the previous audit as #29 — still open.)
 
-### N2. Dead `emptyMail` icon token
-- **Where:** `constants/icons.ts:45`
-- `emptyMail: mci('email-outline')` is unreferenced after the Mail tab was removed.
-- **Fix:** delete the token.
+### ~~N2. Dead `emptyMail` icon token~~ — FIXED 2026-09-10
+- **Where:** `constants/icons.ts`
+- It was worse than one token: **ten** of the registry's entries were
+  unreferenced (`emptyMail`, `chevronRight`, `chevronLeft`, `emptyInbox`,
+  `emptyProfile`, `qr`, and the four `tab*` glyphs that `custom-tab-bar`'s own
+  `TAB_META` had superseded). All ten deleted, and the file's stale
+  "After Phase 5 …" header rewritten.
 
 ### N3. `SnapColumn` disables `react-hooks/exhaustive-deps`
-- **Where:** `components/snap-column.tsx:50` — the effect omits `selectedIndex`, so an external change while `visible` stays true won't scroll to match. Latent only (the repo has no ESLint config wired, and current call sites don't hit the case).
+- **Where:** `components/snap-column.tsx:50` — the effect omits `selectedIndex`, so an external change while `visible` stays true won't scroll to match. Still latent (current call sites don't hit the case), but as of 2026-09-10 **ESLint is wired** (`npm run lint`), so this and the four other `eslint-disable` comments now suppress a rule that actually runs — they're real decisions, not decoration. `npm run lint` is at 0 errors; 39 warnings remain and are documented as expected in the `verify-changes` skill.
 
-### N4. Post sort uses `localeCompare` on ISO timestamps
-- **Where:** `lib/editions.ts` (`fetchEditionWithPosts`)
-- Correct for ISO-8601 (lexicographic == chronological) but fragile if the timestamp format ever changes. Prefer a numeric/`Date` compare. Cosmetic.
+### ~~N4. Post sort uses `localeCompare` on ISO timestamps~~ — FIXED 2026-09-10
+- **Where:** `lib/editions.ts` (`fetchEditionWithPosts`) and `app/(tabs)/inbox.tsx` (`buildSections`, which had the same pattern on `published_at`)
+- Both now compare `new Date(x).getTime()`.
 
 ---
 
@@ -114,18 +148,30 @@ New this pass — **all fixed in the working tree**, see the dated resolved sect
 
 ## Top-priority list
 
-1. **Apply the 2026-07-03 security migration** (`npx supabase db push`) — closes the
-   live HIGH cross-group post-injection hole. Ship it together with the app build
-   that contains the coupled client changes (see Pending deploy note).
-2. **Run `eas init`** — writes `owner` + `extra.eas.projectId` to app.json. Without
-   it, production push notifications silently never register (a core feature). See
-   `docs/STORE_LISTING.md` §11.
-3. **Host the legal/support docs** (`docs/PRIVACY.md`, `SUPPORT.md`, `DATA_DELETION.md`)
-   and enter the URLs in App Store Connect / Play Console — hard submission blockers.
-4. **L2** — set a production `EMAIL_FROM` (verified Resend domain) before launch.
-5. **M1** — decide whether weekly email needs per-recipient retry, or accept the trade-off.
-6. **Auth config (dashboard, not code):** raise minimum password length (currently 6)
-   and decide on email confirmation (currently off) — see D2/D3 below.
+Rewritten 2026-09-10. Items 1–3 of the old list are **done**: the security
+migration is live (Gate 2), `eas init` has run (`app.json` carries `owner` and
+`extra.eas.projectId`), and the legal/support pages return 200 (Gate 4).
+`docs/PRESUBMISSION_CHECKLIST.md` is the authoritative submission-day list —
+this is only the code-side residue.
+
+1. **Build on SDK 57 and smoke-test on a device.** The 2026-09-10 upgrade
+   (54 → 57) is typechecked and `expo-doctor`-clean but has never been built.
+   Highest-risk spots: the splash screen (moved to the `expo-splash-screen`
+   plugin with `enableFullScreenImage_legacy`), the tab bar (now
+   `expo-router/js-tabs`), and Reanimated 4.5 animations.
+2. **L2** — set a production `EMAIL_FROM` (verified Resend domain) before launch.
+3. **M1** — decide whether weekly email needs per-recipient retry, or accept the
+   trade-off.
+4. **Auth config (dashboard, not code):** raise minimum password length
+   (currently 6) and decide on email confirmation (currently off) — see D2/D3.
+5. **Universal links are declared nowhere.** `app.json` has no
+   `associatedDomains` (iOS) or `intentFilters` (Android), and the AASA file
+   still contains a literal `TEAMID` while `assetlinks.json` still contains
+   `REPLACE_WITH_YOUR_APP_SIGNING_SHA256_FINGERPRINT`. Every edition email's
+   primary CTA is an `https://www.catchupcolumn.com/edition/<id>` link, so
+   today it lands in the browser and never hands off to the app. Tracked in
+   Gate 4 as optional; it is the difference between the email working and the
+   email half-working.
 
 Everything else is low-risk cleanup that can ride along with normal work.
 
@@ -188,3 +234,88 @@ tree (verified file-by-file during this pass):
 - **LOW: initials broke on emoji names** — `getInitials` (`components/avatar.tsx`) spreads to code points.
 - **Store readiness:** icons regenerated in the orange brand palette (illegible wordmark dropped, main icon flattened to RGB for App Store), monochrome Android notification icon added and wired in `app.json`, `primaryColor` corrected to `#FF7237`, splash made transparent on `paperWarm`; `eas.json` created; legal/support/data-deletion docs and store-listing metadata drafted under `docs/`.
 - **Verified in sync:** all four deployed edge functions are byte-identical to the repo (`supabase functions download`); the `20260627000000` PUBLIC-execute migration is `remote` (live); `compile-editions` v13 carries the 20-min tolerance.
+
+---
+
+## Resolved in the 2026-09-10 pass
+
+Found and fixed in this pass (all typechecked; `npm run lint` at 0 errors;
+`deno check` clean). **None of these are verified on a device** — see the
+session summary for what still needs a real build.
+
+**Bugs**
+
+- **The Editions list showed an empty grey box instead of every lead photo.**
+  `inbox.tsx` passed the raw `posts.image_url` — a *storage path* in a private
+  bucket — straight to `<AppImage>`, which can't render it. Every other photo
+  surface goes through `EditorialPhoto`/`usePostImageUrl`, which sign first.
+  Extracted `components/edition-row.tsx`, which signs its own thumbnail (and is
+  memoised, so a list re-render no longer re-signs every row).
+- **`getInitials` existed three times and had drifted.** `components/avatar.tsx`
+  had the emoji fix (spread to code points); `avatar-picker.tsx` and
+  `profile.tsx` still used `part[0]`, so a name starting with an emoji or other
+  astral character rendered a broken surrogate half. One copy now, in
+  `lib/names.ts`, with a `fallback` argument for the 'CU' placeholder case.
+- **The composer could file two posts for one edition.** Autosave debounces at
+  1200ms; tapping **Save** inside that window ran while the autosave's `create`
+  was still in flight, and `handleSave` read the `existingPost` *state* (still
+  null) rather than `existingPostRef`. Both inserted. `handleSave` now waits out
+  an in-flight save, claims the save slot, and reads the ref.
+- **Dead Expo push tokens were never pruned.** `DeviceNotRegistered` tickets
+  (uninstall, revoked permission, reissued token) were counted as ordinary
+  failures, so one dead device burned all three of an edition's push attempts
+  every week and its row sat in `push_tokens` forever. `pushEdition` now deletes
+  those tokens and excludes them from the retry budget — permanent failures
+  aren't retriable. Expo requires this.
+- **Sign-out left session state behind.** It ran inline in `profile.tsx` against
+  `supabase` directly (against the `data-layer` rule that all access goes
+  through `lib/`). Now `lib/auth.ts` owns `signOut(userId)`, which drops the
+  push token *and* the cached signed URLs before ending the session, and
+  `deleteAccount` routes through it.
+
+**Performance**
+
+- **Home ran the app's heaviest query in full to show one edition.**
+  `fetchEditionsForUser` was unbounded and embeds every post's whole `body` (the
+  lead picker ranks by length), and Home and the Editions tab each ran it
+  independently on every focus. It now takes a `limit` (default 60, documented
+  as needing pagination before it's raised) and Home passes `{ limit: 1 }`.
+- **Signed photo URLs were re-fetched on every mount.** An edition front page
+  signed the lead, the secondary and each brief separately, then signed them all
+  again on the way back from a story. Now cached per storage path for the
+  session in `lib/posts.ts`, expiring a minute before the signature does.
+
+**Bloat**
+
+- `components/illustrations/sketch-border.tsx` — never imported. Deleted.
+- Ten unreferenced `constants/icons.ts` tokens. Deleted (see N2).
+- `assets/fonts/SpaceMono-Regular.ttf` — Expo-template leftover, referenced
+  nowhere. Deleted.
+- `react-test-renderer` devDependency — no test runner exists, and it was
+  pinned to a React version no longer installed. Removed.
+- `formatWeekOf` was duplicated verbatim in `inbox.tsx` and
+  `edition/[id]/index.tsx`. Moved to `lib/edition-layout.ts`.
+- A `mimeType` field was threaded through three screens and two `lib`
+  signatures and **never read** — every upload force-converts to JPEG in
+  `resizeImageForUpload`. Removed, which collapsed three single-field wrapper
+  types to plain `string | null`.
+- `app/group/create.tsx` rendered its cover with RN's `Image` instead of
+  `AppImage` (the same inconsistency that was fixed in group detail earlier).
+- `package.json` was still named `catchupcolumn-init`.
+- **`app/group/create.tsx` imported the `@expo/vector-icons` barrel**
+  (`import { Ionicons } from '@expo/vector-icons'`) where every other file uses
+  the direct subpath. The barrel re-exports ~20 icon families and each pulls
+  its `.ttf` in as an asset, so one line was shipping 17 unused fonts. Switched
+  to `@expo/vector-icons/Ionicons`: measured **6.3MB → 4.1MB** of bundled
+  assets (20 font files → the 3 the app actually uses).
+
+**Currency / tooling**
+
+- **Expo SDK 54 → 57** (RN 0.81.5 → 0.86.3, React 19.1 → 19.2.3, TS 5.9 → 6.0).
+  `npm audit` went 36 → 20 findings and 15 high → 2; the remainder are
+  build-toolchain transitives, not shipped code. Two migrations were required:
+  `Tabs`/`BottomTabBarProps` now come from `expo-router/js-tabs` (the plain
+  `expo-router` export is deprecated), and `app.json` dropped `newArchEnabled`
+  and `edgeToEdgeEnabled` (both mandatory now) with `splash` moved into the
+  `expo-splash-screen` plugin. `expo-doctor` is 21/21.
+- **ESLint is wired** — `eslint-config-expo` flat config, `npm run lint`.

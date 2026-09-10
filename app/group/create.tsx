@@ -1,9 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,6 +11,7 @@ import {
   View
 } from 'react-native';
 
+import { AppImage } from '@/components/app-image';
 import { DaySelector } from '@/components/day-selector';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
@@ -35,11 +35,6 @@ const getDeviceTimezone = () => {
   }
 };
 
-type SelectedImage = {
-  uri: string;
-  mimeType?: string | null;
-};
-
 const CreateGroupScreen = () => {
   const router = useRouter();
   const { user } = useAuth();
@@ -49,7 +44,8 @@ const CreateGroupScreen = () => {
   const [publishDay, setPublishDay] = useState(0);
   const [publishHour, setPublishHour] = useState(9);
   const [publishMinute, setPublishMinute] = useState(0);
-  const [coverImage, setCoverImage] = useState<SelectedImage | null>(null);
+  // A freshly picked local cover URI, pending upload on create.
+  const [coverImage, setCoverImage] = useState<string | null>(null);
 
   const [nameError, setNameError] = useState('');
   const [screenError, setScreenError] = useState('');
@@ -74,7 +70,7 @@ const CreateGroupScreen = () => {
       });
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        setCoverImage({ uri: asset.uri, mimeType: asset.mimeType });
+        setCoverImage(asset.uri);
       }
     } catch (_err) {
       setScreenError('Could not open your photo library right now. Try again in a moment.');
@@ -109,7 +105,7 @@ const CreateGroupScreen = () => {
       if (coverImage) {
         let upload: Awaited<ReturnType<typeof uploadGroupCover>> | null = null;
         try {
-          upload = await uploadGroupCover(group.id, coverImage.uri);
+          upload = await uploadGroupCover(group.id, coverImage);
           await updateGroupSettings(group.id, { cover_image_url: upload.publicUrl });
         } catch (_err) {
           // Non-fatal: the group already exists; remove the orphan storage
@@ -160,7 +156,7 @@ const CreateGroupScreen = () => {
           {/* Cover image */}
           <Pressable onPress={handlePickCoverImage} style={styles.coverPickerWrapper}>
             {coverImage ? (
-              <Image source={{ uri: coverImage.uri }} style={styles.coverPreview} resizeMode="cover" />
+              <AppImage source={{ uri: coverImage }} style={styles.coverPreview} />
             ) : (
               <View style={styles.coverPlaceholder}>
                 <ThemedText variant="caption" style={styles.coverPlaceholderText}>

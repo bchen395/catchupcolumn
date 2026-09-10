@@ -10,7 +10,7 @@ const NotFoundScreen = () => {
     <>
       <Stack.Screen options={{ title: 'Oops!' }} />
       <ThemedView style={styles.container}>
-        <ThemedText variant="subheadline">This screen doesn't exist.</ThemedText>
+        <ThemedText variant="subheadline">This screen doesn&apos;t exist.</ThemedText>
         <Link href="/(tabs)/home" style={styles.link}>
           <ThemedText variant="body" style={styles.linkText}>Go to home screen!</ThemedText>
         </Link>

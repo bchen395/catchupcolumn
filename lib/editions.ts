@@ -9,7 +9,24 @@ export type EditionListItem = EditionRow & {
   posts: LeadPostLike[];
 };
 
-export const fetchEditionsForUser = async (userId: string): Promise<EditionListItem[]> => {
+// Editions returned by default. This query is the app's heaviest — it embeds
+// every post's full body so the front-page lead picker can rank by length —
+// so it stays bounded rather than growing forever with a Group's history. A
+// weekly Group produces ~52 a year, so this is roughly a year across a
+// handful of Groups; add pagination to the Editions list before raising it.
+const EDITIONS_PAGE_SIZE = 60;
+
+/**
+ * Editions across every Group the user belongs to, newest first.
+ *
+ * Pass `limit: 1` when you only need the latest (Home's hero does) — the
+ * default page pulls every embedded post body, which is far more than a
+ * single-edition caller needs.
+ */
+export const fetchEditionsForUser = async (
+  userId: string,
+  { limit = EDITIONS_PAGE_SIZE }: { limit?: number } = {},
+): Promise<EditionListItem[]> => {
   // Filter explicitly by group membership rather than relying on RLS to hide
   // non-member rows. Two-step keeps the second query's plan simple.
   const { data: memberships, error: membershipError } = await supabase
@@ -34,7 +51,8 @@ export const fetchEditionsForUser = async (userId: string): Promise<EditionListI
        posts(title, body, image_url, author:users(display_name))`,
     )
     .in('group_id', groupIds)
-    .order('published_at', { ascending: false });
+    .order('published_at', { ascending: false })
+    .limit(limit);
 
   if (error) {
     throw error;
@@ -67,8 +85,13 @@ export const fetchEditionWithPosts = async (editionId: string): Promise<EditionW
   }
 
   const row = data as unknown as EditionRowWithPosts;
-  const sortedPosts = [...row.posts].sort((a, b) =>
-    a.created_at.localeCompare(b.created_at),
+  // Compare as instants, not strings. Lexicographic order happens to match
+  // chronological order for the ISO-8601 timestamps Postgres returns, but it
+  // stops being true the moment the format shifts (a different offset, a
+  // different fractional precision), and the failure would be a silently
+  // mis-ordered edition.
+  const sortedPosts = [...row.posts].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
   );
 
   return { ...row, posts: sortedPosts };

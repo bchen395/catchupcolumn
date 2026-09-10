@@ -1,14 +1,18 @@
 /**
  * Central registry for icons used across screens.
  *
- * Components reference icons by *semantic key* (e.g. `Icons.emptyInbox`)
+ * Components reference icons by *semantic key* (e.g. `Icons.emptyGroups`)
  * rather than by raw glyph name. Swap an icon set or a specific glyph by
  * editing this one file — no screen edits required.
  *
- * After Phase 5 most empty/error icons are MaterialCommunityIcons outlines —
- * they have a softer, hand-drawn feel that matches the Figma wireframes
- * better than FontAwesome's heavier strokes. FontAwesome is still in the
- * mix for chevrons and a couple of legacy spots that haven't been touched.
+ * Empty- and error-state icons are MaterialCommunityIcons outlines: a softer,
+ * hand-drawn stroke that sits closer to the v2 illustration world than
+ * FontAwesome's heavier weights. FontAwesome survives only for the chevrons.
+ *
+ * Keep this list to glyphs that are actually referenced. Tab-bar icons are
+ * deliberately *not* here — `custom-tab-bar.tsx` owns its own `TAB_META`
+ * (a known inconsistency, noted in the `frontend-design` skill); duplicating
+ * them here just left dead tokens behind.
  */
 
 import type { ComponentProps } from 'react';
@@ -31,18 +35,13 @@ const mci = (name: MaterialCommunityName): IconDescriptor => ({
 export const Icons = {
   // Brand / chrome
   brand: mci('newspaper-variant-outline'),
-  chevronRight: fa('chevron-right'),
-  chevronLeft: fa('chevron-left'),
   chevronDown: fa('chevron-down'),
   close: mci('close'),
 
-  // Empty states — soft outlines that match the Figma wireframe sketches
-  emptyInbox: mci('newspaper-variant-outline'),
+  // Empty states — soft outlines that match the illustration world
   emptyGroups: mci('account-group-outline'),
   emptyPost: mci('pencil-outline'),
   emptyEdition: mci('file-document-outline'),
-  emptyProfile: mci('account-outline'),
-  emptyMail: mci('email-outline'),
 
   // Error states
   errorGeneric: mci('alert-circle-outline'),
@@ -50,12 +49,5 @@ export const Icons = {
 
   // Invitations (join flow + the group screen's invite card)
   invite: mci('email-open-outline'),
-  qr: mci('qrcode'),
   copy: mci('content-copy'),
-
-  // Tab bar (kept here so a future redesign is one file)
-  tabInbox: mci('newspaper-variant-outline'),
-  tabPost: mci('pencil-outline'),
-  tabGroups: mci('account-group-outline'),
-  tabProfile: mci('account-outline'),
 };
