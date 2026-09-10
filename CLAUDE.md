@@ -179,7 +179,18 @@ npm run typecheck
 
 # Lint the app (eslint-config-expo; does not cover supabase/functions)
 npm run lint
+
+# Type-check the edge functions (Deno; not covered by npm run typecheck)
+find supabase/functions -name '*.ts' -print0 | xargs -0 deno check
+
+# Render the edition-email fixtures (fails if one would hit Gmail's clip limit)
+deno run --allow-write=preview-out supabase/functions/_shared/preview/render-email-fixtures.ts preview-out
 ```
+
+All of the above run automatically in CI (`.github/workflows/ci.yml`) on every
+PR, alongside a two-platform Metro bundle and — when SQL changes — a from-scratch
+migration apply. See the `verify-changes` skill for what CI does and does not
+cover.
 
 ## Code Style
 

@@ -124,6 +124,8 @@ await Deno.mkdir(outDir, { recursive: true });
 
 const GMAIL_CLIP_BYTES = 102 * 1024;
 
+const overLimit: string[] = [];
+
 for (const [name, p] of fixtures) {
   const html = renderEditionEmailHtml(p);
   const text = renderEditionEmailText(p);
@@ -134,8 +136,21 @@ for (const [name, p] of fixtures) {
 
   const bytes = new TextEncoder().encode(html).length;
   const clipWarning = bytes > GMAIL_CLIP_BYTES ? '  ⚠ OVER GMAIL CLIP LIMIT' : '';
+  if (bytes > GMAIL_CLIP_BYTES) overLimit.push(`${name} (${bytes} bytes)`);
   console.log(`${name.padEnd(22)} ${String(bytes).padStart(6)} bytes${clipWarning}`);
   console.log(`${''.padEnd(22)} subject: ${subject}`);
 }
 
 console.log(`\nWrote ${fixtures.length} fixtures to ${outDir}/ — open the .html files in a browser.`);
+
+// Exit non-zero when a fixture would be clipped. CI runs this as its only
+// behavioural check on the email, and a warning printed into a green build is
+// a warning nobody reads. Gmail truncates past ~102KB and appends a "View
+// entire message" link — which, for a member who only ever reads the email,
+// silently cuts the edition in half.
+if (overLimit.length > 0) {
+  console.error(
+    `\n✗ ${overLimit.length} fixture(s) exceed Gmail's ~102KB clip limit:\n  ${overLimit.join('\n  ')}`,
+  );
+  Deno.exit(1);
+}

@@ -1,0 +1,249 @@
+# CI — Catch Up Column
+#
+# This repo has no test runner, so CI is the *static* half of the
+# `verify-changes` skill, automated. It cannot tell you the app looks right or
+# that push works on a real device; it can tell you the code compiles, resolves,
+# bundles, and that the migrations apply. Manual QA on a device is still the
+# other half — see `docs/PRESUBMISSION_CHECKLIST.md` Gate 1.
+#
+# Jobs, and what each one actually catches:
+#
+#   app             typecheck + lint + dependency drift. The everyday gate.
+#   bundle          a real Metro bundle per platform. Catches the whole class
+#                   of breakage typecheck can't see: a bad import path, a
+#                   missing native module, a config-plugin error. This is what
+#                   caught the SDK 54→57 tab-bar move.
+#   edge-functions  `deno check` (tsconfig excludes supabase/functions, so
+#                   nothing else covers them) plus the email fixture render,
+#                   which is the only behavioural check in the repo.
+#   migrations      only when SQL changed: refuses edits to already-merged
+#                   migrations, then applies the whole history from scratch.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  # So you can re-run the gate by hand without pushing an empty commit.
+  workflow_dispatch:
+
+# Least privilege: nothing here writes to the repo.
+permissions:
+  contents: read
+
+# A new push to the same branch makes the previous run pointless. Don't pay for
+# it. `github.head_ref` is the PR branch; `github.ref` covers push/dispatch.
+concurrency:
+  group: ci-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # `lib/supabase.ts` throws at module load if these are unset, and Metro
+  # inlines EXPO_PUBLIC_* at bundle time. These are deliberate placeholders:
+  # CI only ever bundles and discards, it never talks to Supabase. Do NOT put
+  # real values here — EXPO_PUBLIC_* is compiled into the client bundle and is
+  # not a secret store.
+  EXPO_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+  EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+
+jobs:
+  # ---------------------------------------------------------------------------
+  app:
+    name: Typecheck, lint, dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # .nvmrc is the single source of truth for the Node version; keep it
+          # and package.json's `engines` in step.
+          node-version-file: .nvmrc
+          cache: npm
+
+      # `ci`, not `install`: fails if package-lock.json is out of sync with
+      # package.json, which catches a forgotten lockfile commit.
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # 0 errors is the gate. Warnings are expected and documented — three
+      # React-Compiler-era rules can't tell the Reanimated/Animated idioms
+      # from real bugs. See the `verify-changes` skill before "fixing" them.
+      - name: Lint
+        run: npm run lint
+
+      - name: Expo config and native-module checks
+        run: npx expo-doctor
+
+      # Fails when an Expo-managed dependency drifts off the SDK's pinned
+      # version — the thing that let this project sit three SDKs behind.
+      - name: Dependencies match the SDK
+        run: npx expo install --check
+
+  # ---------------------------------------------------------------------------
+  bundle:
+    name: Bundle (${{ matrix.platform }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      # Report both platforms in one run rather than stopping at the first.
+      fail-fast: false
+      matrix:
+        platform: [ios, android]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # A production Metro bundle. Exercises every import in the app — a route
+      # file that no other job imports still has to resolve here.
+      - name: Export ${{ matrix.platform }} bundle
+        run: npx expo export --platform ${{ matrix.platform }} --output-dir dist-ci
+
+      # Bundle size is a launch concern (it's a phone app for people on
+      # family plans), so print it rather than let it drift silently. Not a
+      # gate: a threshold would fail on the first legitimate feature.
+      - name: Report bundle size
+        run: |
+          {
+            echo "### ${{ matrix.platform }} bundle"
+            echo
+            echo '| Item | Size |'
+            echo '| --- | --- |'
+            printf '| JS (Hermes bytecode) | %s |\n' \
+              "$(du -ch dist-ci/_expo/static/js/${{ matrix.platform }}/*.hbc 2>/dev/null | tail -1 | cut -f1)"
+            printf '| Assets | %s |\n' "$(du -sh dist-ci/assets 2>/dev/null | cut -f1)"
+            printf '| Total | %s |\n' "$(du -sh dist-ci | cut -f1)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  edge-functions:
+    name: Edge functions (Deno)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          # Pinned major: a Deno release shouldn't be able to redefine the gate.
+          deno-version: v2.x
+
+      # tsconfig.json excludes supabase/functions/**, so `npm run typecheck`
+      # never sees these. This is their only type check.
+      #
+      # `find`, not a `**` glob: GitHub's bash doesn't enable globstar, so
+      # `supabase/functions/**/*.ts` expands only one directory deep and
+      # silently skips `_shared/preview/`. A gate that quietly checks 6 of 7
+      # files is worse than no gate.
+      - name: Type-check functions
+        run: find supabase/functions -name '*.ts' -print0 | xargs -0 deno check
+
+      # The closest thing to a unit test in this repo: renders every edition
+      # email fixture and exits non-zero if any would hit Gmail's ~102KB clip
+      # limit. The email is a first-class surface — for some members it's the
+      # whole product — and a clipped edition is a silently halved one.
+      - name: Render edition-email fixtures
+        run: |
+          deno run --allow-write=preview-out \
+            supabase/functions/_shared/preview/render-email-fixtures.ts preview-out
+
+      # Lets you eyeball the rendered email on a PR without running anything.
+      - name: Upload rendered emails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: edition-email-preview
+          path: preview-out/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  migrations:
+    name: Migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # Full history so the base commit is available for the diff below.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Everything after this is gated on SQL actually having changed — the
+      # Supabase stack takes a couple of minutes to come up and most PRs
+      # don't touch the database.
+      - name: Detect SQL changes
+        id: changed
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base='${{ github.event.pull_request.base.sha }}'
+          else
+            # push/dispatch: compare against the previous commit on the branch.
+            base="$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)"
+          fi
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          if git diff --name-only "$base" HEAD -- supabase/migrations supabase/config.toml \
+               | grep -q .; then
+            echo "sql=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "sql=false" >> "$GITHUB_OUTPUT"
+            echo "No migration or config changes — skipping." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # The Supabase footgun this project is most exposed to. Migrations are
+      # applied once to a live remote database and never replayed, so editing
+      # one that's already merged means local and production diverge
+      # permanently — with no error anywhere to tell you. New migrations only.
+      - name: Already-merged migrations must not be edited
+        if: steps.changed.outputs.sql == 'true'
+        run: |
+          set -euo pipefail
+          base='${{ steps.changed.outputs.base }}'
+          # M=modified, D=deleted, R=renamed. Added (A) is the whole point.
+          touched="$(git diff --name-only --diff-filter=MDR "$base" HEAD \
+                     -- supabase/migrations || true)"
+          if [ -n "$touched" ]; then
+            echo "::error::Existing migration(s) were modified, renamed or deleted."
+            printf '%s\n' "$touched" | while read -r f; do
+              echo "::error file=$f::$f is already merged. Migrations are applied once to production and never re-run — edit this and local will permanently disagree with the remote schema. Add a new migration instead (npx supabase migration new <name>)."
+            done
+            exit 1
+          fi
+          echo "Only new migrations added." >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: supabase/setup-cli@v1
+        if: steps.changed.outputs.sql == 'true'
+        with:
+          # Pinned: a CLI release shouldn't be able to break the gate. Bump
+          # deliberately, alongside the version you run locally.
+          version: 2.117.0
+
+      # Brings up Postgres and applies every migration in order, from nothing.
+      # A syntax error, a bad dependency order, or a policy that references a
+      # dropped column all fail here rather than against production.
+      - name: Apply the full migration history
+        if: steps.changed.outputs.sql == 'true'
+        run: supabase db start
+
+      # plpgsql static analysis on the resulting schema (unreachable code, bad
+      # record references). Error level only — warnings are noisy on the
+      # SECURITY DEFINER RPCs this project leans on.
+      - name: Lint the schema
+        if: steps.changed.outputs.sql == 'true'
+        run: supabase db lint --level error
+
+      - name: Stop the stack
+        if: always() && steps.changed.outputs.sql == 'true'
+        run: supabase stop --no-backup || true

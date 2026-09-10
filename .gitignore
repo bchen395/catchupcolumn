@@ -9,8 +9,13 @@ node_modules
 # Expo
 .expo/
 dist/
+dist-ci/
 web-build/
 expo-env.d.ts
+
+# Edition-email preview output (render-email-fixtures.ts); CI uploads it as an
+# artifact instead of committing it.
+preview-out/
 
 # Native
 .kotlin/

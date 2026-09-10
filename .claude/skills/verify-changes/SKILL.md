@@ -9,6 +9,19 @@ Be honest about what this repo can and can't do: **there is no test runner.** Th
 
 For *launching* the app, defer to the built-in **`run`** / **`verify`** skills and the patterns below. This skill is the project-specific checklist that wraps them.
 
+## CI runs the static half for you
+
+`.github/workflows/ci.yml` runs on every PR and every push to `main`:
+
+| Job | Gate |
+| --- | --- |
+| `app` | `npm run typecheck`, `npm run lint`, `npx expo-doctor`, `npx expo install --check` |
+| `bundle` | a real `expo export` Metro bundle for **iOS and Android** — catches bad imports, missing native modules, and config-plugin errors that typecheck can't see. Prints bundle size to the run summary. |
+| `edge-functions` | `deno check` on every function file, plus the edition-email fixture render, which **fails if a fixture would hit Gmail's ~102KB clip limit**. Uploads the rendered emails as an artifact so you can eyeball them from the PR. |
+| `migrations` | *Only when `supabase/migrations/` or `config.toml` changed.* Refuses any edit to an already-merged migration, then applies the whole history from scratch against a real Postgres and runs `supabase db lint`. |
+
+So you don't have to run the baseline locally to be safe — but running it locally is still faster than waiting for a red build. **CI cannot replace the manual QA below**: it never renders a screen, never sends a push, and never touches a device.
+
 ## The baseline check (always)
 
 ```bash
@@ -56,6 +69,7 @@ npm run start:tunnel # tunnel mode when the device isn't on the LAN
 
 ## Before saying "done"
 
+0. If the work is pushed, **CI is the authority** on the static checks — read the run, don't re-derive it.
 1. `npm run typecheck` clean and `npm run lint` at 0 errors (and `deno check` if functions changed).
 2. The specific surface exercised in the running app or against the local Supabase stack.
 3. Negative/authorization paths checked when relevant.
@@ -65,5 +79,6 @@ npm run start:tunnel # tunnel mode when the device isn't on the LAN
 
 If the project gains real verification infrastructure, update this skill instead of letting it drift:
 
-- A test runner (Jest/Detox/Maestro) or CI is added → replace "manual QA" with "run the suite," and note the CI gate.
-- Until then, keep this skill's honesty: don't imply tests exist when they don't. `typecheck` and `lint` are wired; a behaviour suite is not.
+- A **test runner** (Jest/Detox/Maestro) is added → add it to the baseline and to the CI table above, and replace the matching "manual QA" rows with it.
+- The **CI jobs change** → update the table above in the same commit; a stale table is worse than none, because it tells you a gate exists that doesn't.
+- Until then, keep this skill's honesty: don't imply tests exist when they don't. `typecheck`, `lint`, `deno check`, a two-platform bundle, the email clip-limit check, and migration application are wired **and automated**; a behaviour/UI suite is not.
