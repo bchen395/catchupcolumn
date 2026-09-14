@@ -17,6 +17,12 @@ Companion docs:
   why); that one is the procedure.
 - **[STORE_LISTING.md](./STORE_LISTING.md)** — metadata, descriptions, and the exact
   privacy/data-safety questionnaire answers.
+- **[POSITIONING.md](./POSITIONING.md)** — the friends-first repositioning (decided
+  2026-09-14), the pre-publish nudge, and monetization. **Read it before resuming this
+  runbook.** Two things in it change the plan below: submission is now gated on four
+  clean editions of a real group (its §6), and its copy pass (§2) rewrites
+  STORE_LISTING.md before anything is pasted into App Store Connect. The step order
+  stated under "Plan" below predates that decision.
 
 Project ref: `wvaxfyhihcfilewygtzp` · Bundle ID: `com.catchupcolumn.app`
 

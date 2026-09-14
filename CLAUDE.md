@@ -2,11 +2,24 @@
 
 ## Project Overview
 
-Catch Up Column is a mobile app where families and friends collaborate on a private weekly newsletter — like a digital Sunday newspaper made by your own family/friend group. Members contribute short written entries (with optional photos) throughout the week, and at a set time the app compiles everything into a single "edition" delivered to the whole group.
+Catch Up Column is a mobile app where a friend group or a family collaborates on a private weekly newsletter — like a digital Sunday newspaper made by your own people. Members contribute short written entries (with optional photos) throughout the week, and at a set time the app compiles everything into a single "edition" delivered to the whole group.
 
-## Target Audience (MVP)
+## Target Audience
 
-The primary audience is older adults (grandparents, older parents) who want to stay connected with younger family members and Gen Z friend groups who want to have more meaningful digital interactions. The app must be extremely simple and accessible — large tap targets, readable fonts, minimal navigation, warm familiar language. Think "family group text" ease of use, not "SaaS onboarding."
+**Direction set 2026-09-14.** Full reasoning, and the work it implies, in
+[`docs/POSITIONING.md`](docs/POSITIONING.md).
+
+**Primary: post-grad friend groups.** Six to ten people who were close in one place and now live in five states. The pain isn't that they stopped caring — it's that there's no occasion. The group text is dead or it's memes; social media reports that their friends exist, not how they are. Catch Up Column manufactures the occasion.
+
+**The community behind it** is people consciously leaving the attention economy who don't want to lose their friends in the process — the digital-minimalism / r/nosurf / Light Phone world. They supply the *organizer*: the one member who starts a Group and brings in six friends who have never heard of any of that and don't need to.
+
+**Secondary, and still first-class: families.** Grandparents, parents, scattered siblings. Every feature must keep working for a family Group, and "The Williams Family Weekly" must still feel native. This is a generalization of the audience, not a replacement — do not strip family framing out, just stop assuming it.
+
+What this means for the work:
+
+- **The absence of engagement mechanics is the product, not a gap.** There are no likes, reactions, comments, or follower counts anywhere in the schema or migrations, and there is no feed. Never add them and never propose them as an improvement — they are precisely what this audience is leaving. See Non-features below.
+- **The accessibility floor is not negotiable, and it isn't "the grandparent feature."** Minimum 16px body, ≥48px touch targets (rows ≥56px), high contrast, tested at larger system font sizes. Family Groups contain grandparents, and large readable type is good editorial design for everyone.
+- **Simplicity over capability.** Think "family group text" ease of use, not "SaaS onboarding." A 26-year-old and their grandmother must both get through onboarding without asking anyone for help.
 
 ## Tech Stack
 
@@ -117,6 +130,19 @@ Use this language consistently in code, UI, and comments:
 - **Moderator** — the Group creator/admin
 - **Post** — a single written entry by one contributor for one edition
 
+**Audience vocabulary.** The app serves friend groups and families equally, so
+user-facing copy must not assume either:
+- **"your people"** — the default. Warm, true for both, and already the house phrase
+  (`web/index.html`, the edition-email footer).
+- **"family and friends"** — when you need to be explicit.
+- **"family"** — only when the sentence is literally about a family.
+- **Never "loved ones"** — greeting-card register, wrong for someone writing to
+  college friends.
+
+Existing copy is mid-migration: sites still saying "family" are listed in
+[`docs/POSITIONING.md`](docs/POSITIONING.md) §2. Match the convention above in new
+copy rather than the surrounding code.
+
 ## MVP Features (in priority order)
 
 1. **Auth** — Email/password signup and login via Supabase Auth. Keep onboarding to 3 screens max: create account → set display name & avatar → create or join a Group.
@@ -126,15 +152,26 @@ Use this language consistently in code, UI, and comments:
 5. **Inbox / reading view** — Newspaper-styled layout showing the latest Edition. Each contributor's post is a "section." Prioritize readability and warmth.
 6. **Email delivery** — When an Edition publishes, send an email to all Group members (via Resend). The email is a first-class design surface: full content including photos (signed URLs, 1-year TTL), brand-styled newspaper layout, content-led subject, and https links to `WEB_BASE_URL` (catchupcolumn.com). See `supabase/functions/_shared/edition-email.ts` and the `edge-functions` skill.
 
-## NOT in MVP (future phases)
+## Non-features
 
-- Public posts / discovery feed
-- Writing prompts and timed exercises
-- AI "write for you" feature
-- Physical print/mail delivery
-- Templates
-- Pairing strangers / public groups
-- Personalized recommendation engine
+Two lists that are often confused. The first is permanent; the second is sequencing.
+
+**Deliberately never.** Proposing these is a misread of the product:
+
+- Likes, reactions, comments, follower/view counts, streaks, or any other engagement metric
+- A feed, an algorithm, or any reading surface that isn't a compiled Edition
+- Public posts, discovery, stranger pairing, public Groups
+- Ads, data sale, or engagement-based monetization
+- Writing prompts and timed exercises — Home's rotating `deckLines` are flavor copy in the paper's own voice, *not* prompts (see the comment in `constants/strings.ts`)
+- AI "write for you" — the writing being yours is the entire point
+
+**Not yet, but planned:**
+
+- In-app monetization — **the revenue path as of 2026-09-14.** Mechanism deliberately undecided; the one constraint that binds is that the *organizer* is the only plausible payer and the other members are never charged. See [`docs/POSITIONING.md`](docs/POSITIONING.md) §5, which rules out paywalled core features and microtransactions in advance.
+- Physical print / mail delivery — briefly the primary revenue path on 2026-09-14, **deferred the same day** in favour of in-app monetization: a manufacturer, COGS, shipping and returns are a second business. Still the best artifact idea available; revisit once the app has users and a ritual that holds. See [`docs/POSITIONING.md`](docs/POSITIONING.md) §5.
+- Web composer — write without installing the app, via magic link from the weekly email. Gated on evidence; §4.
+- Templates for post layouts
+- Personalized reading recommendations
 
 ## Design & UX Guidelines
 
@@ -144,7 +181,7 @@ The full visual system lives in `design/BRAND.md` (source of truth for design de
 - **Editorial aesthetic (v2, 2026-07-17).** "NYT structure, HeyTea charm": near-monochrome ink-on-paper, hairline rules, no cards or pills for content. Serif: Lora; UI sans: Jost (same on every platform). Warmth comes from a hand-drawn monoline illustration world (the paperboy and his dog) that lives in app chrome only — never inside editions.
 - **Near-monochrome palette.** Ink `#1A1A1A` on warm paper `paperWarm`, structure drawn with `hairline` rules, one scarce vermilion `#E8442E` accent (kickers, stamps, live moments — never fills or surfaces). Always use tokens from `constants/colors.ts` — never raw hex in components.
 - **Minimal navigation.** 5-slot bottom bar: Home, Editions, raised ink-black "+" (opens the compose sheet), Groups, Profile. The Group create/join/detail flow lives off-tab under `app/group/`, reached from the Groups tab and Home. No hamburger menus or deep nesting.
-- **Language tone.** Friendly, clear, non-technical. "Your Group is ready!" not "Edition #4 has been published." Say "Write something for this week" not "Create a new post."
+- **Language tone.** Friendly, clear, non-technical. "Your Group is ready!" not "Edition #4 has been published." Say "Write something for this week" not "Create a new post." Never assume the Group is a family — see Audience vocabulary under Key Terminology.
 
 ## Supabase Setup Notes
 

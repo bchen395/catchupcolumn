@@ -3,6 +3,12 @@
 Refer to CLAUDE.md for full spec, schema, design guidelines, and code style.
 Mark phases as [x] when complete. Work through them in order.
 
+**Direction change (2026-09-14):** the target audience is now post-grad friend groups
+first, families second. See **[docs/POSITIONING.md](docs/POSITIONING.md)** for the
+friends-first copy pass, the pre-publish nudge (the retention feature), the
+monetization plan, and the Group Zero gate that now sits in front of App Store
+submission.
+
 ---
 
 ## Phase 1: Project Skeleton
@@ -90,6 +96,12 @@ Mark phases as [x] when complete. Work through them in order.
 - [x] App icon and splash screen (brand-orange icon set regenerated 2026-07-03; monochrome Android notification icon added)
 - [~] App Store / Play Store metadata — drafted in `docs/STORE_LISTING.md` (descriptions, keywords, privacy-label + data-safety answers, checklist). Still needs: owner to run `eas init`, host `docs/PRIVACY.md`/`SUPPORT.md`/`DATA_DELETION.md`, capture screenshots, and fill store-console fields.
 - [x] Performance pass: image optimization, lazy loading
+- [ ] Friends-first copy pass — [docs/POSITIONING.md](docs/POSITIONING.md) §2
+- [ ] Pre-publish nudge (48h before publish day) — [docs/POSITIONING.md](docs/POSITIONING.md) §3
+- [ ] Group Zero: four consecutive editions across two groups, before submitting — [docs/POSITIONING.md](docs/POSITIONING.md) §6
+- [ ] **[owner]** Apple Developer enrollment — blocks TestFlight, which blocks Group Zero editions 3–4 (Expo Go can't do remote push) — [docs/POSITIONING.md](docs/POSITIONING.md) §6
+- [ ] Passwordless (email OTP) sign-in alongside the password flow — [docs/POSITIONING.md](docs/POSITIONING.md) §6
+- [x] Crash reporting (Sentry) + OTA updates (expo-updates) + print-resolution fix — landed 2026-09-14, [docs/POSITIONING.md](docs/POSITIONING.md) §11
 
 **Test:** Hand the app to a non-technical family member. Can they sign up, join a Group, write a post, and read an edition without asking you for help?
 
@@ -98,7 +110,13 @@ Mark phases as [x] when complete. Work through them in order.
 ## Future (post-MVP, not yet planned in detail)
 - Writing prompts (app-generated and moderator-created)
 - Public Groups and discovery feed
-- Physical print/mail editions
+- Physical print/mail editions — promoted 2026-09-14, then **deferred the same
+  day** in favour of in-app monetization (physical goods mean a manufacturer,
+  COGS, shipping and returns). Revisit once the app has users. See
+  [docs/POSITIONING.md](docs/POSITIONING.md) §5
+- In-app monetization — the revenue path as of 2026-09-14. Organizer pays,
+  readers always free; mechanism undecided until an organizer says yes. See
+  [docs/POSITIONING.md](docs/POSITIONING.md) §5
 - Templates for post layouts
 - AI "write for you" feature
 - Stranger pairing and public groups
