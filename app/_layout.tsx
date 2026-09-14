@@ -12,6 +12,7 @@ import {
   Lora_600SemiBold,
   Lora_700Bold,
 } from '@expo-google-fonts/lora';
+import * as Sentry from '@sentry/react-native';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -25,6 +26,34 @@ import { useAutoJoinInvite } from '@/hooks/use-auto-join-invite';
 import { needsOnboarding } from '@/lib/auth';
 
 export { ErrorBoundary } from 'expo-router';
+
+// Crash reporting. Deliberately the narrowest possible configuration: crashes
+// and unhandled errors only — no performance tracing, no session replay, no
+// user identification, no PII. During Group Zero the app runs on phones we
+// can't see, and a crash we never hear about is indistinguishable from someone
+// losing interest — which is exactly the signal that run exists to measure.
+//
+// docs/PRIVACY.md documents what this sends. Keep the two in sync: anything
+// added here that widens collection has to be reflected there and in the
+// App Store privacy labels (docs/STORE_LISTING.md) before submission.
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  // No DSN configured (or running in Expo Go / dev) → no-op rather than noise.
+  enabled: !__DEV__ && Boolean(process.env.EXPO_PUBLIC_SENTRY_DSN),
+  sendDefaultPii: false,
+  // Performance monitoring and replay are off on purpose: we want the stack
+  // trace, not a behavioural record of the people using this.
+  tracesSampleRate: 0,
+  enableAutoPerformanceTracing: false,
+  // Query strings on Supabase requests carry group and post ids. The breadcrumb
+  // is still useful without them, so drop the tail.
+  beforeBreadcrumb: (breadcrumb) => {
+    if (breadcrumb.data?.url && typeof breadcrumb.data.url === 'string') {
+      breadcrumb.data.url = breadcrumb.data.url.split('?')[0];
+    }
+    return breadcrumb;
+  },
+});
 
 // Start the navigator on the auth stack so the tab tree (and its data
 // fetches) doesn't briefly mount against an unauthenticated client during
@@ -148,4 +177,4 @@ const RootLayout = () => {
   );
 };
 
-export default RootLayout;
+export default Sentry.wrap(RootLayout);
