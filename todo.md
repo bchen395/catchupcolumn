@@ -110,13 +110,16 @@ submission.
 ## Future (post-MVP, not yet planned in detail)
 - Writing prompts (app-generated and moderator-created)
 - Public Groups and discovery feed
-- Physical print/mail editions — promoted 2026-09-14, then **deferred the same
-  day** in favour of in-app monetization (physical goods mean a manufacturer,
-  COGS, shipping and returns). Revisit once the app has users. See
+- Physical print/mail editions — **the revenue path as of 2026-09-14**, after
+  research. Print-on-demand removes the manufacturer problem that briefly got
+  this deferred. Sold as an object ($89–99), never as access. See
   [docs/POSITIONING.md](docs/POSITIONING.md) §5
-- In-app monetization — the revenue path as of 2026-09-14. Organizer pays,
-  readers always free; mechanism undecided until an organizer says yes. See
-  [docs/POSITIONING.md](docs/POSITIONING.md) §5
+- [ ] **[owner] The December test** — five families pay $89 for a hand-made
+  volume, uploaded to Lulu by hand. No renderer, no API, no code. Q4 is 40–60%
+  of annual revenue for gift products, so this is the one revenue item with a
+  real deadline. [docs/POSITIONING.md](docs/POSITIONING.md) §5
+- [ ] Run Lulu's pricing calculator against real trim size and page count —
+  nothing in the pricing ladder is costed until this happens
 - Templates for post layouts
 - AI "write for you" feature
 - Stranger pairing and public groups

@@ -167,8 +167,9 @@ Two lists that are often confused. The first is permanent; the second is sequenc
 
 **Not yet, but planned:**
 
-- In-app monetization — **the revenue path as of 2026-09-14.** Mechanism deliberately undecided; the one constraint that binds is that the *organizer* is the only plausible payer and the other members are never charged. See [`docs/POSITIONING.md`](docs/POSITIONING.md) §5, which rules out paywalled core features and microtransactions in advance.
-- Physical print / mail delivery — briefly the primary revenue path on 2026-09-14, **deferred the same day** in favour of in-app monetization: a manufacturer, COGS, shipping and returns are a second business. Still the best artifact idea available; revisit once the app has users and a ritual that holds. See [`docs/POSITIONING.md`](docs/POSITIONING.md) §5.
+- Physical print — **the primary revenue path as of 2026-09-14**, after research. A bound volume of ~12 editions, sold as an object for $89–99, never as access. Print-on-demand (Lulu's API: no setup fees, no inventory, dropship) removes the operational objection that briefly got this deferred. Nothing is ever withheld from a Group that doesn't buy. See [`docs/POSITIONING.md`](docs/POSITIONING.md) §5.
+- **Friends distribute, families pay.** The revenue evidence in this category (Storyworth, Remento) is all family/gift purchase; no friend-group social app was found with meaningful direct revenue. This does **not** reverse the friends-first audience decision — friend groups are how users arrive, families are who buys the artifact, and the product already serves both first-class. POSITIONING.md §5.
+- Subscriptions of any kind — ruled out, not deferred. Freemium converts at 2–5%, and reaching the same revenue that way needs ~25x the user base. See POSITIONING.md §5.
 - Web composer — write without installing the app, via magic link from the weekly email. Gated on evidence; §4.
 - Templates for post layouts
 - Personalized reading recommendations
