@@ -141,6 +141,18 @@ export const deletePost = async (postId: string): Promise<void> => {
 const POST_IMAGE_BUCKET = 'post-images';
 const POST_IMAGE_SIGNED_TTL_SECONDS = 60 * 60; // 1 hour
 
+// Post images are sized for print, not for the screen — they are the only
+// images that can end up in a bound volume, and the resolution ceiling is set
+// irreversibly at upload time. 2600px on the long edge is ~8.7in at 300 DPI,
+// enough for a full-page photo on a typical trim size; the display surfaces
+// (app + email) just downscale. Group covers and avatars stay display-sized.
+//
+// Quality is 0.9 rather than the 0.82 display default because print shows JPEG
+// artifacts that a phone screen hides. The composer's picker is set to quality
+// 1 so this is the only lossy pass. See docs/POSITIONING.md §5.
+const POST_IMAGE_MAX_EDGE = 2600;
+const POST_IMAGE_QUALITY = 0.9;
+
 // Storage RLS on `post-images` requires the first path segment to equal
 // auth.uid()::text, so the path must start with the uploading user's id.
 export const uploadPostImage = async (
@@ -148,9 +160,11 @@ export const uploadPostImage = async (
   postId: string,
   imageUri: string,
 ): Promise<string> => {
-  // Resize + JPEG-recompress so we always upload at most ~1600px on the long
-  // edge. Original camera shots are 4–6 MB and we don't need that fidelity.
-  const resizedUri = await resizeImageForUpload(imageUri);
+  // Resize + JPEG-recompress at print bounds (see POST_IMAGE_MAX_EDGE above).
+  const resizedUri = await resizeImageForUpload(imageUri, {
+    maxEdge: POST_IMAGE_MAX_EDGE,
+    quality: POST_IMAGE_QUALITY,
+  });
   const imageResponse = await fetch(resizedUri);
   if (!imageResponse.ok) {
     throw new Error(`Failed to read image for upload (${imageResponse.status})`);

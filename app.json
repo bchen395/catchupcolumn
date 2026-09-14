@@ -9,6 +9,13 @@
     "icon": "./assets/images/icon.png",
     "scheme": "catchupcolumn",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c9be4074-4916-4e94-9276-811bbe8a05dc",
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.catchupcolumn.app",
@@ -59,7 +66,8 @@
           "enableFullScreenImage_legacy": true
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true

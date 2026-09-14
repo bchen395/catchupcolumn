@@ -35,8 +35,17 @@ We only collect what the app needs to work:
 **Automatically recorded**
 - Timestamps for accounts, posts, and editions (when they were created or published).
 
+**Crash reports**
+- When the app crashes or hits an unexpected error, a diagnostic report is sent to
+  Sentry, our crash-reporting provider. It contains the error and its stack trace,
+  your device model, OS version, and app version. It does **not** contain your
+  name, email, posts, photos, or any identifier that links the report back to you,
+  and we have turned off performance tracking and session recording.
+
 We do **not** collect your location, contacts, advertising identifiers, or browsing
-activity, and the app contains no third-party advertising or analytics SDKs.
+activity. The app contains no third-party advertising or analytics SDKs, and no
+tracking of any kind across apps or websites. Crash reporting, described above, is
+the only third-party SDK in the app, and it exists so we can fix what breaks.
 
 ## How your content is shared
 

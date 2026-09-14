@@ -254,7 +254,9 @@ const PostScreen = () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
-      quality: 0.85,
+      // Quality 1 = no compression here. lib/posts.ts recompresses once at
+      // print quality on upload; compressing twice showed in print.
+      quality: 1,
     });
     if (!result.canceled && result.assets[0]) {
       setImageUri(result.assets[0].uri);

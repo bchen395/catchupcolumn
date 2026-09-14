@@ -104,10 +104,20 @@ Answer **"No"** to "used for tracking."
 | Other user content (post text, group names/descriptions) | Yes | App Functionality | Yes |
 | Device ID / Push token | Yes | App Functionality (notifications) | Yes |
 | User ID | Yes | App Functionality | Yes |
+| Crash Data (Diagnostics) | Yes | App Functionality | **No** — not linked |
+| Other Diagnostic Data | Yes | App Functionality | **No** — not linked |
+
+Crash Data was added 2026-09-14 when Sentry was wired in (docs/POSITIONING.md
+§11). It is the only category here **not** linked to identity: the SDK runs with
+`sendDefaultPii: false`, no user identification, no performance tracing and no
+session replay, so reports carry a stack trace, device model, OS and app version
+and nothing that ties back to a person. See docs/PRIVACY.md.
 
 Not collected: location, contacts, browsing/search history, purchases, financial
-info, health, advertising data, usage/analytics, diagnostics.
-No third-party SDKs collect data. **No App Tracking Transparency prompt is needed.**
+info, health, advertising data, usage/analytics.
+**No App Tracking Transparency prompt is needed** — nothing here is used for
+tracking. Sentry is the only third-party SDK that receives data, and only the
+diagnostic payload described above.
 
 ## 8. Google Play Data Safety answers
 
@@ -128,6 +138,7 @@ Data types to declare (Collected, processed for app functionality, not for ads/t
 | Personal info | Name | Yes | App functionality |
 | Photos and videos | Photos | Yes | App functionality |
 | Messages | Other in-app messages (posts) | Yes | App functionality |
+| App info and performance | Crash logs | Yes | App functionality (diagnostics; not linked to the user) |
 | App activity | Other user-generated content | Yes | App functionality |
 | Device or other IDs | Device or other IDs (push token) | Yes | App functionality (notifications) |
 
