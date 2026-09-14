@@ -66,12 +66,23 @@ catching up."*
 
 ### Why the comparable products died
 
-Storyworth (§5) is the monetization comp, not the product comp. The product comp
-is the private-friend-group app, and that category is a graveyard: Path shut
-down, Cocoon shut down, Geneva was absorbed. They died from one cause —
-**nothing brought people back between events.** The app was a place you had to
-remember to go, and a small private group generates no ambient reason to go
-there.
+Storyworth (§5) is a monetization comp, not a product comp. The product comp is
+the private-friend-group app, and that category has produced no durable
+business. Path — the best-known attempt, deliberately capped at 50 friends and
+once valued near $500M — shut down in 2018. Cocoon raised VC through Y
+Combinator in 2019 on explicitly the same premise, "dedicated software for your
+most important group chat."
+
+> **Verification note, 2026-09-14.** An earlier draft of this section asserted
+> that Cocoon shut down and that Geneva was absorbed. Path's shutdown is
+> documented; those two outcomes were *not* confirmed by research and should not
+> be repeated as fact. What research did confirm is the claim that carries the
+> weight here: **no private-friend-group social app was found with meaningful
+> direct revenue.** See §5 for what that implies.
+
+They fail for one shared reason — **nothing brings people back between events.**
+The app is a place you have to remember to go, and a small private group
+generates no ambient reason to go there.
 
 The structural answer here is already shipped, and stating it explicitly changes
 what to prioritize: **the retention surface is the edition email, not the app.**
@@ -357,116 +368,181 @@ a web-only member can be reached by a link.
 
 ## 5. Work item — monetization
 
-**Status: planning only. Revenue target is 6–12 months from 2026-09-14.**
+**Status: planning only, now backed by research (2026-09-14). Revenue target
+brought forward — see "the December test" below.**
 
-**Direction changed 2026-09-14 (same day, owner's call): in-app monetization is
-the path; the printed volume is deferred until the app has users and some
-proven success.** The reasoning is operational, not strategic — a physical
-product means sourcing a manufacturer, COGS, shipping, damaged-copy support,
-and returns, and that is a second business bolted onto a solo founder who has
-not yet run one edition. The artifact thesis below is still sound; it is just
-not the thing to do first. §5 previously had this the other way around.
+### How this section got here
+
+Three positions in one day, recorded because the reversals are informative:
+
+1. **Printed volume as the primary revenue path.** Right instinct, no evidence.
+2. **Deferred in favour of in-app monetization** — on the reasoning that a
+   physical product means sourcing a manufacturer, COGS, shipping and returns,
+   which is a second business for a solo founder.
+3. **Print restored as the primary path**, because research showed the premise
+   behind (2) was wrong. Print-on-demand APIs make "find a manufacturer" a
+   solved problem, and the artifact is the only model in this category with
+   demonstrated revenue.
+
+Position (2)'s *operational* concern was legitimate and is what the research
+had to answer. It did.
 
 ### The constraint (unchanged, and it still binds)
 
 Post-grads will not pay a monthly subscription to talk to their friends. The
 community being courted is actively hostile to paying for connection — it's a
 large part of what they're leaving. **Any plan that charges the six friends
-kills the network before it forms.**
+kills the network before it forms.** Every option below is filtered through this.
 
-This constraint does not relax because the strategy moved in-app. It is the
-filter the in-app options have to pass through, and it eliminates most of them.
+### What the research found
 
-### The three in-app options, against that filter
+| Company | Model | Result |
+| --- | --- | --- |
+| **Storyworth** | $59 / $109 / $199 a year; weekly prompt email → hardcover | **$1.5M ARR, bootstrapped**, no outside funding, ~10 people, founded 2011 |
+| **Remento** | $99/yr, AOV $119; prompts → hardcover | **$620k in its first 10 months**, projecting $4.6M; **$16 to print and ship**, ~86% gross margin |
 
-The mechanism is explicitly undecided and does not need deciding yet. What can
-be decided now is which options are still live:
+Both are one storyteller answering prompts, with the book bought *for* them by
+an adult child. Both are family/legacy products. **No friend-group social app
+was found with meaningful direct revenue.**
 
-| Option | Verdict |
-| --- | --- |
-| **Organizer pays, readers always free** | **The live one.** Charges exactly one person — the one who already wants the group to survive and who does the recruiting work. The six friends are never asked for money, so the constraint holds |
-| **Paywalled features** | Risky, and partly foreclosed. "Paywalling group size" is already in *Explicitly not doing* below, and the accessibility floor and the simplicity mandate rule out crippling the base experience. A cosmetic or archival tier could work; anything that degrades the weekly ritual cannot |
-| **Microtransactions** | Worst fit. This is a product whose thesis is the absence of engagement mechanics, sold to people leaving the attention economy. Per-item purchase prompts read as exactly the thing they left, and they'd land inside the one surface that must stay clean |
+Three more numbers that shape the decision:
 
-Note that "organizer pays" was already §5's *secondary* before this change, so
-the reversal is mostly a promotion of something that was already written down
-and already passed the constraint — not a new invention.
+- **Freemium conversion is 2–5% at median**; RevenueCat's day-35 figure is
+  **2.1% for freemium against 10.7% for a hard paywall**. A supporter tier that
+  withholds nothing lands at the bottom of that range or below.
+- **Marco Polo does roughly $800k/month** on a group-video app with an explicit
+  "no ads, no selling your data" stance, monetized on *conveniences* — playback
+  speed, background listening, custom emoji, a family plan — never on gating the
+  core. Proof the thesis and revenue can coexist. Not proof it can happen soon;
+  that is years of scale.
+- **Gift businesses run 40–60% of annual revenue in Q4.** If the artifact is the
+  path, the calendar is most of the strategy.
 
-### The payment-rail consequence (this reverses the earlier tooling answer)
+### The premise that was wrong: print operations
 
-When the product being sold was a physical book, Stripe was correct and
-RevenueCat was category-wrong — Apple directs physical goods *away* from IAP.
-Moving monetization in-app inverts that, and the doc should say so plainly:
+Lulu's Print API has **no setup fees, no handling fees, no inventory and no
+minimum order**. They print, bind, package and dropship to 200+ countries, and
+you pay per copy at order time. There is an Order Import tool built specifically
+for fulfilling a batch of preorders. Remento's $16 print-and-ship against a $119
+order is what this looks like in practice.
 
-- **A digital subscription or unlock consumed inside the iOS app must use
-  Apple IAP**, at 15–30%. RevenueCat is the sane wrapper over StoreKit and
-  Google Play Billing, and becomes the right tool if this is the path.
-- **The cheaper path is to sell the organizer plan on the web**, via Stripe,
-  and have the app read entitlement from your own backend. As of the 2025 US
-  injunction, apps may link out to external purchase in the US storefront
-  without commission — but this specific rule has moved repeatedly, so
-  **verify the current guidelines before building**, don't build against this
-  paragraph.
-- **Do neither yet.** At zero users there is nothing to charge for. The first
-  real signal is whether an organizer who isn't you (Group B, §6) would pay to
-  keep their group running — and that is a question you ask, not a rail you
-  integrate.
+"Find a manufacturer" is an API key. The deferral in position (2) was answering
+a problem that print-on-demand already solved.
 
-### Open work
+**Two caveats, both real.** Full-colour interiors cost 3–5x black-and-white per
+page, and a colour hardcover can run ~6x a B&W novel; one estimate for a colour
+photo hardcover was €25–35. This product is photo-bearing, so Remento's $16
+likely reflects tight format control rather than what we would pay.
+- [ ] **Run Lulu's own calculator against a real trim size and page count before
+      trusting any number in this section.** Nothing here is costed until that
+      happens.
 
-None of it blocks launch, and none of it should start before Group Zero
-produces a result.
+### Friends distribute; families pay
 
-- [ ] **[owner]** Ask the Group B organizer, after edition 4: "if this cost you
-      $5/month and stayed free for everyone else, would you keep it?" That is
-      the entire price discovery for this path, and it costs one message.
-- [ ] Decide the mechanism only once someone has said yes. Then pick the rail
-      (web/Stripe first, IAP/RevenueCat if the guidelines force it).
-- [ ] Keep the free tier genuinely free and unlimited, whatever the mechanism.
+The research splits a thing this doc had been conflating. **Do not reverse §1.**
 
-### Deferred: the printed volume
+- **Friend groups remain the distribution strategy.** The reasoning in §1 holds:
+  the owner is a member, the community is findable, and he is not a member of
+  the family-caregiver world. That is about where users come from.
+- **Families are the revenue.** They have the proven gift purchase, the Q4
+  occasion, the higher AOV, and two companies demonstrating it. The product
+  already serves them first-class — CLAUDE.md mandates it — so this costs
+  nothing in positioning and requires no new audience work.
 
-Still the best *artifact* idea available, and the reasons it fit are unchanged:
-post-grads buy gifts rather than subscriptions; the book converts "will anyone
-keep this up?" into the reason to keep going; it charges for an object rather
-than for access; and `_shared/edition-email.ts` already proves an edition can
-be rendered to a fixed layout outside the app, so a print renderer is adjacent
-work rather than new work.
+The paid artifact is aimed at the family Group first. A friend-group volume can
+exist too; it just won't be what pays first.
 
-Revisit when there are users and a proven ritual. A "Volume One" can be any N
-editions — 12 (a quarter) rather than 52 — so the feedback loop is three months
-whenever you choose to start it.
+### The differentiator, in one sentence
 
-**One piece of it was not deferred, because it could not be.** Image resolution
-is decided irreversibly at upload time:
+Storyworth and Remento are **one elder answering prompts**. Catch Up Column is
+**a whole family writing to each other every week.** CLAUDE.md lists writing
+prompts as a permanent non-feature, so their model isn't available to copy and
+shouldn't be wanted — "everyone's year, in their own words" is a different
+object from "Grandma's memoir."
 
-- [x] **Checked and fixed 2026-09-14.** `lib/image.ts` was clamping every
-      upload to 1600px at JPEG q0.82 and keeping nothing else; the composer's
-      picker added a second compression pass at q0.85. 1600px is ~5.3in at 300
-      DPI — not enough for a full-page photo, and the double pass showed.
-      Post images now upload at `POST_IMAGE_MAX_EDGE` 2600px / q0.9
-      (`lib/posts.ts`), which is ~8.7in at 300 DPI, and the picker is set to
-      quality 1 so the upload is the only lossy step. Avatars (512px) and group
-      covers (1600px) are unchanged — they are display-only.
-- [ ] Photos uploaded *before* this fix are permanently capped. There are none
-      outside seed data, so the cost is zero — but it would not have been in
-      four weeks.
+### The ladder
+
+| Tier | Price | Notes |
+| --- | --- | --- |
+| **The paper** | Free forever — unlimited Groups, members, editions, archive | Nothing is ever withheld from anyone |
+| **Digital volume** (PDF, 12 editions) | $39 | ~100% margin; also the cheap test of whether the object sells at all |
+| **Printed volume** (hardcover, Lulu) | **$89–99** | ~$55–70/copy pending the calculator run |
+
+Any member of a Group can buy — this was the owner's call, and it matches the
+social dynamic better than organizer-only. One volume per Group per period,
+priced for the Group rather than per person; a PDF is trivially shared and
+pretending otherwise would just add DRM anxiety for no revenue.
+
+An earlier draft of this section priced the digital volume at $29. That was well
+under market for the category — the comps sit at $59–199 with $119 as a working
+AOV. Start at $39 and raise; prices go up as the product improves.
+
+### Why this is the faster path, in one comparison
+
+At $89 with roughly $30 of COGS, **$2,000/month needs about 400 volumes a year**
+— and if Q4 seasonality holds, more than half land in an eight-week window.
+
+The same $2,000/month from a $5/month subscription needs 400 paying organizers,
+which at a 3% conversion rate implies roughly **13,000 active Groups**.
+
+Same revenue, **~25x difference in the user base required.** That is the entire
+argument for the artifact over the subscription, and it's why "in-app
+monetization" as a frame was the wrong target rather than merely a slow one.
+
+### The payment rail
+
+Unchanged from the earlier analysis, and the artifact model keeps it simple:
+
+- **Sell on the web via Stripe, not in the app.** A physical book is a physical
+  good, which Apple directs *away* from IAP; a PDF sold in-app would be a
+  digital good and would attract IAP, so sell both the same way and keep the
+  buy flow out of the app entirely.
+- **The edition email is the sales channel.** It is already the retention
+  surface (§1), it arrives weekly, and the Volume offer belongs in the footer of
+  edition twelve. Apple's rules govern what the app does; an email is not the
+  app. The practical constraint is simply **no "Buy the Volume" button in the
+  UI**.
+- **RevenueCat stays a "no"** (§11). It wraps StoreKit for digital in-app
+  purchases, which is not what this sells.
+
+### The December test [owner]
+
+The calendar is the plan. Q4 is the revenue event and there are roughly ten
+weeks left in it. A print renderer, a Lulu integration and a checkout flow do
+not fit in that window — so don't build them.
+
+Do it by hand instead. This is the manual stage, and it is the only version that
+produces revenue in 2026:
+
+- [ ] Get Group Zero running now (§6), and make sure **at least one participating
+      Group is a family** — otherwise there is nothing to test the gift purchase
+      against.
+- [ ] Late November: take the editions that exist, lay out a volume manually,
+      upload the PDF to Lulu's website by hand, order copies.
+- [ ] Invoice directly or send a Stripe Payment Link. No renderer, no API, no
+      integration, no code.
+- [ ] Pass condition: **five families pay $89.** That's ~$450, proof the object
+      sells, and a finished spec for the renderer that would otherwise have been
+      built on speculation. If nobody bites, that was learned in six weeks for
+      the price of a few book orders.
+
+### Open work, after December
+
+- [ ] Print renderer: editions → print-ready PDF. Reuse the email renderer's
+      layout logic. **Build only if the December test passes.**
+- [ ] Lulu Print API integration, replacing the manual upload.
+- [ ] Revisit price against real orders. Raise before adding tiers.
 
 ### Explicitly not doing
 
-Ads of any kind. Engagement-based anything. Charging readers. Selling data.
-Paywalling group size. All of these are the thing this community is fleeing, and
-the privacy policy already promises the absence of most of them in writing.
+Ads of any kind. Engagement-based anything. Charging readers for access. Selling
+data. Paywalling group size. Paywalling the ritual itself. All of these are the
+thing this community is fleeing, and the privacy policy already promises the
+absence of most of them in writing.
 
-### Competitive note
-
-Storyworth (~$99/yr, weekly prompt email → bound book) remains the closest comp
-and proves the artifact monetizes — which is why the printed volume is deferred
-rather than dropped. The difference to be able to state in one sentence:
-**Storyworth is one elder answering prompts; Catch Up Column is a whole group
-writing to each other every week.** Note also that CLAUDE.md lists writing
-prompts as a deliberate non-feature — that stays true; the difference is the
-many-to-many cadence, not the prompting.
+Note what the ladder above never does: **nothing is ever withheld from a Group
+that doesn't pay.** Everything charged for is an object, not access. That is
+what keeps this compatible with an audience leaving monetized connection.
 
 ---
 
@@ -512,6 +588,10 @@ vendor, and it's the same primitive §4's web composer would need.
       recruiting, feel the friction.
 - [ ] **Group B — someone else as organizer.** Recruit one person who is not you
       to start their own Group with their own friends, from week 1, in parallel.
+- [ ] **Group C — a family.** Added 2026-09-14 after the monetization research.
+      §5 bets that families are who buys the artifact, and there is currently no
+      family Group to test that against. It can be your own family, and it is
+      the Group the December test depends on.
 
 Group B is not a nice-to-have. The whole distribution model is *one organizer
 brings six friends*, and you are not a representative organizer: you built it,
@@ -560,9 +640,13 @@ opposite fixes, so establish which one before building anything.
 - [ ] Note every place the copy says "family" and it felt wrong to your friends.
       Free user research on §2.
 - [ ] **Ask the price question in week 2**, before any print work exists: "at
-      the end of the quarter I'll bind these into a book — $49, want one?" A
-      real preorder from a real friend is worth more than the whole §5
-      checklist, and it costs one text message.
+      the end of the quarter I'll turn these into a real hardcover — $89, want
+      one?" Ask it in the family Group *and* a friend Group; §5's open question
+      is whether the artifact sells to both or only to families, and this is the
+      cheapest way to find out. A real preorder is worth more than the whole §5
+      checklist and costs one text message.
+- [ ] Watch whether anyone says yes **without hesitating**. That, not the money,
+      is the signal.
 
 ---
 
@@ -611,26 +695,30 @@ Where the organizers are. Join as a person, months before mentioning the app.
    1–2 run off-app, so this does not wait on enrollment.
 4. **This week, in parallel** — the copy pass (§2). Cheap, no dependencies, and
    it stops you from launching at the wrong audience.
-4. **Weeks 1–4** — community presence (§7). Also long-pole; standing accrues
+5. **Weeks 1–4** — community presence (§7). Also long-pole; standing accrues
    slowly and can't be bought later.
-5. **Week 4, not weeks 2–3** — the nudge (§3), and only if Group Zero showed
+6. **Week 4, not weeks 2–3** — the nudge (§3), and only if Group Zero showed
    people *forgetting* rather than declining. Shipping it mid-run was the
    earlier plan and it's the wrong order twice over: it's a fix for a churn
    mechanism nobody has observed yet, and it destroys the clean four-edition
    baseline you're trying to read.
-6. **Week 4** — decide on write-by-web (§4) from the editions 1–2 vs. 3–4 delta.
-7. **After 4 clean editions** — App Store submission (resume LAUNCH.md).
-8. **Only after an organizer says yes** — in-app monetization (§5). The gate is
-   one question to the Group B organizer after edition 4, not a rail to build.
+7. **Week 4** — decide on write-by-web (§4) from the editions 1–2 vs. 3–4 delta.
+8. **After 4 clean editions** — App Store submission (resume LAUNCH.md).
+9. **Late November — the December test (§5).** Hand-made volumes, uploaded to
+   Lulu by hand, sold by invoice or Payment Link. This is the only revenue item
+   with a deadline attached: Q4 is 40–60% of annual revenue for gift products,
+   and the window closes. Everything else on this list can slip a week; this
+   can't.
 
 ### Deliberately deferred
 
-- **The printed volume** — deferred 2026-09-14 in favour of in-app
-  monetization; see §5. Physical goods mean a manufacturer, COGS, shipping and
-  returns, and that's a second business. The image-resolution fix that it
-  depended on already landed, so nothing about deferring it is irreversible.
-- **Any payment rail at all** — Stripe, IAP, RevenueCat. There is nothing to
-  charge for until someone has said they'd pay. See §5 and §11.
+- **The print renderer and the Lulu API integration** — but *not* the printed
+  volume itself, which is back on as the primary revenue path (§5). December's
+  volumes get laid out and uploaded by hand. Build the automation only once
+  someone has paid for the manual version.
+- **Any payment rail beyond a Stripe Payment Link.** A hosted link needs no
+  integration and takes fifteen minutes. IAP and RevenueCat stay off the table
+  entirely — the artifact is sold on the web (§5, §11).
 - **App Store submission** — a launch with no retention mechanism spends your
   one shot at organic attention. LAUNCH.md's remaining steps (Apple enrollment,
   screenshots) stay paused, and the screenshots now want friend-group sample
@@ -647,13 +735,16 @@ Where the organizers are. Join as a person, months before mentioning the app.
       better? Weekly is the brand and the routine is the stated point — but
       Group Zero is the only way to find out, and the schema already supports
       per-group scheduling.
-- [ ] In-app monetization: which mechanism? Organizer-pays is the only one of
-      the three that clears §5's constraint intact, but the shape (flat monthly,
-      annual, one-time "keep this group running") is open — and shouldn't be
-      answered before an organizer who isn't you says they'd pay.
-- [ ] If organizer-pays happens: sell on the web via Stripe, or in-app via
-      IAP/RevenueCat? Cheaper on the web, but the App Store link-out rules have
-      moved repeatedly and need re-checking at build time, not now.
+- [ ] What does a volume actually cost to print at *our* specs? Everything in
+      §5's ladder is uncosted until Lulu's calculator has been run against a real
+      trim size and page count. Colour interiors are 3–5x B&W per page, so this
+      could move the price materially.
+- [ ] How many editions make a volume worth $89? Twelve is a quarter and fits
+      the feedback loop, but 12 editions × 3 writers is ~36 posts, which may be a
+      pamphlet rather than a book. Mock one up before committing to the number.
+- [ ] Does the friend-group volume sell at all, or is the artifact a
+      family-only product? §5 bets families pay first; the friend-group version
+      is untested and may need a different object entirely.
 - [ ] Does the revenue window survive contact with Group Zero? If the ritual
       doesn't hold for four weeks with your own friends, monetization timing is
       the wrong thing to be optimizing.
@@ -667,8 +758,10 @@ Where the organizers are. Join as a person, months before mentioning the app.
 | Friend groups churn after 2–3 editions | The nudge (§3); a thin-edition design that reads as a letter, not a failure; Group Zero proves or disproves it before launch |
 | Community is app-averse by identity | Write-by-web (§4); positioning as the app that doesn't want your attention |
 | Awareness ≠ adoption — forums full of people who enjoy discussing the problem | Membership first (§7); recruit organizers one at a time, not by announcement |
-| Post-grads won't pay | Charge the organizer, never the six friends (§5); keep the free tier genuinely free and unlimited |
-| In-app monetization drifts toward paywalls or microtransactions — the exact register this community left | §5 ranks the three options against the constraint and rules two of them out in advance; CLAUDE.md's Non-features list is the backstop |
+| Post-grads won't pay | Don't charge them for access at all (§5). Sell an object, to whoever wants it, and never withhold anything from a Group that doesn't buy |
+| Monetization drifts toward paywalls or microtransactions — the exact register this community left | §5's ladder charges only for objects; nothing is ever withheld. CLAUDE.md's Non-features list is the backstop |
+| The artifact is a family product and the primary audience is friend groups | Acknowledged and deliberate (§5): friends are the distribution strategy, families are the revenue. The product serves both first-class already, so this needs no repositioning — but if friend-group volumes never sell, revenue scales with the *secondary* audience, which is worth knowing early |
+| Print economics don't survive contact with colour photo pages | Nothing in §5 is costed until Lulu's calculator is run; the December test uses real orders at real cost before any renderer is built |
 | Nobody can install the app in time for edition 3 | Apple enrollment started week 1 (§6); editions 1–2 run off-app, which buys ~2 weeks of buffer |
 | Family users feel abandoned by the new copy | Generalize, don't replace: rotate examples, keep the accessibility floor, keep "family" where it's literally true |
 | Launching before retention is proven | Sequencing (§8) — Group Zero gates submission |
@@ -780,15 +873,24 @@ update, and none of them answer a question you have at eight users.
   highest-risk refactor available in this repo for zero user-visible change.
   The real auth improvement is passwordless sign-in, which Supabase already does
   — see §6.
-- **RevenueCat — not now, and conditional later.** It wraps StoreKit and Google
-  Play Billing, so it's only relevant to digital in-app purchases. It became
-  *potentially* relevant when monetization moved in-app (§5) and stops being
-  irrelevant only if the App Store rules force IAP over a web/Stripe checkout.
-  Revisit at that point, not before.
+- **RevenueCat — no, and the condition that would have revived it is gone.** It
+  wraps StoreKit and Google Play Billing, so it only matters for digital in-app
+  purchases. It became briefly relevant when monetization moved in-app, and
+  stopped being relevant again when research moved it back to a physical
+  artifact sold on the web (§5). A printed book is a physical good, which Apple
+  directs away from IAP. Keep the buy flow out of the app and this never comes
+  back.
 - **Product analytics (PostHog, Amplitude, Mixpanel) — no.** Eight users and a
   SQL editor. Resend already reports edition-email opens, which is the one
   retention metric that matters (§6).
-- **A print partner API (Lulu, Blurb, Peecho, Mixam) — no.** Deferred with the
-  printed volume. When it happens, book one gets uploaded through a website by
-  hand.
+- **Stripe — yes, but only as a hosted Payment Link.** Fifteen minutes, no
+  integration, no webhook, no code. A real Stripe integration earns its keep
+  somewhere north of 50 orders; until then, manual invoicing teaches more.
+- **A print partner API (Lulu, Blurb, Peecho, Mixam) — not yet, but Lulu is the
+  chosen one.** Its Print API has no setup fees, no handling fees, no inventory
+  and no minimum, and it dropships to 200+ countries; there is also an Order
+  Import tool built for batch-fulfilling preorders. That combination is what
+  made §5 reverse the print deferral. **The integration still waits** — December's
+  volumes get uploaded through Lulu's website by hand, and the API only earns
+  its keep once the manual version has sold.
 - **A push vendor — no.** Expo Push is free and already working.
