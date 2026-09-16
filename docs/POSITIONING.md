@@ -2,8 +2,11 @@
 
 **Decision date: 2026-09-14.** This doc is the handoff for a change of direction
 made before launch, and the checklist for executing it. It is a companion to
-[LAUNCH.md](./LAUNCH.md) (the submission runbook) and
-[STORE_LISTING.md](./STORE_LISTING.md) (store metadata).
+[LAUNCH.md](./LAUNCH.md) (the submission runbook),
+[STORE_LISTING.md](./STORE_LISTING.md) (store metadata), and
+[ORGANIZER_PLAYBOOK.md](./ORGANIZER_PLAYBOOK.md) (the one-page process an
+organizer follows to start and run a Group — §6's Group B is a test of that
+page).
 
 Steps marked **[owner]** need your accounts, your friends, or your judgment and
 can't be done from the repo.
@@ -221,7 +224,7 @@ change:
 ## 3. Work item — the pre-publish nudge (the retention feature)
 
 **Status: does not exist. Highest retention-per-line-of-code item on the board —
-but sequenced after Group Zero, not during it. See §8 step 5 for why.**
+but sequenced after Group Zero, not during it. See §8 step 7 for why.**
 
 ### Why this is the priority
 
@@ -514,9 +517,9 @@ not fit in that window — so don't build them.
 Do it by hand instead. This is the manual stage, and it is the only version that
 produces revenue in 2026:
 
-- [ ] Get Group Zero running now (§6), and make sure **at least one participating
-      Group is a family** — otherwise there is nothing to test the gift purchase
-      against.
+- [ ] Get Group Zero running now (§6), with **as many family Groups as the
+      arithmetic below says you need** — not the one the first draft of this
+      section called for.
 - [ ] Late November: take the editions that exist, lay out a volume manually,
       upload the PDF to Lulu's website by hand, order copies.
 - [ ] Invoice directly or send a Stripe Payment Link. No renderer, no API, no
@@ -525,6 +528,45 @@ produces revenue in 2026:
       sells, and a finished spec for the renderer that would otherwise have been
       built on speculation. If nobody bites, that was learned in six weeks for
       the price of a few book orders.
+
+### The December arithmetic
+
+**Corrected 2026-09-16.** The pass condition above and the Group Zero plan in §6
+were written separately and don't reconcile.
+
+A volume is bound from a Group's own editions, and the ladder sells one volume
+per Group per period. So every December buyer has to be a family Group that has
+been publishing since roughly now — a family recruited in November has nothing
+to print. **The number of family Groups running by the end of September is a
+hard cap on December revenue.** §6 started one. The pass condition wants five.
+
+Three ways to close it. They are not equivalent and the first is the real one:
+
+1. **Recruit to three–five family Groups this month.** [owner] The honest
+   version of the pass condition. It is also a lot of recruiting for someone who
+   has not yet started one, and it competes for the same September hours as
+   Groups A and B — which is the actual cost of the December deadline, and worth
+   seeing before committing to it rather than in November.
+2. **Sell more than one copy per family.** [owner, decision needed] The ladder's
+   "one volume per Group per period" was your call and it is right for the *PDF*
+   — a digital file is trivially shared and DRM would be worse than the lost
+   revenue. A hardcover is not that: it has real per-copy COGS, and three
+   siblings each wanting their own is the Storyworth gift dynamic the whole
+   section is built on. Selling additional printed copies at $89 is not a
+   paywall and withholds nothing. If this is a yes, five paid copies can come
+   from two or three family Groups and item 1 gets much smaller. **Decide this
+   before you decide how many families to recruit**, because it sets the number.
+3. **Restate the pass condition to what the Groups you have can prove.** Two
+   families paying from two family Groups is a 100% hit rate and tells you as
+   much about whether the object sells as five out of eight would. What it does
+   not produce is $450 or a sense of volume. If September ends with fewer family
+   Groups than item 1 needs, write the smaller number down here *in advance* —
+   the failure mode is reaching December, missing five, and reading a sound
+   result as a failed test because the bar was set by an arithmetic mistake.
+
+Whichever way this goes, the deposit link in §6 runs in week 2 regardless. It is
+the same question asked ten weeks earlier for $20 instead of $89, and it is not
+capped by any of this.
 
 ### Open work, after December
 
@@ -588,10 +630,22 @@ vendor, and it's the same primitive §4's web composer would need.
       recruiting, feel the friction.
 - [ ] **Group B — someone else as organizer.** Recruit one person who is not you
       to start their own Group with their own friends, from week 1, in parallel.
-- [ ] **Group C — a family.** Added 2026-09-14 after the monetization research.
-      §5 bets that families are who buys the artifact, and there is currently no
-      family Group to test that against. It can be your own family, and it is
-      the Group the December test depends on.
+      **Hand them [ORGANIZER_PLAYBOOK.md](./ORGANIZER_PLAYBOOK.md), not a verbal
+      briefing** (added 2026-09-16). Recruiting six friends is the one process
+      the whole distribution model rests on and it has never existed outside
+      your head; briefing them in person re-inserts you into the experiment and
+      tests the person instead of the process. If they fail while following the
+      page, distribution is the broken thing. If they fail because there was no
+      page, you learned nothing. Its last section lists what they report back.
+- [ ] **Groups C1–Cn — families, plural.** Added 2026-09-14 after the
+      monetization research; **corrected 2026-09-16.** §5 bets that families are
+      who buys the artifact, and there was no family Group to test that against.
+      The original plan started *one* — which caps the December test at one
+      possible buyer against a pass condition of five. One can be your own
+      family; the rest are recruiting work that happens this month or not at
+      all. The arithmetic, and the two alternatives to recruiting, are in §5,
+      "The December arithmetic." **Settle that number before you finish
+      recruiting Group A**, because it changes how much recruiting there is.
 
 Group B is not a nice-to-have. The whole distribution model is *one organizer
 brings six friends*, and you are not a representative organizer: you built it,
@@ -606,11 +660,55 @@ A thin edition has two very different causes — *the ritual doesn't hold* and
 let them blur:
 
 - [ ] **Editions 1–2: accept posts by any channel.** If someone won't install,
-      text them, take the text, paste it in yourself. This measures the ritual
-      alone.
+      text them, take the text, and put it in for them — but **not under your
+      own account.** See "Posting for someone who hasn't installed" below; the
+      naive version silently ruins the edition. This measures the ritual alone.
 - [ ] **Editions 3–4: require the app.** The delta between the two halves *is*
       the install-resistance number, and it feeds the §4 decision much better
       than a headcount does.
+
+### Posting for someone who hasn't installed
+
+**Added 2026-09-16.** "Paste it in yourself" does not work the way it reads, and
+the failure is silent.
+
+Post inserts are gated on `author_id = auth.uid()`
+(`supabase/migrations/20260426000000_rename_columns_to_groups.sql:146`) and every
+reading surface renders the author's own name next to their avatar
+(`components/edition-brief-column.tsx:38`,
+`components/story-article.tsx:40-47`).
+Pasting six friends' entries from your own account produces an edition where
+all six stories are bylined *you*, with your face on each one. That isn't a thin
+edition, it's a wrong one — and it corrupts the exact signal Group Zero exists
+to read.
+
+**Create the accounts yourself instead.** The organizer is the app for the first
+month:
+
+- [ ] For each member who hasn't installed: Supabase dashboard →
+      Authentication → Add user, with **Auto Confirm User** checked and user
+      metadata `{"display_name": "Their Name"}`. The `on_auth_user_created`
+      trigger reads exactly that key
+      (`supabase/migrations/001_initial_schema.sql:240`), so the `public.users`
+      row and therefore the byline come out right with no further work.
+- [ ] Add them to the Group from the SQL editor — insert the `group_members`
+      row directly. `join_group_by_invite_code` is caller-scoped
+      (`supabase/migrations/20260505000000_critical_security_fixes.sql:73`) and
+      can't be used on someone else's behalf.
+- [ ] Write their entries from their session, not yours.
+
+Two things fall out of this that are worth more than the convenience:
+
+- **The edition email reaches everyone from day one.** Recipients are every
+  `group_members` row with `email_subscribed = true`
+  (`supabase/migrations/20260711000000_edition_email_payload_images.sql:69`) —
+  install status is not consulted anywhere. §1 says the retention surface is the
+  email, not the app; this makes editions 1–2 a real test of that claim rather
+  than a workaround, because the whole loop runs with zero installs.
+- **You get a cleaner install-resistance number.** An account already exists for
+  each of them, so "installing" is a password reset, and *when each person does
+  it* is a per-person date rather than the 1–2 vs. 3–4 headcount delta. Tell
+  them the account is waiting; don't make them create one.
 
 ### Pass condition
 
@@ -639,14 +737,23 @@ opposite fixes, so establish which one before building anything.
       the right nudge lead time.
 - [ ] Note every place the copy says "family" and it felt wrong to your friends.
       Free user research on §2.
-- [ ] **Ask the price question in week 2**, before any print work exists: "at
+- [ ] **Take a deposit in week 2**, before any print work exists. Revised
+      2026-09-16: the earlier version of this bullet asked the question — "at
       the end of the quarter I'll turn these into a real hardcover — $89, want
-      one?" Ask it in the family Group *and* a friend Group; §5's open question
-      is whether the artifact sells to both or only to families, and this is the
-      cheapest way to find out. A real preorder is worth more than the whole §5
-      checklist and costs one text message.
-- [ ] Watch whether anyone says yes **without hesitating**. That, not the money,
-      is the signal.
+      one?" — and a verbal yes about an object that doesn't exist yet, given to
+      a friend, is the weakest data in this document. Send a **Stripe Payment
+      Link for a $20 deposit against the $89 volume** instead. A hosted link
+      takes fifteen minutes, needs no integration, and is already the December
+      rail (§5). Refund anyone who changes their mind; the refund rate is itself
+      a finding.
+- [ ] Send it to a family Group *and* a friend Group. §5's open question is
+      whether the artifact sells to both or only to families, and this answers
+      it ten weeks before the December test does, for the cost of one link.
+- [ ] Watch whether anyone pays **without hesitating**. That, not the $20, is
+      the signal — and note that this is the only price signal the product
+      produces all quarter. The paper is free forever by design (§5), so
+      participation in Group Zero tells you nothing about willingness to pay.
+      Don't let a ritual that holds get read as demand for an object.
 
 ---
 
@@ -689,22 +796,30 @@ Where the organizers are. Join as a person, months before mentioning the app.
 2. **This week, [owner], starts the clock** — Apple Developer enrollment (§6).
    Pure waiting-time with a multi-day tail, and nothing gets onto a friend's
    phone without it. Start it before anything else on this list.
-3. **This week** — start Group Zero, both groups (§6). It's the long pole; every
-   week of delay is a week of evidence you don't have. Recruiting the Group B
-   organizer is the other part with a lead time, so start asking now. Editions
-   1–2 run off-app, so this does not wait on enrollment.
-4. **This week, in parallel** — the copy pass (§2). Cheap, no dependencies, and
+3. **This week** — start Group Zero: Group A, Group B, and the family Groups
+   (§6). It's the long pole; every week of delay is a week of evidence you don't
+   have. Recruiting the Group B organizer is the other part with a lead time, so
+   start asking now, and hand them
+   [ORGANIZER_PLAYBOOK.md](./ORGANIZER_PLAYBOOK.md) rather than a verbal
+   briefing — the point of Group B is to test the process, not the person.
+   Editions 1–2 run off-app, so this does not wait on enrollment.
+4. **This week, and it expires** — settle the extra-copies question and the
+   family-Group count (§5, "The December arithmetic"). Every family Group not
+   publishing by roughly the end of September is a December buyer that cannot
+   exist. This is the only item on the list whose window closes in weeks rather
+   than months.
+5. **This week, in parallel** — the copy pass (§2). Cheap, no dependencies, and
    it stops you from launching at the wrong audience.
-5. **Weeks 1–4** — community presence (§7). Also long-pole; standing accrues
+6. **Weeks 1–4** — community presence (§7). Also long-pole; standing accrues
    slowly and can't be bought later.
-6. **Week 4, not weeks 2–3** — the nudge (§3), and only if Group Zero showed
+7. **Week 4, not weeks 2–3** — the nudge (§3), and only if Group Zero showed
    people *forgetting* rather than declining. Shipping it mid-run was the
    earlier plan and it's the wrong order twice over: it's a fix for a churn
    mechanism nobody has observed yet, and it destroys the clean four-edition
    baseline you're trying to read.
-7. **Week 4** — decide on write-by-web (§4) from the editions 1–2 vs. 3–4 delta.
-8. **After 4 clean editions** — App Store submission (resume LAUNCH.md).
-9. **Late November — the December test (§5).** Hand-made volumes, uploaded to
+8. **Week 4** — decide on write-by-web (§4) from the editions 1–2 vs. 3–4 delta.
+9. **After 4 clean editions** — App Store submission (resume LAUNCH.md).
+10. **Late November — the December test (§5).** Hand-made volumes, uploaded to
    Lulu by hand, sold by invoice or Payment Link. This is the only revenue item
    with a deadline attached: Q4 is 40–60% of annual revenue for gift products,
    and the window closes. Everything else on this list can slip a week; this
