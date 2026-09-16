@@ -133,7 +133,16 @@ Two corrections to *this document*, which had drifted:
 - **Where:** `supabase/migrations/20260525000000_manual_publish.sql:204`
 - `max(edition_number)+1` under a per-group `pg_try_advisory_xact_lock` is race-safe for every current writer (all edition inserts go through the locked RPC). It is **not** safe against a hypothetical future direct-insert path that skips the lock. No such path exists today — noted so it isn't introduced unknowingly.
 
-### D2. Auth: minimum password length 6, no email confirmation
+### ~~D2. Auth: minimum password length 6, no email confirmation~~ — LARGELY CLOSED 2026-09-16
+
+Email sign-in codes landed and are now the default for both sign-in and sign-up,
+so there is no password-signup path left to create an unverified account: the
+code *is* proof of address. `enable_confirmations` can stay off deliberately
+rather than undecided. The password-length setting still applies to accounts
+created before the change; raising it in the dashboard remains worthwhile but no
+longer gates anything. Original note follows.
+
+### D2 (original). Auth: minimum password length 6, no email confirmation
 - **Where:** `supabase/config.toml` (`minimum_password_length = 6`, `[auth.email] enable_confirmations = false`). NOTE: `config.toml` governs **local** dev only — production auth settings live in the Supabase **dashboard** (Authentication → Providers/Policies). Changing the file does not change prod.
 - Weak passwords are accepted, and email ownership isn't verified before first sign-in (someone could sign up under another person's address). **Owner decision:** raise the minimum (8+) in the dashboard; weigh enabling email confirmation against the onboarding friction it adds for the older-adult audience (the app already has a resend-confirmation path if you enable it).
 

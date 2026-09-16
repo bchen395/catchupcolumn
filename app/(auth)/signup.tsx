@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AuthScreenShell } from '@/components/auth-screen-shell';
+import { EmailCodeStep } from '@/components/email-code-step';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
 import { PendingInviteBanner } from '@/components/pending-invite-banner';
@@ -10,127 +11,72 @@ import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
+import { useEmailCode } from '@/hooks/use-email-code';
 import { usePendingInvite } from '@/hooks/use-pending-invite';
-import { mapAuthErrorMessage, resendConfirmationEmail, signUpWithEmail } from '@/lib/auth';
 
-type SignupErrors = {
-  email?: string;
-  password?: string;
-};
-
+// Signing up is the same two steps as signing in — email, then the code. There
+// is no password field: one fewer thing to invent, and nothing to lose later.
+// `sendEmailCode` with allowNewUser creates the account, so the code both
+// registers and signs in.
 const SignupScreen = () => {
   const router = useRouter();
   const { invite } = usePendingInvite();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<SignupErrors>({});
-  const [formError, setFormError] = useState('');
-  const [infoMessage, setInfoMessage] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [resending, setResending] = useState(false);
-  const [resentMessage, setResentMessage] = useState('');
 
-  const handleSignup = async () => {
-    const nextErrors = validateSignupForm(email, password);
-    setErrors(nextErrors);
-    setFormError('');
-    setInfoMessage('');
+  // Always onboarding: a brand-new account has no name or photo yet, and an
+  // existing account that came through here lands on a form pre-filled from
+  // its saved profile, so the extra step is harmless rather than wrong.
+  const goToOnboarding = useCallback(() => {
+    router.replace('/(auth)/onboarding');
+  }, [router]);
 
-    if (Object.keys(nextErrors).length > 0) {
-      return;
-    }
+  const flow = useEmailCode({ allowNewUser: true, onVerified: goToOnboarding });
 
-    try {
-      setSubmitting(true);
-      const authData = await signUpWithEmail({ email, password });
+  const banner = invite ? (
+    <PendingInviteBanner message={Strings.invite.joiningBannerSignup(invite.groupName)} />
+  ) : null;
 
-      if (!authData.session) {
-        setInfoMessage('We created your account, but your session did not start automatically. Check your email, then sign in.');
-        return;
-      }
-
-      router.replace('/(auth)/onboarding');
-    } catch (error) {
-      setFormError(mapAuthErrorMessage(error, 'We could not create your account right now.'));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleResendConfirmation = async () => {
-    setFormError('');
-    setResentMessage('');
-    try {
-      setResending(true);
-      await resendConfirmationEmail(email);
-      setResentMessage('Sent — check your inbox for the confirmation link.');
-    } catch (error) {
-      setFormError(mapAuthErrorMessage(error, 'We could not resend the confirmation email right now.'));
-    } finally {
-      setResending(false);
-    }
-  };
+  if (flow.step === 'code') {
+    return (
+      <AuthScreenShell
+        title="Check your email"
+        subtitle={`We sent a ${flow.codeLength}-digit code to ${flow.email}. It expires in an hour.`}
+        banner={banner}
+      >
+        <EmailCodeStep flow={flow} submitLabel="Create my account" />
+      </AuthScreenShell>
+    );
+  }
 
   return (
     <AuthScreenShell
       title="Create your account"
-      subtitle="Start with your email and password. You can add your name and photo on the next screen."
-      banner={
-        invite ? (
-          <PendingInviteBanner message={Strings.invite.joiningBannerSignup(invite.groupName)} />
-        ) : null
-      }
+      subtitle="Just your email — we'll send a code. You can add your name and photo next."
+      banner={banner}
       footer={
         <>
           <ThemedText variant="caption">Already have an account?</ThemedText>
-          <FormButton
-            title="Sign in"
-            variant="ghost"
-            onPress={() => router.push('/(auth)/login')}
-          />
+          <FormButton title="Sign in" variant="ghost" onPress={() => router.push('/(auth)/login')} />
         </>
       }
     >
       <View style={styles.form}>
-        {formError ? <StatusBanner variant="error" message={formError} /> : null}
-        {infoMessage ? <StatusBanner variant="info" message={infoMessage} /> : null}
-        {resentMessage ? <StatusBanner variant="success" message={resentMessage} /> : null}
+        {flow.formError ? <StatusBanner variant="error" message={flow.formError} /> : null}
 
         <FormField
           label="Email address"
-          value={email}
-          onChangeText={setEmail}
+          value={flow.email}
+          onChangeText={flow.setEmail}
           autoCapitalize="none"
           autoComplete="email"
           keyboardType="email-address"
           textContentType="emailAddress"
-          error={errors.email}
+          error={flow.fieldError}
           placeholder="you@example.com"
+          onSubmitEditing={() => flow.requestCode()}
+          returnKeyType="go"
         />
 
-        <FormField
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          autoCapitalize="none"
-          autoComplete="new-password"
-          textContentType="newPassword"
-          error={errors.password}
-          helperText="Use at least 6 characters."
-          placeholder="Choose a password"
-          secureTextEntry
-        />
-
-        <FormButton title="Continue" loading={submitting} onPress={handleSignup} />
-
-        {infoMessage ? (
-          <FormButton
-            title="Resend confirmation email"
-            variant="ghost"
-            loading={resending}
-            onPress={handleResendConfirmation}
-          />
-        ) : null}
+        <FormButton title="Email me a code" loading={flow.sending} onPress={() => flow.requestCode()} />
       </View>
     </AuthScreenShell>
   );
@@ -143,36 +89,3 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
   },
 });
-
-const validateSignupForm = (email: string, password: string): SignupErrors => {
-  const nextErrors: SignupErrors = {};
-
-  const emailError = validateEmail(email);
-  if (emailError) {
-    nextErrors.email = emailError;
-  }
-
-  if (!password.trim()) {
-    nextErrors.password = 'Choose a password.';
-  } else if (password.trim().length < 6) {
-    nextErrors.password = 'Choose a password with at least 6 characters.';
-  }
-
-  return nextErrors;
-};
-
-const validateEmail = (value: string) => {
-  const trimmedValue = value.trim();
-
-  if (!trimmedValue) {
-    return 'Enter your email address.';
-  }
-
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailPattern.test(trimmedValue)) {
-    return 'Enter a valid email address.';
-  }
-
-  return undefined;
-};

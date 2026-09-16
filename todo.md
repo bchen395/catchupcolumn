@@ -46,8 +46,10 @@ POSITIONING §8 is the authoritative sequence. The short version:
       [docs/POSITIONING.md](docs/POSITIONING.md) §2
 - [ ] **[owner] Sentry DSN** — the code is wired and inert until it's set.
       [docs/LAUNCH.md](docs/LAUNCH.md) step 10
-- [ ] **Passwordless (email OTP) sign-in** alongside the password flow, before
-      Group Zero's edition 3. [docs/POSITIONING.md](docs/POSITIONING.md) §6
+- [x] **Passwordless (email OTP) sign-in** — landed 2026-09-16; the default for
+      both sign-in and sign-up. **[owner] still needed:** put `{{ .Token }}` in
+      the Magic Link email template or no code is ever sent
+      ([docs/LAUNCH.md](docs/LAUNCH.md) step 5).
 - [ ] **Pre-publish nudge** — after Group Zero, and only if the run showed people
       forgetting rather than declining. [docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md)
 - [ ] **Thin-edition design** — a one-story edition must read as a letter, not a

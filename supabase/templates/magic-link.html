@@ -1,0 +1,92 @@
+<!--
+  Supabase Auth → Email Templates → "Magic Link".
+
+  This file is the source of truth; the dashboard holds a copy. If you edit one,
+  edit the other, or the next person will trust the wrong version.
+
+  It sends a CODE, not a link. {{ .Token }} is the 6-digit code the app's
+  sign-in screen asks for. Do NOT reintroduce {{ .ConfirmationURL }}: a link
+  cannot hand back to the app until universal links are configured (app.json has
+  no associatedDomains and the AASA file still holds a literal TEAMID), so a
+  tapped link would strand the reader in Safari.
+
+  Brand: BRAND.md §2/§3 — Lora + Jost, ink on warm paper, hairline rules, one
+  vermilion kicker. The code is set at 34px with wide tracking because a
+  misread digit costs the whole sign-in, and the accessibility floor applies to
+  email as much as to the app.
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+    <title>Your Catch Up Column sign-in code</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@400;500;600&display=swap');
+      :root { color-scheme: light; supported-color-schemes: light; }
+    </style>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #FBF9F4;">
+    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">Your sign-in code is {{ .Token }}&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #FBF9F4;">
+      <tr>
+        <td align="center" style="padding: 28px 12px;">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; background-color: #FBF9F4; border: 1px solid #DCDAD5;">
+
+            <tr>
+              <td align="center" style="padding: 40px 36px 0 36px;">
+                <p style="margin: 0 0 12px 0; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 2.4px; text-transform: uppercase; color: #E8442E;">Sign in</p>
+                <h1 style="margin: 0; font-family: 'Lora', Georgia, 'Times New Roman', serif; font-size: 32px; line-height: 1.14; font-weight: 700; letter-spacing: -0.5px; color: #1A1A1A;">Catch Up Column</h1>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 24px 36px 0 36px;">
+                <hr style="border: 0; border-top: 1px solid #DCDAD5; margin: 0;">
+              </td>
+            </tr>
+
+            <tr>
+              <td align="center" style="padding: 28px 36px 0 36px;">
+                <p style="margin: 0; font-family: 'Lora', Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 26px; color: #1A1A1A;">Here is your code. Type it into the app to sign in.</p>
+              </td>
+            </tr>
+
+            <tr>
+              <td align="center" style="padding: 24px 36px 0 36px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td align="center" style="border: 1px solid #DCDAD5; padding: 20px 32px;">
+                      <span style="font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 34px; font-weight: 600; letter-spacing: 10px; color: #1A1A1A;">{{ .Token }}</span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td align="center" style="padding: 20px 36px 0 36px;">
+                <p style="margin: 0; font-family: 'Lora', Georgia, 'Times New Roman', serif; font-size: 16px; font-style: italic; line-height: 24px; color: #706F6D;">The code works once and expires in an hour.</p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 32px 36px 0 36px;">
+                <hr style="border: 0; border-top: 1px solid #DCDAD5; margin: 0;">
+              </td>
+            </tr>
+
+            <tr>
+              <td align="center" style="padding: 20px 36px 36px 36px;">
+                <p style="margin: 0; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 14px; line-height: 22px; color: #A6A4A1;">If you didn't ask to sign in, you can ignore this email — nobody can get in without the code.</p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
