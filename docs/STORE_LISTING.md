@@ -23,17 +23,13 @@ blockquote is an owner decision/input.
 
 ## 2. Short pitch
 
-**Subtitle (iOS, 30 char max):** {{owner decision — see below}}
+**Subtitle (iOS, 30 char max):** `A newspaper by your people` — 26 chars
 
-> **Open decision (POSITIONING §9).** Two candidates, both within the cap:
-> - `A newspaper by your people` (26 chars) — safe, searchable, matches the house
->   vocabulary. The recommended default.
-> - `The opposite of a feed` (22 chars) — sharper, and the line this audience
->   actually responds to. Slightly riskier with App Review, and carries no
->   keyword weight.
->
-> Paste one before submission. Until then the field is deliberately blank rather
-> than holding the retired family-first line.
+> **Decided 2026-09-16.** Chosen over `The opposite of a feed` (22 chars), which
+> is the sharper line but carries no keyword weight and is a little riskier with
+> App Review. "The opposite of a feed" is still the right register for the
+> *promotional text* field, which updates without a review cycle — that's where
+> to A/B it after launch.
 
 **Short description (Android, 80 char max):**
 `A private weekly newsletter you write together with your people.`

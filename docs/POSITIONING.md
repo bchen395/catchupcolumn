@@ -124,9 +124,10 @@ Three things worth keeping out of the git log:
   scroll. No strangers. No ads." is the first line of the full description
   rather than the third paragraph — §1's point that the absence of engagement
   mechanics *is* the pitch.
-- **The subtitle is deliberately blank.** It's an open decision (§9), and
-  leaving the field empty is better than shipping the retired family-first line
-  by default. `docs/STORE_LISTING.md` carries both candidates.
+- **The subtitle is settled: "A newspaper by your people"** (§9, 2026-09-16).
+  The sharper candidate, "The opposite of a feed", moves to the promotional-text
+  field — that one updates without a review cycle, so it's the cheap place to
+  A/B the harder pitch after launch.
 
 **Not covered by the pass, and still true:** the privacy policy and terms say
 "family and friends", which is the sanctioned explicit form, and the accessibility
@@ -825,8 +826,10 @@ Where the organizers are. Join as a person, months before mentioning the app.
 
 ## 9. Open questions [owner]
 
-- [ ] Subtitle: "A newspaper by your people" (safe, searchable) or "The opposite
-      of a feed" (sharper, riskier with App Review)?
+- [x] ~~Subtitle~~ — **settled 2026-09-16: "A newspaper by your people"** (26 of
+      30 chars). "The opposite of a feed" was the sharper line but carries no
+      keyword weight; it belongs in the promotional-text field instead, which
+      updates without a review cycle. In `STORE_LISTING.md` §2.
 - [ ] Is weekly the right cadence for friend groups, or does biweekly retain
       better? Weekly is the brand and the routine is the stated point — but
       Group Zero is the only way to find out, and the schema already supports
