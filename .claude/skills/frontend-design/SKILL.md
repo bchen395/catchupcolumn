@@ -5,7 +5,7 @@ description: Use when making any UI, visual, or frontend change in the Catch Up 
 
 # Frontend design — Catch Up Column
 
-You're working on the UI of a family-newsletter app built for older adults and Gen Z friend groups. The identity (v2, 2026-07-17): *"The New York Times' structure with HeyTea's charm"* — a near-monochrome, hairline-ruled editorial frame (ink on warm paper, Lora + Jost, one scarce vermilion accent), warmed exclusively by a hand-drawn monoline illustration world (the paperboy and his dog) that lives in app chrome only. Warmth and accessibility beat polish and density every time.
+You're working on the UI of a private group-newsletter app. **Audience (set 2026-09-14): post-grad friend groups first, families second, both first-class** — copy must not assume the Group is a family (CLAUDE.md → Audience vocabulary), and the accessibility floor holds for everyone, not just grandparents. The identity (v2, 2026-07-17): *"The New York Times' structure with HeyTea's charm"* — a near-monochrome, hairline-ruled editorial frame (ink on warm paper, Lora + Jost, one scarce vermilion accent), warmed exclusively by a hand-drawn monoline illustration world (the paperboy and his dog) that lives in app chrome only. Warmth and accessibility beat polish and density every time.
 
 **Migration state:** the v2 reskin has reached **every screen**, illustration phase included (BRAND §14 lists what landed). All v1 color tokens are deleted — there is no orange/peach/yellow/green anywhere. The monoline SVG set lives under `components/illustrations/` (one file per asset, `Colors.illustrationInk` strokes, `aria-hidden` wrapper Views); the splash/app-icon PNGs are generated from the same rider geometry as `paperboy-mark.tsx` — regenerate them together if the mark changes. The one remaining v2 loose end: redefining `caption` to the 12px spec once the last v1 caption usages migrate.
 
@@ -54,7 +54,7 @@ You're working on the UI of a family-newsletter app built for older adults and G
 | `illustrations/paperboy-mailbox-scene` | Empty-editions doodle: the paperboy waiting at a flag-down mailbox. |
 | `illustrations/dog-with-paper-scene` | No-groups doodle: the dog holding a rolled paper (vermilion wrap band). |
 | `illustrations/printing-press-scene` | The long-wait scene (vermilion lever knob). Exports `FlywheelSpokes`/`PressSheet` for the loader's animation. |
-| `illustrations/invite-ticket` | The §11 perforated ticket: drawn frame + dog stub, live-text code (Jost Bold, vermilion). Lives inside `invite-family-card`. |
+| `illustrations/invite-ticket` | The §11 perforated ticket: drawn frame + dog stub, live-text code (Jost Bold, vermilion). Lives inside `invite-card`. |
 | `illustrations/sleeping-dog-doodle` / `mug-doodle` | §11 hidden corner doodles (editions-list end, profile footer). ≤48px tall, never animated. |
 | `edition-lead` | The front-page lead story block (vermilion kicker — the cover's one accent, headline, byline, excerpt, read cue). |
 | `edition-secondary` | The cover's second story — mid-weight: optional photo, `title` headline, excerpt, read cue. |
@@ -84,7 +84,7 @@ You're working on the UI of a family-newsletter app built for older adults and G
 | `invite-hero` | The invitation as a one-page special edition (vermilion kicker, `display` masthead, flat cover photo, member byline, cadence dateline). |
 | `avatar-stack` | Overlapping member faces for the invitation byline; decorative (hidden from screen readers). |
 | `pending-invite-banner` | The hairline-band "Joining {name}" strip on auth screens while an invite is pending. |
-| `invite-family-card` | The group screen's sender-side invite card: tap-to-copy code, code-first share, QR on a hard-white paper card. |
+| `invite-card` | The group screen's sender-side invite card: tap-to-copy code, code-first share, QR on a hard-white paper card. |
 
 ## Decisions newer than BRAND.md (drift notes)
 

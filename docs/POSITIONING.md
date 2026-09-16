@@ -8,13 +8,12 @@ door and are listed below.
 Steps marked **[owner]** need your accounts, your friends, or your judgment and
 can't be done from the repo.
 
-**The neighbours.** Each is the executable half of something argued here, and the
-two work-item docs get deleted when their work lands:
+**The neighbours.** Each is the executable half of something argued here, and a
+work-item doc gets deleted when its work lands (COPY_PASS.md did, 2026-09-16):
 
 | Doc | What it holds |
 | --- | --- |
 | [ORGANIZER_PLAYBOOK.md](./ORGANIZER_PLAYBOOK.md) | The one page an organizer follows to start and run a Group. Handed to Group B (§6) as-is. |
-| [COPY_PASS.md](./COPY_PASS.md) | §2's file-by-file checklist — 15 strings, a component rename, the store metadata. |
 | [NUDGE_SPEC.md](./NUDGE_SPEC.md) | §3's build spec — table DDL, RPC, wiring, verification. |
 | [LAUNCH.md](./LAUNCH.md) | The submission runbook and the owner's vendor setup. |
 | [PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md) | The tickable gates for submission day. |
@@ -106,25 +105,33 @@ is the composer and the archive. Two consequences:
 
 ---
 
-## 2. Work item — the copy pass (friends + family)
+## 2. Work item — the copy pass (friends + family) — ✅ landed 2026-09-16
 
-**Status: not started** (re-verified against the tree 2026-09-16). Cheapest,
-highest-leverage item on the board. Do this before any store submission, or you
-launch pointed at the wrong audience.
+The product no longer assumes the Group is a family. `constants/strings.ts`, the
+Group-create and onboarding screens, the profile screen, `web/index.html`, the
+store listing, `design/BRAND.md` §8 and the `frontend-design` skill all follow
+CLAUDE.md's **Audience vocabulary**, and `components/invite-family-card.tsx` is
+now `invite-card.tsx`. `docs/COPY_PASS.md` held the checklist and was deleted
+when it landed, as designed.
 
-The vocabulary rule it enforces now lives in **CLAUDE.md → Key Terminology →
-Audience vocabulary**, which is where every future session reads it. The
-file-by-file checklist — 15 strings across `constants/`, `app/`, `web/`, a
-component rename, and the store metadata — is
-**[COPY_PASS.md](./COPY_PASS.md)**, which gets deleted when the pass lands.
+Three things worth keeping out of the git log:
 
-Two judgment calls in there are yours, not the checklist's:
+- **The Group-name placeholder rotates.** `Strings.groupCreate.nameExamples`
+  alternates "The Sunday Dispatch" and "The Williams Family Weekly" by day via
+  `dailyPick`, the same helper Home's deck lines use. Neither audience reads as
+  the afterthought, and nobody had to pick a winner.
+- **The store listing now leads with the line that was buried.** "No feeds to
+  scroll. No strangers. No ads." is the first line of the full description
+  rather than the third paragraph — §1's point that the absence of engagement
+  mechanics *is* the pitch.
+- **The subtitle is settled: "A newspaper by your people"** (§9, 2026-09-16).
+  The sharper candidate, "The opposite of a feed", moves to the promotional-text
+  field — that one updates without a review cycle, so it's the cheap place to
+  A/B the harder pitch after launch.
 
-- **The Group-name placeholder** (`app/group/create.tsx:184`) currently reads
-  "e.g. The Williams Family Weekly". Rotating it against a friends example is the
-  single clearest signal in the whole product that friend groups belong.
-- **The App Store subtitle** — safe and searchable, or sharp and riskier with
-  App Review. Tracked in §9.
+**Not covered by the pass, and still true:** the privacy policy and terms say
+"family and friends", which is the sanctioned explicit form, and the accessibility
+floor keeps its "grandparent clause" name (§1).
 
 ---
 
@@ -309,9 +316,11 @@ object from "Grandma's memoir."
 | **Printed volume** (hardcover, Lulu) | **$89–99** | ~$55–70/copy pending the calculator run |
 
 Any member of a Group can buy — this was the owner's call, and it matches the
-social dynamic better than organizer-only. One volume per Group per period,
-priced for the Group rather than per person; a PDF is trivially shared and
-pretending otherwise would just add DRM anxiety for no revenue.
+social dynamic better than organizer-only. **One *digital* volume per Group per
+period**, priced for the Group rather than per person: a PDF is trivially shared
+and pretending otherwise would just add DRM anxiety for no revenue. **Printed
+copies are per person** — as many as a family wants, at $89 each (settled
+2026-09-16; see "The December arithmetic").
 
 An earlier draft of this section priced the digital volume at $29. That was well
 under market for the category — the comps sit at $59–199 with $119 as a working
@@ -482,56 +491,68 @@ not fit in that window — so don't build them.
 Do it by hand instead. This is the manual stage, and it is the only version that
 produces revenue in 2026:
 
-- [ ] Get Group Zero running now (§6), with **as many family Groups as the
-      arithmetic below says you need** — not the one the first draft of this
-      section called for.
+- [ ] Get Group Zero running now (§6), with **two to three family Groups** — the
+      number the arithmetic below settles on.
 - [ ] Late November: take the editions that exist, lay out a volume manually,
       upload the PDF to Lulu's website by hand, order copies.
 - [ ] Invoice directly or send a Stripe Payment Link. No renderer, no API, no
       integration, no code.
-- [ ] Pass condition: **five families pay $89.** That's ~$450, proof the object
-      sells, and a finished spec for the renderer that would otherwise have been
-      built on speculation. If nobody bites, that was learned in six weeks for
-      the price of a few book orders.
+- [ ] Pass condition: **five copies sold at $89** — revised 2026-09-16 from "five
+      *families*", since a family can now buy more than one (see "Settled" below).
+      That's ~$450, proof the object sells, and a finished spec for the renderer
+      that would otherwise have been built on speculation. If nobody bites, that
+      was learned in six weeks for the price of a few book orders.
+- [ ] Record the **attach rate** — copies per paying family. One versus three is
+      the difference between a $2,000/month path and a $6,000/month one, and
+      December is the only place it gets measured this year.
 
 ### The December arithmetic
 
 **Corrected 2026-09-16.** The pass condition above and the Group Zero plan in §6
 were written separately and don't reconcile.
 
-A volume is bound from a Group's own editions, and the ladder sells one volume
-per Group per period. So every December buyer has to be a family Group that has
-been publishing since roughly now — a family recruited in November has nothing
-to print. **The number of family Groups running by the end of September is a
-hard cap on December revenue.** §6 started one. The pass condition wants five.
+A volume is bound from a Group's own editions. So every December buyer has to be
+a family Group that has been publishing since roughly now — a family recruited in
+November has nothing to print. **The number of family Groups running by the end
+of September is a hard cap on December revenue**, and the original plan started
+one against a pass condition of five. The decision below closes that gap.
 
-Three ways to close it. They are not equivalent and the first is the real one:
+### Settled 2026-09-16: extra printed copies sell
 
-1. **Recruit to three–five family Groups this month.** [owner] The honest
-   version of the pass condition. It is also a lot of recruiting for someone who
-   has not yet started one, and it competes for the same September hours as
-   Groups A and B — which is the actual cost of the December deadline, and worth
-   seeing before committing to it rather than in November.
-2. **Sell more than one copy per family.** [owner, decision needed] The ladder's
-   "one volume per Group per period" was your call and it is right for the *PDF*
-   — a digital file is trivially shared and DRM would be worse than the lost
-   revenue. A hardcover is not that: it has real per-copy COGS, and three
-   siblings each wanting their own is the Storyworth gift dynamic the whole
-   section is built on. Selling additional printed copies at $89 is not a
-   paywall and withholds nothing. If this is a yes, five paid copies can come
-   from two or three family Groups and item 1 gets much smaller. **Decide this
-   before you decide how many families to recruit**, because it sets the number.
-3. **Restate the pass condition to what the Groups you have can prove.** Two
-   families paying from two family Groups is a 100% hit rate and tells you as
-   much about whether the object sells as five out of eight would. What it does
-   not produce is $450 or a sense of volume. If September ends with fewer family
-   Groups than item 1 needs, write the smaller number down here *in advance* —
-   the failure mode is reaching December, missing five, and reading a sound
-   result as a failed test because the bar was set by an arithmetic mistake.
+**A family can buy more than one printed copy, at $89 each.** This was the open
+decision that set the size of September's recruiting, and it is now closed.
 
-Whichever way this goes, the deposit link in §6 runs in week 2 regardless. It is
-the same question asked ten weeks earlier for $20 instead of $89, and it is not
-capped by any of this.
+The ladder's "one volume per Group per period" stands **for the PDF** — a digital
+file is trivially shared, and DRM would cost more in goodwill than it recovers.
+A hardcover is a different object: it has real per-copy COGS, and three siblings
+each wanting their own copy is precisely the Storyworth gift dynamic this whole
+section is built on. Selling a second and third copy withholds nothing from
+anyone, so it does not touch the rule that keeps this compatible with the
+audience — everything charged for is an object, not access.
+
+**What it changes:**
+
+- **The December pass condition is now five paid copies, not five paying
+  families.** Those can come from two or three family Groups.
+- **Recruiting target: two to three family Groups publishing by roughly the end
+  of September**, down from three to five. One can be your own. This is the
+  number §6's Groups C1–Cn refers to.
+- **Ask the multi-copy question explicitly** when you take the week-2 deposit.
+  "Would your brother want his own?" is a different question from "do you want
+  one," and the answer is worth more than the $20 — it tells you whether the
+  attach rate per family is one or three, which is the difference between a
+  $2,000/month path and a $6,000/month one.
+
+**What it does not change.** The per-copy price stays $89 — no bulk discount
+until there is evidence anyone wants three. And it stays one *edition range* per
+volume: copies two and three are the same book, not a second quarter's.
+
+**The remaining unknown is attach rate, not permission.** Nothing above is
+costed until Lulu's calculator has been run (§9), and a three-copy family is
+three times the COGS as well as three times the revenue.
+
+The deposit link in §6 runs in week 2 regardless. It is the same question asked
+ten weeks earlier for $20 instead of $89, and it is not capped by any of this.
 
 ### Open work, after December
 
@@ -607,12 +628,12 @@ vendor, and it's the same primitive §4's web composer would need.
       re-inserts you into the experiment and tests the person instead of the
       process. If they fail while following the page, distribution is the broken
       thing; if they fail because there was no page, you learned nothing.
-- [ ] **Groups C1–Cn — families, plural.** §5 bets that families are who buys the
-      artifact, and there is no family Group to test that against. One can be
-      your own; the rest are recruiting work that happens this month or not at
-      all. **How many is set by §5, "The December arithmetic" — settle it before
-      you finish recruiting Group A**, because it changes how much recruiting
-      there is.
+- [ ] **Groups C1–Cn — two to three families.** §5 bets that families are who
+      buys the artifact, and there is no family Group to test that against. One
+      can be your own; the other one or two are recruiting work that happens this
+      month or not at all — a family recruited in November has nothing to print.
+      (The number came down from three–five when extra printed copies were
+      settled on 2026-09-16; §5, "The December arithmetic.")
 
 Group B is not a nice-to-have. If nobody but you will do the recruiting work,
 that is the business — and it is far cheaper to learn in week 2 than in month 6.
@@ -764,10 +785,11 @@ Where the organizers are. Join as a person, months before mentioning the app.
    (§6). It's the long pole; every week of delay is a week of evidence you don't
    have. Recruiting the Group B organizer has its own lead time, so start asking
    now. Editions 1–2 run off-app, so none of this waits on enrollment.
-4. **This week, and it expires** — settle the extra-copies question and the
-   family-Group count (§5, "The December arithmetic"). It is the only item here
-   whose window closes in weeks rather than months, and it sets how much
-   recruiting step 3 actually is.
+4. **Settled 2026-09-16** — ~~the extra-copies question and the family-Group
+   count~~. Extra printed copies sell at $89, which brings the recruiting target
+   to two–three family Groups (§5, "The December arithmetic"). What still expires
+   is the recruiting itself: a family Group not publishing by roughly the end of
+   September cannot be a December buyer.
 5. **This week, in parallel** — the copy pass (§2). Cheap, no dependencies, and
    it stops you from launching at the wrong audience.
 6. **Weeks 1–4** — community presence (§7). Also long-pole; standing accrues
@@ -804,8 +826,10 @@ Where the organizers are. Join as a person, months before mentioning the app.
 
 ## 9. Open questions [owner]
 
-- [ ] Subtitle: "A newspaper by your people" (safe, searchable) or "The opposite
-      of a feed" (sharper, riskier with App Review)?
+- [x] ~~Subtitle~~ — **settled 2026-09-16: "A newspaper by your people"** (26 of
+      30 chars). "The opposite of a feed" was the sharper line but carries no
+      keyword weight; it belongs in the promotional-text field instead, which
+      updates without a review cycle. In `STORE_LISTING.md` §2.
 - [ ] Is weekly the right cadence for friend groups, or does biweekly retain
       better? Weekly is the brand and the routine is the stated point — but
       Group Zero is the only way to find out, and the schema already supports

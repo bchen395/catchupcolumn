@@ -26,12 +26,12 @@ type Props = {
   inviteCode: string;
 };
 
-// The group screen's "Invite your family" card — the sender half of the
-// acquisition funnel. Three paths, matched to how families actually invite:
-// read the code out over the phone (big copyable code), text it (share sheet,
-// code-first message), or hand your phone across the kitchen table (QR of the
-// deep link for their camera).
-export const InviteFamilyCard = ({ groupName, inviteCode }: Props) => {
+// The group screen's "Invite your people" card — the sender half of the
+// acquisition funnel. Three paths, matched to how people actually invite: read
+// the code out over the phone (big copyable code), text it (share sheet,
+// code-first message), or hand your phone across the table (QR of the deep
+// link for their camera).
+export const InviteCard = ({ groupName, inviteCode }: Props) => {
   const reduceMotion = useReduceMotion();
   const [copied, setCopied] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);

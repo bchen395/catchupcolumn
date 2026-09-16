@@ -142,7 +142,7 @@ const OnboardingScreen = () => {
     const nextErrors: OnboardingErrors = {};
 
     if (!trimmedDisplayName) {
-      nextErrors.displayName = 'Enter the name you want your family to see.';
+      nextErrors.displayName = 'Enter the name you want your Group to see.';
     } else if (trimmedDisplayName.length > DISPLAY_NAME_MAX) {
       nextErrors.displayName = `Keep your name under ${DISPLAY_NAME_MAX} characters.`;
     }
@@ -202,7 +202,7 @@ const OnboardingScreen = () => {
   return (
     <AuthScreenShell
       title="Set up your profile"
-      subtitle="Add the name your family will see. A photo is optional and you can always add one later."
+      subtitle="Add the name your Group will see. A photo is optional and you can always add one later."
       banner={
         invite ? (
           <PendingInviteBanner message={Strings.invite.joiningBannerSignup(invite.groupName)} />

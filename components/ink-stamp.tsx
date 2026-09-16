@@ -36,7 +36,7 @@ type InkStampProps = {
   /**
    * 'moment': presses on, rests, fades — the host unmounts it via onDone
    * (FILED). 'record': presses once after a beat and stays put, with the
-   * confirm() haptic (JOINED — a date stamped in the family record).
+   * confirm() haptic (JOINED — a date stamped in the Group's record).
    */
   behavior: 'moment' | 'record';
   reduceMotion: boolean;

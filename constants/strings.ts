@@ -77,7 +77,7 @@ export const Strings = {
     },
     groups: {
       title: 'No Groups yet',
-      body: 'Create a Group to start your family newsletter, or ask someone for their invite code to join theirs.',
+      body: 'Create a Group to start your group’s newsletter, or ask someone for their invite code to join theirs.',
     },
     postNoGroups: {
       title: 'No Groups yet',
@@ -133,7 +133,7 @@ export const Strings = {
     // Under the greeting — the paper's masthead motto of the day.
     deckLines: [
       'Your weekly newsletter, made together.',
-      'Every family has stories worth printing.',
+      'Everyone has stories worth printing.',
       'The little things make the best headlines.',
       'Ordinary weeks make wonderful reading.',
       'Someone out there loves your news.',
@@ -148,11 +148,11 @@ export const Strings = {
       'What’s something they don’t know yet?',
     ],
     // The hero slot before a Group's first edition exists — a coming-soon
-    // front page (the one sanctioned illustration hero: no family photos yet).
+    // front page (the one sanctioned illustration hero: no member photos yet).
     firstEdition: {
       kicker: 'Your first edition',
       headline: 'The presses are warming up',
-      deck: 'Everything your family writes this week becomes your first edition.',
+      deck: 'Everything your people write this week becomes your first edition.',
     },
     // Folio line under the hero story, small caps: group · week · story count.
     folio: (groupName: string, weekOf: string, storyCount: number) =>
@@ -225,7 +225,7 @@ export const Strings = {
     joiningBannerLogin: (name: string) => `Joining ${name} — sign in to continue.`,
     errorNotFound: 'We couldn’t find a Group with that code. Double-check it with whoever invited you.',
     errorEmptyCode: 'Enter an invite code to find a Group.',
-    errorRevoked: 'That invitation isn’t active anymore. Ask your family for a fresh code.',
+    errorRevoked: 'That invitation isn’t active anymore. Ask whoever invited you for a fresh code.',
     errorJoin: 'We couldn’t get you in just now. Please try again.',
     errorNetwork: 'Can’t reach the press — check your connection and try again.',
     a11yFound: (name: string) => `Invitation found. ${name}.`,
@@ -244,9 +244,21 @@ export const Strings = {
     a11yJoined: (name: string) => `You’re in. Welcome to ${name}.`,
   },
 
-  // The sender side: the group screen's "Invite your family" card.
+  // Placeholder examples for the Group-name field, rotated by `dailyPick` so
+  // neither audience reads as the afterthought: a friend group and a family
+  // alternate by day. CLAUDE.md's Audience vocabulary is the rule this serves —
+  // the app is for friend groups first and families equally, and this field is
+  // the most audience-defining copy in the product.
+  groupCreate: {
+    nameExamples: [
+      'e.g. The Sunday Dispatch',
+      'e.g. The Williams Family Weekly',
+    ],
+  },
+
+  // The sender side: the group screen's "Invite your people" card.
   inviteCard: {
-    title: 'Invite your family',
+    title: 'Invite your people',
     body: 'Anyone with this code can join. Read it out over the phone, text it, or show the code below to scan.',
     // Small-caps label inside the §11 ticket, above the code.
     ticketLabel: 'Invite code',

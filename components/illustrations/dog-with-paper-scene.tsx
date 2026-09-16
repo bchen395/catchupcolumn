@@ -4,7 +4,7 @@ import Svg, { Circle, G, Path } from 'react-native-svg';
 import { Colors } from '@/constants/colors';
 
 // No-groups doodle (BRAND §4): the paperboy's dog sitting with a rolled
-// paper in his mouth, ready to deliver — "start your family's paper."
+// paper in his mouth, ready to deliver — "start your group's paper."
 // Monoline #000, one vermilion spot (the wrap band on the roll).
 
 const VIEWBOX = { w: 200, h: 160 };
