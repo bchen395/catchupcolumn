@@ -369,7 +369,8 @@ a web-only member can be reached by a link.
 ## 5. Work item — monetization
 
 **Status: planning only, now backed by research (2026-09-14). Revenue target
-brought forward — see "the December test" below.**
+brought forward — see "the December test" below. Ads costed and rejected
+2026-09-15 — see "Ads" below.**
 
 ### How this section got here
 
@@ -386,6 +387,12 @@ Three positions in one day, recorded because the reversals are informative:
 
 Position (2)'s *operational* concern was legitimate and is what the research
 had to answer. It did.
+
+A fourth position was raised and closed on 2026-09-15: **advertising**, on the
+reasonable-sounding ground that newspapers carry ads and even the paid NYT does.
+It was costed rather than waved off, and it lost on arithmetic before it ever got
+to taste. The numbers are below, because a one-line refusal is how a decision
+gets relitigated every six months.
 
 ### The constraint (unchanged, and it still binds)
 
@@ -501,9 +508,137 @@ Unchanged from the earlier analysis, and the artifact model keeps it simple:
   surface (§1), it arrives weekly, and the Volume offer belongs in the footer of
   edition twelve. Apple's rules govern what the app does; an email is not the
   app. The practical constraint is simply **no "Buy the Volume" button in the
-  UI**.
+  UI**. Spec for the offer block itself: "The house ad" below.
 - **RevenueCat stays a "no"** (§11). It wraps StoreKit for digital in-app
   purchases, which is not what this sells.
+
+### The house ad — the only advertisement the paper carries
+
+The Volume offer is an ad in our own newspaper, and it should look like one.
+That is the whole of what survives the ads question: **the form, not the
+advertiser.** A ruled classified box set in the paper's own type is native to a
+newspaper in a way a banner never is — so build that, and keep 100% of the
+revenue with nobody to report metrics to.
+
+Today the edition email ends with the colophon (`renderColophon` in
+`supabase/functions/_shared/edition-email.ts`) — printer's mark, "written by
+{group}, printed by Catch Up Column", and "Start one for your people". The
+Volume offer is a **separate block sitting immediately above** it, in the
+classified register rather than the colophon's italic whisper.
+
+Spec:
+
+- **Cadence.** Renders only when `payload.edition_number % 12 === 0`. Never on
+  any other edition. A Group that hasn't reached twelve editions never sees it,
+  and a Group that has just read its twelfth is being offered the thing it just
+  finished making.
+- **Form.** A hairline-ruled box — `INK_SOFT` at 1px, no fill, no shadow, width
+  matched to the post column. This is the one boxed element permitted in an
+  email that otherwise forbids cards, and it is permitted *because* it is a
+  classified, visibly not part of the editorial matter.
+- **Type.** Kicker in Jost 11px / 2px letter-spacing / uppercase, vermilion —
+  the existing kicker role and the one place the accent is licensed. Headline in
+  Lora. Body in Lora **16px**: the accessibility floor applies here too, this is
+  copy meant to be read.
+- **Copy, in the paper's own voice.** No marketing register, no urgency, no
+  countdown, no "limited time":
+
+  > **THE VOLUME**
+  > Twelve editions, bound.
+  > Everything {group_name} wrote from No. {n−11} to No. {n}, printed and posted
+  > to whoever you like. $89.
+  > *Order the volume →*
+
+  Anchor the copy to edition numbers, not to "this year" — twelve weekly
+  editions is a quarter, and §9 hasn't settled whether a volume is 12 or 52. The
+  edition-number framing is true under either answer.
+
+- **Link.** Plain `https` to a Stripe Payment Link on `WEB_BASE_URL`, untracked
+  and unredirected — the same rule as every other link in the email. No UTM, no
+  click wrapper, no pixel. If we ever need to know which Groups converted,
+  Stripe's own checkout metadata carries it without instrumenting the email.
+- **Apple.** Load-bearing and unchanged: this lives in the email only. **No "Buy
+  the Volume" button anywhere in the app UI.**
+- **The floor.** If the block ever reads louder than the members' writing above
+  it, it is wrong and gets quieter. This is `renderColophon`'s standing rule
+  ("it must never shout over the family" — a comment §2's copy pass should
+  reword to *your people*) extended to the block above it.
+
+**Build it only after the December test passes.** The manual version is a Stripe
+Payment Link pasted into a personal email, and that is what December uses.
+
+### Ads — costed and rejected, 2026-09-15
+
+The instinct was worth costing: newspapers carry ads as a structural element,
+and the NYT runs them against a paid subscription. It does not survive contact
+with the numbers.
+
+**What the NYT comparison actually shows.** FY2025: total advertising revenue
+**$566.0M**, digital roughly 73% of it (~$413M), against ~12.21M digital-only
+subscribers — **~$34/subscriber/year, about $2.82/month** — versus digital-only
+ARPU of **$9.68/month**. At the most successful subscription newspaper in the
+world, with a direct ad-sales organisation, advertising is **~23% of per-user
+digital revenue** — and that $2.82 is earned across dozens of impressions a
+month (daily app, Games, Cooking, Wirecutter). An edition arrives **once a
+week**: ~4.3 impressions per member per month. Same model, an order of magnitude
+less inventory per person.
+
+The deeper mismatch is whose attention is being sold. The NYT sells strangers an
+audience gathered around journalism it paid to produce. Our inventory is one
+member's letter to seven friends.
+
+**The arithmetic.** One slot per edition, 8-member Groups, against the same
+$2,000/month target used above:
+
+| Scenario | CPM | Rev / Group / mo | Groups for $2,000/mo |
+| --- | --- | --- | --- |
+| Direct-sold premium, 2 slots, every open | $25 | $1.20 | ~1,700 (13,600 people) |
+| Remnant / programmatic, 1 slot, 60% open | $3–5 | ~$0.14 | ~14,000–19,000 (110k–155k people) |
+| Printed volume, for comparison | — | — | ~2,000–3,000 Groups at 15% attach |
+
+The top row is not available to us. The practical floor for *any* sponsor
+interest is 1,000–2,000 engaged subscribers **in a clear commercial niche**;
+~2,500 for basic ad opportunities, 25,000+ for real brands. "Eight friends from
+college, now scattered across five states" is not a niche — it is the absence of
+one. The realistic row is the one that applies, and it needs roughly **10x the
+users of the print path for the same money**.
+
+In one line: at the *optimistic* CPM, **one $89 volume is worth about four years
+of ad revenue from that Group.** At the realistic CPM, about thirty-five years.
+
+**Three blockers that are structural, not aesthetic.**
+
+1. **You cannot sell what you cannot count.** `edition-dispatch.ts` records
+   `emailed_at` and nothing else — no open pixel, no click redirect, no
+   per-recipient log. CPM sales require all three. Building them means building
+   the tracking layer that `docs/PRIVACY.md` and `web/privacy.html` promise in
+   writing does not exist. The measurement apparatus is the product's negation.
+2. **It degrades the only retention channel there is.** §1 concluded the edition
+   email *is* the retention surface. Gmail Primary placement averages **57.8%**
+   with **37.7%** diverted to Promotions, and ad markup, promotional formatting
+   and tracked outbound links are primary triggers. That is the product's entire
+   delivery mechanism wagered for ~$0.15 per member per month.
+3. **Adjacency cannot be controlled.** A member writes that their mother went
+   into hospice; a mattress ad renders below it. The only fix is scanning the
+   content to place against it — reading private letters — which is the
+   forbidden data model. Note that Meta, with every incentive to do otherwise,
+   put WhatsApp ads in Status and Channels and kept personal messaging ad-free.
+   An edition is personal messaging.
+
+**And the promise is already made in writing.** "No ads" is the line §2 says
+should *lead* the store listing (`STORE_LISTING.md`), and the privacy policy
+states it twice. Marco Polo does ~$800k/month with "no ads, no selling your
+data" as its pitch. In this category the refusal is an asset with revenue
+attached, not a cost — retracting it at launch would spend the one thing the
+product has before it has users.
+
+Sources: NYT FY2025 10-K and Q4 2025 release; beehiiv and Paved newsletter CPM
+benchmarks; SponsorPriceIQ sponsor thresholds; Gmail inbox-placement benchmarks;
+WhatsApp ads rollout coverage, Dec 2025.
+
+**What survives:** the form, not the advertiser — "The house ad" above. The
+other newspaper-shaped idea this raised, a member-written classifieds section,
+is a *content* decision rather than a revenue one and is logged in §9.
 
 ### The December test [owner]
 
@@ -535,10 +670,16 @@ produces revenue in 2026:
 
 ### Explicitly not doing
 
-Ads of any kind. Engagement-based anything. Charging readers for access. Selling
-data. Paywalling group size. Paywalling the ritual itself. All of these are the
-thing this community is fleeing, and the privacy policy already promises the
-absence of most of them in writing.
+Ads of any kind — third-party advertising, sponsorships, sponsored posts, a
+patron line, affiliate placements, and every other arrangement where someone
+outside the Group pays to appear inside its edition. Costed and rejected above;
+do not reopen without new numbers. The house ad is not an exception to this — it
+sells our own object and answers to nobody.
+
+Also: engagement-based anything. Charging readers for access. Selling data.
+Paywalling group size. Paywalling the ritual itself. All of these are the thing
+this community is fleeing, and the privacy policy already promises the absence
+of most of them in writing.
 
 Note what the ladder above never does: **nothing is ever withheld from a Group
 that doesn't pay.** Everything charged for is an object, not access. That is
@@ -745,6 +886,13 @@ Where the organizers are. Join as a person, months before mentioning the app.
 - [ ] Does the friend-group volume sell at all, or is the artifact a
       family-only product? §5 bets families pay first; the friend-group version
       is untested and may need a different object entirely.
+- [ ] Classifieds: should an edition carry a short ruled section of member-written
+      one-liners — "Sarah's looking for a roommate in Chicago", "Dan's band plays
+      Nov 3"? It came out of the ads question (§5) and is the most
+      newspaper-shaped thing we aren't doing. It is content, not an engagement
+      mechanic, and it is free. The risk is drift: a section that accumulates
+      starts to behave like a feed, which is the one shape the product forbids.
+      Decide after Group Zero, on whether anyone actually wants it.
 - [ ] Does the revenue window survive contact with Group Zero? If the ritual
       doesn't hold for four weeks with your own friends, monetization timing is
       the wrong thing to be optimizing.

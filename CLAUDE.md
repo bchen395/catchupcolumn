@@ -161,7 +161,12 @@ Two lists that are often confused. The first is permanent; the second is sequenc
 - Likes, reactions, comments, follower/view counts, streaks, or any other engagement metric
 - A feed, an algorithm, or any reading surface that isn't a compiled Edition
 - Public posts, discovery, stranger pairing, public Groups
-- Ads, data sale, or engagement-based monetization
+- Ads, data sale, or engagement-based monetization — third-party advertising was
+  costed and rejected on 2026-09-15 (it needs ~10x the users of the print path for
+  the same money, and requires per-recipient tracking the privacy policy promises
+  does not exist). The arithmetic is in [`docs/POSITIONING.md`](docs/POSITIONING.md)
+  §5 so it doesn't get relitigated. The Volume offer in the edition email is a
+  house ad for our own object, not an exception to this.
 - Writing prompts and timed exercises — Home's rotating `deckLines` are flavor copy in the paper's own voice, *not* prompts (see the comment in `constants/strings.ts`)
 - AI "write for you" — the writing being yours is the entire point
 
