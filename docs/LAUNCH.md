@@ -1,148 +1,110 @@
 # Launch Runbook — Catch Up Column
 
 Everything left to take Catch Up Column from "code-complete" to "live in the App
-Store," in order. Steps marked **[owner]** need your accounts/logins and can't be
-automated from the repo.
+Store." Steps marked **[owner]** need your accounts/logins and can't be automated
+from the repo.
 
 **Scope decision (2026-08-22): iOS first, Android later.** Every step below is
 iOS-only unless it says otherwise. Play Console, the FCM service account, and
 `assetlinks.json` are out of scope for this launch — see
-[Android — deferred](#android--deferred) at the bottom for what's already in place
-and what it will need when you pick it back up.
+[Android — deferred](#android--deferred) at the bottom.
 
-Companion docs:
+## Where this fits
 
-- **[PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md)** — the flat, tickable
-  list to work through on submission day. This doc is the narrative (what happened and
-  why); that one is the procedure.
-- **[STORE_LISTING.md](./STORE_LISTING.md)** — metadata, descriptions, and the exact
-  privacy/data-safety questionnaire answers.
-- **[POSITIONING.md](./POSITIONING.md)** — the friends-first repositioning (decided
-  2026-09-14), the pre-publish nudge, and monetization. **Read it before resuming this
-  runbook.** Two things in it change the plan below: submission is now gated on four
-  clean editions of a real group (its §6), and its copy pass (§2) rewrites
-  STORE_LISTING.md before anything is pasted into App Store Connect. The step order
-  stated under "Plan" below predates that decision.
+- **[POSITIONING.md](./POSITIONING.md) sets the order, and it outranks this
+  file.** Submission is gated on four clean editions of a real Group (its §6), so
+  this runbook stays paused at step 7 until Group Zero has run. Read it first.
+- **[PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md)** is the flat,
+  tickable list for submission day, including the on-device smoke test. This doc
+  is the narrative — what happened, what's left, and why. **Where the two
+  overlap, the checklist is authoritative and this file points at it.**
+- **[STORE_LISTING.md](./STORE_LISTING.md)** — metadata, descriptions, and the
+  exact privacy/data-safety answers. POSITIONING §2's copy pass rewrites it
+  before anything gets pasted into App Store Connect.
 
 Project ref: `wvaxfyhihcfilewygtzp` · Bundle ID: `com.catchupcolumn.app`
 
-**Plan (as of 2026-08-22):** the backend, legal hosting, the UI redesign, the EAS env
-vars, and **UGC moderation (step 9, shipped 2026-08-05)** are all done — the last of
-those was the likeliest App Review rejection, and it's closed.
+## Current state (2026-09-16)
 
-The active product work is now the **illustration rework (step 6b)**. Because
-screenshots freeze the final look, and because the Apple Developer enrollment only
-starts being useful once there's art worth building against, those are **deliberately
-deferred**:
+**Done and verified:** the backend, legal hosting, the Vercel site, the v2 UI
+redesign, the EAS env vars, and UGC moderation (step 9) — that last one was the
+likeliest App Review rejection, and it's closed.
 
-- ⏸ **Store screenshots (step 7)** — deferred until the illustrations land.
-- ⏸ **Apple Developer Program enrollment + push credentials (steps 3, 7)** — deferred
-  by choice. Nothing else is blocked on them; see step 3.
+**Now unblocked and time-sensitive:**
 
-So the order from here is: **illustrations (6b) → enroll + first build (7, 8) →
-screenshots → submit.**
+1. **Apple Developer enrollment (step 7) — start it this week.** This was
+   previously deferred behind the illustration rework. POSITIONING §6 reverses
+   that: Expo Go dropped remote push in SDK 53, so Group Zero's editions 3–4 need
+   a TestFlight build, which needs the enrollment. It is waiting-time with a
+   multi-day tail, so starting late blocks everything and starting early costs
+   nothing.
+2. **Email OTP sign-in (POSITIONING §6)** — wanted before Group Zero's edition 3,
+   so people can join without inventing a password.
 
-Cleared on 2026-08-22, both needing no Apple account: the **Vercel redeploy** (step 2
-— edition permalinks now 200 where they previously 404'd, so edition emails' primary
-CTA works) and the **Supabase Auth dashboard settings** (step 5).
+**Still open and independent of Apple:**
 
-Still open and independent of Apple:
-
-1. **Resend** (step 4) — DNS is correctly provisioned; confirm Resend flipped the
+3. **Resend** (step 4) — DNS is correctly provisioned; confirm Resend flipped the
    domain to `verified`, re-set `EMAIL_FROM`, and add the missing DMARC record.
-2. **Confirm the `compile-editions` cron is firing** — see
-   [Verifying the compile-editions cron](#verifying-the-compile-editions-cron). If it
-   isn't, weekly compilation silently never runs and the core feature is dead.
+4. **Confirm the `compile-editions` cron is firing** — see
+   [Verifying the compile-editions cron](#verifying-the-compile-editions-cron).
+   If it isn't, weekly compilation silently never runs and the core feature is
+   dead. **Do this before Group Zero, not before submission.**
+5. **Sentry DSN** (step 11) — the code is wired and inert until it's set, and
+   Group Zero is exactly when crash reports start mattering.
+
+**Deferred by choice:** the illustration rework (step 6b) and store screenshots
+(step 7). Screenshots freeze the final look, and Group Zero produces real
+friend-group sample content for them for free.
 
 ---
 
 ## ✅ Already done
 
-**2026-07-03 pre-launch pass**
+A changelog, not a procedure — the numbered steps below carry anything still
+actionable. Verified against production on the dates shown, not assumed.
 
-- **Security migration `20260703000000` applied to production** (`supabase db push`)
-  — confirmed live via `supabase migration list`. Closes the cross-group
-  post-injection hole, the email leak, and the unsubscribe-token leak.
-- **All 4 edge functions verified byte-identical to the repo** — no redeploy needed.
-- **Client code** updated to match the new DB grants (stops reading `users.email`).
-- **Icons** regenerated in the brand palette + Android notification icon; `app.json`
-  colors fixed; iPad support dropped; `eas.json` created.
-- **Legal/support docs** written under `docs/`; Profile screen links to them.
-- **Pre-launch PR merged** (`launch-prep-security-store`, #8) — the committed app
-  code now matches the already-applied database changes, so the app runs from `main`
-  (the earlier "run from the branch" caveat no longer applies).
+**2026-07-03 — pre-launch security pass.** Migration `20260703000000` applied to
+prod, closing the cross-group post-injection hole, the `users.email` leak, and the
+`unsubscribe_token` leak; client code updated to match the new column grants.
+Icons regenerated in the brand palette, iPad support dropped, `eas.json` created,
+legal/support docs written under `docs/`. PR #8.
 
-**2026-07-17 web & legal-hosting pass** — branch `web-legal-pages-and-vercel` (PR pending, step 1)
+**2026-07-17/18 — web, legal hosting, and the redesign.** Legal/support pages
+built as styled static HTML in `web/` and deployed to Vercel (`web/vercel.json`
+holds all routing); `.well-known/` universal-link files added with placeholder
+Team ID and SHA-256. `eas init` run — `owner` and `extra.eas.projectId` are
+committed to `app.json`. **The full v2 editorial redesign reached every screen
+(step 6)**, which also closed the orange-as-text contrast question: body and UI
+text are now ink/inkSoft (AA everywhere) and vermilion is confined to bold
+small-caps kicker/stamp roles (BRAND.md §2). PRs #9, #10.
 
-- **Legal/support pages built as styled static HTML** in `web/` (`privacy.html`,
-  `terms.html`, `support.html`, `delete-account.html`) — resolves the in-app and
-  App Store Connect / Play Console URLs that previously 404'd.
-- **Doc placeholders filled:** support email `support@catchupcolumn.com`; Terms
-  governed by California, USA.
-- **Deployment switched to Vercel:** `web/vercel.json` holds all routing (clean URLs,
-  `/start` redirect, `/edition/*` rewrite, AASA content-type header); the
-  Cloudflare-only `_redirects` file was removed.
-- **Universal/app-link files added** under `web/.well-known/` (AASA + `assetlinks.json`),
-  scoped to `/edition/*`. Apple Team ID and Android SHA-256 are placeholders — harmless
-  until a build declares the domain (see step 2).
-- **BRAND.md** records the accepted decision to keep bright orange as text (knowingly
-  below WCAG AA) — revisit in the redesign (step 6). *(Resolved in the 2026-07-18
-  redesign; see below.)*
+**2026-08-04 — verification pass against production.** All 27 migrations applied,
+all 4 edge functions deployed and current, EAS production env vars present, all
+four function secrets set, the site live on Vercel with **`www` canonical** (the
+apex 308-redirects). Three things were fixed rather than confirmed:
 
-**2026-07-18 redesign & merge pass**
+- **Edition permalinks were 404ing in production** — `vercel.json` rewrote
+  `/edition/:path*` to `/edition/index.html`, but under `cleanUrls: true` that
+  `.html` route 308s, and a rewrite landing on a redirect resolves to a 404.
+  Every edition email's primary CTA was dead. Destination is now the clean
+  `/edition` path. **This is the easiest thing in the project to regress
+  silently** — re-verify with the curl in step 2 after any `vercel.json` change.
+- **The bogus `RECORD_AUDIO` Android permission** was dropped from `app.json`.
+  The app has no audio code; it was scaffolding that would have forced a
+  microphone disclosure in Play data safety. Verify it hasn't come back.
+- **Canonicalized on `www`** throughout `Strings.legal.*` and the `WEB_BASE_URL`
+  fallback. `web/README.md`'s universal-links snippet previously claimed the
+  apex, which **cannot work** — Apple and Google don't follow redirects when
+  fetching `.well-known/` files.
 
-- **Web & legal-hosting PR merged** (`web-legal-pages-and-vercel`, #9) — step 1 done;
-  the legal/support pages, Vercel config, and `.well-known` files are on `main`.
-- **EAS project linked** (`eas init`) — `owner` (`bchen395`) + `extra.eas.projectId`
-  are committed to `app.json`. The *rest* of step 3 (env vars + push credentials) is
-  still open — see step 3.
-- **Full UI redesign landed (step 6)** — the v2 editorial system reached every screen.
-  This closed the orange-as-text contrast question: body/UI text is now all
-  ink/inkSoft (AA everywhere) and vermilion is confined to bold small-caps
-  kicker/stamp roles (BRAND.md §2). Store screenshots (step 7) are now unblocked.
+**2026-08-05 — UGC moderation shipped (step 9).** PR #14.
 
-**2026-08-04 verification pass** — everything below was checked against production,
-not assumed. Where this doc previously disagreed with reality, reality won.
+**2026-08-22 — Vercel redeployed** to pick up the permalink fix (verified 200),
+and the Supabase Auth dashboard settings were set (step 5).
 
-*Verified green:*
-
-- **All 27 migrations are applied to prod** (`supabase migration list --linked`),
-  including `20260710000000` (invite-preview RPCs) and `20260711000000` (email
-  payload images).
-- **All 4 edge functions are deployed and current** (`supabase functions list`).
-  Careful: `delete-account` reports `updated_at` 2026-05-05, *earlier* than its last
-  code change (2026-05-06) — that timestamp is a red herring. Downloading the live
-  source confirms it contains the `prepare_account_deletion` call, so account
-  deletion works. Don't "fix" this based on the timestamp alone.
-- **EAS production env vars are set** — `EXPO_PUBLIC_SUPABASE_URL` and
-  `EXPO_PUBLIC_SUPABASE_ANON_KEY` both present (`eas env:list production`). This doc
-  previously listed them as open.
-- **Function secrets all set:** `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`
-  (updated 2026-07-17, so no longer the sandbox default), `WEB_BASE_URL`.
-- **Site is live on Vercel** — `/privacy`, `/terms`, `/support`, `/delete-account`
-  all 200. The apex 308-redirects to `www`, so **`www` is canonical.**
-- `npm run typecheck` clean · `expo-doctor` 18/18 · `deno check` clean on the shared
-  dispatch module.
-
-*Fixed in this pass:*
-
-- **Edition permalinks were 404ing in production.** `web/vercel.json` rewrote
-  `/edition/:path*` → `/edition/index.html`, but with `cleanUrls: true` that `.html`
-  route 308s, and a rewrite landing on a redirect resolves to a 404. Every edition
-  email's primary CTA was dead. Destination is now the clean `/edition` path.
-  **Needs a Vercel redeploy to take effect** — re-verify with the curl in
-  `web/README.md`.
-- **Dropped the bogus `RECORD_AUDIO` Android permission** from `app.json` — the app
-  has no audio code anywhere; it was scaffolding that would have forced a microphone
-  disclosure in Play data safety.
-- **Canonicalized on `www`** — `Strings.legal.*` and the `WEB_BASE_URL` fallback in
-  `edition-dispatch.ts` no longer pay a redirect hop. `web/README.md`'s universal-links
-  snippet now uses `www` too; the old snippet claimed the apex, which **cannot work**
-  because Apple and Google don't follow redirects when fetching
-  `.well-known/` files.
-- **Expo patch versions aligned** (`expo install --fix`) — 6 packages were behind;
-  `expo-doctor` now passes 18/18. This also added the now-required `expo-web-browser`
-  config plugin to `app.json`.
+**2026-09-10/14 — SDK 57, CI, and Group Zero tooling.** Expo SDK 54 → 57,
+`eslint-config-expo` wired, CI added (`.github/workflows/ci.yml`), then Sentry,
+`expo-updates`, and the print-resolution fix (POSITIONING §11).
 
 ---
 
@@ -183,23 +145,24 @@ SHA-256 in `assetlinks.json`, and (b) add `associatedDomains`/`intentFilters` to
 `app.json` (snippet in `web/README.md`). **Declare `www.catchupcolumn.com`, not the
 apex** — Apple and Google don't follow the 308.
 
-## 3. EAS project setup **[owner]** — ✅ done for now (credentials deferred)
+## 3. EAS project setup **[owner]** — ✅ done; APNs key waits on step 7
 
 - ✅ **`eas init` done** — `owner` (`bchen395`) + `extra.eas.projectId`
   (`c9be4074-4916-4e94-9276-811bbe8a05dc`) are committed to `app.json`.
 - ✅ **Supabase env vars on EAS** — verified present in the `production` environment
   (2026-08-04). This was the part that would break the app at launch, and it's done.
-- ⏸ **Push credentials — deferred with the Apple enrollment.** The iOS APNs key can
-  only be created from an Apple Developer account, so this is blocked on step 7 by
-  choice, not by oversight. EAS creates it interactively during the first
-  `eas build`, so there is nothing to do ahead of time:
+- ☐ **Push credentials — blocked on the Apple enrollment (step 7).** The iOS APNs
+  key can only be created from an Apple Developer account. EAS creates it
+  interactively during the first `eas build`, so there is nothing to do ahead of
+  time — but the enrollment is no longer deferred, so this unblocks itself:
 
   ```bash
   npx eas-cli credentials    # iOS: add an APNs key (needs Apple enrollment)
   ```
 
-  **Consequence while deferred:** production push notifications won't register. Email
-  delivery is unaffected, so editions still reach people. Push is the only casualty.
+  **Consequence while missing:** production push notifications won't register.
+  Email delivery is unaffected, so editions still reach people — but POSITIONING
+  §3's pre-publish nudge is push-only, so this also gates the retention feature.
 
 **Nothing else in step 3 is outstanding** — with the env vars set and the project
 linked, an unsigned iOS *simulator* build already works today if you want to smoke-test
@@ -273,11 +236,18 @@ If you revisit the UI further, run the `verify-changes` checklist first — `npm
 typecheck` plus manual QA of every screen (auth, onboarding, group create/join,
 composer, editions list, edition reader, profile) at large system font sizes.
 
-## 6b. Illustration rework — ⚠️ the active product gate
+## 6b. Illustration rework — ⏸ deferred (no longer the gate)
 
-Reworking the hand-drawn illustration world (the paperboy and his dog). This is the
-**last planned product change before launch**, and it's why steps 7–8 are deferred:
-screenshots and the store build both freeze the final look.
+Reworking the hand-drawn illustration world (the paperboy and his dog). Scope is in
+[`design/ILLUSTRATION_REWORK.md`](../design/ILLUSTRATION_REWORK.md).
+
+**Status changed 2026-09-16.** This was "the active product gate," on the reasoning
+that screenshots freeze the final look. POSITIONING §8 supersedes that: Group Zero
+is the long pole, it needs a TestFlight build rather than finished art, and it
+produces real friend-group screenshot content as a by-product. So the rework is
+still the last planned product change before *submission* — it just no longer
+blocks the enrollment (step 7) or the first build (step 8), and the four-week
+Group Zero run is the natural window to do it in.
 
 **What exists today** — 8 components in `components/illustrations/`:
 `paperboy-mark`, `paperboy-mailbox-scene`, `dog-with-paper-scene`,
@@ -319,18 +289,21 @@ doesn't sprawl — this is chrome, not a re-architecture.
 
   This exercises font loading and the splash on a real binary. It won't test push or
   universal links — those need the signed production build.
-- **Then** unblock steps 7 and 8.
+- **Then** capture screenshots (step 7) against Group Zero's real content.
 
-## 7. Store account, assets, and metadata **[owner]** — ⏸ deferred until 6b lands
+## 7. Store account, assets, and metadata **[owner]** — enrollment now, the rest deferred
 
-iOS only. Deferred by choice until the illustration rework is done, since screenshots
-freeze the final look.
+iOS only. **The enrollment is no longer deferred** — POSITIONING §6 needs a
+TestFlight build for Group Zero's editions 3–4, and enrollment has a multi-day
+tail. Everything *after* the enrollment still waits, because screenshots freeze
+the final look and Group Zero will produce better ones.
 
-- ⏸ Enroll in the **Apple Developer Program** ($99/yr). Confirm the bundle ID
+- ☐ **[owner] Enroll in the Apple Developer Program ($99/yr) this week.** It is
+  waiting-time, not working-time. Confirm the bundle ID
   `com.catchupcolumn.app` is final — it's **immutable after first submission**. This
   is also where you get the **Apple Team ID** that step 2's universal links need, and
   what unblocks the APNs key in step 3.
-- ⏸ Create the app record in App Store Connect.
+- ⏸ Create the app record in App Store Connect (after Group Zero).
 - ⏸ **Screenshots — capture after 6b:** iPhone 6.9" required (Home, an edition front
   page, the composer, a group). No iPad shots needed (iPad support is off).
   > `/screenshots` in the repo holds design-reference images only (and is untracked as
@@ -349,7 +322,9 @@ build is also the first test of font loading, splash-hide, push registration, de
 links, and the notification icon on a signed binary. Budget time for it to not work
 first try.
 
-iOS only, and deferred until 6b lands and you've enrolled (step 7).
+iOS only. Deferred until Group Zero's four editions are in (POSITIONING §8) —
+not until 6b lands; a TestFlight build for Group Zero comes first and needs only
+the enrollment.
 
 ```bash
 npx eas-cli build --platform ios --profile production
@@ -369,29 +344,92 @@ user-generated content**) and submit for review.
 ## 9. UGC moderation — ✅ done (2026-08-05, PR #14)
 
 Apple Guideline 1.2 expects three things from an app where users publish content
-others see. **Decided 2026-08-05: build all three** rather than argue the invite-only
-model — a rejection costs a review cycle and both affordances were cheap. This was
-previously flagged as the likeliest rejection cause; it is now closed.
+others see. **Decided 2026-08-05: build all three** rather than argue the
+invite-only model — a rejection costs a review cycle and all three were cheap.
+This was previously flagged as the likeliest rejection cause; it is now closed.
 
-- ✅ **Published acceptable-use terms** — `docs/TERMS.md §4` / `web/terms.html`, both
-  now describing the report path and the moderator's removal power.
-- ✅ **A way to report objectionable content** — "Report this story" at the foot of
-  every story in the reader (`components/report-story-link.tsx`, wired in
-  `components/story-article.tsx`), drafting a mailto to `support@catchupcolumn.com`
-  with the story/group/edition ids. Hidden on your own posts. `lib/report.ts` is the
-  seam to swap for a real endpoint if volume ever justifies it.
-- ✅ **A way to block/eject an abusive user** — moderators get a "Remove" action on
-  every other member's row (`app/group/[id].tsx`), backed by the `remove_group_member`
-  RPC (`20260806003026_member_moderation.sql`, hardened by `20260806005907`). Removal
-  also deletes the member's *uncompiled* posts, so an ejected member's pending story
-  can't land in tomorrow's edition; published editions are untouched.
-  `prevent_last_moderator_removal` still guards the sole-moderator case.
+Shipped: acceptable-use terms (`docs/TERMS.md §4` / `web/terms.html`), a report
+path (`components/report-story-link.tsx`, drafting a mailto with the
+story/group/edition ids; `lib/report.ts` is the seam to swap for a real endpoint),
+and moderator eject (`app/group/[id].tsx` → the `remove_group_member` RPC, which
+also deletes the removed member's *uncompiled* posts so they can't land in
+tomorrow's edition; `prevent_last_moderator_removal` guards the sole-moderator
+case).
 
-☐ **Still to do:** smoke-test both affordances on device (Gate 7 in
-[PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md)), and re-run the Gate 1
-automated checks — this code landed after Gate 1 last passed.
+☐ **Still to do:** smoke-test both affordances on device, and re-run the Gate 1
+automated checks — this code landed after Gate 1 last passed. Both are tracked in
+[PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md) Gates 6–7; don't keep a
+second copy of the list here.
 
-## 10. Post-approval
+## 10. Sentry setup **[owner]** — ☐ needed before Group Zero
+
+Relocated here from POSITIONING §11 (2026-09-16) — that doc records *why* Sentry
+and not the alternatives; this is how to turn it on.
+
+The code is wired and inert until a DSN exists, and a crash on a friend's phone
+during Group Zero reads as "they lost interest," which corrupts the only signal
+the exercise produces. Sentry's free tier (5k errors a month) is far more than
+Group Zero will generate. Parts 1–3 below take about ten minutes and are the ones that
+matter; 4–5 make the traces readable.
+
+**1. Create the project.** sentry.io → new organization if you don't have one →
+**Create Project** → platform **React Native** → name it `catch-up-column`.
+Alert frequency: "on every new issue" is right at this scale; you want the email.
+
+**2. Copy the DSN.** Shown on the setup screen, and afterwards under
+*Settings → Projects → catch-up-column → Client Keys (DSN)*. It looks like
+`https://<hash>@o<org>.ingest.sentry.io/<project>`. The DSN is not a secret —
+it's compiled into the app binary and only allows *writing* events — so
+`EXPO_PUBLIC_` is the correct prefix and committing it would be harmless. It's
+in `.env.local` (gitignored) purely to keep environments separable.
+
+```bash
+# .env.local
+EXPO_PUBLIC_SENTRY_DSN=https://…@o0.ingest.sentry.io/0
+```
+
+**3. Verify it reports.** `Sentry.init` is deliberately disabled in dev
+(`enabled: !__DEV__`), so a simulator run will *not* send anything — this is the
+step people get stuck on. Test on a preview build:
+
+```bash
+eas build --profile preview --platform ios
+```
+
+Then temporarily add `Sentry.captureException(new Error('sentry smoke test'))`
+to a screen, trigger it, and confirm the issue appears in the Sentry dashboard
+within a minute or so. Remove the line afterwards. If nothing arrives, check
+that the DSN was present at build time — `EXPO_PUBLIC_*` values are inlined
+during the bundle step, not read at runtime, so a DSN added after the build
+won't apply.
+
+**4. Source maps.** Without these, every stack frame is a minified one-liner and
+the reports are close to useless. The `@sentry/react-native` config plugin
+uploads them during an EAS build when three build-time variables are present.
+Create an auth token at *Settings → Auth Tokens* with the `project:releases`
+scope, then:
+
+```bash
+eas secret:create --scope project --name SENTRY_ORG        --value <org-slug>
+eas secret:create --scope project --name SENTRY_PROJECT    --value catch-up-column
+eas secret:create --scope project --name SENTRY_AUTH_TOKEN --value <token>
+```
+
+`SENTRY_AUTH_TOKEN` **is** a real secret — never put it in `.env.local`, app.json,
+or a commit. The other two are just names.
+
+**5. Sanity-check what's being sent** once real reports arrive. Open an issue and
+confirm it carries a stack trace, device model, OS and app version — and *not* a
+display name, email, post body, or a URL with a group id in the query string.
+The config in `app/_layout.tsx` is written to prevent all of those; if any shows
+up, the config drifted and `docs/PRIVACY.md` plus the App Store privacy labels
+in `docs/STORE_LISTING.md` need re-checking before submission.
+
+**Not worth turning on:** performance tracing, session replay, profiling, user
+feedback widgets. Each one widens what you collect, each needs a privacy-doc
+update, and none of them answer a question you have at eight users.
+
+## 11. Post-approval
 
 ☐ Fill `appStoreUrl` in `web/config.js` and redeploy, so the site's App Store button
 appears instead of the "coming soon" line. (Leave `playStoreUrl` empty until Android
@@ -426,24 +464,15 @@ of scope. **Already in place** (no need to redo it):
 
 ---
 
-## Post-launch smoke test (recommended before wide release)
+## On-device smoke test
 
-Using a TestFlight / internal-testing build:
+Owned by [PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md) **Gate 7** —
+two accounts, a TestFlight build, and eleven checks from signup through account
+deletion. It used to be duplicated here; it isn't any more.
 
-1. Sign up → set name/avatar → create a group. Confirm profile loads (validates the
-   `users` column-grant change against production).
-2. Invite a second test account; both see the group.
-3. Write a post with a photo; publish the edition (moderator "publish now").
-4. Confirm the edition email arrives from your verified domain and the push fires.
-5. **Tap the email's "read the edition" link** → must land on the bouncer page and
-   hand off to the app, *not* a 404 (regression check for the `/edition/*` rewrite).
-6. Tap the email's unsubscribe link → confirm the styled confirmation page.
-7. Profile → Delete account → confirm it completes and signs out.
-8. Confirm the 15-minute `compile-editions` cron is actually firing — see
-   [Verifying the compile-editions cron](#verifying-the-compile-editions-cron) below.
-   If it isn't, weekly compilation silently never runs and the core feature is dead.
-
----
+The one item in it that is *also* a live ops concern rather than a submission
+gate is the cron, because it fails silently and Group Zero depends on it. That's
+the next section.
 
 ## Verifying the compile-editions cron
 

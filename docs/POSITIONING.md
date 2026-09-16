@@ -1,15 +1,24 @@
 # POSITIONING.md — Friends-first repositioning, retention, and money
 
-**Decision date: 2026-09-14.** This doc is the handoff for a change of direction
-made before launch, and the checklist for executing it. It is a companion to
-[LAUNCH.md](./LAUNCH.md) (the submission runbook),
-[STORE_LISTING.md](./STORE_LISTING.md) (store metadata), and
-[ORGANIZER_PLAYBOOK.md](./ORGANIZER_PLAYBOOK.md) (the one-page process an
-organizer follows to start and run a Group — §6's Group B is a test of that
-page).
+**Decision date: 2026-09-14.** This doc is the *why* — the change of direction
+made before launch, the bets that follow from it, and the order to take them in.
+It deliberately does not hold build steps or store procedure; those live next
+door and are listed below.
 
 Steps marked **[owner]** need your accounts, your friends, or your judgment and
 can't be done from the repo.
+
+**The neighbours.** Each is the executable half of something argued here, and the
+two work-item docs get deleted when their work lands:
+
+| Doc | What it holds |
+| --- | --- |
+| [ORGANIZER_PLAYBOOK.md](./ORGANIZER_PLAYBOOK.md) | The one page an organizer follows to start and run a Group. Handed to Group B (§6) as-is. |
+| [COPY_PASS.md](./COPY_PASS.md) | §2's file-by-file checklist — 15 strings, a component rename, the store metadata. |
+| [NUDGE_SPEC.md](./NUDGE_SPEC.md) | §3's build spec — table DDL, RPC, wiring, verification. |
+| [LAUNCH.md](./LAUNCH.md) | The submission runbook and the owner's vendor setup. |
+| [PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md) | The tickable gates for submission day. |
+| [STORE_LISTING.md](./STORE_LISTING.md) | Store metadata and the privacy questionnaire answers. |
 
 ---
 
@@ -55,17 +64,10 @@ catching up."*
 
 ### What does NOT change
 
-- **No schema rewrite, no redesign.** The product is right; the words around it
-  point at the wrong people.
-- **Families stay a first-class use case.** This is a generalization, not a
-  replacement. "The Williams Family Weekly" must keep working and keep feeling
-  native.
-- **The accessibility floor stays exactly where it is.** BRAND.md §6's scale
-  floor (19px row headlines, 16px UI body, ≥56px targets) is currently justified
-  as "the grandparent clause." Keep the floor and keep the name — family groups
-  still contain grandparents, and large readable type is not a concession to
-  one audience.
-- **The app name survives untouched.**
+**No schema rewrite, no redesign, no rename.** The product is right; the words
+around it point at the wrong people. Families stay first-class, the accessibility
+floor stays exactly where it is, and both of those are now binding policy in
+CLAUDE.md → Target Audience rather than a decision recorded here.
 
 ### Why the comparable products died
 
@@ -106,118 +108,23 @@ is the composer and the archive. Two consequences:
 
 ## 2. Work item — the copy pass (friends + family)
 
-**Status: not started.** Cheapest, highest-leverage item on the board. Do this
-before any store submission, or you launch pointed at the wrong audience.
+**Status: not started** (re-verified against the tree 2026-09-16). Cheapest,
+highest-leverage item on the board. Do this before any store submission, or you
+launch pointed at the wrong audience.
 
-### House vocabulary
+The vocabulary rule it enforces now lives in **CLAUDE.md → Key Terminology →
+Audience vocabulary**, which is where every future session reads it. The
+file-by-file checklist — 15 strings across `constants/`, `app/`, `web/`, a
+component rename, and the store metadata — is
+**[COPY_PASS.md](./COPY_PASS.md)**, which gets deleted when the pass lands.
 
-The repo already contains the neutral phrase in two places
-(`web/index.html:24`, and the edition-email footer's "Start one for your
-people"). Make it the convention:
+Two judgment calls in there are yours, not the checklist's:
 
-- **Default: "your people."** Warm, true for both audiences, already in the
-  product's voice.
-- **When you need to be explicit: "family and friends."**
-- **"Family" only when the sentence is literally about a family.**
-- **Never "loved ones"** — greeting-card register, wrong for a 26-year-old
-  writing to college friends.
-
-Add this to CLAUDE.md's **Key Terminology** section when the pass lands.
-
-### Files to change
-
-**`constants/strings.ts`**
-- [ ] `:80` — `empty.groups.body`: "start your family newsletter" → "start your
-      group's newsletter"
-- [ ] `:136` — `home.deckLines`: "Every family has stories worth printing." →
-      "Everyone has stories worth printing." (keep the line count at 5; the
-      rotation is by `dailyIndex`)
-- [ ] `:155` — `home.firstEdition.deck`: "Everything your family writes this
-      week…" → "Everything your people write this week…"
-- [ ] `:228` — `invite.errorRevoked`: "Ask your family for a fresh code." →
-      "Ask whoever invited you for a fresh code." (also better copy — the
-      inviter may not be family in either framing)
-- [ ] `:247` — update the section comment above `inviteCard`
-- [ ] `:249` — `inviteCard.title`: "Invite your family" → "Invite your people"
-
-**`app/group/create.tsx`**
-- [ ] `:85` — "Give your Group a name so your family can find it." → "…so your
-      people can find it."
-- [ ] `:184` — placeholder "e.g. The Williams Family Weekly". **Rotate two
-      examples** so neither audience feels like the afterthought — e.g. "The
-      Williams Family Weekly" and "The Sunday Dispatch." A friends-only example
-      here is the single clearest signal that friend groups belong.
-
-**`app/(tabs)/profile.tsx`**
-- [ ] `:158` — "Enter the name you want your family to see." → "…you want your
-      Group to see."
-
-**`components/invite-family-card.tsx`**
-- [ ] Rename to `invite-card.tsx` (kebab-case, per CLAUDE.md Code Style)
-- [ ] Rename the component `InviteFamilyCard` → `InviteCard`
-- [ ] Update the import at `app/group/[id].tsx:19` and the usage at `:586`
-
-**`web/index.html`** — the landing page is the single most audience-defining
-surface, and it currently says "family" four times.
-- [ ] `:6` — `<title>`: "a weekly newspaper, written by your family" → "…written
-      by your people"
-- [ ] `:7` — meta description: same substitution
-- [ ] `:18` — `.dateline`: same substitution
-- [ ] `:21` — body paragraph: "…arrives for the whole family as one beautiful
-      edition" → "…for everyone". **Also consider leading with the friend-group
-      pain here** — "The group text scrolls away. This doesn't." is already a
-      good first line; the paragraph after it is where the new pitch belongs.
-- [ ] `:35` — colophon: "Written by families. Printed by us." → "Written by you.
-      Printed by us."
-
-**`docs/STORE_LISTING.md`** — [owner] re-paste into App Store Connect after.
-- [ ] Subtitle (30 char max): "A newspaper by your family" → **"A newspaper by
-      your people"** (26 chars) or **"The opposite of a feed"** (22). The second
-      is stronger for this community; the first is safer for App Review and
-      search. Owner's call.
-- [ ] Short description (80 max): "…with family and friends" — already fine,
-      verify it reads friends-first
-- [ ] Full description: reorder so "No feeds to scroll. No strangers. No ads."
-      appears in the **first** paragraph, not the third
-- [ ] Keywords: drop `grandparents` (12 chars), add `friends` (7). Frees 5 chars
-      against the 100-char cap. Consider also `nosurf` or `minimalism` if they
-      fit.
-- [ ] Promotional text: currently "Your family's weekly newspaper" — rewrite
-      friends-first (this field is updatable without review, so it's the
-      cheapest place to A/B the pitch post-launch)
-
-**Low priority — comments and fixtures, cosmetic only**
-- [ ] `app/group/welcome.tsx:16` — comment says "family record"
-- [ ] `supabase/functions/_shared/edition-email.ts:271` — comment says "never
-      shout over the family"
-- [ ] `supabase/functions/_shared/preview/render-email-fixtures.ts:52` — the
-      fixture group is "The Williams Family Weekly". Changing it re-renders the
-      email fixtures; harmless, but run the fixture renderer after (see
-      CLAUDE.md Commands) since it fails on Gmail's clip limit.
-
-### Docs to update when the pass lands
-
-Per CLAUDE.md's self-maintaining-skills rule, the source of truth moves with the
-change:
-- [x] **CLAUDE.md → "Target Audience"** — rewritten friends-first 2026-09-14
-      (heading lost its "(MVP)" suffix). This is the one that matters; it's what
-      every future session reads.
-- [x] **CLAUDE.md → "Key Terminology"** — "your people" convention added as
-      **Audience vocabulary**, and "NOT in MVP" was restructured into
-      **Non-features** (permanent vs. merely deferred)
-- [ ] **`.claude/skills/frontend-design/SKILL.md`** — grep it for family
-      language and the audience description
-- [ ] **design/BRAND.md §9** (language tone) — the examples are family-flavored;
-      add a friend-group example beside them
-
-### Verification
-
-- [ ] `npm run typecheck` and `npm run lint` (the component rename is the only
-      part that can actually break)
-- [ ] `grep -rn -i "famil\(y\|ies\)" constants/ app/ web/ components/ | grep -v
-      "fontFamily\|Typography.families\|css2?family"` — should return only
-      deliberate uses
-- [ ] Walk the onboarding flow on device; the family framing is densest there
+- **The Group-name placeholder** (`app/group/create.tsx:184`) currently reads
+  "e.g. The Williams Family Weekly". Rotating it against a friends example is the
+  single clearest signal in the whole product that friend groups belong.
+- **The App Store subtitle** — safe and searchable, or sharp and riskier with
+  App Review. Tracked in §9.
 
 ---
 
@@ -237,103 +144,34 @@ biggest risk to the friends-first bet, and the nudge is the direct answer.**
 Right now nothing tells anyone the deadline is coming. Push exists, but only
 fires *after* an edition publishes — which is exactly too late to affect it.
 
-### The copy already exists
+### What it is, in four constraints
 
-`constants/strings.ts:167-177` (`Strings.thisWeek`) has the right register:
+The build spec — table DDL, RPC signature, wiring, checklist — is
+**[NUDGE_SPEC.md](./NUDGE_SPEC.md)**, which gets deleted when it ships. The four
+decisions in it that are strategy rather than implementation:
 
-- `bylines` — `"Martha and Dave have written this week"` + `bylinesAddYours` —
-  `" — there's still time to add yours."`
-- `noBylines` — `"No stories yet this week — yours could be the first."`
-
-These render on Home today, which means **only people who already opened the app
-see them.** The people who need them are precisely the ones who didn't. The
-nudge is mostly a delivery problem, not a writing problem.
-
-### Spec
-
-**Timing.** ~48 hours before publish (Friday morning for a Sunday 9am edition),
-evaluated in the group's own `timezone`, same as compilation.
-
-**Where it runs.** Inside the existing `compile-editions` function. The Supabase
-cron already invokes it every 15 minutes; add a `nudgeDueGroups(client)` call
-alongside `dispatchPendingEmails` / `dispatchPendingPushes`. **No new cron, no
-new function, no new secret.**
-
-**Idempotency.** The compile path guards against duplicate work with a
-slot-scoped check plus an advisory lock. Mirror it — at nudge time no edition
-row exists yet, so the marker needs its own home:
-
-```sql
-create table edition_nudges (
-  group_id  uuid not null references groups(id) on delete cascade,
-  slot_at   timestamptz not null,   -- the publish slot this nudge is for
-  sent_at   timestamptz not null default now(),
-  primary key (group_id, slot_at)
-);
-```
-
-Insert-on-send; the PK makes a double-tick a no-op. RLS: no client access needed
-at all (service-role only), so enable RLS and add no policies.
-
-**New RPC** — `nudge_due_groups(p_lead_hours int default 48,
-p_tolerance_minutes int default 20)`, `SECURITY DEFINER`, returning the members
-to notify. Selection rules:
-
-- Groups whose next publish slot is `p_lead_hours` away, ± tolerance, in the
-  group's `timezone`
-- Skip groups already in `edition_nudges` for that slot
-- **Skip single-member groups** — there is nothing social about nudging yourself
-- Skip members who have already written an uncompiled post for this cycle
-- Respect `group_members.push_subscribed`
-- Return, per recipient: group name, count and first names of who *has* written
-
-Note: existing migrations use an invalid 8-character SQLSTATE in
-`raise … using errcode`. Use a valid 5-character code in this one.
-
-**Channel: push only. Do not email the nudge.** Email is the edition's channel;
-a second weekly email cheapens the one that matters and invites unsubscribes
-that also kill edition delivery. If a member has no push token, they get
-nothing this cycle — accept that (and see §4, which fixes it properly).
-
-**Tone — binding.** Positive social proof only. Report who *has* written, never
-who hasn't. No counts of missing people, no streaks, no guilt, no urgency
-language. BRAND.md calls for "a warm nudge, never urgency," and this community
-in particular will uninstall over an engagement-mechanic smell. One nudge per
-member per cycle, hard cap.
-
-Suggested copy, matching `Strings.push.editionReady`'s register:
-- Title: `Two days to press`
-- Body, with writers: `Martha and Dave have written this week — there's still time to add yours.`
-- Body, empty: `No stories yet this week — yours could be the first.`
-
-**Copy-duplication caveat:** the edge functions are Deno and can't import
-`constants/strings.ts`, so push copy is already duplicated between the app and
-`_shared/edition-dispatch.ts`. Put the nudge strings next to the existing push
-copy in `_shared/` rather than inventing a third location, and leave a comment
-in `strings.ts` pointing at it.
-
-**Deep link.** Straight to the composer, not Home. The nudge's only job is to
-get one post written.
-
-### Checklist
-
-- [ ] Migration: `edition_nudges` table + RLS enabled, no policies
-- [ ] Migration: `nudge_due_groups` RPC
-- [ ] `nudgeDueGroups()` in `_shared/` + wired into `compile-editions`
-- [ ] Nudge copy in `_shared/`, cross-referenced from `strings.ts`
-- [ ] Deep link to composer verified on a real device
-- [ ] `deno check` across `supabase/functions`
-- [ ] Manual test: POST to `compile-editions` with the `CRON_SECRET` bearer
-      token against a group with a slot ~48h out
-- [ ] Verify the double-tick no-op (invoke twice, confirm one row, one push)
+- **It rides inside `compile-editions`.** No new cron, no new function, no new
+  secret. The retention feature costs one function call.
+- **Push only, never email.** Email is the edition's channel; a second weekly
+  email cheapens the one that matters and invites unsubscribes that also kill
+  edition delivery. The cost is that a member with no push token is invisible to
+  the only mechanism reaching people *between* editions — a real hole, and §4 is
+  what closes it.
+- **Positive social proof only, binding.** Report who *has* written, never who
+  hasn't. No counts of missing people, no streaks, no urgency. This community
+  uninstalls over an engagement-mechanic smell, and the line between "a warm
+  nudge" and a streak counter is the whole product.
+- **48h is a guess.** Group Zero produces the real number for free — see §6,
+  "Also collect."
 
 ### The adjacent question: what does a thin edition look like?
 
-Empty editions are already skipped (`skipped_no_posts`) — correct. But an
-edition where exactly one person wrote still publishes, and for a friend group
-that's the moment the ritual either survives or visibly fails. **Decide
-deliberately:** a one-story edition should read as a letter, not as a failure.
-This is a design task, not a copy task, and it's worth doing before launch.
+Empty editions are already skipped (`skipped_no_posts`) — correct. But an edition
+where exactly one person wrote still publishes, and for a friend group that's the
+moment the ritual either survives or visibly fails. **Decide deliberately:** a
+one-story edition should read as a letter, not as a failure. That's a design task
+in the reader and the email, worth doing before launch and independent of the
+nudge.
 
 ---
 
@@ -377,19 +215,11 @@ brought forward — see "the December test" below. Ads costed and rejected
 
 ### How this section got here
 
-Three positions in one day, recorded because the reversals are informative:
-
-1. **Printed volume as the primary revenue path.** Right instinct, no evidence.
-2. **Deferred in favour of in-app monetization** — on the reasoning that a
-   physical product means sourcing a manufacturer, COGS, shipping and returns,
-   which is a second business for a solo founder.
-3. **Print restored as the primary path**, because research showed the premise
-   behind (2) was wrong. Print-on-demand APIs make "find a manufacturer" a
-   solved problem, and the artifact is the only model in this category with
-   demonstrated revenue.
-
-Position (2)'s *operational* concern was legitimate and is what the research
-had to answer. It did.
+Print → deferred → print again, in one day. The deferral was on the reasoning
+that a physical product means sourcing a manufacturer, COGS, shipping and returns
+— a second business for a solo founder. That concern was legitimate, and research
+answered it: print-on-demand makes "find a manufacturer" an API key. Recorded
+because the reversal is what makes the rest of this section trustworthy.
 
 A fourth position was raised and closed on 2026-09-15: **advertising**, on the
 reasonable-sounding ground that newspapers carry ads and even the paid NYT does.
@@ -745,9 +575,9 @@ Group Zero cannot run on Expo Go. Your friends need a real build:
 
 - [ ] **[owner] Start the Apple Developer enrollment this week.** $99/yr, and it
       is not instant — it can take days, sometimes longer if Apple asks for
-      verification. LAUNCH.md has this paused; unpause it. Enrollment is
-      waiting-time, not working-time, so it costs nothing to start early and
-      blocks everything if you start late.
+      verification. Enrollment is waiting-time, not working-time, so it costs
+      nothing to start early and blocks everything if you start late.
+      **Unpaused in LAUNCH.md step 7 on 2026-09-16** on the strength of this.
 - [ ] **TestFlight is the distribution channel**, not EAS internal distribution.
       Internal distribution means collecting eight device UDIDs from eight
       non-technical people; TestFlight is a link and an email address.
@@ -772,27 +602,20 @@ vendor, and it's the same primitive §4's web composer would need.
 - [ ] **Group B — someone else as organizer.** Recruit one person who is not you
       to start their own Group with their own friends, from week 1, in parallel.
       **Hand them [ORGANIZER_PLAYBOOK.md](./ORGANIZER_PLAYBOOK.md), not a verbal
-      briefing** (added 2026-09-16). Recruiting six friends is the one process
-      the whole distribution model rests on and it has never existed outside
-      your head; briefing them in person re-inserts you into the experiment and
-      tests the person instead of the process. If they fail while following the
-      page, distribution is the broken thing. If they fail because there was no
-      page, you learned nothing. Its last section lists what they report back.
-- [ ] **Groups C1–Cn — families, plural.** Added 2026-09-14 after the
-      monetization research; **corrected 2026-09-16.** §5 bets that families are
-      who buys the artifact, and there was no family Group to test that against.
-      The original plan started *one* — which caps the December test at one
-      possible buyer against a pass condition of five. One can be your own
-      family; the rest are recruiting work that happens this month or not at
-      all. The arithmetic, and the two alternatives to recruiting, are in §5,
-      "The December arithmetic." **Settle that number before you finish
-      recruiting Group A**, because it changes how much recruiting there is.
+      briefing.** The playbook's own opening says why, and its last section lists
+      what they report back — the short version is that briefing them in person
+      re-inserts you into the experiment and tests the person instead of the
+      process. If they fail while following the page, distribution is the broken
+      thing; if they fail because there was no page, you learned nothing.
+- [ ] **Groups C1–Cn — families, plural.** §5 bets that families are who buys the
+      artifact, and there is no family Group to test that against. One can be
+      your own; the rest are recruiting work that happens this month or not at
+      all. **How many is set by §5, "The December arithmetic" — settle it before
+      you finish recruiting Group A**, because it changes how much recruiting
+      there is.
 
-Group B is not a nice-to-have. The whole distribution model is *one organizer
-brings six friends*, and you are not a representative organizer: you built it,
-you will nag, and you will absorb friction a real organizer would quit over. If
-nobody but you will do the recruiting work, that is the business — and it is far
-cheaper to learn in week 2 than in month 6.
+Group B is not a nice-to-have. If nobody but you will do the recruiting work,
+that is the business — and it is far cheaper to learn in week 2 than in month 6.
 
 ### Isolate the two failures
 
@@ -939,16 +762,12 @@ Where the organizers are. Join as a person, months before mentioning the app.
    phone without it. Start it before anything else on this list.
 3. **This week** — start Group Zero: Group A, Group B, and the family Groups
    (§6). It's the long pole; every week of delay is a week of evidence you don't
-   have. Recruiting the Group B organizer is the other part with a lead time, so
-   start asking now, and hand them
-   [ORGANIZER_PLAYBOOK.md](./ORGANIZER_PLAYBOOK.md) rather than a verbal
-   briefing — the point of Group B is to test the process, not the person.
-   Editions 1–2 run off-app, so this does not wait on enrollment.
+   have. Recruiting the Group B organizer has its own lead time, so start asking
+   now. Editions 1–2 run off-app, so none of this waits on enrollment.
 4. **This week, and it expires** — settle the extra-copies question and the
-   family-Group count (§5, "The December arithmetic"). Every family Group not
-   publishing by roughly the end of September is a December buyer that cannot
-   exist. This is the only item on the list whose window closes in weeks rather
-   than months.
+   family-Group count (§5, "The December arithmetic"). It is the only item here
+   whose window closes in weeks rather than months, and it sets how much
+   recruiting step 3 actually is.
 5. **This week, in parallel** — the copy pass (§2). Cheap, no dependencies, and
    it stops you from launching at the wrong audience.
 6. **Weeks 1–4** — community presence (§7). Also long-pole; standing accrues
@@ -975,10 +794,10 @@ Where the organizers are. Join as a person, months before mentioning the app.
 - **Any payment rail beyond a Stripe Payment Link.** A hosted link needs no
   integration and takes fifteen minutes. IAP and RevenueCat stay off the table
   entirely — the artifact is sold on the web (§5, §11).
-- **App Store submission** — a launch with no retention mechanism spends your
-  one shot at organic attention. LAUNCH.md's remaining steps (Apple enrollment,
-  screenshots) stay paused, and the screenshots now want friend-group sample
-  content anyway, which Group Zero produces for free.
+- **App Store submission** — a launch with no retention mechanism spends your one
+  shot at organic attention. The enrollment is the exception and starts now (§6);
+  everything downstream of it in LAUNCH.md stays paused, and the screenshots want
+  friend-group sample content anyway, which Group Zero produces for free.
 - **Android** — already deferred per LAUNCH.md (2026-08-22). Unchanged.
 
 ---
@@ -1016,21 +835,28 @@ Where the organizers are. Join as a person, months before mentioning the app.
 
 ## 10. Risks
 
-| Risk | Mitigation |
+An index, not an argument — each row points at the section that actually handles
+it. Read it as a check that nothing on the board is unowned.
+
+| Risk | Owned by |
 | --- | --- |
-| Friend groups churn after 2–3 editions | The nudge (§3); a thin-edition design that reads as a letter, not a failure; Group Zero proves or disproves it before launch |
-| Community is app-averse by identity | Write-by-web (§4); positioning as the app that doesn't want your attention |
-| Awareness ≠ adoption — forums full of people who enjoy discussing the problem | Membership first (§7); recruit organizers one at a time, not by announcement |
-| Post-grads won't pay | Don't charge them for access at all (§5). Sell an object, to whoever wants it, and never withhold anything from a Group that doesn't buy |
-| Monetization drifts toward paywalls or microtransactions — the exact register this community left | §5's ladder charges only for objects; nothing is ever withheld. CLAUDE.md's Non-features list is the backstop |
-| The artifact is a family product and the primary audience is friend groups | Acknowledged and deliberate (§5): friends are the distribution strategy, families are the revenue. The product serves both first-class already, so this needs no repositioning — but if friend-group volumes never sell, revenue scales with the *secondary* audience, which is worth knowing early |
-| Print economics don't survive contact with colour photo pages | Nothing in §5 is costed until Lulu's calculator is run; the December test uses real orders at real cost before any renderer is built |
-| Nobody can install the app in time for edition 3 | Apple enrollment started week 1 (§6); editions 1–2 run off-app, which buys ~2 weeks of buffer |
-| Family users feel abandoned by the new copy | Generalize, don't replace: rotate examples, keep the accessibility floor, keep "family" where it's literally true |
-| Launching before retention is proven | Sequencing (§8) — Group Zero gates submission |
-| No organizer exists except you — the whole distribution model assumes one person recruits six | Group B (§6): a second organizer who isn't you, from week 1. If nobody will take the role, the broken thing is distribution, not the product, and that changes what to build next |
-| ~~Photos accumulate below print DPI~~ | **Closed 2026-09-14.** Post images now upload at 2600px/q0.9 with a single compression pass. Retired as a risk, but the general form stands: check for irreversible defaults *before* real data arrives, not after |
-| A crash on a friend's phone reads as "they lost interest," corrupting the only signal Group Zero produces | Sentry, wired 2026-09-14 (§11) |
+| Friend groups churn after 2–3 editions | §3 (the nudge) + the thin-edition design; §6 proves or disproves it before launch |
+| Community is app-averse by identity | §4 (write-by-web), decided off a measured drop-off rather than a headcount |
+| Awareness ≠ adoption — forums enjoy discussing the problem more than solving it | §7: membership first, organizers recruited one at a time, never by announcement |
+| Post-grads won't pay | §5: never charge them for access. Sell an object; withhold nothing |
+| Monetization drifts toward paywalls — the exact register this community left | §5's ladder charges only for objects; CLAUDE.md's Non-features is the backstop |
+| Ads get relitigated every six months | §5, "Ads — costed and rejected": the arithmetic is written down so the answer doesn't depend on taste. Do not reopen without new numbers |
+| The artifact is a family product; the primary audience is friend groups | §5, deliberate: friends distribute, families pay. But if friend-group volumes never sell, revenue scales with the *secondary* audience — worth knowing early |
+| Print economics don't survive colour photo pages | §5 is uncosted until Lulu's calculator is run; December uses real orders at real cost |
+| Nobody can install the app in time for edition 3 | §6: enrollment starts week 1; editions 1–2 run off-app for ~2 weeks of buffer |
+| Family users feel abandoned by the new copy | §2: generalize, don't replace — rotate examples, keep the accessibility floor |
+| Launching before retention is proven | §8: Group Zero gates submission |
+| No organizer exists except you | §6's Group B. If nobody will take the role, the broken thing is distribution, not the product — and that changes what to build next |
+| A crash reads as "they lost interest," corrupting Group Zero's only signal | Sentry, wired 2026-09-14 (§11) |
+
+**Retired.** *Photos accumulate below print DPI* — closed 2026-09-14; uploads are
+now 2600px/q0.9 with a single compression pass. The general form still stands:
+check for irreversible defaults *before* real data arrives, not after.
 
 ---
 
@@ -1047,10 +873,8 @@ than on the merits of the products.
   setup: crashes and unhandled errors only, `tracesSampleRate: 0`, no session
   replay, `sendDefaultPii: false`, and a `beforeBreadcrumb` that strips query
   strings so Supabase group/post ids don't ride along. Disabled in dev and
-  no-ops when `EXPO_PUBLIC_SENTRY_DSN` is unset.
-  **[owner]** create the Sentry project and set the DSN; set `SENTRY_ORG`,
-  `SENTRY_PROJECT` and `SENTRY_AUTH_TOKEN` as EAS secrets for source-map upload.
-  **`docs/PRIVACY.md` was updated in the same change** — it previously claimed
+  no-ops when `EXPO_PUBLIC_SENTRY_DSN` is unset. **[owner] setup is LAUNCH.md
+  step 10.** **`docs/PRIVACY.md` was updated in the same change** — it previously claimed
   "no third-party SDKs," which Sentry makes untrue. `docs/STORE_LISTING.md`'s
   privacy-label and data-safety answers still need the owner to re-check
   "Diagnostics → Crash Data" before submission.
@@ -1061,69 +885,6 @@ than on the merits of the products.
   native code). During a four-week live run this is how a typo or a crash gets
   fixed without a TestFlight round trip.
 - **Print-resolution fix** — see §5.
-
-### Sentry setup [owner]
-
-The code is wired and inert until a DSN exists. Sentry's free tier (5k errors a
-month) is far more than Group Zero will produce. Steps 1–3 take about ten
-minutes and are the ones that matter; 4–5 make the traces readable.
-
-**1. Create the project.** sentry.io → new organization if you don't have one →
-**Create Project** → platform **React Native** → name it `catch-up-column`.
-Alert frequency: "on every new issue" is right at this scale; you want the email.
-
-**2. Copy the DSN.** Shown on the setup screen, and afterwards under
-*Settings → Projects → catch-up-column → Client Keys (DSN)*. It looks like
-`https://<hash>@o<org>.ingest.sentry.io/<project>`. The DSN is not a secret —
-it's compiled into the app binary and only allows *writing* events — so
-`EXPO_PUBLIC_` is the correct prefix and committing it would be harmless. It's
-in `.env.local` (gitignored) purely to keep environments separable.
-
-```bash
-# .env.local
-EXPO_PUBLIC_SENTRY_DSN=https://…@o0.ingest.sentry.io/0
-```
-
-**3. Verify it reports.** `Sentry.init` is deliberately disabled in dev
-(`enabled: !__DEV__`), so a simulator run will *not* send anything — this is the
-step people get stuck on. Test on a preview build:
-
-```bash
-eas build --profile preview --platform ios
-```
-
-Then temporarily add `Sentry.captureException(new Error('sentry smoke test'))`
-to a screen, trigger it, and confirm the issue appears in the Sentry dashboard
-within a minute or so. Remove the line afterwards. If nothing arrives, check
-that the DSN was present at build time — `EXPO_PUBLIC_*` values are inlined
-during the bundle step, not read at runtime, so a DSN added after the build
-won't apply.
-
-**4. Source maps.** Without these, every stack frame is a minified one-liner and
-the reports are close to useless. The `@sentry/react-native` config plugin
-uploads them during an EAS build when three build-time variables are present.
-Create an auth token at *Settings → Auth Tokens* with the `project:releases`
-scope, then:
-
-```bash
-eas secret:create --scope project --name SENTRY_ORG        --value <org-slug>
-eas secret:create --scope project --name SENTRY_PROJECT    --value catch-up-column
-eas secret:create --scope project --name SENTRY_AUTH_TOKEN --value <token>
-```
-
-`SENTRY_AUTH_TOKEN` **is** a real secret — never put it in `.env.local`, app.json,
-or a commit. The other two are just names.
-
-**5. Sanity-check what's being sent** once real reports arrive. Open an issue and
-confirm it carries a stack trace, device model, OS and app version — and *not* a
-display name, email, post body, or a URL with a group id in the query string.
-The config in `app/_layout.tsx` is written to prevent all of those; if any shows
-up, the config drifted and `docs/PRIVACY.md` plus the App Store privacy labels
-in `docs/STORE_LISTING.md` need re-checking before submission.
-
-**Not worth turning on:** performance tracing, session replay, profiling, user
-feedback widgets. Each one widens what you collect, each needs a privacy-doc
-update, and none of them answer a question you have at eight users.
 
 ### Decided against
 

@@ -1,32 +1,50 @@
 # Catch Up Column
 
-A private weekly newsletter you write together with family and friends. Members write short updates (with optional photos) throughout the week, and on each group's publish day everything gets compiled into a single "edition" — delivered in‑app, by push, and by email.
+A private weekly newspaper you write together with your people. Members write
+short updates (with optional photos) through the week, and on each Group's publish
+day everything is compiled into one "edition" — delivered in-app, by push, and by
+email.
 
-The MVP is aimed at older adults and small friend groups who want something warmer and more deliberate than a group chat. Design priorities: large tap targets, readable serif type, minimal navigation, "newspaper on the kitchen counter" feel.
+**Audience (set 2026-09-14):** post-grad friend groups first, families second. Six
+to ten people who were close in one place and now live in five states; the pain
+isn't that they stopped caring, it's that there's no occasion. Families stay a
+first-class use case — "The Williams Family Weekly" must still feel native. The
+reasoning is [docs/POSITIONING.md](docs/POSITIONING.md); the binding version is
+[CLAUDE.md](CLAUDE.md) → Target Audience.
+
+**There are no likes, reactions, comments, follower counts, feed, or ads anywhere
+in the schema.** That is the product, not a gap. See CLAUDE.md → Non-features
+before proposing any of them — each one has a decision behind it, and advertising
+in particular was costed and rejected rather than waved off.
 
 ## Status
 
-The app is feature‑complete through MVP Phase 7 of [todo.md](todo.md) and into Phase 8 polish. What's working today:
+Feature-complete through Phase 7 of [todo.md](todo.md) and into Phase 8 polish.
+Working today: email/password auth and reset, 3-screen onboarding, Group creation
+and invite codes, the post composer with photo upload, weekly compilation on a
+15-minute cron scoped by each Group's `publish_day`/`publish_time`/`timezone`, the
+newspaper-styled edition reader, Resend email with per-Group unsubscribe, push on
+publish, and account deletion with moderator handoff.
 
-- Email + password auth, password reset, 3‑screen onboarding (account → name/avatar → create/join group)
-- Group creation, invite codes, join‑by‑code, member list, leave/remove, moderator‑only settings
-- Post composer with single‑photo upload, current‑draft surfacing, edit/delete before publish
-- Weekly compilation via Supabase Edge Function on a 15‑minute cron, scoped by each group's `publish_day` / `publish_time` / `timezone`
-- Inbox + newspaper‑styled edition reading view with pull‑to‑refresh
-- Transactional email via Resend with per‑group unsubscribe tokens
-- Push notifications on edition publish, deep‑linked to the edition view
-- Account deletion (with moderator handoff) via RPC + edge function
-
-Still open: store icons / splash polish, App Store and Play Store metadata, an end‑to‑end performance pass. See [todo.md](todo.md) for the full checklist and [bugs.md](bugs.md) for known issues.
+**Not shipped, and gating launch:** the app has never been run on real users.
+[docs/POSITIONING.md](docs/POSITIONING.md) §6 ("Group Zero") is the validation gate
+in front of App Store submission — four consecutive editions of a real Group
+before anything is submitted. The other open work is the friends-first copy pass
+([docs/COPY_PASS.md](docs/COPY_PASS.md)) and the pre-publish nudge
+([docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md)).
 
 ## Tech Stack
 
-- **Mobile:** React Native 0.81 + Expo SDK 54 (managed workflow), Expo Router 6 with typed routes
+- **Mobile:** React Native 0.86 + Expo SDK 57 (managed workflow), Expo Router 7 with typed routes.
+  `(tabs)/_layout.tsx` imports `Tabs` from `expo-router/js-tabs` — the plain
+  `expo-router` export is deprecated as of SDK 57.
 - **Language:** TypeScript (strict), path alias `@/*` → repo root
 - **Backend:** Supabase — Postgres + RLS, Auth, Storage, Edge Functions (Deno)
 - **Email:** Resend
 - **Push:** Expo Notifications (token registered server‑side, pushes sent from the edge function)
-- **Fonts:** Superclarendon + Futura on iOS (system); Roboto Slab + Jost on Android/web via `@expo-google-fonts`
+- **Fonts:** Lora (serif) + Jost (UI sans) via `@expo-google-fonts`, identical on every platform
+- **Crash reporting:** Sentry (crashes only — no tracing, no replay, no PII)
+- **OTA:** `expo-updates` + EAS Update, `runtimeVersion.policy: "fingerprint"`
 
 ## Repo Layout
 
@@ -45,13 +63,13 @@ lib/                       supabase client + domain modules (auth, groups, posts
                            edition-seen, haptics)
 types/                     Shared DB + domain types
 supabase/
-  migrations/              24 SQL migrations (schema → security hardening)
+  migrations/              29 SQL migrations (schema → security hardening)
   functions/
     compile-editions/      Cron-driven compile + email + push
     publish-edition-now/   Moderator-only immediate publish
     delete-account/        Auth-aware account deletion
     unsubscribe/           Token-based per-group unsubscribe endpoint
-    _shared/               Shared HTML email rendering
+    _shared/               Shared HTML email rendering + email/push dispatch
 design/                    BRAND.md, implementation plan, logo assets
 assets/                    Brand logo, app icons, splash, fonts
 ```
@@ -110,6 +128,7 @@ npx supabase secrets set \
   CRON_SECRET=<shared-secret-for-manual-invocations> \
   RESEND_API_KEY=<resend-api-key> \
   FUNCTIONS_PUBLIC_URL=https://<project-ref>.supabase.co/functions/v1 \
+  WEB_BASE_URL=https://www.catchupcolumn.com \
   EMAIL_FROM='Catch Up Column <hello@your-verified-domain>'
 ```
 
@@ -146,9 +165,14 @@ curl -X POST \
 
 The visual language is documented in [design/BRAND.md](design/BRAND.md). Quick reference:
 
-- **Palette:** warm paper background (`#FAF7F2`), orange primary (`#FF7237`), peach surfaces (`#FFD3C2`), yellow accent (`#F4E33A`), high‑contrast ink text.
-- **Type:** Superclarendon (display serif) + Futura (body sans) on iOS; Roboto Slab + Jost as the cross‑platform fallback. Pick families from `Typography.families` in [constants/typography.ts](constants/typography.ts) — don't hardcode font names.
-- **Tokens:** semantic only. Use `Colors.ink` / `Colors.paperWarm`, never raw hex; use `Layout.padding.*`, `Layout.borderRadius.*`, and `Layout.touchTargetMin` (48 px floor) at component sites.
+The system is **v2 (2026-07-17), "NYT structure, HeyTea charm"** — the v1 orange /
+peach / yellow palette is retired.
+
+- **Palette:** near-monochrome. Ink `#1A1A1A` on warm paper `#FBF9F4`, structure drawn with `Colors.hairline` rules, and one scarce vermilion `#E8442E` accent confined to bold small-caps kicker/stamp roles — never body copy, fills, or surfaces.
+- **Type:** Lora (every serif role) + Jost (all UI chrome), identical on every platform. Pick families from `Typography.families` in [constants/typography.ts](constants/typography.ts) — don't hardcode font names.
+- **Tokens:** semantic only. Use `Colors.ink` / `Colors.paperWarm`, never raw hex; use `Layout.padding.*`, `Layout.borderRadius.*`, and `Layout.touchTargetMin` at component sites.
+- **Accessibility floor, non-negotiable:** 16px minimum body, ≥48px touch targets (rows ≥56px), high contrast, tested at larger system font sizes.
+- **Illustrations** (the paperboy and his dog) live in app chrome only — never inside editions.
 
 ## Conventions
 
@@ -160,8 +184,11 @@ The visual language is documented in [design/BRAND.md](design/BRAND.md). Quick r
 
 ## Useful Files
 
-- [CLAUDE.md](CLAUDE.md) — full project spec, schema, terminology, MVP scope
-- [todo.md](todo.md) — build phases and what's left
-- [bugs.md](bugs.md) — known issues
-- [design/BRAND.md](design/BRAND.md) — colors, typography, and component intent
-- [design/BRAND_IMPLEMENTATION_PLAN.md](design/BRAND_IMPLEMENTATION_PLAN.md) — branding migration tracker
+- [CLAUDE.md](CLAUDE.md) — the spec: schema, terminology, audience, non-features, code style. **Start here.**
+- [design/BRAND.md](design/BRAND.md) — the visual system, source of truth
+- [docs/POSITIONING.md](docs/POSITIONING.md) — strategy: audience, retention, monetization, and the order of work
+- [docs/ORGANIZER_PLAYBOOK.md](docs/ORGANIZER_PLAYBOOK.md) — the one page handed to someone starting a Group
+- [docs/LAUNCH.md](docs/LAUNCH.md) + [docs/PRESUBMISSION_CHECKLIST.md](docs/PRESUBMISSION_CHECKLIST.md) — the submission runbook and its tickable gates
+- [todo.md](todo.md) — what's left
+- [bugs.md](bugs.md) — the audit log
+- `.claude/skills/` — per-surface conventions (`frontend-design`, `data-layer`, `db-migrations`, `edge-functions`, `verify-changes`); read the matching `SKILL.md` before working in that area

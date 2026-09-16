@@ -1,126 +1,77 @@
-# TODO.md — Catch Up Column Build Phases
+# TODO.md — Catch Up Column
 
-Refer to CLAUDE.md for full spec, schema, design guidelines, and code style.
-Mark phases as [x] when complete. Work through them in order.
+What's left. The spec is [CLAUDE.md](CLAUDE.md); the *why* and the order of work
+are [docs/POSITIONING.md](docs/POSITIONING.md) §8.
 
-**Direction change (2026-09-14):** the target audience is now post-grad friend groups
-first, families second. See **[docs/POSITIONING.md](docs/POSITIONING.md)** for the
-friends-first copy pass, the pre-publish nudge (the retention feature), the
-monetization plan, and the Group Zero gate that now sits in front of App Store
-submission.
-
----
-
-## Phase 1: Project Skeleton
-- [x] Scaffold Expo project with Router template (TypeScript)
-- [x] Install dependencies, set up Supabase client with secure token storage
-- [x] Write initial database migration (all 5 tables, RLS policies, storage buckets)
-- [x] Set up root layout with font loading and auth state routing
-- [x] Create tab navigator with placeholder screens
-- [x] Define constants (colors, typography, layout) and shared TypeScript types
-
-**Test:** App boots, shows placeholder tabs when logged out it redirects to auth stack.
+**Phases 1–7 are complete** — project skeleton, auth & onboarding, Group creation
+and invites, the post composer, weekly edition compilation, the inbox and reading
+view, and email delivery all shipped. Their per-phase checklists were deleted
+2026-09-16; the features are described in [README.md](README.md) → Status and
+specified in CLAUDE.md. Git history has the detail if you need it.
 
 ---
 
-## Phase 2: Auth & Onboarding
-- [x] Sign up screen (email + password)
-- [x] Log in screen
-- [x] Onboarding screen: set display name + avatar (photo picker → upload to `avatars` bucket)
-- [x] Auth error handling (clear, non-technical messages)
-- [x] "Forgot password" flow via Supabase magic link
+## Phase 8: Polish & launch prep
 
-**Test:** Can sign up, set a name/avatar, land on the main tabs. Can log out and log back in.
-
----
-
-## Phase 3: Group Creation & Invites
-- [x] "Create a Group" flow: name, description, optional cover image, pick publish day/time
-- [x] Generate invite code on creation, show shareable invite link
-- [x] "Join a Group" screen: enter invite code or open a deep link
-- [x] My Groups tab: list of Groups the user belongs to, tap to view details
-- [x] Group detail screen: member list, settings (moderator only), leave group
-
-**Test:** Can create a Group, invite another test account, both see the Group in their list.
-
----
-
-## Phase 4: Post Composer
-- [x] Compose tab: simple text input + optional photo upload to `post-images` bucket
-- [x] Select which Group to post to (if member of multiple)
-- [x] Show current draft / already-submitted post for this week's edition window
-- [x] Edit and delete own posts before the edition publishes
-- [x] Character guidance (not a hard limit, but a gentle nudge around 500 words)
-
-**Test:** Can write a post with a photo, see it saved, edit it, delete it.
-
----
-
-## Phase 5: Weekly Edition Compilation
-- [x] Supabase Edge Function: compile all unassigned posts for a Group into a new Edition
-- [x] Cron trigger based on each Group's `publish_day` and `publish_time`
-- [x] Edition data structure: ordered list of posts with author info
-- [x] Handle edge cases: no posts this week (send a "no edition" notice or skip), Group with one member
-
-**Test:** Manually trigger the function, verify an Edition is created with the correct posts linked.
-
----
-
-## Phase 6: Inbox & Reading View
-- [x] Inbox tab: list of Editions, newest first, grouped by Group
-- [x] Edition reading view: newspaper-styled layout with serif headlines, each post as a "section"
-- [x] Show author name, avatar, and photo for each post section
-- [x] Empty state: "No editions yet — write something for your Group this week!"
-- [x] Pull-to-refresh
-
-**Test:** Open the Inbox, see a compiled Edition, read through it. Feels like reading a family newspaper.
-
----
-
-## Phase 7: Email Delivery
-- [x] Integrate Resend for transactional email
-- [x] When an Edition publishes, email all Group members with the content
-- [x] Email template: clean, readable, newspaper-styled HTML email
-- [x] Include a deep link back to the app to read the full edition
-- [x] Unsubscribe option per Group
-
-**Test:** Edition publishes, all members receive a well-formatted email.
-
----
-
-## Phase 8: Polish & Launch Prep
-- [x] Loading screen with newspaper-themed animation (as described in app screens doc)
+- [x] Loading screen with newspaper-themed animation
 - [x] Push notifications: "Your Group is ready!" on edition publish
-- [ ] Onboarding improvements based on testing with a real family member
 - [x] Error states and empty states for every screen
-- [x] App icon and splash screen (brand-orange icon set regenerated 2026-07-03; monochrome Android notification icon added)
-- [~] App Store / Play Store metadata — drafted in `docs/STORE_LISTING.md` (descriptions, keywords, privacy-label + data-safety answers, checklist). Still needs: owner to run `eas init`, host `docs/PRIVACY.md`/`SUPPORT.md`/`DATA_DELETION.md`, capture screenshots, and fill store-console fields.
+- [x] App icon and splash screen
 - [x] Performance pass: image optimization, lazy loading
-- [ ] Friends-first copy pass — [docs/POSITIONING.md](docs/POSITIONING.md) §2
-- [ ] Pre-publish nudge (48h before publish day) — [docs/POSITIONING.md](docs/POSITIONING.md) §3
-- [ ] Group Zero: four consecutive editions across two groups, before submitting — [docs/POSITIONING.md](docs/POSITIONING.md) §6
-- [ ] **[owner]** Apple Developer enrollment — blocks TestFlight, which blocks Group Zero editions 3–4 (Expo Go can't do remote push) — [docs/POSITIONING.md](docs/POSITIONING.md) §6
-- [ ] Passwordless (email OTP) sign-in alongside the password flow — [docs/POSITIONING.md](docs/POSITIONING.md) §6
-- [x] Crash reporting (Sentry) + OTA updates (expo-updates) + print-resolution fix — landed 2026-09-14, [docs/POSITIONING.md](docs/POSITIONING.md) §11
-
-**Test:** Hand the app to a non-technical family member. Can they sign up, join a Group, write a post, and read an edition without asking you for help?
+- [x] Crash reporting (Sentry) + OTA updates (expo-updates) + print-resolution fix
+      — landed 2026-09-14, [docs/POSITIONING.md](docs/POSITIONING.md) §11
+- [~] Store metadata — drafted in [docs/STORE_LISTING.md](docs/STORE_LISTING.md).
+      Still needs screenshots and the store-console fields; the copy pass rewrites
+      it first.
+- [ ] Onboarding tested with a real non-technical user (folded into Group Zero)
 
 ---
 
-## Future (post-MVP, not yet planned in detail)
-- Writing prompts (app-generated and moderator-created)
-- Public Groups and discovery feed
-- Physical print/mail editions — **the revenue path as of 2026-09-14**, after
-  research. Print-on-demand removes the manufacturer problem that briefly got
-  this deferred. Sold as an object ($89–99), never as access. See
-  [docs/POSITIONING.md](docs/POSITIONING.md) §5
-- [ ] **[owner] The December test** — five families pay $89 for a hand-made
-  volume, uploaded to Lulu by hand. No renderer, no API, no code. Q4 is 40–60%
-  of annual revenue for gift products, so this is the one revenue item with a
-  real deadline. [docs/POSITIONING.md](docs/POSITIONING.md) §5
-- [ ] Run Lulu's pricing calculator against real trim size and page count —
-  nothing in the pricing ladder is costed until this happens
-- Templates for post layouts
-- AI "write for you" feature
-- Stranger pairing and public groups
-- Personalized reading recommendations
+## In front of launch, in order
+
+POSITIONING §8 is the authoritative sequence. The short version:
+
+- [ ] **[owner] Apple Developer enrollment** — waiting-time with a multi-day tail.
+      Blocks TestFlight, which blocks Group Zero editions 3–4 (Expo Go dropped
+      remote push in SDK 53). [docs/LAUNCH.md](docs/LAUNCH.md) step 7
+- [ ] **[owner] Group Zero** — four consecutive editions across Groups A, B and the
+      family Groups, before submitting anything.
+      [docs/POSITIONING.md](docs/POSITIONING.md) §6
+- [ ] **[owner] Settle the December arithmetic** — the extra-copies question and how
+      many family Groups to recruit. The only item whose window closes in weeks.
+      [docs/POSITIONING.md](docs/POSITIONING.md) §5
+- [ ] **Friends-first copy pass** — [docs/COPY_PASS.md](docs/COPY_PASS.md)
+- [ ] **[owner] Sentry DSN** — the code is wired and inert until it's set.
+      [docs/LAUNCH.md](docs/LAUNCH.md) step 10
+- [ ] **Passwordless (email OTP) sign-in** alongside the password flow, before
+      Group Zero's edition 3. [docs/POSITIONING.md](docs/POSITIONING.md) §6
+- [ ] **Pre-publish nudge** — after Group Zero, and only if the run showed people
+      forgetting rather than declining. [docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md)
+- [ ] **Thin-edition design** — a one-story edition must read as a letter, not a
+      failure. [docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md)
+- [ ] **Decide on write-by-web** from the editions 1–2 vs. 3–4 delta.
+      [docs/POSITIONING.md](docs/POSITIONING.md) §4
+- [ ] **Illustration rework** — no longer a launch gate; Group Zero's four weeks are
+      the natural window. [design/ILLUSTRATION_REWORK.md](design/ILLUSTRATION_REWORK.md)
+- [ ] **App Store submission** — [docs/PRESUBMISSION_CHECKLIST.md](docs/PRESUBMISSION_CHECKLIST.md)
+
+---
+
+## Revenue — the one item with a real deadline
+
+- [ ] **[owner] Run Lulu's pricing calculator** against a real trim size and page
+      count. Nothing in the pricing ladder is costed until this happens.
+- [ ] **[owner] The December test** — hand-made volumes, uploaded to Lulu by hand,
+      sold by Stripe Payment Link. No renderer, no API, no code. Q4 is 40–60% of
+      annual revenue for gift products. [docs/POSITIONING.md](docs/POSITIONING.md) §5
+
+---
+
+## Not planned
+
+CLAUDE.md → **Non-features** is the list, and it distinguishes *deliberately never*
+(likes, reactions, comments, feeds, ads, prompts, AI writing) from *not yet*
+(physical print, web composer, post templates). Don't keep a second copy here.
+
+Ads specifically were costed and rejected on 2026-09-15 — the arithmetic is in
+[docs/POSITIONING.md](docs/POSITIONING.md) §5 so it doesn't get relitigated.

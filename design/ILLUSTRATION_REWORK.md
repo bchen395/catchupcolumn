@@ -1,6 +1,13 @@
 # Illustration rework — working scope
 
-**Status:** scoped 2026-08-22, not started. Launch gate: `docs/LAUNCH.md` step 6b.
+**Status:** scoped 2026-08-22, not started, **no longer a launch gate**
+(2026-09-16). Tracked as `docs/LAUNCH.md` step 6b.
+
+It was the gate on the reasoning that screenshots freeze the final look.
+`docs/POSITIONING.md` §8 supersedes that: Group Zero is the long pole, it needs a
+TestFlight build rather than finished art, and it produces real friend-group
+screenshot content as a by-product. The four-week Group Zero run is the natural
+window for this work — it just isn't blocking anything upstream of it any more.
 
 A **execution-quality redraw of all 8 illustration assets** (9 until `sketch-border`
 was deleted 2026-09-10), inside BRAND §4's
