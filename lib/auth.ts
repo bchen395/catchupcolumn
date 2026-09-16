@@ -21,24 +21,12 @@ const AVATAR_MAX_EDGE = 512;
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
-export const signUpWithEmail = async ({ email, password }: Credentials) => {
-  const { data, error } = await supabase.auth.signUp({
-    email: normalizeEmail(email),
-    password,
-    options: {
-      data: {
-        needs_onboarding: true,
-      },
-    },
-  });
-
-  if (error) {
-    throw error;
-  }
-
-  return data;
-};
-
+/**
+ * Password sign-in, kept for accounts created before the code flow existed.
+ * There is deliberately no password *signup* any more — a new account is created
+ * by `sendEmailCode`, and a passwordless user who wants a password can set one
+ * through "Forgot your password?" → the reset screen.
+ */
 export const signInWithEmail = async ({ email, password }: Credentials) => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email: normalizeEmail(email),
@@ -52,15 +40,54 @@ export const signInWithEmail = async ({ email, password }: Credentials) => {
   return data;
 };
 
-export const resendConfirmationEmail = async (email: string) => {
-  const { error } = await supabase.auth.resend({
-    type: 'signup',
+/**
+ * Send a 6-digit sign-in code to `email`.
+ *
+ * **This only sends a CODE if the project's Magic Link email template uses
+ * `{{ .Token }}`.** Magic links and OTPs are the same Supabase call — with the
+ * stock template the email carries a link instead, and a link cannot hand back
+ * to the app until universal links are configured (`app.json` declares no
+ * `associatedDomains`, and the AASA file still holds a literal `TEAMID`).
+ * See docs/LAUNCH.md step 5 for the dashboard change.
+ *
+ * `allowNewUser` is what separates the two entry points: the login screen passes
+ * false so an unknown email is an error we can explain, and the signup screen
+ * passes true so the code both creates and signs in.
+ */
+export const sendEmailCode = async (email: string, { allowNewUser }: { allowNewUser: boolean }) => {
+  const { error } = await supabase.auth.signInWithOtp({
     email: normalizeEmail(email),
+    options: {
+      shouldCreateUser: allowNewUser,
+      // Applied by GoTrue when a user is actually created, which is the only
+      // case we need it for. If it were ever applied to an existing account the
+      // cost is one extra pass through onboarding — which pre-fills from the
+      // saved profile and clears the flag on save, so the outcome is benign.
+      ...(allowNewUser ? { data: { needs_onboarding: true } } : {}),
+    },
   });
 
   if (error) {
     throw error;
   }
+};
+
+/**
+ * Exchange a 6-digit code for a session. `type: 'email'` covers both the
+ * new-user and returning-user cases of `sendEmailCode`.
+ */
+export const verifyEmailCode = async ({ email, code }: { email: string; code: string }) => {
+  const { data, error } = await supabase.auth.verifyOtp({
+    email: normalizeEmail(email),
+    token: code.trim(),
+    type: 'email',
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 };
 
 export const sendPasswordResetEmail = async (email: string) => {
@@ -245,6 +272,26 @@ export const mapAuthErrorMessage = (
 
   if (message.includes('invalid login credentials')) {
     return 'That email and password did not match. Please try again.';
+  }
+
+  // shouldCreateUser: false against an address with no account. Deliberately
+  // explicit rather than vague: this is an invite-only product with no public
+  // discovery, so the enumeration risk is slight and "your email is wrong" is
+  // a dead end for a grandparent typing it in by hand.
+  if (message.includes('signups not allowed') || message.includes('otp_disabled')) {
+    return 'We could not find an account with that email. Create one instead?';
+  }
+
+  if (
+    message.includes('token has expired or is invalid') ||
+    message.includes('otp_expired') ||
+    message.includes('invalid token')
+  ) {
+    return 'That code did not work. Check it, or send a new one.';
+  }
+
+  if (message.includes('email rate limit exceeded') || message.includes('over_email_send_rate_limit')) {
+    return 'Too many codes requested. Please wait a minute and try again.';
   }
 
   if (message.includes('user already registered')) {

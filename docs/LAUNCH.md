@@ -210,7 +210,7 @@ npx supabase secrets set EMAIL_FROM='Catch Up Column <hello@catchupcolumn.com>'
 
 (No function redeploy needed — secrets are read at runtime.)
 
-## 5. Supabase Auth dashboard settings **[owner]** — ✅ done (2026-08-22)
+## 5. Supabase Auth dashboard settings **[owner]** — ⚠️ one new item (2026-09-16)
 
 These are **not** in `config.toml` (that governs local dev only) — they were set in the
 Supabase dashboard → Authentication. `config.toml` still shows the old local-dev values
@@ -221,6 +221,27 @@ is not a signal about production.
   allowlisted, so password-reset deep links work in release builds.
 - ✅ **Minimum password length** raised from 6.
 - ✅ **Email confirmation** decision made.
+
+☐ **Put `{{ .Token }}` in the Magic Link email template.** Added 2026-09-16 with
+the code sign-in flow, and **nothing about that flow works until this is done.**
+Supabase sends magic links and one-time codes through the same call and the same
+template; the stock template contains `{{ .ConfirmationURL }}`, so people would
+receive a *link*, and a link cannot hand back to the app until universal links
+are configured (step 2 — blocked on your Apple Team ID). The 6-digit code needs
+none of that.
+
+- Dashboard → Authentication → Email Templates → **Magic Link**
+- Make the body lead with `{{ .Token }}` — e.g. *"Your code is `{{ .Token }}`.
+  It expires in an hour."*
+- Keep it plain and large; this email is read by the same people the
+  accessibility floor exists for.
+- Verify by requesting a code from the app's sign-in screen and confirming six
+  digits arrive rather than a button.
+
+☐ **Email confirmation can now be left off.** The code flow *is* confirmation —
+nobody completes sign-up without receiving mail at that address — and there is no
+longer a password-signup path that could create an unverified account. This
+closes the open question in `bugs.md` D2.
 
 Re-confirm the redirect allowlist after the first release build — it is the one
 setting whose breakage only shows up on a signed binary.

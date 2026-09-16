@@ -606,15 +606,27 @@ Group Zero cannot run on Expo Go. Your friends need a real build:
       needs the app until **week 3**. That's roughly two weeks of buffer for
       enrollment and a first build — use it, don't spend it.
 
-**While you're reducing install friction:** `lib/auth.ts:43` is
-`signInWithPassword`, and it's the only way in. For a grandmother in a family
-Group and for a digital minimalist without a password manager, "enter the
-6-digit code we emailed you" converts better than "create a password." Supabase
-supports it natively via `signInWithOtp` — one function and one screen, no new
-vendor, and it's the same primitive §4's web composer would need.
+**Install friction — ✅ addressed 2026-09-16.** Password sign-in used to be the
+only way in, which is the wrong ask for a grandmother in a family Group and for a
+digital minimalist without a password manager. A 6-digit emailed code is now the
+default for both signing in *and* signing up, so **a new account never involves
+inventing a password.** Passwords still work for anyone who already has one,
+behind "Use a password instead". Built on `signInWithOtp`/`verifyOtp` — no new
+vendor, and the same primitive §4's web composer would need.
 
-- [ ] Add email OTP / magic-link sign-in alongside the password flow before
-      edition 3. Keep passwords working for anyone already signed up.
+Three things worth knowing before Group Zero:
+
+- **It is a code, not a magic link — and that was forced.** Supabase sends both
+  through the same call; a link would have to hand back to the app, which needs
+  universal links, which need the Apple Team ID you get at enrollment. The code
+  needs none of that and works today.
+- **[owner] One dashboard step, and nothing works without it.** The Magic Link
+  email template must contain `{{ .Token }}` instead of `{{ .ConfirmationURL }}`,
+  or people receive a link. LAUNCH.md step 5.
+- **It improves "Posting for someone who hasn't installed" below.** You no longer
+  have to set or communicate a password for the accounts you create by hand —
+  they type their email, get a code, and land with the right byline. That was the
+  clumsiest step in the whole Group Zero setup.
 
 ### Run two groups, not one
 
@@ -919,8 +931,8 @@ than on the merits of the products.
   JWT, `users.id` is keyed to `auth.users.id`, `prepare_account_deletion` walks
   that relationship, and the service-role edge functions assume it. That's the
   highest-risk refactor available in this repo for zero user-visible change.
-  The real auth improvement is passwordless sign-in, which Supabase already does
-  — see §6.
+  The real auth improvement was passwordless sign-in, which Supabase already does
+  and which landed 2026-09-16 — see §6.
 - **RevenueCat — no, and the condition that would have revived it is gone.** It
   wraps StoreKit and Google Play Billing, so it only matters for digital in-app
   purchases. It became briefly relevant when monetization moved in-app, and

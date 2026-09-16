@@ -87,10 +87,14 @@ Authentication:
 - [ ] Redirect allowlist includes `catchupcolumn://` and
       `catchupcolumn://(auth)/reset-password` (password reset breaks in release builds
       without this)
-- [ ] Minimum password length raised from 6 → 8+
-- [ ] Email confirmation: decision made (prevents signup under someone else's address;
-      costs a step for the older-adult audience — the app already has a
-      resend-confirmation path if you enable it)
+- [ ] **Magic Link email template contains `{{ .Token }}`**, not
+      `{{ .ConfirmationURL }}` — without it the code sign-in flow silently mails a
+      link instead of a code, and the link cannot hand back to the app until
+      universal links exist. See [LAUNCH.md](./LAUNCH.md) step 5.
+- [ ] Minimum password length raised from 6 → 8+ (still applies to the accounts
+      that have passwords; new sign-ups no longer create one)
+- [ ] Email confirmation: can stay **off** — the code flow is itself proof of
+      address, and there is no password-signup path any more
 
 ## Gate 4 — Web surface
 
