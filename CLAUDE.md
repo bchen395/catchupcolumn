@@ -139,9 +139,9 @@ user-facing copy must not assume either:
 - **Never "loved ones"** — greeting-card register, wrong for someone writing to
   college friends.
 
-Existing copy is mid-migration: sites still saying "family" are listed in
-[`docs/POSITIONING.md`](docs/POSITIONING.md) §2. Match the convention above in new
-copy rather than the surrounding code.
+Existing copy is mid-migration: every site still saying "family" is listed in
+[`docs/COPY_PASS.md`](docs/COPY_PASS.md). Match the convention above in new copy
+rather than the surrounding code.
 
 ## MVP Features (in priority order)
 

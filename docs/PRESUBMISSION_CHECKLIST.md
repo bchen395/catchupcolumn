@@ -3,9 +3,12 @@
 The run-through before pressing submit in App Store Connect / Play Console. Work top
 to bottom: each gate assumes the ones above it passed.
 
-- **Why this doc exists:** [LAUNCH.md](./LAUNCH.md) is the *narrative* runbook (what
-  happened, what's left, why). This is the flat, tickable list you actually work
-  through on submission day.
+- **Don't start this yet.** [POSITIONING.md](./POSITIONING.md) §8 gates submission
+  on four clean editions of a real Group (its §6). Nothing below is wrong; it's
+  just not due until Group Zero has run.
+- **This doc owns the procedure.** [LAUNCH.md](./LAUNCH.md) is the *narrative*
+  runbook (what happened, what's left, why) and points here rather than keeping a
+  second copy of any list. Where the two ever disagree, this one wins.
 - **Metadata, descriptions, and the privacy/data-safety answers** live in
   [STORE_LISTING.md](./STORE_LISTING.md) — copy from there, don't retype.
 - **How to verify app changes** is in the `verify-changes` skill.
@@ -48,7 +51,8 @@ touches a device:
 
 - [ ] Manual QA per the `verify-changes` skill: auth, onboarding, group create/join,
       composer, editions list, edition reader, profile — **each at large system font
-      sizes** (the audience is older adults; this is not optional polish)
+      sizes**. Not optional polish: CLAUDE.md's accessibility floor is a product
+      requirement, and family Groups contain grandparents.
 
 ## Gate 2 — Backend parity with production
 
@@ -68,10 +72,12 @@ touches a device:
       `npx supabase secrets set WEB_BASE_URL='https://www.catchupcolumn.com'`
 - [ ] Resend **sending domain is verified**, and `EMAIL_FROM` uses it (not
       `onboarding@resend.dev`)
-- [ ] `compile-editions` cron is actually firing — check `cron.job_run_details` in the
-      Supabase dashboard. It reads the Vault secrets `project_url` and
-      `compile_editions_cron_secret`; if either is missing, **weekly compilation
-      silently never runs** and the core feature is dead.
+- [ ] `compile-editions` cron is actually firing. **A `succeeded` row in
+      `cron.job_run_details` does not prove this** — pg_net is async, so the job
+      logs healthy even when the POST goes nowhere. Run the four queries in
+      [LAUNCH.md → Verifying the compile-editions cron](./LAUNCH.md#verifying-the-compile-editions-cron);
+      if the Vault secrets are missing, **weekly compilation silently never runs**
+      and the core feature is dead.
 
 ## Gate 3 — Supabase Auth dashboard
 
@@ -130,26 +136,18 @@ Authentication:
 ## Gate 6 — App Review risk: user-generated content
 
 Apple Guideline 1.2 expects three things from an app where users publish content
-others see. **Decided 2026-08-05: build all three** rather than argue the
-invite-only model — a rejection costs a review cycle, and both affordances were
-cheap.
+others see. All three shipped 2026-08-05 (PR #14); the decision and the code
+pointers are [LAUNCH.md](./LAUNCH.md) step 9. What's left is verification.
 
 - [x] Published acceptable-use terms — `docs/TERMS.md §4` / `web/terms.html`
-      (both now describe the report path and the moderator's removal power)
-- [x] A way to **report** objectionable content — "Report this story" at the foot of
-      every story in the reader (`components/report-story-link.tsx`), which drafts a
-      mailto to `support@catchupcolumn.com` with the story/group/edition ids
-      attached. Hidden on your own posts. `lib/report.ts` is the seam to swap for a
-      real endpoint if volume ever justifies one.
-- [x] A way to **block or eject** an abusive user — moderators get a "Remove" action
-      on every other member's row in `app/group/[id].tsx`, backed by the
-      `remove_group_member` RPC (`20260806003026_member_moderation.sql`). Removal
-      also deletes the member's *uncompiled* posts, so an ejected member's pending
-      story can't still land in tomorrow's edition; published editions are untouched.
-      `prevent_last_moderator_removal` still guards the sole-moderator case.
+- [x] A way to **report** objectionable content
+- [x] A way to **block or eject** an abusive user
 
 - [ ] Re-run the Gate 1 automated checks — this code landed after Gate 1 passed
 - [ ] Smoke-test both affordances on device (folded into Gate 7 below)
+- [ ] Age rating questionnaire answer prepared: **flag user-generated content**
+      (Gate 8 ticks it; getting this wrong is the rejection this gate exists to
+      prevent)
 
 ## Gate 7 — On-device smoke test
 
