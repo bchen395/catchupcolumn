@@ -208,7 +208,7 @@ const EditionFrontPage = () => {
         ) : null}
 
         <View style={styles.masthead}>
-          {/* Title case, not caps — uppercasing long family names hurts
+          {/* Title case, not caps — uppercasing long Group names hurts
               warmth (BRAND §6); the masthead is Lora Bold `display`. */}
           <ThemedText style={styles.mastheadTitle} numberOfLines={2}>
             {group.name}

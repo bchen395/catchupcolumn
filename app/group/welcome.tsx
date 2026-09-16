@@ -13,7 +13,7 @@ import { Typography } from '@/constants/typography';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { nextPublishForGroup } from '@/lib/groups';
 
-// The moment after joining: a stamped date in the family record, a welcome,
+// The moment after joining: a stamped date in the Group's record, a welcome,
 // and one warm push toward the thing that actually makes them a member —
 // their first post. Nothing here blocks or auto-navigates; the CTAs are
 // visible from the first frame and the stamp is the only animated element.

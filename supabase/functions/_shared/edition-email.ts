@@ -268,7 +268,7 @@ const renderCta = (payload: EditionEmailPayload): string => `
   </tr>`;
 
 // The printer's mark: reads as a colophon to members, as an invitation to a
-// forwarded reader. Deliberately quiet — it must never shout over the family.
+// forwarded reader. Deliberately quiet — it must never shout over your people.
 const renderColophon = (payload: EditionEmailPayload): string => {
   const ornament = `<span style="font-family: ${SERIF}; font-size: 16px; color: ${INK_SOFT};">&#10086;</span>`;
   return `

@@ -20,6 +20,7 @@ import { ThemedText } from '@/components/themed-text';
 import { TimeField } from '@/components/time-picker-modal';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
+import { dailyPick, Strings } from '@/constants/strings';
 import { useAuth } from '@/hooks/use-auth';
 import { createGroup, removeGroupCover, updateGroupSettings, uploadGroupCover } from '@/lib/groups';
 
@@ -82,7 +83,7 @@ const CreateGroupScreen = () => {
   const handleCreate = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
-      setNameError('Give your Group a name so your family can find it.');
+      setNameError('Give your Group a name so your people can find it.');
       return;
     }
     setNameError('');
@@ -181,7 +182,7 @@ const CreateGroupScreen = () => {
                 setName(t);
                 if (nameError) setNameError('');
               }}
-              placeholder="e.g. The Williams Family Weekly"
+              placeholder={dailyPick(Strings.groupCreate.nameExamples)}
               returnKeyType="next"
               onSubmitEditing={() => {
                 if (descriptionRef.current) {

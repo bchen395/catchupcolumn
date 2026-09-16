@@ -8,8 +8,8 @@ The v2 migration has reached every screen, including the illustration phase (pap
 
 Two references, one split of responsibilities:
 
-- **NYT owns structure.** Hierarchy, hairline rules, kickers, decks, small-caps metadata, edge-to-edge content columns, restraint. The edition — real family stories, real photos — is treated with the dignity of photojournalism.
-- **HeyTea owns charm.** A recurring hand-drawn monoline character and his world carry all the warmth. Illustration lives in the app's *chrome* (splash, loading, empty states, celebrations, invites) and never competes with family content.
+- **NYT owns structure.** Hierarchy, hairline rules, kickers, decks, small-caps metadata, edge-to-edge content columns, restraint. The edition — real stories from your people, real photos — is treated with the dignity of photojournalism.
+- **HeyTea owns charm.** A recurring hand-drawn monoline character and his world carry all the warmth. Illustration lives in the app's *chrome* (splash, loading, empty states, celebrations, invites) and never competes with members' content.
 
 The two registers are kept deliberately separate. When they blur — doodles in the edition, bouncy buttons, colored surfaces — the design fails in both directions at once.
 
@@ -24,7 +24,7 @@ Near-monochrome: black ink on warm paper, structure drawn with hairlines, **one 
 | `inkMuted`   | `ink` @ 38%       | Disabled text, placeholder                                 |
 | `vermilion`  | `#E8442E`         | THE accent. Kickers, stamps, live moments, hand-lettered bits inside illustrations. See usage budget below. |
 | `paper`      | `#FFFFFF`         | Elevated cards, modals, sheets                             |
-| `paperWarm`  | `#FBF9F4`         | App background everywhere. A whisper of warmth — flatters family photos where clinical white doesn't. |
+| `paperWarm`  | `#FBF9F4`         | App background everywhere. A whisper of warmth — flatters members' photos where clinical white doesn't. |
 | `hairline`   | `ink` @ 14%       | Rules, dividers, outlined buttons, photo edges             |
 | `rule`       | `ink` @ 100%, 2–3px | Masthead rules, section-opening rules (structural, not decorative) |
 | `error`      | `#B3261E`         | Errors only. Deliberately darker/deader than vermilion so the two never read as the same voice. |
@@ -76,10 +76,10 @@ The warmth engine, and the only place the app is allowed to be cute.
 
 **Where doodles live (and don't).** Chrome only; **editions stay editorial** (decided 2026-07-17):
 - **Splash/loading:** the paperboy rides; wheels spin (§10). Long waits (compile, publish) get the printing press running. **Narrowed 2026-08-22:** the rider now covers cold boot and invite arrival only — ordinary in-app navigation gets a skeleton instead (§9/§10).
-- **Empty states:** scene + Lora Bold headline + Jost body, warm and never apologetic. (Empty editions list: paperboy waiting at a mailbox. No groups: dog holding a rolled paper, "Start your family's paper.")
+- **Empty states:** scene + Lora Bold headline + Jost body, warm and never apologetic. (Empty editions list: paperboy waiting at a mailbox. No groups: dog holding a rolled paper, "Start your group's paper.")
 - **Onboarding, invite, welcome:** the dog catches the paper on the welcome screen; the ticket carries the invite (§11).
 - **Profile/settings flourishes and hidden corners:** small easter-egg doodles in quiet corners — the dog asleep under the final hairline of the editions list, a mug by the settings footer. Delight, zero function.
-- **The edition front page and story reader get none of this.** Family photos never share a page with cartoons. The single sanctioned mark: a tiny inked ornament (rolled-paper glyph) in the masthead/colophon where v1 used ◆.
+- **The edition front page and story reader get none of this.** Members' photos never share a page with cartoons. The single sanctioned mark: a tiny inked ornament (rolled-paper glyph) in the masthead/colophon where v1 used ◆.
 
 **Pipeline.** `react-native-svg` components, one file per asset, strokes/fills bound to tokens. Motion (wheel spin, press cycle, dog leap) is Reanimated transforms on SVG groups — no Lottie dependency. Draft assets may be AI-assisted or self-drawn *to this spec*; a commissioned illustrator can later redraw to the same spec without touching call sites. (Decided 2026-07-17: the full set — characters included — ships as in-house drafts to spec; commissioning is a later, optional upgrade.)
 
@@ -96,7 +96,7 @@ Flat editorial. **The polaroid (tape, tilt, white frame) is fully retired** — 
 
 **NYT structure at comfortable scale.** The idiom is the newspaper section front: one content column, edge-to-edge, structure drawn with rules — **no cards, no pills, no floating containers** for content. Elevation exists only for true overlays (sheets, modals).
 
-- **Grouped-list section fronts** (decided 2026-07-17, set by the Editions list): a `rule`-weight ink rule, then the group's name as a Lora Bold `title` with its square hairline-edged cover thumb — never a small-caps kicker (uppercasing long family names hurts warmth), never placeholder art when there's no cover.
+- **Grouped-list section fronts** (decided 2026-07-17, set by the Editions list): a `rule`-weight ink rule, then the group's name as a Lora Bold `title` with its square hairline-edged cover thumb — never a small-caps kicker (uppercasing long Group names hurts warmth), never placeholder art when there's no cover.
 - **Lists (editions, groups, drafts):** hairline-separated rows. Headline in `rowTitle` left, square thumbnail (56–64px, hairline edge) right, `meta` line below the headline (`FEB 9 · 6 STORIES · 4 WRITERS`, `2 MIN READ`). Row vertical padding 16–20px; whole row is the target (≥56px); no chevrons.
 - **Scale floor (the grandparent clause):** base sizes one notch above NYT's — 19px row headlines, 16px UI body, ≥56px targets. Density comes from removing chrome, not shrinking type.
 - **Section tabs:** where a screen needs horizontal sections (e.g. Groups filter), the NYT device: Jost labels in a row, active = ink + 2px ink underline, inactive = `inkSoft`. No segmented-control capsules.
@@ -115,12 +115,20 @@ Flat editorial. **The polaroid (tape, tilt, white frame) is fully retired** — 
 
 **NYT dressing, warm words.** The metadata dress code is adopted wholesale; the language inside it stays the kitchen-table register (CLAUDE.md's tone rule stands).
 
-- **Kickers:** small-caps vermilion above headlines — `THIS WEEK`, `FROM YOUR FAMILY`, `YOU'RE INVITED`, `NEW EDITION`. Warm words in newspaper dress; never `BREAKING`, never urgency.
+- **Kickers:** small-caps vermilion above headlines — `THIS WEEK`, `FROM YOUR PEOPLE`, `YOU'RE INVITED`, `NEW EDITION`. Warm words in newspaper dress; never `BREAKING`, never urgency.
 - **Metadata:** `meta` small caps in `inkSoft` — `2 MIN READ` on stories, `EDITION NO. 12 · 6 STORIES · 4 WRITERS` folios, `SUNDAY AT 9 AM` datelines.
 - **Decks:** Lora italic `deck` under headlines — one warm sentence, not a summary.
 - **Greeting:** Home opens `Good morning, Ruth` (Lora, time-aware) over a `deck`-style line — NYT's "You" hub warmth, no engagement mechanics.
-- **Home is a front page** (decided 2026-07-18, "make it pop" pass): the masthead prints today's date as a `meta` folio over the greeting, and the hero block (`home-hero`) treats the latest edition as a miniature section front where the **lead story leads** — its photo is the hero image (fresh weekly; the static group cover went invisible), its headline is the headline, and the group name demotes to a folio line (`GROUP · WEEK OF · N STORIES`). Fallback chain: lead photo → group cover → type-only front. Landscape keeps the 4:3 plate; portrait/square crops to 1:1 so the hero never becomes a poster. Pre-first-edition, the slot shows a coming-soon front (`YOUR FIRST EDITION` + the mailbox scene — sanctioned illustration: no family photos exist yet). The dateline strip gains a decorative face row of this week's writers (avatar-stack idiom; the names sentence still carries the meaning and still never names who hasn't written) and the paperboy riding its top rule — Home's one doodle.
+- **Home is a front page** (decided 2026-07-18, "make it pop" pass): the masthead prints today's date as a `meta` folio over the greeting, and the hero block (`home-hero`) treats the latest edition as a miniature section front where the **lead story leads** — its photo is the hero image (fresh weekly; the static group cover went invisible), its headline is the headline, and the group name demotes to a folio line (`GROUP · WEEK OF · N STORIES`). Fallback chain: lead photo → group cover → type-only front. Landscape keeps the 4:3 plate; portrait/square crops to 1:1 so the hero never becomes a poster. Pre-first-edition, the slot shows a coming-soon front (`YOUR FIRST EDITION` + the mailbox scene — sanctioned illustration: no member photos exist yet). The dateline strip gains a decorative face row of this week's writers (avatar-stack idiom; the names sentence still carries the meaning and still never names who hasn't written) and the paperboy riding its top rule — Home's one doodle.
 - **Rotating editorial copy** (decided 2026-07-18): Home's greeting deck and the write block's subline rotate daily through small curated sets (`Strings.home`, day-seeded via `dailyPick` — deterministic per calendar day, never random per render). This is the paper's own voice staying freshly typeset; it is **not** a writing-prompts feature (still out of scope): the CTA text never changes, only the warmth around it.
+- **Audience vocabulary** (added 2026-09-16): copy must not assume the Group is a
+  family. Default to **"your people"**; use **"family and friends"** when you need
+  to be explicit; use **"family"** only when the sentence is literally about one;
+  never **"loved ones"**. CLAUDE.md → Key Terminology is the binding version.
+  Examples that pass: *"Invite your people"*, *"Everything your people write this
+  week becomes your first edition."* The Group-name placeholder rotates a friend
+  example and a family example by day (`Strings.groupCreate.nameExamples`) so
+  neither audience reads as the afterthought.
 - **No gamification** — v1's rule survives verbatim: no streaks, badges, counters, confetti. The ritual devices (dateline strip, NEW pill, stamps) express the weekly rhythm; presence is celebrated, absence is invisible.
 
 ## 9. Components

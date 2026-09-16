@@ -97,7 +97,7 @@ export const HomeHero = ({ edition, isNew, onPress }: HomeHeroProps) => {
 
 // The hero slot before any edition exists — a coming-soon front page for the
 // first week. This is the one sanctioned illustration hero: there are no
-// family photos yet, so the slot is still chrome (BRAND §4). Not pressable;
+// member photos yet, so the slot is still chrome (BRAND §4). Not pressable;
 // the write block below is the action.
 export const FirstEditionHero = () => (
   <View style={styles.block}>

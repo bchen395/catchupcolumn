@@ -23,23 +23,34 @@ blockquote is an owner decision/input.
 
 ## 2. Short pitch
 
-**Subtitle (iOS, 30 char max):** `A newspaper by your family`
+**Subtitle (iOS, 30 char max):** {{owner decision — see below}}
+
+> **Open decision (POSITIONING §9).** Two candidates, both within the cap:
+> - `A newspaper by your people` (26 chars) — safe, searchable, matches the house
+>   vocabulary. The recommended default.
+> - `The opposite of a feed` (22 chars) — sharper, and the line this audience
+>   actually responds to. Slightly riskier with App Review, and carries no
+>   keyword weight.
+>
+> Paste one before submission. Until then the field is deliberately blank rather
+> than holding the retired family-first line.
+
 **Short description (Android, 80 char max):**
-`A private weekly newsletter you write together with family and friends.`
+`A private weekly newsletter you write together with your people.`
 
 ## 3. Full description (both stores)
 
 ```
-Catch Up Column is a private weekly newsletter you make together with the people
-you love — like a little Sunday newspaper written by your own family or friends.
+No feeds to scroll. No strangers. No ads. Just the people you choose, catching up.
+
+Catch Up Column is a private weekly newspaper you make together — with the friends
+you never see enough of, or with your family, or both.
 
 Through the week, everyone adds short updates and photos. On your group's publish
 day, Catch Up Column gathers it all into one beautifully laid-out edition and
 delivers it to everyone — in the app, by email, and by a gentle notification.
 
-No feeds to scroll. No strangers. No ads. Just the people you choose, catching up.
-
-• Start a group and invite family or friends with a simple code
+• Start a group and invite your people with a simple code
 • Write short posts and add a photo — no pressure, no formatting to fuss over
 • Every group has its own publish day and time
 • Read each edition as a warm, newspaper-styled issue
@@ -51,11 +62,18 @@ seen by the members of your group.
 ```
 
 **Promotional text (iOS, 170 char, updatable without review):**
-`Your family's weekly newspaper, written by all of you. Add updates through the week; on publish day it becomes one warm edition, delivered to everyone.`
+`The group text scrolls away. This doesn't. Everyone writes a little through the week; on publish day it arrives as one warm edition, for everyone.`
+
+> This field updates without a review cycle, so it is the cheapest place to A/B
+> the pitch after launch (POSITIONING §2).
 
 ## 4. Keywords (iOS, 100 char total, comma-separated)
 
-`family,newsletter,journal,group,private,weekly,memories,photos,grandparents,together,updates,diary`
+`family,friends,newsletter,journal,group,private,weekly,memories,photos,together,updates,diary`
+
+Dropped `grandparents` (12 chars) and added `friends` (7) — the audience change,
+and it frees 5 chars against the cap. `family` stays: families are still a
+first-class audience and it is the higher-volume search term.
 
 ## 5. Screenshots (owner to capture)
 
