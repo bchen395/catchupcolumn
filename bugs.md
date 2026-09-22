@@ -173,7 +173,8 @@ this is only the code-side residue.
    trade-off.
 4. **Auth config (dashboard, not code):** raise minimum password length
    (currently 6) and decide on email confirmation (currently off) — see D2/D3.
-5. **Universal links are declared nowhere.** `app.json` has no
+5. **Universal links are declared nowhere — and as of 2026-09-22 this is
+   actionable.** `app.json` has no
    `associatedDomains` (iOS) or `intentFilters` (Android), and the AASA file
    still contains a literal `TEAMID` while `assetlinks.json` still contains
    `REPLACE_WITH_YOUR_APP_SIGNING_SHA256_FINGERPRINT`. Every edition email's
@@ -181,6 +182,11 @@ this is only the code-side residue.
    today it lands in the browser and never hands off to the app. Tracked in
    Gate 4 as optional; it is the difference between the email working and the
    email half-working.
+   **The blocker is gone:** the Apple enrollment landed 2026-09-22, so the Team
+   ID exists. The iOS half can ship alone — `assetlinks.json` still needs a
+   signed Android build, but the two files are independent and Android is
+   deferred. This moved from "waiting on Apple" to "waiting on someone pasting
+   a string."
 
 Everything else is low-risk cleanup that can ride along with normal work.
 

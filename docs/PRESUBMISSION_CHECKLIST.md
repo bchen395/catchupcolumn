@@ -87,10 +87,14 @@ Authentication:
 - [ ] Redirect allowlist includes `catchupcolumn://` and
       `catchupcolumn://(auth)/reset-password` (password reset breaks in release builds
       without this)
-- [ ] **Magic Link email template contains `{{ .Token }}`**, not
-      `{{ .ConfirmationURL }}` — without it the code sign-in flow silently mails a
-      link instead of a code, and the link cannot hand back to the app until
-      universal links exist. See [LAUNCH.md](./LAUNCH.md) step 5.
+- [x] **Magic Link email template contains `{{ .Token }}`**, not
+      `{{ .ConfirmationURL }}` *(pasted 2026-09-22 from
+      `supabase/templates/magic-link.html`)* — without it the code sign-in flow
+      silently mails a link instead of a code, and the link cannot hand back to
+      the app until universal links exist. See [LAUNCH.md](./LAUNCH.md) step 5.
+- [ ] **Code email verified on both entry points** — an existing account *and* a
+      never-used email. Sign-up may render from the **Confirm signup** template
+      instead; if so that template needs `{{ .Token }}` too.
 - [ ] Minimum password length raised from 6 → 8+ (still applies to the accounts
       that have passwords; new sign-ups no longer create one)
 - [ ] Email confirmation: can stay **off** — the code flow is itself proof of
@@ -187,7 +191,9 @@ Using the TestFlight / internal-testing build, with two accounts:
 
 ## Gate 8 — Store consoles
 
-- [ ] Apple Developer Program ($99/yr) and Play Console ($25 one-time) enrolled
+- [x] Apple Developer Program ($99/yr) enrolled *(2026-09-22)*
+- [ ] Play Console ($25 one-time) enrolled — Android is deferred, so this is only
+      needed if that changes
 - [ ] Bundle ID `com.catchupcolumn.app` confirmed final — **immutable after first
       submission**
 - [ ] App records created in both consoles

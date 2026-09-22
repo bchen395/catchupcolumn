@@ -33,26 +33,33 @@ built-in sender onto Resend SMTP on 2026-09-22, sending limit 100/hour** (step 5
 until then the code sign-in flow would have throttled partway through onboarding a
 single Group.
 
-**Now unblocked and time-sensitive:**
+**Apple Developer enrollment is done (2026-09-22)** — the long pole with the
+multi-day tail is behind us. Three things it unblocks, none of which were
+actionable before and all of which are now:
 
-1. **Apple Developer enrollment (step 7) — start it this week.** This was
-   previously deferred behind the illustration rework. POSITIONING §6 reverses
-   that: Expo Go dropped remote push in SDK 53, so Group Zero's editions 3–4 need
-   a TestFlight build, which needs the enrollment. It is waiting-time with a
-   multi-day tail, so starting late blocks everything and starting early costs
-   nothing.
-2. **Email OTP sign-in (POSITIONING §6)** — wanted before Group Zero's edition 3,
-   so people can join without inventing a password.
+1. **The Apple Team ID → universal links (step 2).** Enrollment is where the Team
+   ID comes from, and `web/.well-known/apple-app-site-association` still contains
+   a literal `TEAMID`. Until that is replaced and `associatedDomains` is added to
+   `app.json`, every edition email's primary CTA lands in Safari instead of
+   handing off to the app. This is the cheapest of the three and the only one
+   that changes something already in front of users.
+2. **The APNs push key (step 3).** EAS creates it interactively on the first
+   `eas build` / `eas credentials` run. Production push doesn't register without
+   it, which also gates POSITIONING §3's pre-publish nudge, since the nudge is
+   push-only.
+3. **The first TestFlight build (step 8).** What Group Zero's editions 3–4 need —
+   Expo Go dropped remote push in SDK 53 — and the first release build this
+   project has ever produced. Budget for it failing the first time.
 
 **Still open and independent of Apple:**
 
-3. **Resend** (step 4) — DNS is correctly provisioned; confirm Resend flipped the
+4. **Resend** (step 4) — DNS is correctly provisioned; confirm Resend flipped the
    domain to `verified`, re-set `EMAIL_FROM`, and add the missing DMARC record.
-4. **Confirm the `compile-editions` cron is firing** — see
+5. **Confirm the `compile-editions` cron is firing** — see
    [Verifying the compile-editions cron](#verifying-the-compile-editions-cron).
    If it isn't, weekly compilation silently never runs and the core feature is
    dead. **Do this before Group Zero, not before submission.**
-5. **Sentry DSN** (step 11) — the code is wired and inert until it's set, and
+6. **Sentry DSN** (step 11) — the code is wired and inert until it's set, and
    Group Zero is exactly when crash reports start mattering.
 
 **Deferred by choice:** the illustration rework (step 6b) and store screenshots
@@ -142,22 +149,31 @@ curl -s -o /dev/null -w '%{http_code}\n' https://www.catchupcolumn.com/edition/0
 npx supabase secrets set WEB_BASE_URL='https://www.catchupcolumn.com'
 ```
 
-**Universal links** stay dormant until you (a) replace `TEAMID` in
+☐ **Universal links — unblocked as of the 2026-09-22 Apple enrollment.** They stay
+dormant until you (a) replace `TEAMID` in
 `web/.well-known/apple-app-site-association` with your Apple Team ID and the Android
 SHA-256 in `assetlinks.json`, and (b) add `associatedDomains`/`intentFilters` to
 `app.json` (snippet in `web/README.md`). **Declare `www.catchupcolumn.com`, not the
 apex** — Apple and Google don't follow the 308.
 
-## 3. EAS project setup **[owner]** — ✅ done; APNs key waits on step 7
+The Team ID half is now available and was the only blocker; the Android SHA-256
+still waits on a signed Android build, which is deferred. iOS can go alone —
+the two files are independent. Until this lands, every edition email's "read the
+edition" button opens Safari rather than the app, which is the difference between
+the email working and half-working (`bugs.md` top-priority #5). Re-deploy Vercel
+after editing `.well-known/`, and re-run the permalink curl above.
+
+## 3. EAS project setup **[owner]** — ✅ done; APNs key now unblocked (2026-09-22)
 
 - ✅ **`eas init` done** — `owner` (`bchen395`) + `extra.eas.projectId`
   (`c9be4074-4916-4e94-9276-811bbe8a05dc`) are committed to `app.json`.
 - ✅ **Supabase env vars on EAS** — verified present in the `production` environment
   (2026-08-04). This was the part that would break the app at launch, and it's done.
-- ☐ **Push credentials — blocked on the Apple enrollment (step 7).** The iOS APNs
-  key can only be created from an Apple Developer account. EAS creates it
-  interactively during the first `eas build`, so there is nothing to do ahead of
-  time — but the enrollment is no longer deferred, so this unblocks itself:
+- ☐ **Push credentials — no longer blocked.** The Apple enrollment landed
+  2026-09-22, and the iOS APNs key can only be created from an Apple Developer
+  account. EAS creates it interactively during the first `eas build`, so there is
+  still nothing to do ahead of that build — but it will no longer fail for want
+  of an account:
 
   ```bash
   npx eas-cli credentials    # iOS: add an APNs key (needs Apple enrollment)
@@ -213,7 +229,7 @@ npx supabase secrets set EMAIL_FROM='Catch Up Column <hello@catchupcolumn.com>'
 
 (No function redeploy needed — secrets are read at runtime.)
 
-## 5. Supabase Auth dashboard settings **[owner]** — ⚠️ one item left (2026-09-22)
+## 5. Supabase Auth dashboard settings **[owner]** — ✅ all set; one thing left to *verify* (2026-09-22)
 
 These are **not** in `config.toml` (that governs local dev only) — they were set in the
 Supabase dashboard → Authentication. `config.toml` still shows the old local-dev values
@@ -229,21 +245,31 @@ is not a signal about production.
   setting here that has a capacity number attached, and the number was reasoned
   about rather than defaulted.
 
-☐ **Put `{{ .Token }}` in the Magic Link email template.** Added 2026-09-16 with
-the code sign-in flow, and **nothing about that flow works until this is done.**
-Supabase sends magic links and one-time codes through the same call and the same
-template; the stock template contains `{{ .ConfirmationURL }}`, so people would
-receive a *link*, and a link cannot hand back to the app until universal links
-are configured (step 2 — blocked on your Apple Team ID). The 6-digit code needs
-none of that.
+✅ **`{{ .Token }}` is in the Magic Link email template** — `supabase/templates/magic-link.html`
+pasted into Dashboard → Authentication → Email Templates → **Magic Link** on
+2026-09-22. The repo file stays the source of truth; if you edit one, edit the
+other. Why it mattered: Supabase sends magic links and one-time codes through the
+same call and the same template, and the stock template contains
+`{{ .ConfirmationURL }}`, so people would have received a *link* — which cannot
+hand back to the app until universal links are configured (step 2). The 6-digit
+code needs none of that.
 
-- Dashboard → Authentication → Email Templates → **Magic Link**
-- Make the body lead with `{{ .Token }}` — e.g. *"Your code is `{{ .Token }}`.
-  It expires in an hour."*
-- Keep it plain and large; this email is read by the same people the
-  accessibility floor exists for.
-- Verify by requesting a code from the app's sign-in screen and confirming six
-  digits arrive rather than a button.
+☐ **Verify it on BOTH entry points — this is the last open item in step 5.**
+Pasting is not proof; the two entry points may not render from the same template:
+
+- Sign in with an **existing account** → six digits arrive, not a button.
+- Sign up with an **email that has never been used** → six digits arrive.
+
+Sign-up goes through `signInWithOtp` with `shouldCreateUser: true`, and GoTrue can
+route a brand-new user to the **Confirm signup** template rather than Magic Link.
+If it does, that template needs `{{ .Token }}` too, and fixing only Magic Link
+leaves **sign-up** silently mailing a dead link while sign-in looks perfect. Group
+Zero is almost entirely first-time sign-ups, so that is the half you can least
+afford to guess at.
+
+Also check the dashboard's **subject line** — a separate field the repo file does
+not cover. Keep it plain; the template's hidden preheader already surfaces the
+code in the inbox preview line.
 
 ☐ **Email confirmation can now be left off.** The code flow *is* confirmation —
 nobody completes sign-up without receiving mail at that address — and there is no
@@ -385,18 +411,21 @@ doesn't sprawl — this is chrome, not a re-architecture.
   universal links — those need the signed production build.
 - **Then** capture screenshots (step 7) against Group Zero's real content.
 
-## 7. Store account, assets, and metadata **[owner]** — enrollment now, the rest deferred
+## 7. Store account, assets, and metadata **[owner]** — ✅ enrolled 2026-09-22; the rest deferred
 
-iOS only. **The enrollment is no longer deferred** — POSITIONING §6 needs a
-TestFlight build for Group Zero's editions 3–4, and enrollment has a multi-day
-tail. Everything *after* the enrollment still waits, because screenshots freeze
-the final look and Group Zero will produce better ones.
+iOS only. **Enrollment landed 2026-09-22.** Everything *after* it still waits,
+because screenshots freeze the final look and Group Zero will produce better ones.
 
-- ☐ **[owner] Enroll in the Apple Developer Program ($99/yr) this week.** It is
-  waiting-time, not working-time. Confirm the bundle ID
-  `com.catchupcolumn.app` is final — it's **immutable after first submission**. This
-  is also where you get the **Apple Team ID** that step 2's universal links need, and
-  what unblocks the APNs key in step 3.
+- ✅ **[owner] Apple Developer Program ($99/yr) — enrolled 2026-09-22.** This was
+  the multi-day-tail item that gated the APNs key (step 3), the Team ID for
+  step 2's universal links, and the TestFlight build Group Zero's editions 3–4
+  need (step 8).
+- ☐ **[owner] Copy the Apple Team ID out and use it.** It is in the developer
+  account under Membership details. Two places want it: step 2's
+  `web/.well-known/apple-app-site-association` (replacing the literal `TEAMID`)
+  and `app.json`'s `associatedDomains`. Nothing else in this step is blocked on it.
+- ☐ **[owner] Confirm the bundle ID `com.catchupcolumn.app` is final** before the
+  first submission — it is **immutable afterwards**.
 - ⏸ Create the app record in App Store Connect (after Group Zero).
 - ⏸ **Screenshots — capture after 6b:** iPhone 6.9" required (Home, an edition front
   page, the composer, a group). No iPad shots needed (iPad support is off).
