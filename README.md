@@ -29,9 +29,9 @@ publish, and account deletion with moderator handoff.
 **Not shipped, and gating launch:** the app has never been run on real users.
 [docs/POSITIONING.md](docs/POSITIONING.md) §6 ("Group Zero") is the validation gate
 in front of App Store submission — four consecutive editions of a real Group
-before anything is submitted. The other open work is the friends-first copy pass
-([docs/COPY_PASS.md](docs/COPY_PASS.md)) and the pre-publish nudge
-([docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md)).
+before anything is submitted. The friends-first copy pass landed 2026-09-16; the
+remaining code work is the pre-publish nudge
+([docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md)), which is sequenced *after* Group Zero.
 
 ## Tech Stack
 

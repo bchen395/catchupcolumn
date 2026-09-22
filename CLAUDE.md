@@ -139,9 +139,12 @@ user-facing copy must not assume either:
 - **Never "loved ones"** — greeting-card register, wrong for someone writing to
   college friends.
 
-Existing copy is mid-migration: every site still saying "family" is listed in
-[`docs/COPY_PASS.md`](docs/COPY_PASS.md). Match the convention above in new copy
-rather than the surrounding code.
+The migration landed 2026-09-16 — app strings, the landing page, the store
+listing, `design/BRAND.md` §8, and the `frontend-design` skill all follow this
+now, so **match the surrounding code**. The remaining "family" hits in the tree
+are deliberate: the rotating Group-name example
+(`Strings.groupCreate.nameExamples`), and "family and friends" in the privacy
+policy and terms, which is the sanctioned explicit form.
 
 ## MVP Features (in priority order)
 

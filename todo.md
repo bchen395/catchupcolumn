@@ -37,10 +37,13 @@ POSITIONING §8 is the authoritative sequence. The short version:
 - [ ] **[owner] Group Zero** — four consecutive editions across Groups A, B and the
       family Groups, before submitting anything.
       [docs/POSITIONING.md](docs/POSITIONING.md) §6
-- [ ] **[owner] Settle the December arithmetic** — the extra-copies question and how
-      many family Groups to recruit. The only item whose window closes in weeks.
+- [ ] **[owner] Recruit two to three family Groups this month** — a family Group
+      not publishing by roughly the end of September cannot be a December buyer.
+      (The extra-copies question that set this number was settled 2026-09-16:
+      printed copies sell per person at $89.)
       [docs/POSITIONING.md](docs/POSITIONING.md) §5
-- [ ] **Friends-first copy pass** — [docs/COPY_PASS.md](docs/COPY_PASS.md)
+- [x] **Friends-first copy pass** — landed 2026-09-16.
+      [docs/POSITIONING.md](docs/POSITIONING.md) §2
 - [ ] **[owner] Sentry DSN** — the code is wired and inert until it's set.
       [docs/LAUNCH.md](docs/LAUNCH.md) step 10
 - [ ] **Passwordless (email OTP) sign-in** alongside the password flow, before

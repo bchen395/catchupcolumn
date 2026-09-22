@@ -67,7 +67,7 @@ export const InviteHero = ({
         <View style={styles.kickerRule} />
       </View>
 
-      {/* Title case, not caps — uppercasing long family names hurts warmth
+      {/* Title case, not caps — uppercasing long Group names hurts warmth
           (BRAND §6); set exactly like an edition masthead. */}
       <ThemedText accessibilityRole="header" style={styles.masthead} numberOfLines={3}>
         {name}

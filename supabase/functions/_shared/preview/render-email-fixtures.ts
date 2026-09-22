@@ -49,7 +49,7 @@ const payload = (
     edition_number: 12,
     published_at: '2026-07-05T13:00:00Z',
     group_id: '11111111-1111-1111-1111-111111111111',
-    group_name: 'The Williams Family Weekly',
+    group_name: 'The Sunday Dispatch',
     posts,
     recipient_display_name: 'Ruth',
     unsubscribe_url: 'https://example.supabase.co/functions/v1/unsubscribe?token=00000000-0000-0000-0000-000000000000',

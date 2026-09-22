@@ -155,7 +155,7 @@ const ProfileScreen = () => {
     const nextErrors: EditErrors = {};
 
     if (!trimmedName) {
-      nextErrors.displayName = 'Enter the name you want your family to see.';
+      nextErrors.displayName = 'Enter the name you want your Group to see.';
     } else if (trimmedName.length > DISPLAY_NAME_MAX) {
       nextErrors.displayName = `Keep your name under ${DISPLAY_NAME_MAX} characters.`;
     }

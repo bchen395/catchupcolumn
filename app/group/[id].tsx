@@ -16,7 +16,7 @@ import { DaySelector } from '@/components/day-selector';
 import { ErrorState } from '@/components/error-state';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
-import { InviteFamilyCard } from '@/components/invite-family-card';
+import { InviteCard } from '@/components/invite-card';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { GroupDetailSkeleton } from '@/components/skeletons/group-detail-skeleton';
 import { StatusBanner } from '@/components/status-banner';
@@ -583,7 +583,7 @@ const GroupDetailScreen = () => {
 
       {/* Invite section */}
       <View style={styles.section}>
-        <InviteFamilyCard groupName={group.name} inviteCode={group.invite_code} />
+        <InviteCard groupName={group.name} inviteCode={group.invite_code} />
       </View>
 
       {/* Members section */}
