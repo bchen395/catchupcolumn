@@ -22,6 +22,10 @@
   tapped link would strand the reader in Safari. The app's signup screen asks for
   six digits and has no way to receive a link.
 
+  The code must be SIX digits: hooks/use-email-code.ts hard-codes
+  CODE_LENGTH = 6 and the input truncates to it, so a longer OTP length in the
+  dashboard cannot be typed in.
+
   Dashboard subject line (a separate field, not covered by this file):
   "Your Catch Up Column code"
 

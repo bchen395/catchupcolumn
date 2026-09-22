@@ -272,12 +272,30 @@ Fixing only one leaves the other mailing a dead link, and the half that breaks i
 **sign-up** — nearly all of Group Zero. The app's signup screen asks for six
 digits and has no way to receive a link, so the person is simply stuck.
 
-☐ **Re-verify both paths after pasting.** An existing account *and* an address
-that has never been used. Six digits on both, no button on either.
+☐ **Set the email OTP length to 6.** Dashboard → Authentication → the email
+provider's **OTP Length**. Observed sending **8** digits on 2026-09-22, which
+does not just look wrong — it makes sign-in *impossible*:
+`hooks/use-email-code.ts` hard-codes `CODE_LENGTH = 6`, the input carries
+`maxLength={6}`, and `setCode` slices to 6. An 8-digit code is silently truncated
+as the person types, then rejected. There is no error that explains it.
 
-Also check each template's **subject line** — a separate dashboard field the repo
-files do not cover. Keep it plain; both templates carry a hidden preheader that
-already surfaces the code in the inbox preview line.
+**6 is the number to standardise on**, not 8: it matches `config.toml`'s
+`otp_length = 6` for local dev, every piece of UI copy derives from
+`CODE_LENGTH`, and fewer digits is the accessible choice for the audience the
+floor exists for. Changing the dashboard is one field; changing the app is a
+release.
+
+☐ **Set both templates' subject lines.** A separate dashboard field the repo
+files do not cover, and it still holds Supabase's defaults — the code email
+arrived subject-lined *"Your Magic Link"* on 2026-09-22 while its body said
+"here is your code." Use the same plain subject on both, e.g. **"Your Catch Up
+Column code"**. Both templates carry a hidden preheader that already surfaces the
+code in the inbox preview line.
+
+☐ **Re-verify both paths after pasting.** An existing account *and* an address
+that has genuinely never been used — note that a previous failed test **creates
+the user**, so re-running with the same address exercises the sign-in path, not
+sign-up. Use a fresh alias. Six digits on both, no button on either.
 
 > **Don't "fix" this by turning email confirmation off instead.** Fixing the
 > template is idempotent and holds regardless of that setting; flipping a setting

@@ -96,8 +96,14 @@ Authentication:
       `supabase/templates/confirm-signup.html`. **Two templates, not one:**
       sign-in renders from Magic Link, sign-up from Confirm signup. Found the
       hard way 2026-09-22.
+- [ ] **Email OTP length is 6**, matching `CODE_LENGTH` in
+      `hooks/use-email-code.ts`. Observed at 8 on 2026-09-22, which makes sign-in
+      impossible — the input is capped at 6 and silently truncates.
+- [ ] **Both templates have a plain subject line** set, not Supabase's default
+      "Your Magic Link" on a body that says "here is your code"
 - [ ] **Code email verified on both entry points** — an existing account *and* a
-      never-used email. Six digits on both, no button on either.
+      never-used email (a prior failed test creates the user, so reuse tests
+      sign-in, not sign-up). Six digits on both, no button on either.
 - [ ] Minimum password length raised from 6 → 8+ (still applies to the accounts
       that have passwords; new sign-ups no longer create one)
 - [ ] Email confirmation: can stay **off** — the code flow is itself proof of

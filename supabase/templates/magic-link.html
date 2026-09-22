@@ -15,6 +15,12 @@
   no associatedDomains and the AASA file still holds a literal TEAMID), so a
   tapped link would strand the reader in Safari.
 
+  The code must be SIX digits: hooks/use-email-code.ts hard-codes
+  CODE_LENGTH = 6 and the input truncates to it, so a longer OTP length in the
+  dashboard cannot be typed in. Dashboard subject line (a separate field, not
+  covered by this file): "Your Catch Up Column code" — the Supabase default is
+  "Your Magic Link", which contradicts this body.
+
   Brand: BRAND.md §2/§3 — Lora + Jost, ink on warm paper, hairline rules, one
   vermilion kicker. The code is set at 34px with wide tracking because a
   misread digit costs the whole sign-in, and the accessibility floor applies to
