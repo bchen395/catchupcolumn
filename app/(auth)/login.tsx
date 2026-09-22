@@ -1,140 +1,101 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AuthScreenShell } from '@/components/auth-screen-shell';
+import { EmailCodeStep } from '@/components/email-code-step';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
+import { PasswordSignIn } from '@/components/password-sign-in';
 import { PendingInviteBanner } from '@/components/pending-invite-banner';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
+import { useEmailCode } from '@/hooks/use-email-code';
 import { usePendingInvite } from '@/hooks/use-pending-invite';
-import { mapAuthErrorMessage, sendPasswordResetEmail, signInWithEmail } from '@/lib/auth';
 import { getPendingInvite } from '@/lib/pending-invite';
 
-type LoginErrors = {
-  email?: string;
-  password?: string;
-};
+// A code is the default way in: nothing to remember, and it works for the
+// accounts created by hand during Group Zero. The password form stays for
+// anyone who already has one and prefers it.
+type Mode = 'code' | 'password';
 
 const LoginScreen = () => {
   const router = useRouter();
   const { invite } = usePendingInvite();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<LoginErrors>({});
-  const [formError, setFormError] = useState('');
-  const [resetNotice, setResetNotice] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [sendingReset, setSendingReset] = useState(false);
+  const [mode, setMode] = useState<Mode>('code');
 
-  const handleSignIn = async () => {
-    const nextErrors = validateLoginForm(email, password);
-    setErrors(nextErrors);
-    setFormError('');
-    setResetNotice('');
-
-    if (Object.keys(nextErrors).length > 0) {
-      return;
+  // With an invite pending, the root layout's use-auto-join-invite owns
+  // navigation (join → welcome); replacing to home now would race it.
+  const goAfterSignIn = useCallback(async () => {
+    if (!(await getPendingInvite())) {
+      router.replace('/(tabs)/home');
     }
+  }, [router]);
 
-    try {
-      setSubmitting(true);
-      await signInWithEmail({ email, password });
-      // With an invite pending, the root layout's use-auto-join-invite owns
-      // navigation (join → welcome); replacing to home now would race it.
-      if (!(await getPendingInvite())) {
-        router.replace('/(tabs)/home');
-      }
-    } catch (error) {
-      setFormError(mapAuthErrorMessage(error, 'We could not sign you in right now.'));
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const flow = useEmailCode({ allowNewUser: false, onVerified: goAfterSignIn });
 
-  const handleForgotPassword = async () => {
-    const emailError = validateEmail(email);
-    setErrors((currentErrors) => ({
-      ...currentErrors,
-      email: emailError,
-    }));
-    setFormError('');
-    setResetNotice('');
+  const banner = invite ? (
+    <PendingInviteBanner message={Strings.invite.joiningBannerLogin(invite.groupName)} />
+  ) : null;
 
-    if (emailError) {
-      return;
-    }
+  const footer = (
+    <>
+      <ThemedText variant="caption">Need an account?</ThemedText>
+      <FormButton title="Create one" variant="ghost" onPress={() => router.push('/(auth)/signup')} />
+    </>
+  );
 
-    try {
-      setSendingReset(true);
-      await sendPasswordResetEmail(email);
-      setResetNotice('If that email belongs to a Catch Up Column account, we sent a reset link.');
-    } catch (error) {
-      setFormError(mapAuthErrorMessage(error, 'We could not send a reset email right now.'));
-    } finally {
-      setSendingReset(false);
-    }
-  };
+  if (mode === 'password') {
+    return (
+      <PasswordSignIn
+        banner={banner}
+        footer={footer}
+        onUseCode={() => setMode('code')}
+        onSignedIn={goAfterSignIn}
+      />
+    );
+  }
+
+  if (flow.step === 'code') {
+    return (
+      <AuthScreenShell
+        title="Check your email"
+        subtitle={`We sent a ${flow.codeLength}-digit code to ${flow.email}. It expires in an hour.`}
+        banner={banner}
+      >
+        <EmailCodeStep flow={flow} submitLabel="Sign in" />
+      </AuthScreenShell>
+    );
+  }
 
   return (
     <AuthScreenShell
       title="Welcome back"
-      subtitle="Sign in to read the latest edition and write something for this week."
-      banner={
-        invite ? (
-          <PendingInviteBanner message={Strings.invite.joiningBannerLogin(invite.groupName)} />
-        ) : null
-      }
-      footer={
-        <>
-          <ThemedText variant="caption">Need an account?</ThemedText>
-          <FormButton
-            title="Create one"
-            variant="ghost"
-            onPress={() => router.push('/(auth)/signup')}
-          />
-        </>
-      }
+      subtitle="We'll email you a code — no password to remember."
+      banner={banner}
+      footer={footer}
     >
       <View style={styles.form}>
-        {formError ? <StatusBanner variant="error" message={formError} /> : null}
-        {resetNotice ? <StatusBanner variant="success" message={resetNotice} /> : null}
+        {flow.formError ? <StatusBanner variant="error" message={flow.formError} /> : null}
 
         <FormField
           label="Email address"
-          value={email}
-          onChangeText={setEmail}
+          value={flow.email}
+          onChangeText={flow.setEmail}
           autoCapitalize="none"
           autoComplete="email"
           keyboardType="email-address"
           textContentType="emailAddress"
-          error={errors.email}
+          error={flow.fieldError}
           placeholder="you@example.com"
+          onSubmitEditing={() => flow.requestCode()}
+          returnKeyType="go"
         />
 
-        <FormField
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          autoCapitalize="none"
-          autoComplete="password"
-          textContentType="password"
-          error={errors.password}
-          placeholder="Enter your password"
-          secureTextEntry
-        />
-
-        <FormButton
-          title="Forgot your password?"
-          variant="ghost"
-          loading={sendingReset}
-          onPress={handleForgotPassword}
-        />
-
-        <FormButton title="Sign in" loading={submitting} onPress={handleSignIn} />
+        <FormButton title="Email me a code" loading={flow.sending} onPress={() => flow.requestCode()} />
+        <FormButton title="Use a password instead" variant="ghost" onPress={() => setMode('password')} />
       </View>
     </AuthScreenShell>
   );
@@ -147,34 +108,3 @@ const styles = StyleSheet.create({
     gap: Layout.padding.md,
   },
 });
-
-const validateLoginForm = (email: string, password: string): LoginErrors => {
-  const nextErrors: LoginErrors = {};
-
-  const emailError = validateEmail(email);
-  if (emailError) {
-    nextErrors.email = emailError;
-  }
-
-  if (!password.trim()) {
-    nextErrors.password = 'Enter your password.';
-  }
-
-  return nextErrors;
-};
-
-const validateEmail = (value: string) => {
-  const trimmedValue = value.trim();
-
-  if (!trimmedValue) {
-    return 'Enter your email address.';
-  }
-
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailPattern.test(trimmedValue)) {
-    return 'Enter a valid email address.';
-  }
-
-  return undefined;
-};

@@ -20,11 +20,13 @@ in particular was costed and rejected rather than waved off.
 ## Status
 
 Feature-complete through Phase 7 of [todo.md](todo.md) and into Phase 8 polish.
-Working today: email/password auth and reset, 3-screen onboarding, Group creation
-and invite codes, the post composer with photo upload, weekly compilation on a
-15-minute cron scoped by each Group's `publish_day`/`publish_time`/`timezone`, the
-newspaper-styled edition reader, Resend email with per-Group unsubscribe, push on
-publish, and account deletion with moderator handoff.
+Working today: passwordless email-code sign-in (sign-up has no password field at
+all; the login screen keeps a password form, and reset, for accounts that already
+have one), 3-screen onboarding, Group creation and invite codes, the post composer
+with photo upload, weekly compilation on a 15-minute cron scoped by each Group's
+`publish_day`/`publish_time`/`timezone`, the newspaper-styled edition reader,
+Resend email with per-Group unsubscribe, push on publish, and account deletion
+with moderator handoff.
 
 **Not shipped, and gating launch:** the app has never been run on real users.
 [docs/POSITIONING.md](docs/POSITIONING.md) §6 ("Group Zero") is the validation gate
@@ -40,7 +42,10 @@ remaining code work is the pre-publish nudge
   `expo-router` export is deprecated as of SDK 57.
 - **Language:** TypeScript (strict), path alias `@/*` → repo root
 - **Backend:** Supabase — Postgres + RLS, Auth, Storage, Edge Functions (Deno)
-- **Email:** Resend
+- **Email:** Resend on both surfaces — edition email through the API from the edge
+  function (`RESEND_API_KEY`/`EMAIL_FROM` secrets), auth email (the sign-in code)
+  through SMTP configured in the Supabase dashboard. Different config, same vendor;
+  only the second is subject to the Auth rate limit. [docs/LAUNCH.md](docs/LAUNCH.md) step 5
 - **Push:** Expo Notifications (token registered server‑side, pushes sent from the edge function)
 - **Fonts:** Lora (serif) + Jost (UI sans) via `@expo-google-fonts`, identical on every platform
 - **Crash reporting:** Sentry (crashes only — no tracing, no replay, no PII)
