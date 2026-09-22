@@ -24,11 +24,14 @@ iOS-only unless it says otherwise. Play Console, the FCM service account, and
 
 Project ref: `wvaxfyhihcfilewygtzp` · Bundle ID: `com.catchupcolumn.app`
 
-## Current state (2026-09-16)
+## Current state (2026-09-22)
 
 **Done and verified:** the backend, legal hosting, the Vercel site, the v2 UI
 redesign, the EAS env vars, and UGC moderation (step 9) — that last one was the
-likeliest App Review rejection, and it's closed.
+likeliest App Review rejection, and it's closed. **Auth email moved off Supabase's
+built-in sender onto Resend SMTP on 2026-09-22, sending limit 100/hour** (step 5);
+until then the code sign-in flow would have throttled partway through onboarding a
+single Group.
 
 **Now unblocked and time-sensitive:**
 
@@ -210,7 +213,7 @@ npx supabase secrets set EMAIL_FROM='Catch Up Column <hello@catchupcolumn.com>'
 
 (No function redeploy needed — secrets are read at runtime.)
 
-## 5. Supabase Auth dashboard settings **[owner]** — ⚠️ one new item (2026-09-16)
+## 5. Supabase Auth dashboard settings **[owner]** — ⚠️ one item left (2026-09-22)
 
 These are **not** in `config.toml` (that governs local dev only) — they were set in the
 Supabase dashboard → Authentication. `config.toml` still shows the old local-dev values
@@ -221,6 +224,10 @@ is not a signal about production.
   allowlisted, so password-reset deep links work in release builds.
 - ✅ **Minimum password length** raised from 6.
 - ✅ **Email confirmation** decision made.
+- ✅ **Custom SMTP → Resend, sending limit 100/hour** (2026-09-22). Auth email no
+  longer goes through Supabase's built-in sender. Detail below — it is the one
+  setting here that has a capacity number attached, and the number was reasoned
+  about rather than defaulted.
 
 ☐ **Put `{{ .Token }}` in the Magic Link email template.** Added 2026-09-16 with
 the code sign-in flow, and **nothing about that flow works until this is done.**
@@ -242,6 +249,72 @@ none of that.
 nobody completes sign-up without receiving mail at that address — and there is no
 longer a password-signup path that could create an unverified account. This
 closes the open question in `bugs.md` D2.
+
+### Auth email goes through Resend SMTP — ✅ set 2026-09-22
+
+**Two email systems, and they are easy to confuse.** Only the second one is
+governed by anything on this page:
+
+- **Edition email** — the Resend **API**, called from
+  `supabase/functions/_shared/edition-dispatch.ts`. Configured by the
+  `RESEND_API_KEY` / `EMAIL_FROM` function secrets (step 4). Never touches
+  Supabase Auth, and is **not** subject to the Auth rate limit below.
+- **Auth email** — the 6-digit sign-in code (`lib/auth.ts` → `signInWithOtp`) and
+  password reset (`resetPasswordForEmail`). These go through Supabase Auth,
+  which until 2026-09-22 used Supabase's **built-in sender** — a testing
+  facility with a low per-hour cap, on a shared IP, not intended for production.
+
+Dashboard → Authentication → SMTP Settings, pointed at Resend: host
+`smtp.resend.com`, user `resend`, password = the same `RESEND_API_KEY`, sender on
+the **root** domain (`@catchupcolumn.com`) for the DKIM reason in step 4.
+
+`supabase/templates/magic-link.html` is unaffected — SMTP is transport only, and
+the template still has to carry `{{ .Token }}` per the item above.
+
+#### Rate limit for sending emails: **100/hour**
+
+Set 2026-09-22. Supabase defaults this to 30 once custom SMTP is enabled, and 30
+is roughly the burst Group Zero itself creates — the worst possible place to sit.
+
+The sizing quantity is peak concurrent onboarding, not total users. The realistic
+spike is an organizer walking one whole Group through TestFlight install in a
+single sitting: 6–10 people, at **1.5–2 emails each** once mistyped addresses,
+codes landing in spam, and "resend code" taps are counted. That is 15–20 emails
+for one Group; two Groups on the same evening, or one Group plus ordinary
+sign-backs-in, clears 30.
+
+Why the headroom is worth it: **the cap is project-wide, not per-user.** When it
+is hit, the next person to open the app gets a hard error — including someone
+signing back in who had nothing to do with the burst. During Group Zero that
+reads as "the app is broken," or worse as "they lost interest," which is exactly
+the signal corruption Sentry was wired to prevent
+([POSITIONING.md](./POSITIONING.md) §11). You would be measuring retention
+through a broken sign-in.
+
+Why not higher: with custom SMTP the sender reputation on the line is **ours** —
+our DKIM, our Resend account, `catchupcolumn.com`'s standing with Gmail. Someone
+hammering the OTP endpoint against random addresses generates bounces and
+complaints against our domain, not Supabase's. 100/hour keeps the blast radius
+small enough to notice in Resend's dashboard before Gmail does.
+
+Two companion checks, neither of which this setting covers:
+
+☐ **Confirm the per-address minimum interval** (Authentication → Rate Limits —
+Supabase defaults it to 60s). That is what actually stops one address being
+spammed, and it is what makes a 100/hour ceiling safe rather than reckless.
+`config.toml:223` shows `max_frequency = "1s"`, which is **local dev only** and
+says nothing about production — same caveat as the rest of this step.
+
+☐ **Check the Resend plan's daily cap.** On the free tier (100/day, 3,000/month —
+verify in the Resend dashboard) a 100/hour Auth ceiling is notional, because Auth
+email now shares that daily budget with edition email. Note the collision:
+`groups.publish_day` defaults to 0 (Sunday) and `publish_time` to 09:00, so
+unless a Group changed it, every Group Zero edition mails in one burst — 5 Groups
+× 8 members ≈ 40 emails at 09:00 Sunday. Onboarding a new Group that same morning
+stacks an auth burst on top of it.
+
+**Re-derive this number at App Store launch.** It should track peak signups per
+hour, which is a different quantity from anything Group Zero will show.
 
 Re-confirm the redirect allowlist after the first release build — it is the one
 setting whose breakage only shows up on a signed binary.

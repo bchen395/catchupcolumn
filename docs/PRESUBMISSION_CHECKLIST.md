@@ -95,6 +95,18 @@ Authentication:
       that have passwords; new sign-ups no longer create one)
 - [ ] Email confirmation: can stay **off** — the code flow is itself proof of
       address, and there is no password-signup path any more
+- [ ] **Custom SMTP is enabled and points at Resend** — `smtp.resend.com`, user
+      `resend`, sender on the root domain. On Supabase's built-in sender the
+      6-digit code throttles partway through onboarding one Group, and the error
+      is project-wide. Set 2026-09-22; verify it survived any project changes.
+- [ ] **Auth "rate limit for sending emails" is 100/hour**, not the 30 Supabase
+      defaults to when custom SMTP is switched on. Re-derive from peak signups
+      per hour before launch — the 100 was sized for Group Zero, not for the
+      store. Reasoning in [LAUNCH.md](./LAUNCH.md) step 5.
+- [ ] Per-address minimum interval between auth emails is still set (60s default)
+      — it is what makes the 100/hour ceiling safe
+- [ ] Resend plan's **daily** cap clears expected volume — auth email and edition
+      email now share it
 
 ## Gate 4 — Web surface
 

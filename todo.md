@@ -50,6 +50,13 @@ POSITIONING §8 is the authoritative sequence. The short version:
       both sign-in and sign-up. **[owner] still needed:** put `{{ .Token }}` in
       the Magic Link email template or no code is ever sent
       ([docs/LAUNCH.md](docs/LAUNCH.md) step 5).
+- [x] **Auth email onto Resend SMTP** — done 2026-09-22. Auth email (the sign-in
+      code, password reset) ran on Supabase's built-in sender, which is a testing
+      facility with a low per-hour cap; edition email was always on the Resend
+      API and was never affected. Sending limit set to **100/hour** — sized off
+      peak concurrent onboarding, not total users, and re-derive it at launch.
+      Two open sub-checks (per-address interval, Resend's daily cap) in
+      [docs/LAUNCH.md](docs/LAUNCH.md) step 5.
 - [ ] **Pre-publish nudge** — after Group Zero, and only if the run showed people
       forgetting rather than declining. [docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md)
 - [ ] **Thin-edition design** — a one-story edition must read as a letter, not a

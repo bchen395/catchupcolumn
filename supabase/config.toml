@@ -227,6 +227,13 @@ otp_length = 6
 otp_expiry = 3600
 
 # Use a production-ready SMTP server
+#
+# PRODUCTION DOES NOT USE THIS BLOCK. Like the rest of this file it governs local
+# dev only. Production auth email goes through Resend SMTP, configured in the
+# Supabase dashboard (Authentication -> SMTP Settings) on 2026-09-22, with the
+# sending rate limit set to 100/hour. Do not read the commented-out block below,
+# or the local `[auth.rate_limit] email_sent` value, as a statement about prod.
+# See docs/LAUNCH.md step 5.
 # [auth.email.smtp]
 # enabled = true
 # host = "smtp.sendgrid.net"
