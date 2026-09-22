@@ -92,9 +92,12 @@ Authentication:
       `supabase/templates/magic-link.html`)* — without it the code sign-in flow
       silently mails a link instead of a code, and the link cannot hand back to
       the app until universal links exist. See [LAUNCH.md](./LAUNCH.md) step 5.
+- [ ] **Confirm signup template contains `{{ .Token }}`** — paste
+      `supabase/templates/confirm-signup.html`. **Two templates, not one:**
+      sign-in renders from Magic Link, sign-up from Confirm signup. Found the
+      hard way 2026-09-22.
 - [ ] **Code email verified on both entry points** — an existing account *and* a
-      never-used email. Sign-up may render from the **Confirm signup** template
-      instead; if so that template needs `{{ .Token }}` too.
+      never-used email. Six digits on both, no button on either.
 - [ ] Minimum password length raised from 6 → 8+ (still applies to the accounts
       that have passwords; new sign-ups no longer create one)
 - [ ] Email confirmation: can stay **off** — the code flow is itself proof of

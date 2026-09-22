@@ -254,22 +254,35 @@ same call and the same template, and the stock template contains
 hand back to the app until universal links are configured (step 2). The 6-digit
 code needs none of that.
 
-☐ **Verify it on BOTH entry points — this is the last open item in step 5.**
-Pasting is not proof; the two entry points may not render from the same template:
+☐ **Paste `supabase/templates/confirm-signup.html` into the "Confirm signup"
+template.** **There are two templates, not one** — confirmed by testing on
+2026-09-22, when sign-up with a fresh address still arrived as the stock
+*"Confirm your signup / Follow this link to confirm your user"* even though Magic
+Link had already been fixed.
 
-- Sign in with an **existing account** → six digits arrive, not a button.
-- Sign up with an **email that has never been used** → six digits arrive.
+Both entry points go through the same call, but GoTrue routes them to different
+templates:
 
-Sign-up goes through `signInWithOtp` with `shouldCreateUser: true`, and GoTrue can
-route a brand-new user to the **Confirm signup** template rather than Magic Link.
-If it does, that template needs `{{ .Token }}` too, and fixing only Magic Link
-leaves **sign-up** silently mailing a dead link while sign-in looks perfect. Group
-Zero is almost entirely first-time sign-ups, so that is the half you can least
-afford to guess at.
+| Entry point | `lib/auth.ts` | Template |
+| --- | --- | --- |
+| Sign in, existing account | `sendEmailCode(…, { allowNewUser: false })` | **Magic Link** — ✅ done |
+| Sign up, new address | `sendEmailCode(…, { allowNewUser: true })` | **Confirm signup** — ☐ |
 
-Also check the dashboard's **subject line** — a separate field the repo file does
-not cover. Keep it plain; the template's hidden preheader already surfaces the
-code in the inbox preview line.
+Fixing only one leaves the other mailing a dead link, and the half that breaks is
+**sign-up** — nearly all of Group Zero. The app's signup screen asks for six
+digits and has no way to receive a link, so the person is simply stuck.
+
+☐ **Re-verify both paths after pasting.** An existing account *and* an address
+that has never been used. Six digits on both, no button on either.
+
+Also check each template's **subject line** — a separate dashboard field the repo
+files do not cover. Keep it plain; both templates carry a hidden preheader that
+already surfaces the code in the inbox preview line.
+
+> **Don't "fix" this by turning email confirmation off instead.** Fixing the
+> template is idempotent and holds regardless of that setting; flipping a setting
+> to dodge a template is the kind of thing that silently reverts and takes
+> sign-up with it.
 
 ☐ **Email confirmation can now be left off.** The code flow *is* confirmation —
 nobody completes sign-up without receiving mail at that address — and there is no

@@ -1,23 +1,33 @@
 <!--
-  Supabase Auth → Email Templates → "Magic Link".
+  Supabase Auth → Email Templates → "Confirm signup".
 
   This file is the source of truth; the dashboard holds a copy. If you edit one,
   edit the other, or the next person will trust the wrong version.
 
-  THERE ARE TWO OF THESE. See confirm-signup.html, its near-identical sibling.
-  Sign-in and sign-up do NOT render from the same template: one call
-  (supabase.auth.signInWithOtp) routes an existing account here and a brand-new
-  address to "Confirm signup". Change the design in one, change it in both.
+  WHY THIS FILE EXISTS, AND WHY IT IS NEARLY IDENTICAL TO magic-link.html:
+  sign-in and sign-up do NOT render from the same template. Both go through one
+  call — supabase.auth.signInWithOtp (lib/auth.ts → sendEmailCode) — but GoTrue
+  routes a brand-new address (shouldCreateUser: true) to THIS template, and an
+  existing account to Magic Link. Confirmed by testing on 2026-09-22: sign-up
+  arrived as the stock "Confirm your signup / Follow this link to confirm your
+  user", because only Magic Link had been fixed.
 
-  It sends a CODE, not a link. {{ .Token }} is the 6-digit code the app's
-  sign-in screen asks for. Do NOT reintroduce {{ .ConfirmationURL }}: a link
+  So both templates must carry {{ .Token }}. Fixing one leaves the other mailing
+  a dead link, and the half that breaks is sign-up — which is nearly all of
+  Group Zero.
+
+  It sends a CODE, not a link. Do NOT reintroduce {{ .ConfirmationURL }}: a link
   cannot hand back to the app until universal links are configured (app.json has
   no associatedDomains and the AASA file still holds a literal TEAMID), so a
-  tapped link would strand the reader in Safari.
+  tapped link would strand the reader in Safari. The app's signup screen asks for
+  six digits and has no way to receive a link.
+
+  Dashboard subject line (a separate field, not covered by this file):
+  "Your Catch Up Column code"
 
   Brand: BRAND.md §2/§3 — Lora + Jost, ink on warm paper, hairline rules, one
   vermilion kicker. The code is set at 34px with wide tracking because a
-  misread digit costs the whole sign-in, and the accessibility floor applies to
+  misread digit costs the whole sign-up, and the accessibility floor applies to
   email as much as to the app.
 -->
 <!doctype html>
@@ -27,14 +37,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
     <meta name="supported-color-schemes" content="light">
-    <title>Your Catch Up Column sign-in code</title>
+    <title>Your Catch Up Column code</title>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@400;500;600&display=swap');
       :root { color-scheme: light; supported-color-schemes: light; }
     </style>
   </head>
   <body style="margin: 0; padding: 0; background-color: #FBF9F4;">
-    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">Your sign-in code is {{ .Token }}&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>
+    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">Your code is {{ .Token }}&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #FBF9F4;">
       <tr>
         <td align="center" style="padding: 28px 12px;">
@@ -42,7 +52,7 @@
 
             <tr>
               <td align="center" style="padding: 40px 36px 0 36px;">
-                <p style="margin: 0 0 12px 0; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 2.4px; text-transform: uppercase; color: #E8442E;">Sign in</p>
+                <p style="margin: 0 0 12px 0; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 2.4px; text-transform: uppercase; color: #E8442E;">Welcome</p>
                 <h1 style="margin: 0; font-family: 'Lora', Georgia, 'Times New Roman', serif; font-size: 32px; line-height: 1.14; font-weight: 700; letter-spacing: -0.5px; color: #1A1A1A;">Catch Up Column</h1>
               </td>
             </tr>
@@ -55,7 +65,7 @@
 
             <tr>
               <td align="center" style="padding: 28px 36px 0 36px;">
-                <p style="margin: 0; font-family: 'Lora', Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 26px; color: #1A1A1A;">Here is your code. Type it into the app to sign in.</p>
+                <p style="margin: 0; font-family: 'Lora', Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 26px; color: #1A1A1A;">Here is your code. Type it into the app to finish setting up your account.</p>
               </td>
             </tr>
 
@@ -85,7 +95,7 @@
 
             <tr>
               <td align="center" style="padding: 20px 36px 36px 36px;">
-                <p style="margin: 0; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 14px; line-height: 22px; color: #A6A4A1;">If you didn't ask to sign in, you can ignore this email — nobody can get in without the code.</p>
+                <p style="margin: 0; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 14px; line-height: 22px; color: #A6A4A1;">If you didn't try to sign up, you can ignore this email — nobody can use it without the code.</p>
               </td>
             </tr>
 

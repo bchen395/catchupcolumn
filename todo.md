@@ -56,11 +56,13 @@ POSITIONING §8 is the authoritative sequence. The short version:
 - [x] **Passwordless (email OTP) sign-in** — landed 2026-09-16; the default for
       both sign-in and sign-up. The Magic Link template carrying `{{ .Token }}`
       was pasted into the dashboard 2026-09-22, so codes now send.
-- [ ] **[owner] Verify the code email on both entry points** — an existing account
-      *and* a never-used email. Sign-up may render from the **Confirm signup**
-      template rather than Magic Link, in which case that one needs `{{ .Token }}`
-      too and sign-up mails a dead link while sign-in looks fine. Group Zero is
-      almost all first-time sign-ups. [docs/LAUNCH.md](docs/LAUNCH.md) step 5
+- [ ] **[owner] Paste `supabase/templates/confirm-signup.html` into the "Confirm
+      signup" dashboard template** — **there are two templates, not one.** Tested
+      2026-09-22: sign-up with a fresh address still arrived as the stock "Follow
+      this link to confirm your user", because only Magic Link had been fixed.
+      Sign-up is nearly all of Group Zero, and the signup screen has no way to
+      receive a link. Then re-verify both paths.
+      [docs/LAUNCH.md](docs/LAUNCH.md) step 5
 - [x] **Auth email onto Resend SMTP** — done 2026-09-22. Auth email (the sign-in
       code, password reset) ran on Supabase's built-in sender, which is a testing
       facility with a low per-hour cap; edition email was always on the Resend
