@@ -790,9 +790,10 @@ Where the organizers are. Join as a person, months before mentioning the app.
 1. **Done 2026-09-14** — ~~fix the post-image resolution cap (§5)~~, plus the two
    pieces of tooling that protect the Group Zero signal: crash reporting and OTA
    updates. See §11.
-2. **This week, [owner], starts the clock** — Apple Developer enrollment (§6).
-   Pure waiting-time with a multi-day tail, and nothing gets onto a friend's
-   phone without it. Start it before anything else on this list.
+2. **Done 2026-09-22** — ~~Apple Developer enrollment (§6)~~. The multi-day tail
+   is behind us. What it unblocks now runs on its own clock: the Team ID into the
+   universal-link files, the APNs push key, and the first TestFlight build for
+   editions 3–4. LAUNCH.md steps 2, 3 and 8.
 3. **This week** — start Group Zero: Group A, Group B, and the family Groups
    (§6). It's the long pole; every week of delay is a week of evidence you don't
    have. Recruiting the Group B organizer has its own lead time, so start asking

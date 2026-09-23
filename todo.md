@@ -31,9 +31,16 @@ specified in CLAUDE.md. Git history has the detail if you need it.
 
 POSITIONING §8 is the authoritative sequence. The short version:
 
-- [ ] **[owner] Apple Developer enrollment** — waiting-time with a multi-day tail.
-      Blocks TestFlight, which blocks Group Zero editions 3–4 (Expo Go dropped
-      remote push in SDK 53). [docs/LAUNCH.md](docs/LAUNCH.md) step 7
+- [x] **[owner] Apple Developer enrollment** — done 2026-09-22. Unblocks three
+      things that were all waiting on it: the Apple Team ID (→ universal links,
+      [docs/LAUNCH.md](docs/LAUNCH.md) step 2), the APNs push key (step 3), and
+      the first TestFlight build for Group Zero editions 3–4 (step 8).
+- [ ] **[owner] Paste the Apple Team ID into the universal-link files** — replaces
+      the literal `TEAMID` in `web/.well-known/apple-app-site-association` and adds
+      `associatedDomains` to `app.json`. Until then every edition email's CTA opens
+      Safari instead of the app. Cheapest of the three unblocked items, and the only
+      one that fixes something already in front of users.
+      [docs/LAUNCH.md](docs/LAUNCH.md) step 2
 - [ ] **[owner] Group Zero** — four consecutive editions across Groups A, B and the
       family Groups, before submitting anything.
       [docs/POSITIONING.md](docs/POSITIONING.md) §6
@@ -47,9 +54,15 @@ POSITIONING §8 is the authoritative sequence. The short version:
 - [ ] **[owner] Sentry DSN** — the code is wired and inert until it's set.
       [docs/LAUNCH.md](docs/LAUNCH.md) step 10
 - [x] **Passwordless (email OTP) sign-in** — landed 2026-09-16; the default for
-      both sign-in and sign-up. **[owner] still needed:** put `{{ .Token }}` in
-      the Magic Link email template or no code is ever sent
-      ([docs/LAUNCH.md](docs/LAUNCH.md) step 5).
+      both sign-in and sign-up. The Magic Link template carrying `{{ .Token }}`
+      was pasted into the dashboard 2026-09-22, so codes now send.
+- [ ] **[owner] Paste `supabase/templates/confirm-signup.html` into the "Confirm
+      signup" dashboard template** — **there are two templates, not one.** Tested
+      2026-09-22: sign-up with a fresh address still arrived as the stock "Follow
+      this link to confirm your user", because only Magic Link had been fixed.
+      Sign-up is nearly all of Group Zero, and the signup screen has no way to
+      receive a link. Then re-verify both paths.
+      [docs/LAUNCH.md](docs/LAUNCH.md) step 5
 - [x] **Auth email onto Resend SMTP** — done 2026-09-22. Auth email (the sign-in
       code, password reset) ran on Supabase's built-in sender, which is a testing
       facility with a low per-hour cap; edition email was always on the Resend
