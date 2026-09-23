@@ -246,6 +246,30 @@ export const signOut = async (userId?: string | null) => {
   }
 };
 
+/**
+ * `functions.invoke` rejects with only "Edge Function returned a non-2xx status
+ * code" — the function's own JSON body hangs off `error.context` as a Response,
+ * and that body is the part that says which branch failed. Clone before reading
+ * so the caller's copy stays unconsumed.
+ *
+ * Note the delete-account function returns the same "Failed to delete account"
+ * for both of its 500s (the prepare RPC and the admin delete), so this narrows
+ * to a branch but not past it — the dashboard's function logs tell those two
+ * apart. See docs/LAUNCH.md.
+ */
+const describeFunctionError = async (error: unknown) => {
+  const context = (error as { context?: unknown })?.context;
+  if (!(context instanceof Response)) {
+    return null;
+  }
+
+  try {
+    return `${context.status} ${await context.clone().text()}`;
+  } catch {
+    return `${context.status} <body unreadable>`;
+  }
+};
+
 export const deleteAccount = async (userId?: string | null) => {
   // `functions.invoke` attaches the session JWT automatically; passing a
   // manual Authorization header collides with the SDK's own.
@@ -254,6 +278,9 @@ export const deleteAccount = async (userId?: string | null) => {
   });
 
   if (error) {
+    if (__DEV__) {
+      console.error('delete-account failed:', (await describeFunctionError(error)) ?? error);
+    }
     throw error;
   }
 
