@@ -39,8 +39,11 @@ POSITIONING §8 is the authoritative sequence. The short version:
       the literal `TEAMID` in `web/.well-known/apple-app-site-association` and adds
       `associatedDomains` to `app.json`. Until then every edition email's CTA opens
       Safari instead of the app. Cheapest of the three unblocked items, and the only
-      one that fixes something already in front of users.
-      [docs/LAUNCH.md](docs/LAUNCH.md) step 2
+      one that fixes something already in front of users. **Confirm the bundle ID
+      at the same time** — it is half of the AASA appID, and it locks for good on
+      the first TestFlight upload, not at submission. (`WEB_BASE_URL`, the server
+      half of this fix, was moved from the apex to `www` 2026-09-22.)
+      [docs/LAUNCH.md](docs/LAUNCH.md) steps 2 and 7
 - [ ] **[owner] Group Zero** — four consecutive editions across Groups A, B and the
       family Groups, before submitting anything.
       [docs/POSITIONING.md](docs/POSITIONING.md) §6
@@ -51,7 +54,9 @@ POSITIONING §8 is the authoritative sequence. The short version:
       [docs/POSITIONING.md](docs/POSITIONING.md) §5
 - [x] **Friends-first copy pass** — landed 2026-09-16.
       [docs/POSITIONING.md](docs/POSITIONING.md) §2
-- [ ] **[owner] Sentry DSN** — the code is wired and inert until it's set.
+- [ ] **[owner] Sentry DSN** — the code is wired and inert until it's set. It goes
+      in the **EAS environment**, not `.env.local`: that file is gitignored, so an
+      EAS build never sees it and the TestFlight build would ship with Sentry off.
       [docs/LAUNCH.md](docs/LAUNCH.md) step 10
 - [x] **Passwordless (email OTP) sign-in** — landed 2026-09-16; the default for
       both sign-in and sign-up. The Magic Link template carrying `{{ .Token }}`

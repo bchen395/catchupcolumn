@@ -19,7 +19,8 @@ blockquote is an owner decision/input.
 | Content rating target | 4+ (iOS) / Everyone, with user-generated content flag |
 | Price | Free |
 
-> Confirm the bundle ID is final before first submission — it is immutable afterward.
+> Confirm the bundle ID is final before the first TestFlight build — it locks when
+> the first build is uploaded, not at submission. See `LAUNCH.md` step 7.
 
 ## 2. Short pitch
 

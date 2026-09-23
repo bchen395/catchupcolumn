@@ -65,14 +65,18 @@ touches a device:
       > change. That timestamp is a red herring — the deployed source does contain the
       > `prepare_account_deletion` call (verified by `supabase functions download`).
       > Don't redeploy on the strength of the timestamp alone.
-- [ ] Function secrets present: `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`,
-      `WEB_BASE_URL` *(2026-08-04: all set ✅)*
-- [ ] `WEB_BASE_URL` is the **`www`** host — values are hashed in `secrets list`, so
-      set it rather than trying to read it:
-      `npx supabase secrets set WEB_BASE_URL='https://www.catchupcolumn.com'`
+- [x] Function secrets present: `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`,
+      `WEB_BASE_URL` *(2026-08-04: all set ✅; re-checked 2026-09-22)*
+- [x] `WEB_BASE_URL` is the **`www`** host *(set 2026-09-22 — it had been the
+      apex, which universal links can't claim)*. Values are hashed in
+      `secrets list`, but the digest is the SHA-256 of the raw value, so compare
+      rather than re-set blind — [LAUNCH.md](./LAUNCH.md) step 2 has the commands.
 - [ ] Resend **sending domain is verified**, and `EMAIL_FROM` uses it (not
-      `onboarding@resend.dev`)
-- [ ] `compile-editions` cron is actually firing. **A `succeeded` row in
+      `onboarding@resend.dev`) — the `EMAIL_FROM` half ✅ *(digest-verified
+      2026-09-22: `Catch Up Column <hello@catchupcolumn.com>`)*; the domain
+      status is still unconfirmed
+- [x] `compile-editions` cron is actually firing *(verified end to end
+      2026-09-22 — `200`s in `net._http_response` on every tick)*. **A `succeeded` row in
       `cron.job_run_details` does not prove this** — pg_net is async, so the job
       logs healthy even when the POST goes nowhere. Run the four queries in
       [LAUNCH.md → Verifying the compile-editions cron](./LAUNCH.md#verifying-the-compile-editions-cron);
@@ -152,7 +156,9 @@ Authentication:
       service account (Android). Without these, production push silently never
       registers. They're normally created during the first build if you skip ahead.
 - [ ] EAS env vars present: `npx eas-cli env:list production` — the app throws at
-      launch without `EXPO_PUBLIC_SUPABASE_URL` / `_ANON_KEY` *(2026-08-04: set ✅)*
+      launch without `EXPO_PUBLIC_SUPABASE_URL` / `_ANON_KEY` *(2026-08-04: set ✅)*,
+      and needs **`EXPO_PUBLIC_SENTRY_DSN`** here too — `.env.local` is gitignored
+      and never reaches an EAS build ([LAUNCH.md](./LAUNCH.md) step 10)
 - [ ] `npx eas-cli build --platform all --profile production`
 - [ ] **Install the signed binary** and confirm, on a real device — none of this is
       exercised by Expo Go:
@@ -204,8 +210,9 @@ Using the TestFlight / internal-testing build, with two accounts:
 - [x] Apple Developer Program ($99/yr) enrolled *(2026-09-22)*
 - [ ] Play Console ($25 one-time) enrolled — Android is deferred, so this is only
       needed if that changes
-- [ ] Bundle ID `com.catchupcolumn.app` confirmed final — **immutable after first
-      submission**
+- [ ] Bundle ID `com.catchupcolumn.app` confirmed final — **immutable after the
+      first build upload**, which is the Group Zero TestFlight build, not
+      submission. Decide it before that build ([LAUNCH.md](./LAUNCH.md) step 7)
 - [ ] App records created in both consoles
 - [ ] Screenshots captured: iPhone 6.9" required (Home, edition front page, composer,
       group) + Android phone. No iPad shots (iPad support is off).

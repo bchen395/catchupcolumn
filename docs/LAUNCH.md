@@ -42,25 +42,31 @@ actionable before and all of which are now:
    a literal `TEAMID`. Until that is replaced and `associatedDomains` is added to
    `app.json`, every edition email's primary CTA lands in Safari instead of
    handing off to the app. This is the cheapest of the three and the only one
-   that changes something already in front of users.
+   that changes something already in front of users. (The other half —
+   `WEB_BASE_URL` pointing at the apex, which universal links can't claim — was
+   fixed 2026-09-22; step 2.)
 2. **The APNs push key (step 3).** EAS creates it interactively on the first
    `eas build` / `eas credentials` run. Production push doesn't register without
    it, which also gates POSITIONING §3's pre-publish nudge, since the nudge is
    push-only.
 3. **The first TestFlight build (step 8).** What Group Zero's editions 3–4 need —
    Expo Go dropped remote push in SDK 53 — and the first release build this
-   project has ever produced. Budget for it failing the first time.
+   project has ever produced. Budget for it failing the first time. It is also
+   the upload that **permanently locks the bundle ID** (step 7), and the build
+   the Sentry DSN has to be baked into (step 10) — settle both before it.
 
 **Still open and independent of Apple:**
 
-4. **Resend** (step 4) — DNS is correctly provisioned; confirm Resend flipped the
-   domain to `verified`, re-set `EMAIL_FROM`, and add the missing DMARC record.
-5. **Confirm the `compile-editions` cron is firing** — see
+4. **Resend** (step 4) — DNS is correctly provisioned and `EMAIL_FROM` is
+   verified correct; confirm Resend flipped the domain to `verified`, and add
+   the missing DMARC record.
+5. ✅ **The `compile-editions` cron is firing** — verified end to end
+   2026-09-22; see
    [Verifying the compile-editions cron](#verifying-the-compile-editions-cron).
-   If it isn't, weekly compilation silently never runs and the core feature is
-   dead. **Do this before Group Zero, not before submission.**
-6. **Sentry DSN** (step 11) — the code is wired and inert until it's set, and
-   Group Zero is exactly when crash reports start mattering.
+6. **Sentry DSN** (step 10) — the code is wired and inert until it's set, and
+   Group Zero is exactly when crash reports start mattering. It goes in the
+   **EAS environment, not `.env.local`**, or the TestFlight build ships with
+   Sentry silently off.
 
 **Deferred by choice:** the illustration rework (step 6b) and store screenshots
 (step 7). Screenshots freeze the final look, and Group Zero produces real
@@ -142,11 +148,20 @@ curl -s -o /dev/null -w '%{http_code}\n' https://www.catchupcolumn.com/edition/0
 # → 200. A 404 means the rewrite is broken and every edition email's CTA is dead.
 ```
 
-☐ **Confirm the `WEB_BASE_URL` secret points at `www`** (the value is hashed in
-`secrets list`, so it can't be read back):
+✅ **`WEB_BASE_URL` points at `www`** — set 2026-09-22. It had been the **apex**
+(`https://catchupcolumn.com`, since 2026-07-11), overriding the code's `www`
+default, so every edition email linked to a host that 308s to `www`. Browsers
+follow that; universal links don't — the app can only claim `www` (below), so a
+tap on an apex link opens Safari however the Team ID is set.
+
+**Hashed secrets can still be checked.** `secrets list` can't show a value, but
+the digest it prints is the SHA-256 of the raw string, so compare instead of
+re-setting blind:
 
 ```bash
-npx supabase secrets set WEB_BASE_URL='https://www.catchupcolumn.com'
+npx supabase secrets list                                  # note WEB_BASE_URL's digest
+printf '%s' 'https://www.catchupcolumn.com' | shasum -a 256  # → 2539b7ec69c3…
+# To re-set: npx supabase secrets set WEB_BASE_URL='https://www.catchupcolumn.com'
 ```
 
 ☐ **Universal links — unblocked as of the 2026-09-22 Apple enrollment.** They stay
@@ -161,7 +176,9 @@ still waits on a signed Android build, which is deferred. iOS can go alone —
 the two files are independent. Until this lands, every edition email's "read the
 edition" button opens Safari rather than the app, which is the difference between
 the email working and half-working (`bugs.md` top-priority #5). Re-deploy Vercel
-after editing `.well-known/`, and re-run the permalink curl above.
+after editing `.well-known/`, and re-run the permalink curl above. The AASA appID
+is `<TeamID>.com.catchupcolumn.app`, so settle the bundle ID (step 7) at the same
+time.
 
 ## 3. EAS project setup **[owner]** — ✅ done; APNs key now unblocked (2026-09-22)
 
@@ -187,7 +204,7 @@ after editing `.well-known/`, and re-run the permalink curl above.
 linked, an unsigned iOS *simulator* build already works today if you want to smoke-test
 the binary before enrolling (see step 6b).
 
-## 4. Email deliverability — Resend **[owner]** — DNS verified, three checks left
+## 4. Email deliverability — Resend **[owner]** — DNS verified, two checks left
 
 **DNS is correctly provisioned** (checked 2026-08-22). The records match Resend's
 standard layout for the **root** domain `catchupcolumn.com`:
@@ -220,8 +237,13 @@ curl -s https://api.resend.com/domains -H "Authorization: Bearer $RESEND_API_KEY
 # look for "status": "verified" on catchupcolumn.com
 ```
 
-☐ **Re-set `EMAIL_FROM`.** The secret is hashed and can't be read back, and if it is
-unset, `_shared/edition-dispatch.ts` silently falls back to `onboarding@resend.dev`:
+The editions already marked emailed don't prove it: `mark_edition_emailed` runs
+after the first attempt even if every recipient failed (`bugs.md` M1).
+
+✅ **`EMAIL_FROM` is set correctly** — verified 2026-09-22 by digest (step 2 shows
+how): it matches `Catch Up Column <hello@catchupcolumn.com>` exactly, and has
+since 2026-07-17. If it were ever unset, `_shared/edition-dispatch.ts` would
+silently fall back to `onboarding@resend.dev`. To re-set:
 
 ```bash
 npx supabase secrets set EMAIL_FROM='Catch Up Column <hello@catchupcolumn.com>'
@@ -464,8 +486,12 @@ because screenshots freeze the final look and Group Zero will produce better one
   account under Membership details. Two places want it: step 2's
   `web/.well-known/apple-app-site-association` (replacing the literal `TEAMID`)
   and `app.json`'s `associatedDomains`. Nothing else in this step is blocked on it.
-- ☐ **[owner] Confirm the bundle ID `com.catchupcolumn.app` is final** before the
-  first submission — it is **immutable afterwards**.
+- ☐ **[owner] Confirm the bundle ID `com.catchupcolumn.app` is final — before
+  the first TestFlight build, not the first submission.** It locks when the
+  first build is *uploaded*: that binds it to the App Store Connect app record
+  for good, and changing it afterwards means a new app record. The Group Zero
+  TestFlight build (step 8) is that upload. It is also half of the AASA appID
+  (`<TeamID>.com.catchupcolumn.app`), so decide it with the Team ID paste above.
 - ⏸ Create the app record in App Store Connect (after Group Zero).
 - ⏸ **Screenshots — capture after 6b:** iPhone 6.9" required (Home, an edition front
   page, the composer, a group). No iPad shots needed (iPad support is off).
@@ -487,7 +513,9 @@ first try.
 
 iOS only. Deferred until Group Zero's four editions are in (POSITIONING §8) —
 not until 6b lands; a TestFlight build for Group Zero comes first and needs only
-the enrollment.
+the enrollment — but settle two things first, because that build fixes them in
+place: the bundle ID locks on its upload (step 7), and the Sentry DSN is baked
+in, so it must already be in the EAS environment (step 10).
 
 ```bash
 npx eas-cli build --platform ios --profile production
@@ -539,17 +567,30 @@ matter; 4–5 make the traces readable.
 **Create Project** → platform **React Native** → name it `catch-up-column`.
 Alert frequency: "on every new issue" is right at this scale; you want the email.
 
-**2. Copy the DSN.** Shown on the setup screen, and afterwards under
+**2. Put the DSN in the EAS environment — not only `.env.local`.** It's shown on
+the setup screen, and afterwards under
 *Settings → Projects → catch-up-column → Client Keys (DSN)*. It looks like
 `https://<hash>@o<org>.ingest.sentry.io/<project>`. The DSN is not a secret —
 it's compiled into the app binary and only allows *writing* events — so
-`EXPO_PUBLIC_` is the correct prefix and committing it would be harmless. It's
-in `.env.local` (gitignored) purely to keep environments separable.
+`EXPO_PUBLIC_` is the correct prefix and committing it would be harmless.
+
+**`.env.local` does not reach an EAS build.** It is gitignored (`.env*.local`)
+and the repo has no `.easignore`, so EAS never uploads it — and `EXPO_PUBLIC_*`
+values are inlined when the bundle is built. A DSN that lives only in
+`.env.local` produces a TestFlight build with Sentry silently off, which is the
+exact failure this step exists to prevent. Set it where the Supabase variables
+already live (step 3), in both `production` and `preview` so it doesn't matter
+which one a given build profile reads — `eas.json` doesn't pin an `environment`
+on any profile.
 
 ```bash
-# .env.local
-EXPO_PUBLIC_SENTRY_DSN=https://…@o0.ingest.sentry.io/0
+npx eas-cli env:set --name EXPO_PUBLIC_SENTRY_DSN --value 'https://…@o0.ingest.sentry.io/0' \
+  --visibility plaintext --environment production --environment preview
+npx eas-cli env:list production    # confirm it's there, next to EXPO_PUBLIC_SUPABASE_*
 ```
+
+Put `EXPO_PUBLIC_SENTRY_DSN=…` in `.env.local` as well only if you want *local*
+release builds to report.
 
 **3. Verify it reports.** `Sentry.init` is deliberately disabled in dev
 (`enabled: !__DEV__`), so a simulator run will *not* send anything — this is the
@@ -638,6 +679,16 @@ gate is the cron, because it fails silently and Group Zero depends on it. That's
 the next section.
 
 ## Verifying the compile-editions cron
+
+✅ **Last verified end to end 2026-09-22.** The job is active on `*/15 * * * *`,
+and `net._http_response` shows a `200` carrying the function's JSON summary on
+every tick — so both Vault secrets are present and correct. The compile path is
+proven too: the 2026-08-16 edition was compiled at exactly its Group's Sunday
+09:00 ET slot (13:00:03 UTC) and emailed six seconds later. Re-run after any
+change to Vault, `CRON_SECRET`, or the project URL.
+
+Queries 1, 3 and 4 run without Docker via `npx supabase db query --linked "<SQL>"`.
+Skip query 2 unless 4 fails — it prints the secrets in cleartext.
 
 ⚠️ **`cron.job_run_details` showing `succeeded` does NOT mean the cron worked.** The
 job body is a `select net.http_post(...)`, and pg_net is *asynchronous* — it queues the
