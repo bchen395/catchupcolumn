@@ -246,6 +246,54 @@ export const signOut = async (userId?: string | null) => {
   }
 };
 
+/**
+ * `functions.invoke` rejects with only "Edge Function returned a non-2xx status
+ * code" — the function's own JSON body hangs off `error.context` as a Response,
+ * and that body is the part that says which branch failed. Clone before reading
+ * so the caller's copy stays unconsumed.
+ *
+ * Note the delete-account function returns the same "Failed to delete account"
+ * for both of its 500s (the prepare RPC and the admin delete), so this narrows
+ * to a branch but not past it — the dashboard's function logs tell those two
+ * apart. See docs/LAUNCH.md.
+ */
+type ResponseLike = {
+  status?: number;
+  clone?: () => ResponseLike;
+  text?: () => Promise<string>;
+  // whatwg-fetch (React Native's polyfill) keeps an already-decoded copy here.
+  _bodyText?: string;
+};
+
+const describeFunctionError = async (error: unknown) => {
+  const context = (error as { context?: unknown })?.context;
+
+  if (!context || typeof context !== 'object') {
+    return `no response attached; error keys: ${Object.keys(error ?? {}).join(', ') || 'none'}`;
+  }
+
+  // Duck-type rather than `instanceof Response`: React Native's fetch polyfill
+  // hands back a Response-shaped object that is not an instance of the global
+  // Response, so narrowing by constructor silently misses every time.
+  const response = context as ResponseLike;
+  const status = response.status ?? '???';
+
+  if (typeof response._bodyText === 'string') {
+    return `${status} ${response._bodyText}`;
+  }
+
+  const readable = typeof response.clone === 'function' ? response.clone() : response;
+  if (typeof readable.text === 'function') {
+    try {
+      return `${status} ${await readable.text()}`;
+    } catch {
+      // fall through to the shape dump below
+    }
+  }
+
+  return `${status} <body unreadable>; context keys: ${Object.keys(response).join(', ')}`;
+};
+
 export const deleteAccount = async (userId?: string | null) => {
   // `functions.invoke` attaches the session JWT automatically; passing a
   // manual Authorization header collides with the SDK's own.
@@ -254,6 +302,9 @@ export const deleteAccount = async (userId?: string | null) => {
   });
 
   if (error) {
+    if (__DEV__) {
+      console.error('delete-account failed:', await describeFunctionError(error), error);
+    }
     throw error;
   }
 
