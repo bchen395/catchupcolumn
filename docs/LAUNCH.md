@@ -254,8 +254,8 @@ same call and the same template, and the stock template contains
 hand back to the app until universal links are configured (step 2). The 6-digit
 code needs none of that.
 
-☐ **Paste `supabase/templates/confirm-signup.html` into the "Confirm signup"
-template.** **There are two templates, not one** — confirmed by testing on
+✅ **`confirm-signup.html` is in the "Confirm signup" template** (pasted
+2026-09-22). **There are two templates, not one** — confirmed by testing on
 2026-09-22, when sign-up with a fresh address still arrived as the stock
 *"Confirm your signup / Follow this link to confirm your user"* even though Magic
 Link had already been fixed.
@@ -266,43 +266,52 @@ templates:
 | Entry point | `lib/auth.ts` | Template |
 | --- | --- | --- |
 | Sign in, existing account | `sendEmailCode(…, { allowNewUser: false })` | **Magic Link** — ✅ done |
-| Sign up, new address | `sendEmailCode(…, { allowNewUser: true })` | **Confirm signup** — ☐ |
+| Sign up, new address | `sendEmailCode(…, { allowNewUser: true })` | **Confirm signup** — ✅ done |
 
 Fixing only one leaves the other mailing a dead link, and the half that breaks is
 **sign-up** — nearly all of Group Zero. The app's signup screen asks for six
 digits and has no way to receive a link, so the person is simply stuck.
 
-☐ **Set the email OTP length to 6.** Dashboard → Authentication → the email
-provider's **OTP Length**. Observed sending **8** digits on 2026-09-22, which
+✅ **Email OTP length set to 6** (2026-09-22). Dashboard → Authentication → the
+email provider's **OTP Length**. It had been sending **8** digits, which
 does not just look wrong — it makes sign-in *impossible*:
 `hooks/use-email-code.ts` hard-codes `CODE_LENGTH = 6`, the input carries
 `maxLength={6}`, and `setCode` slices to 6. An 8-digit code is silently truncated
 as the person types, then rejected. There is no error that explains it.
 
-**6 is the number to standardise on**, not 8: it matches `config.toml`'s
+**6 is the number to standardize on**, not 8: it matches `config.toml`'s
 `otp_length = 6` for local dev, every piece of UI copy derives from
 `CODE_LENGTH`, and fewer digits is the accessible choice for the audience the
 floor exists for. Changing the dashboard is one field; changing the app is a
-release.
+release. **If the app ever wants a different length, `CODE_LENGTH` and this
+setting have to move together** — they are two halves of one number.
 
-☐ **Set both templates' subject lines.** A separate dashboard field the repo
-files do not cover, and it still holds Supabase's defaults — the code email
-arrived subject-lined *"Your Magic Link"* on 2026-09-22 while its body said
-"here is your code." Use the same plain subject on both, e.g. **"Your Catch Up
-Column code"**. Both templates carry a hidden preheader that already surfaces the
-code in the inbox preview line.
+✅ **Both templates' subject lines set** (2026-09-22). A separate dashboard field
+the repo files do not cover. They had held Supabase's defaults — the code email
+arrived subject-lined *"Your Magic Link"* over a body reading "here is your
+code", which is most of why the implementation looked like a mix of magic links
+and codes. It is not: the app sends codes only, and "Magic Link" is merely
+Supabase's name for the template slot. Both templates carry a hidden preheader
+that surfaces the code in the inbox preview line.
 
-☐ **Re-verify both paths after pasting.** An existing account *and* an address
-that has genuinely never been used — note that a previous failed test **creates
-the user**, so re-running with the same address exercises the sign-in path, not
-sign-up. Use a fresh alias. Six digits on both, no button on either.
+☐ **Verify sign-up with a never-used address — the one thing in step 5 still
+open.** Sign-in was verified working 2026-09-22 (existing account, six digits,
+no button). **Sign-up has not been retested since the template and OTP-length
+fixes landed**, and it is the half that was broken.
+
+Note a previous failed attempt **creates the user** — GoTrue makes the row when
+it sends that first mail, and `on_auth_user_created` mirrors it into
+`public.users` — so re-running with the same address exercises sign-in, not
+sign-up. Use a fresh `+alias`. Group Zero is almost entirely first-time
+sign-ups, so this is the half that matters most.
 
 > **Don't "fix" this by turning email confirmation off instead.** Fixing the
 > template is idempotent and holds regardless of that setting; flipping a setting
 > to dodge a template is the kind of thing that silently reverts and takes
 > sign-up with it.
 
-☐ **Email confirmation can now be left off.** The code flow *is* confirmation —
+✅ **Email confirmation left off** — the decision in the checked list above. The
+code flow *is* confirmation —
 nobody completes sign-up without receiving mail at that address — and there is no
 longer a password-signup path that could create an unverified account. This
 closes the open question in `bugs.md` D2.

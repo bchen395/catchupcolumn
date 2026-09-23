@@ -56,13 +56,24 @@ POSITIONING §8 is the authoritative sequence. The short version:
 - [x] **Passwordless (email OTP) sign-in** — landed 2026-09-16; the default for
       both sign-in and sign-up. The Magic Link template carrying `{{ .Token }}`
       was pasted into the dashboard 2026-09-22, so codes now send.
-- [ ] **[owner] Paste `supabase/templates/confirm-signup.html` into the "Confirm
-      signup" dashboard template** — **there are two templates, not one.** Tested
-      2026-09-22: sign-up with a fresh address still arrived as the stock "Follow
-      this link to confirm your user", because only Magic Link had been fixed.
-      Sign-up is nearly all of Group Zero, and the signup screen has no way to
-      receive a link. Then re-verify both paths.
+- [x] **Email sign-in made to actually work** — 2026-09-22, three dashboard fixes,
+      not one: `confirm-signup.html` pasted into the **Confirm signup** template
+      (there are *two* templates — sign-in renders from Magic Link, sign-up from
+      Confirm signup), OTP length corrected from 8 to **6** (the app hard-codes
+      `CODE_LENGTH = 6` and silently truncates, so an 8-digit code could not be
+      entered at all), and a plain subject line set on both.
       [docs/LAUNCH.md](docs/LAUNCH.md) step 5
+- [ ] **[owner] Verify sign-up with a never-used email address** — sign-in is
+      verified; **sign-up is not**, and it is the half that was broken. A prior
+      failed attempt creates the user, so reusing that address tests sign-in
+      instead — use a fresh `+alias`. Group Zero is almost entirely first-time
+      sign-ups. [docs/LAUNCH.md](docs/LAUNCH.md) step 5
+- [ ] **[owner] Verify account deletion completes** — the fix for Supabase's new
+      `storage.protect_delete` trigger is live in production (migration
+      `20260923003208`, applied 2026-09-22), but no delete has ever succeeded
+      against the real project. Exercise the moderator-removes-a-member path too:
+      the same trigger broke it whenever that member had draft posts, and it had
+      never been tested. `docs/PRESUBMISSION_CHECKLIST.md` Gate 7
 - [x] **Auth email onto Resend SMTP** — done 2026-09-22. Auth email (the sign-in
       code, password reset) ran on Supabase's built-in sender, which is a testing
       facility with a low per-hour cap; edition email was always on the Resend
