@@ -251,7 +251,7 @@ npx supabase secrets set EMAIL_FROM='Catch Up Column <hello@catchupcolumn.com>'
 
 (No function redeploy needed — secrets are read at runtime.)
 
-## 5. Supabase Auth dashboard settings **[owner]** — ✅ all set; one thing left to *verify* (2026-09-22)
+## 5. Supabase Auth dashboard settings **[owner]** — ✅ all set and verified (2026-09-22)
 
 These are **not** in `config.toml` (that governs local dev only) — they were set in the
 Supabase dashboard → Authentication. `config.toml` still shows the old local-dev values
@@ -316,16 +316,20 @@ and codes. It is not: the app sends codes only, and "Magic Link" is merely
 Supabase's name for the template slot. Both templates carry a hidden preheader
 that surfaces the code in the inbox preview line.
 
-☐ **Verify sign-up with a never-used address — the one thing in step 5 still
-open.** Sign-in was verified working 2026-09-22 (existing account, six digits,
-no button). **Sign-up has not been retested since the template and OTP-length
-fixes landed**, and it is the half that was broken.
+✅ **Sign-up verified with a never-used address** (2026-09-22) — the last open
+item in step 5. The account was created by the test itself: the only mail
+GoTrue recorded sending it was the sign-up one (`confirmation_sent_at` at the
+instant of creation, `recovery_sent_at` empty, so no sign-in mail), and the code
+verified two minutes later. That rules out both failures this step fixed — the
+stock template carries no code at all, and an 8-digit code can't be typed — and
+onboarding then completed. Sign-in was verified the same day. The test account
+was then removed by the account-deletion test.
 
-Note a previous failed attempt **creates the user** — GoTrue makes the row when
-it sends that first mail, and `on_auth_user_created` mirrors it into
-`public.users` — so re-running with the same address exercises sign-in, not
-sign-up. Use a fresh `+alias`. Group Zero is almost entirely first-time
-sign-ups, so this is the half that matters most.
+For any re-test: a previous failed attempt **creates the user** — GoTrue makes
+the row when it sends that first mail, and `on_auth_user_created` mirrors it
+into `public.users` — so re-running with the same address exercises sign-in, not
+sign-up. Use a fresh address (a `+alias` is cheapest). The two timestamps above
+tell you afterwards which path actually ran.
 
 > **Don't "fix" this by turning email confirmation off instead.** Fixing the
 > template is idempotent and holds regardless of that setting; flipping a setting

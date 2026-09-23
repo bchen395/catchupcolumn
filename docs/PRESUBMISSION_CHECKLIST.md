@@ -105,10 +105,10 @@ Authentication:
       input is capped at 6 and silently truncates. The two have to move together.
 - [x] **Both templates have a plain subject line** *(set 2026-09-22)*, not
       Supabase's default "Your Magic Link" on a body that says "here is your code"
-- [ ] **Code email verified on both entry points.** Sign-in ✅ 2026-09-22;
-      **sign-up still unverified** since the fixes landed. Use a never-used
-      address — a prior failed test creates the user, so reuse tests sign-in.
-      Six digits on both, no button on either.
+- [x] **Code email verified on both entry points** *(both 2026-09-22 — sign-up
+      with a never-used address, confirmed in `auth.users`)*. For a re-test, use
+      a never-used address — a prior failed test creates the user, so reuse tests
+      sign-in. Six digits on both, no button on either.
 - [ ] Minimum password length raised from 6 → 8+ (still applies to the accounts
       that have passwords; new sign-ups no longer create one)
 - [ ] Email confirmation: can stay **off** — the code flow is itself proof of
@@ -188,6 +188,15 @@ pointers are [LAUNCH.md](./LAUNCH.md) step 9. What's left is verification.
 ## Gate 7 — On-device smoke test
 
 Using the TestFlight / internal-testing build, with two accounts:
+
+> **The production side of three of these is already proven** (2026-09-22,
+> from a dev build against the live project, checked with before/after
+> queries): sign-up with a fresh address; a moderator removing a member who had
+> an unpublished post with a photo (membership, post and photo all deleted,
+> nothing else touched); and account deletion (auth user, profile and avatar
+> all gone). Both removal and deletion go through the `storage.protect_delete`
+> fix, which had never succeeded before. The boxes stay open: this gate is
+> about the **release build**, and that still has to be run.
 
 - [ ] Sign up → set name/avatar → create a group → profile loads (validates the
       `users` column-grant change against production)
