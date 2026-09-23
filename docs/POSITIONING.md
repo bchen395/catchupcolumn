@@ -846,6 +846,43 @@ Where the organizers are. Join as a person, months before mentioning the app.
       better? Weekly is the brand and the routine is the stated point — but
       Group Zero is the only way to find out, and the schema already supports
       per-group scheduling.
+- [ ] Should a code-only account be able to attach a password later? Raised
+      2026-09-22 while testing sign-in. Today there is no intended way —
+      `updatePassword` is wired only into `app/(auth)/reset-password.tsx`, and
+      nothing in Profile offers it — but there *is* an unintended one: login →
+      "Use a password instead" → "Forgot password" sends a reset mail without
+      checking whether a password ever existed, so a code-only user can mint one
+      by claiming to have forgotten it.
+      **The outside guidance says offer it.** NN/g: *"we recommend that you offer
+      users the option to later attach a password… Users should not, however, be
+      forced to create a password"*
+      (<https://www.nngroup.com/articles/passwordless-accounts/>). Worth knowing
+      this is often misattributed to OWASP, whose Authentication Cheat Sheet does
+      not address retrofitting a password at all. NIST SP 800-63B-4 (final, July
+      2025) points the other way for anything new — phishing-resistant
+      authenticators as the baseline, synced passkeys recognized at AAL2,
+      passwords supported but modernized legacy.
+      **The argument may not transfer to us.** NN/g's reason is repeat-login
+      speed via browser autofill, and we are a native app with
+      `persistSession: true` + `autoRefreshToken: true` in `expo-secure-store`
+      (`lib/supabase.ts`), so signing in is a once-per-device event and there is
+      no repeat login to speed up. A password would then be a credential used
+      approximately never, phishable and stuffable, on an account that stays
+      email-recoverable either way — plus one more thing to explain to a
+      grandparent, against CLAUDE.md's "simplicity over capability".
+      **Leaning: don't add it**, and if sign-in friction turns out to be real,
+      reach for device biometrics or passkeys rather than a password. But the
+      friction is the part nobody has measured. NN/g's complaints — waiting for
+      the mail, app-switching, spam folders — are real and Group Zero is the
+      first time they meet people who did not build this. Decide after it, on
+      whether anyone actually got stuck. Do not close this on the reasoning
+      alone; the reasoning is why the leaning exists, not evidence.
+      Two loose ends either way: if the answer is "no passwords", that
+      forgot-password path contradicts it and wants gating, and the **Recovery**
+      email template is still Supabase stock — it mails
+      `{{ .ConfirmationURL }}`, which works via the allowlisted
+      `catchupcolumn://` deep link but is the one auth template nobody has looked
+      at (LAUNCH.md step 5 covers the other two).
 - [ ] What does a volume actually cost to print at *our* specs? Everything in
       §5's ladder is uncosted until Lulu's calculator has been run against a real
       trim size and page count. Colour interiors are 3–5x B&W per page, so this
