@@ -257,17 +257,41 @@ export const signOut = async (userId?: string | null) => {
  * to a branch but not past it — the dashboard's function logs tell those two
  * apart. See docs/LAUNCH.md.
  */
+type ResponseLike = {
+  status?: number;
+  clone?: () => ResponseLike;
+  text?: () => Promise<string>;
+  // whatwg-fetch (React Native's polyfill) keeps an already-decoded copy here.
+  _bodyText?: string;
+};
+
 const describeFunctionError = async (error: unknown) => {
   const context = (error as { context?: unknown })?.context;
-  if (!(context instanceof Response)) {
-    return null;
+
+  if (!context || typeof context !== 'object') {
+    return `no response attached; error keys: ${Object.keys(error ?? {}).join(', ') || 'none'}`;
   }
 
-  try {
-    return `${context.status} ${await context.clone().text()}`;
-  } catch {
-    return `${context.status} <body unreadable>`;
+  // Duck-type rather than `instanceof Response`: React Native's fetch polyfill
+  // hands back a Response-shaped object that is not an instance of the global
+  // Response, so narrowing by constructor silently misses every time.
+  const response = context as ResponseLike;
+  const status = response.status ?? '???';
+
+  if (typeof response._bodyText === 'string') {
+    return `${status} ${response._bodyText}`;
   }
+
+  const readable = typeof response.clone === 'function' ? response.clone() : response;
+  if (typeof readable.text === 'function') {
+    try {
+      return `${status} ${await readable.text()}`;
+    } catch {
+      // fall through to the shape dump below
+    }
+  }
+
+  return `${status} <body unreadable>; context keys: ${Object.keys(response).join(', ')}`;
 };
 
 export const deleteAccount = async (userId?: string | null) => {
@@ -279,7 +303,7 @@ export const deleteAccount = async (userId?: string | null) => {
 
   if (error) {
     if (__DEV__) {
-      console.error('delete-account failed:', (await describeFunctionError(error)) ?? error);
+      console.error('delete-account failed:', await describeFunctionError(error), error);
     }
     throw error;
   }
