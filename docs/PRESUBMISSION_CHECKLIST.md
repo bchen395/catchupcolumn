@@ -60,11 +60,11 @@ touches a device:
 
 - [x] `npx supabase migration list --linked` — every local migration shows a `remote`
       counterpart *(2026-09-24: all 30 applied ✅, through `20260923003208`)*
-- [ ] `npx supabase functions list` — all 4 functions `ACTIVE` ✅ *(2026-09-24)* **and
-      the deployed source matches `main`** — ✗ *as of 2026-09-24*: `compile-editions`
-      and `publish-edition-now` are on the 2026-07-11 build and send the v1 edition
-      email. `unsubscribe` and `delete-account` match. Redeploy and re-check with
-      the download-and-diff in [LAUNCH.md → Deploying edge functions](./LAUNCH.md#deploying-edge-functions).
+- [x] `npx supabase functions list` — all 4 functions `ACTIVE` **and the deployed
+      source matches `main`** *(2026-09-24 ✅ — after redeploying `compile-editions`
+      and `publish-edition-now`, which had been on a 2026-07-11 build sending the v1
+      email)*. Re-check before submission with the download-and-diff in
+      [LAUNCH.md → Deploying edge functions](./LAUNCH.md#deploying-edge-functions).
       > Compare source, not timestamps. `updated_at` is accurate, but it only says
       > *when*; `delete-account`'s once looked older than its last commit because
       > it had been deployed from the working tree before that commit was made.

@@ -30,16 +30,14 @@ against production (read-only) before recording it. The owner merges PRs.
 
 ## Live state (verified 2026-09-24 — re-check before relying on it)
 
-**Working:** cron firing end to end (200s every 15 min); all 30 migrations
-applied; `WEB_BASE_URL` = `www`; `EMAIL_FROM` correct; Vercel site in sync with
+**Working:** the **v2 edition email is live** (functions redeployed from `main`
+2026-09-24 15:46 UTC and verified by diff); cron firing end to end (200s every
+15 min); all 30 migrations applied; `WEB_BASE_URL` = `www`; `EMAIL_FROM` correct; Vercel site in sync with
 `main`; EAS env has the Supabase vars in `production` and `preview`; code
 sign-in, sign-up, moderator removal and account deletion all verified against
 production 2026-09-22 (dev build).
 
 **Wrong right now:**
-- **Production sends the retired v1 edition email.** `compile-editions` and
-  `publish-edition-now` are on the 2026-07-11 build. Merging deploys nothing to
-  Supabase. Fix = one command (first moves, below).
 - Team ID not pasted (AASA still `TEAMID`, no `associatedDomains`) → email CTA
   opens Safari.
 - No Sentry DSN anywhere. No DMARC record. Resend domain status unconfirmed.
@@ -60,7 +58,7 @@ SDK 57 has never run on hardware.
 | When | What | Why it's fixed |
 | --- | --- | --- |
 | **~2026-09-30** | 2–3 family Groups publishing | A family recruited later has too little to print for December (POSITIONING §5) |
-| Before edition 1 | Function redeploy; the read-measurement decision | Otherwise edition 1 is v1-styled and the pass condition is unmeasurable |
+| Before edition 1 | The read-measurement decision | Otherwise the pass condition is unmeasurable (the function redeploy it also needed was done 2026-09-24) |
 | **Group Zero week 3** (~mid-Oct if edition 1 lands ~Oct 4) | First TestFlight build installed | Editions 3–4 require the app; Expo Go has no remote push |
 | Late November | The December test (hand-made volumes, Lulu by hand, Stripe link) | Q4 is 40–60% of gift revenue |
 
@@ -85,16 +83,17 @@ organizer, and 2–3 families. Editions 1–2 accept entries by any channel; 3�
 require the app. Agent support: the operator script (C2), the readout queries
 (C5), and turning each week's facts into dated notes in POSITIONING §6.
 
-**B. Production correctness — agent, owner approves each prod change.**
-Redeploy functions; verify by download-and-diff (LAUNCH → Deploying edge
-functions). Then the owner's dashboard reads (below).
+**B. Production correctness — agent, owner approves each prod change.** The
+function redeploy is done (2026-09-24). What's left is the owner's dashboard
+reads (below), and redeploying after **every** future function change — verify
+each by download-and-diff (LAUNCH → Deploying edge functions).
 
 **C. Dev work ready to hand to subagents** (each in its own worktree; 2, 3 and 5
 can run in parallel today):
 
-1. **Redeploy** — `npx supabase functions deploy compile-editions
-   publish-edition-now --use-api`, outside any Group's publish window. Ask first.
-   Done when the download-and-diff shows no drift.
+1. ~~**Redeploy**~~ — done 2026-09-24 (v18 / v8), verified by diff. Kept as the
+   pattern for the next one: ask first, deploy just after a cron tick, check for
+   live delivery claims, verify by diff and by the next tick's `200`.
 2. **Group Zero operator script** (`scripts/group-zero/`, Deno — 2.9 is
    installed). Replaces POSITIONING §6's dashboard-and-SQL routine and the
    "sign in as them" step, which code sign-in makes awkward. Service-role key
@@ -220,8 +219,8 @@ volumes sell (POSITIONING §9).
 
 1. Re-verify the live-state block (five minutes, all read-only). Anything that
    changed, update here.
-2. Get the owner's OK and **redeploy the two functions**; verify by diff. In
-   parallel, open the `npx expo install --fix` PR so CI goes green again.
+2. Open the `npx expo install --fix` PR so CI goes green again. (The function
+   redeploy that used to be this step was done 2026-09-24.)
 3. Collect in one message: Team ID + bundle-ID yes/no, the Sentry DSN (or "not
    yet"), and the two Group Zero decisions (read measurement, Group B access).
 4. Start C2 (operator script), C3 (local Release build) and C5 (readout queries)
