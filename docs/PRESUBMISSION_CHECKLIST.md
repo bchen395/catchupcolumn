@@ -65,14 +65,18 @@ touches a device:
       > change. That timestamp is a red herring — the deployed source does contain the
       > `prepare_account_deletion` call (verified by `supabase functions download`).
       > Don't redeploy on the strength of the timestamp alone.
-- [ ] Function secrets present: `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`,
-      `WEB_BASE_URL` *(2026-08-04: all set ✅)*
-- [ ] `WEB_BASE_URL` is the **`www`** host — values are hashed in `secrets list`, so
-      set it rather than trying to read it:
-      `npx supabase secrets set WEB_BASE_URL='https://www.catchupcolumn.com'`
+- [x] Function secrets present: `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`,
+      `WEB_BASE_URL` *(2026-08-04: all set ✅; re-checked 2026-09-22)*
+- [x] `WEB_BASE_URL` is the **`www`** host *(set 2026-09-22 — it had been the
+      apex, which universal links can't claim)*. Values are hashed in
+      `secrets list`, but the digest is the SHA-256 of the raw value, so compare
+      rather than re-set blind — [LAUNCH.md](./LAUNCH.md) step 2 has the commands.
 - [ ] Resend **sending domain is verified**, and `EMAIL_FROM` uses it (not
-      `onboarding@resend.dev`)
-- [ ] `compile-editions` cron is actually firing. **A `succeeded` row in
+      `onboarding@resend.dev`) — the `EMAIL_FROM` half ✅ *(digest-verified
+      2026-09-22: `Catch Up Column <hello@catchupcolumn.com>`)*; the domain
+      status is still unconfirmed
+- [x] `compile-editions` cron is actually firing *(verified end to end
+      2026-09-22 — `200`s in `net._http_response` on every tick)*. **A `succeeded` row in
       `cron.job_run_details` does not prove this** — pg_net is async, so the job
       logs healthy even when the POST goes nowhere. Run the four queries in
       [LAUNCH.md → Verifying the compile-editions cron](./LAUNCH.md#verifying-the-compile-editions-cron);
@@ -92,18 +96,19 @@ Authentication:
       `supabase/templates/magic-link.html`)* — without it the code sign-in flow
       silently mails a link instead of a code, and the link cannot hand back to
       the app until universal links exist. See [LAUNCH.md](./LAUNCH.md) step 5.
-- [ ] **Confirm signup template contains `{{ .Token }}`** — paste
-      `supabase/templates/confirm-signup.html`. **Two templates, not one:**
+- [x] **Confirm signup template contains `{{ .Token }}`** *(pasted 2026-09-22 from
+      `supabase/templates/confirm-signup.html`)* — **two templates, not one:**
       sign-in renders from Magic Link, sign-up from Confirm signup. Found the
-      hard way 2026-09-22.
-- [ ] **Email OTP length is 6**, matching `CODE_LENGTH` in
-      `hooks/use-email-code.ts`. Observed at 8 on 2026-09-22, which makes sign-in
-      impossible — the input is capped at 6 and silently truncates.
-- [ ] **Both templates have a plain subject line** set, not Supabase's default
-      "Your Magic Link" on a body that says "here is your code"
-- [ ] **Code email verified on both entry points** — an existing account *and* a
-      never-used email (a prior failed test creates the user, so reuse tests
-      sign-in, not sign-up). Six digits on both, no button on either.
+      hard way.
+- [x] **Email OTP length is 6** *(set 2026-09-22)*, matching `CODE_LENGTH` in
+      `hooks/use-email-code.ts`. It was 8, which makes sign-in impossible — the
+      input is capped at 6 and silently truncates. The two have to move together.
+- [x] **Both templates have a plain subject line** *(set 2026-09-22)*, not
+      Supabase's default "Your Magic Link" on a body that says "here is your code"
+- [x] **Code email verified on both entry points** *(both 2026-09-22 — sign-up
+      with a never-used address, confirmed in `auth.users`)*. For a re-test, use
+      a never-used address — a prior failed test creates the user, so reuse tests
+      sign-in. Six digits on both, no button on either.
 - [ ] Minimum password length raised from 6 → 8+ (still applies to the accounts
       that have passwords; new sign-ups no longer create one)
 - [ ] Email confirmation: can stay **off** — the code flow is itself proof of
@@ -151,7 +156,9 @@ Authentication:
       service account (Android). Without these, production push silently never
       registers. They're normally created during the first build if you skip ahead.
 - [ ] EAS env vars present: `npx eas-cli env:list production` — the app throws at
-      launch without `EXPO_PUBLIC_SUPABASE_URL` / `_ANON_KEY` *(2026-08-04: set ✅)*
+      launch without `EXPO_PUBLIC_SUPABASE_URL` / `_ANON_KEY` *(2026-08-04: set ✅)*,
+      and needs **`EXPO_PUBLIC_SENTRY_DSN`** here too — `.env.local` is gitignored
+      and never reaches an EAS build ([LAUNCH.md](./LAUNCH.md) step 10)
 - [ ] `npx eas-cli build --platform all --profile production`
 - [ ] **Install the signed binary** and confirm, on a real device — none of this is
       exercised by Expo Go:
@@ -182,6 +189,15 @@ pointers are [LAUNCH.md](./LAUNCH.md) step 9. What's left is verification.
 
 Using the TestFlight / internal-testing build, with two accounts:
 
+> **The production side of three of these is already proven** (2026-09-22,
+> from a dev build against the live project, checked with before/after
+> queries): sign-up with a fresh address; a moderator removing a member who had
+> an unpublished post with a photo (membership, post and photo all deleted,
+> nothing else touched); and account deletion (auth user, profile and avatar
+> all gone). Both removal and deletion go through the `storage.protect_delete`
+> fix, which had never succeeded before. The boxes stay open: this gate is
+> about the **release build**, and that still has to be run.
+
 - [ ] Sign up → set name/avatar → create a group → profile loads (validates the
       `users` column-grant change against production)
 - [ ] Second account joins by invite code (exercises the `get_invite_preview*` RPCs —
@@ -203,8 +219,9 @@ Using the TestFlight / internal-testing build, with two accounts:
 - [x] Apple Developer Program ($99/yr) enrolled *(2026-09-22)*
 - [ ] Play Console ($25 one-time) enrolled — Android is deferred, so this is only
       needed if that changes
-- [ ] Bundle ID `com.catchupcolumn.app` confirmed final — **immutable after first
-      submission**
+- [ ] Bundle ID `com.catchupcolumn.app` confirmed final — **immutable after the
+      first build upload**, which is the Group Zero TestFlight build, not
+      submission. Decide it before that build ([LAUNCH.md](./LAUNCH.md) step 7)
 - [ ] App records created in both consoles
 - [ ] Screenshots captured: iPhone 6.9" required (Home, edition front page, composer,
       group) + Android phone. No iPad shots (iPad support is off).

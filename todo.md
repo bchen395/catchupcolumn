@@ -39,8 +39,11 @@ POSITIONING §8 is the authoritative sequence. The short version:
       the literal `TEAMID` in `web/.well-known/apple-app-site-association` and adds
       `associatedDomains` to `app.json`. Until then every edition email's CTA opens
       Safari instead of the app. Cheapest of the three unblocked items, and the only
-      one that fixes something already in front of users.
-      [docs/LAUNCH.md](docs/LAUNCH.md) step 2
+      one that fixes something already in front of users. **Confirm the bundle ID
+      at the same time** — it is half of the AASA appID, and it locks for good on
+      the first TestFlight upload, not at submission. (`WEB_BASE_URL`, the server
+      half of this fix, was moved from the apex to `www` 2026-09-22.)
+      [docs/LAUNCH.md](docs/LAUNCH.md) steps 2 and 7
 - [ ] **[owner] Group Zero** — four consecutive editions across Groups A, B and the
       family Groups, before submitting anything.
       [docs/POSITIONING.md](docs/POSITIONING.md) §6
@@ -51,18 +54,29 @@ POSITIONING §8 is the authoritative sequence. The short version:
       [docs/POSITIONING.md](docs/POSITIONING.md) §5
 - [x] **Friends-first copy pass** — landed 2026-09-16.
       [docs/POSITIONING.md](docs/POSITIONING.md) §2
-- [ ] **[owner] Sentry DSN** — the code is wired and inert until it's set.
+- [ ] **[owner] Sentry DSN** — the code is wired and inert until it's set. It goes
+      in the **EAS environment**, not `.env.local`: that file is gitignored, so an
+      EAS build never sees it and the TestFlight build would ship with Sentry off.
       [docs/LAUNCH.md](docs/LAUNCH.md) step 10
 - [x] **Passwordless (email OTP) sign-in** — landed 2026-09-16; the default for
       both sign-in and sign-up. The Magic Link template carrying `{{ .Token }}`
       was pasted into the dashboard 2026-09-22, so codes now send.
-- [ ] **[owner] Paste `supabase/templates/confirm-signup.html` into the "Confirm
-      signup" dashboard template** — **there are two templates, not one.** Tested
-      2026-09-22: sign-up with a fresh address still arrived as the stock "Follow
-      this link to confirm your user", because only Magic Link had been fixed.
-      Sign-up is nearly all of Group Zero, and the signup screen has no way to
-      receive a link. Then re-verify both paths.
+- [x] **Email sign-in made to actually work** — 2026-09-22, three dashboard fixes,
+      not one: `confirm-signup.html` pasted into the **Confirm signup** template
+      (there are *two* templates — sign-in renders from Magic Link, sign-up from
+      Confirm signup), OTP length corrected from 8 to **6** (the app hard-codes
+      `CODE_LENGTH = 6` and silently truncates, so an 8-digit code could not be
+      entered at all), and a plain subject line set on both.
       [docs/LAUNCH.md](docs/LAUNCH.md) step 5
+- [x] **Sign-up verified with a never-used email address** — 2026-09-22. Sign-in
+      and sign-up both work, and the account came out right in `auth.users`.
+      [docs/LAUNCH.md](docs/LAUNCH.md) step 5
+- [x] **Account deletion and moderator removal verified** — 2026-09-22, against
+      production. Both go through the fix for Supabase's `storage.protect_delete`
+      trigger (migration `20260923003208`), and neither had ever succeeded
+      before. The removal took a member's unpublished post and its photo with it;
+      the deletion left no auth user, profile or avatar. The release-build rerun
+      is still `docs/PRESUBMISSION_CHECKLIST.md` Gate 7
 - [x] **Auth email onto Resend SMTP** — done 2026-09-22. Auth email (the sign-in
       code, password reset) ran on Supabase's built-in sender, which is a testing
       facility with a low per-hour cap; edition email was always on the Resend

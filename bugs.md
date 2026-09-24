@@ -79,10 +79,10 @@ Two corrections to *this document*, which had drifted:
 
 ## Low
 
-### L2. EMAIL_FROM defaults to the Resend sandbox sender
+### ~~L2. EMAIL_FROM defaults to the Resend sandbox sender~~ — RESOLVED 2026-09-22
 - **Where:** `supabase/functions/_shared/edition-dispatch.ts:22`
 - Falls back to `'Catch Up Column <onboarding@resend.dev>'` when the env var is unset. Fine for dev; tanks deliverability in production.
-- **Fix:** set `EMAIL_FROM` to a verified-domain sender before shipping. Already documented in the README deploy steps — this is an ops checklist item, not a code defect.
+- **Production was never on the fallback.** Verified 2026-09-22 by comparing the `secrets list` digest (the SHA-256 of the value) against the expected string: `EMAIL_FROM` is exactly `Catch Up Column <hello@catchupcolumn.com>`, and has been since 2026-07-17. The fallback stays in code for dev. Whether Resend has the domain `verified` is a separate check, still open in `docs/LAUNCH.md` step 4.
 
 ### L3. Auth init still proceeds if profile creation fails twice
 - **Where:** `hooks/use-auth.ts:23`
@@ -168,7 +168,8 @@ this is only the code-side residue.
    Highest-risk spots: the splash screen (moved to the `expo-splash-screen`
    plugin with `enableFullScreenImage_legacy`), the tab bar (now
    `expo-router/js-tabs`), and Reanimated 4.5 animations.
-2. **L2** — set a production `EMAIL_FROM` (verified Resend domain) before launch.
+2. ~~**L2** — set a production `EMAIL_FROM` (verified Resend domain) before
+   launch.~~ **Done** — verified 2026-09-22; it had been set since 2026-07-17.
 3. **M1** — decide whether weekly email needs per-recipient retry, or accept the
    trade-off.
 4. **Auth config (dashboard, not code):** raise minimum password length
@@ -187,6 +188,9 @@ this is only the code-side residue.
    signed Android build, but the two files are independent and Android is
    deferred. This moved from "waiting on Apple" to "waiting on someone pasting
    a string."
+   **The server half is fixed:** the `WEB_BASE_URL` secret pointed at the apex,
+   which 308s to `www` and which universal links can't claim, so the Team ID
+   alone would not have been enough. Set to `www` 2026-09-22.
 
 Everything else is low-risk cleanup that can ride along with normal work.
 
