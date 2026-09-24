@@ -24,14 +24,24 @@ iOS-only unless it says otherwise. Play Console, the FCM service account, and
 
 Project ref: `wvaxfyhihcfilewygtzp` · Bundle ID: `com.catchupcolumn.app`
 
-## Current state (2026-09-22)
+## Current state (2026-09-24)
 
-**Done and verified:** the backend, legal hosting, the Vercel site, the v2 UI
-redesign, the EAS env vars, and UGC moderation (step 9) — that last one was the
-likeliest App Review rejection, and it's closed. **Auth email moved off Supabase's
-built-in sender onto Resend SMTP on 2026-09-22, sending limit 100/hour** (step 5);
-until then the code sign-in flow would have throttled partway through onboarding a
-single Group.
+**⚠️ Do first: production is sending the retired v1 edition email.**
+`compile-editions` and `publish-edition-now` were last deployed 2026-07-11, and
+merging deploys nothing, so the v2 email restyle and dead-push-token pruning
+have never reached production. Group Zero's first edition would go out
+in the old orange-and-polaroid dress. Redeploy before any real Group publishes —
+[Deploying edge functions](#deploying-edge-functions).
+
+**Done and verified:** the backend, legal hosting, the Vercel site (in sync with
+`main`, 2026-09-24), the v2 UI redesign, the EAS env vars (`production` and
+`preview`), and UGC moderation (step 9) — that last one was the likeliest App
+Review rejection, and it's closed. **Auth email moved off Supabase's built-in
+sender onto Resend SMTP on 2026-09-22, sending limit 100/hour** (step 5); until
+then the code sign-in flow would have throttled partway through onboarding a
+single Group. **Sign-up with a fresh address, moderator removal, and account
+deletion were all verified against production on 2026-09-22** (step 5;
+PRESUBMISSION Gate 7 notes what that does and doesn't cover).
 
 **Apple Developer enrollment is done (2026-09-22)** — the long pole with the
 multi-day tail is behind us. Three things it unblocks, none of which were
@@ -66,7 +76,11 @@ actionable before and all of which are now:
 6. **Sentry DSN** (step 10) — the code is wired and inert until it's set, and
    Group Zero is exactly when crash reports start mattering. It goes in the
    **EAS environment, not `.env.local`**, or the TestFlight build ships with
-   Sentry silently off.
+   Sentry silently off. Not set as of 2026-09-24 (`eas env:list` shows only the
+   two Supabase variables in each environment).
+7. **Two Auth rate checks** (step 5) — the per-address interval and Resend's daily
+   cap, which auth and edition email now share. And confirm the minimum password
+   length: step 5 records it as raised, `bugs.md` D2 believed it was still 6.
 
 **Deferred by choice:** the illustration rework (step 6b) and store screenshots
 (step 7). Screenshots freeze the final look, and Group Zero produces real
@@ -95,9 +109,13 @@ text are now ink/inkSoft (AA everywhere) and vermilion is confined to bold
 small-caps kicker/stamp roles (BRAND.md §2). PRs #9, #10.
 
 **2026-08-04 — verification pass against production.** All 27 migrations applied,
-all 4 edge functions deployed and current, EAS production env vars present, all
+all 4 edge functions deployed, EAS production env vars present, all
 four function secrets set, the site live on Vercel with **`www` canonical** (the
-apex 308-redirects). Three things were fixed rather than confirmed:
+apex 308-redirects). *(Corrected 2026-09-24: this entry originally said the
+functions were "deployed and current". They were not — the v2 email restyle of
+2026-07-21 had already landed and was never deployed. `updated_at` was telling
+the truth; see [Deploying edge functions](#deploying-edge-functions).)* Three
+things were fixed rather than confirmed:
 
 - **Edition permalinks were 404ing in production** — `vercel.json` rewrote
   `/edition/:path*` to `/edition/index.html`, but under `cleanUrls: true` that
@@ -121,6 +139,20 @@ and the Supabase Auth dashboard settings were set (step 5).
 **2026-09-10/14 — SDK 57, CI, and Group Zero tooling.** Expo SDK 54 → 57,
 `eslint-config-expo` wired, CI added (`.github/workflows/ci.yml`), then Sentry,
 `expo-updates`, and the print-resolution fix (POSITIONING §11).
+
+**2026-09-16 — email code sign-in** became the default for sign-in and sign-up
+(PR #27), and the friends-first copy pass landed.
+
+**2026-09-22 — the auth day.** Apple Developer enrollment completed; auth email
+moved onto Resend SMTP; code sign-in made to actually work (two templates, OTP
+length 6, subject lines — step 5); account deletion fixed for Supabase's new
+`storage.protect_delete` trigger (migration `20260923003208`); `WEB_BASE_URL`
+moved from the apex to `www`. Then sign-up, moderator removal and account
+deletion were each verified against production. PRs #28–#32.
+
+**2026-09-24 — function drift found.** Deployed source for `compile-editions`
+and `publish-edition-now` downloaded and diffed against `main`: two months
+behind (above).
 
 ---
 
@@ -185,7 +217,8 @@ time.
 - ✅ **`eas init` done** — `owner` (`bchen395`) + `extra.eas.projectId`
   (`c9be4074-4916-4e94-9276-811bbe8a05dc`) are committed to `app.json`.
 - ✅ **Supabase env vars on EAS** — verified present in the `production` environment
-  (2026-08-04). This was the part that would break the app at launch, and it's done.
+  (2026-08-04), and in `preview` too (re-checked 2026-09-24). This was the part that
+  would break the app at launch, and it's done.
 - ☐ **Push credentials — no longer blocked.** The Apple enrollment landed
   2026-09-22, and the iOS APNs key can only be created from an Apple Developer
   account. EAS creates it interactively during the first `eas build`, so there is
@@ -260,7 +293,9 @@ is not a signal about production.
 
 - ✅ **Redirect URLs:** `catchupcolumn://` and `catchupcolumn://(auth)/reset-password`
   allowlisted, so password-reset deep links work in release builds.
-- ✅ **Minimum password length** raised from 6.
+- ✅ **Minimum password length** raised from 6 — *as recorded 2026-08-22; but
+  `bugs.md` D2 (2026-09-16) believed it was still 6. Confirm the number in the
+  dashboard (Authentication → Providers → Email) and fix whichever doc is wrong.*
 - ✅ **Email confirmation** decision made.
 - ✅ **Custom SMTP → Resend, sending limit 100/hour** (2026-09-22). Auth email no
   longer goes through Supabase's built-in sender. Detail below — it is the one
@@ -551,8 +586,10 @@ also deletes the removed member's *uncompiled* posts so they can't land in
 tomorrow's edition; `prevent_last_moderator_removal` guards the sole-moderator
 case).
 
-☐ **Still to do:** smoke-test both affordances on device, and re-run the Gate 1
-automated checks — this code landed after Gate 1 last passed. Both are tracked in
+☐ **Still to do:** smoke-test both affordances on device. The Gate 1 re-run this
+used to ask for is moot — CI has run Gate 1 on every PR since 2026-09-10 — and
+moderator eject was verified against production on 2026-09-22 (from a dev build).
+The report path and the release-build run are tracked in
 [PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md) Gates 6–7; don't keep a
 second copy of the list here.
 
@@ -678,9 +715,51 @@ Owned by [PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md) **Gate 7** �
 two accounts, a TestFlight build, and eleven checks from signup through account
 deletion. It used to be duplicated here; it isn't any more.
 
-The one item in it that is *also* a live ops concern rather than a submission
-gate is the cron, because it fails silently and Group Zero depends on it. That's
-the next section.
+Two things in it are *also* live ops concerns rather than submission gates,
+because both fail silently and Group Zero depends on both: what code the edge
+functions are actually running, and whether the cron fires. The next two
+sections.
+
+## Deploying edge functions
+
+**Merging deploys nothing.** CI type-checks the functions and renders the email
+fixtures, but it never deploys them (nor pushes migrations); Vercel is the only
+thing that ships on merge. Every change under `supabase/functions/` has to be
+deployed by hand, and a change to `_shared/` has to be deployed to **every
+function that imports it** — today that is `compile-editions` and
+`publish-edition-now` (`_shared/edition-dispatch.ts`, which pulls in the email
+renderer). `unsubscribe` and `delete-account` import nothing shared.
+
+☐ **Redeploy `compile-editions` and `publish-edition-now` from `main`.** Found
+2026-09-24: both were last deployed 2026-07-11, and four later commits to
+`_shared/` never shipped — so production sends the **v1 edition email** (orange
+button, peach wash, Roboto Slab, taped polaroid) and never prunes dead push
+tokens. `config.toml` pins each function's `verify_jwt` to what production
+already has, so a plain deploy keeps the cron's secret-based auth working:
+
+```bash
+npx supabase functions deploy compile-editions publish-edition-now --use-api   # --use-api: no Docker
+```
+
+Do it when no Group is inside its publish window (the cron runs every 15 minutes,
+and a deploy mid-dispatch is the one moment to avoid).
+
+**How to check what production is running.** `functions list`'s `updated_at` is
+accurate, but it can't tell you *what* changed. Download the deployed source into
+a scratch worktree and let git diff it against `main` — read-only for
+production, and it never touches your checkout:
+
+```bash
+git worktree add --detach /tmp/fn-audit main && cd /tmp/fn-audit
+for fn in compile-editions publish-edition-now unsubscribe delete-account; do
+  npx supabase functions download "$fn" --use-api --project-ref wvaxfyhihcfilewygtzp --workdir .
+done
+git status --short supabase/functions    # empty = production matches main
+cd - && git worktree remove --force /tmp/fn-audit
+```
+
+The downloads share one `_shared/` folder, so if the status isn't empty,
+re-download the function you care about on its own before reading the diff.
 
 ## Verifying the compile-editions cron
 

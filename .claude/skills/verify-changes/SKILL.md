@@ -30,7 +30,7 @@ npm run lint               # eslint-config-expo. Must be 0 errors; warnings are 
 ```
 
 - `tsconfig.json` is `strict: true` and **excludes `supabase/functions/**`**. So `npm run typecheck` does **not** check edge functions.
-- For edge functions (Deno), use `deno check supabase/functions/**/*.ts`.
+- For edge functions (Deno), use `find supabase/functions -name '*.ts' -print0 | xargs -0 deno check` (a bare `**/*.ts` glob skips `_shared/` in non-globstar shells).
 - `eslint.config.js` also skips `supabase/functions/**` (Deno's `https://` imports don't resolve under the Node resolver), plus `.expo/**` and `.claude/worktrees/**`.
 - **Warnings are expected and are not a failure.** Three React-Compiler-era rules
   (`react-hooks/refs`, `set-state-in-effect`, `immutability`) are downgraded to
@@ -46,7 +46,7 @@ npm run lint               # eslint-config-expo. Must be 0 errors; warnings are 
 | **UI** (`components/`, `constants/`, `app/` screens) | `npm run typecheck` + `npm run lint` | Run the app (below) and look at the screen. Check the 16px/48px floors and larger system font sizes (see `frontend-design`). |
 | **Data layer** (`lib/`, `types/`) | `npm run typecheck` + `npm run lint` | Run the app and exercise the flow that calls the function (post, join, publish). Watch the Metro console for thrown errors. |
 | **Migrations / RLS / RPC** (`supabase/migrations/`) | — | `npx supabase db push` against a local `supabase start` stack; then call the RPC/flow as a real (non-moderator and moderator) user. Confirm a forbidden action actually fails. |
-| **Edge functions** (`supabase/functions/`) | `deno check …` | `npx supabase start`, `curl` the function; for email check **inbucket** (local mail catcher); for push you hit live Expo. |
+| **Edge functions** (`supabase/functions/`) | `deno check …` | `npx supabase start`, `curl` the function; for email check **inbucket** (local mail catcher); for push you hit live Expo. **Then deploy it** — merging doesn't (see `edge-functions`). |
 
 ## Running the app
 
@@ -74,6 +74,7 @@ npm run start:tunnel # tunnel mode when the device isn't on the LAN
 2. The specific surface exercised in the running app or against the local Supabase stack.
 3. Negative/authorization paths checked when relevant.
 4. Report plainly what you verified and what you did **not** (e.g. "typechecked and ran on web; did not test push on a physical device").
+5. If the change touches `supabase/migrations/` or `supabase/functions/`, say whether it has been **applied/deployed** to production — a merged-but-undeployed backend change is not done. For read-only production checks without Docker, `npx supabase db query --linked "<SQL>"` works.
 
 ## Keep this skill alive (self-maintenance)
 

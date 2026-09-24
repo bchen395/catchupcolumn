@@ -403,8 +403,7 @@ Spec:
   the Volume" button anywhere in the app UI.**
 - **The floor.** If the block ever reads louder than the members' writing above
   it, it is wrong and gets quieter. This is `renderColophon`'s standing rule
-  ("it must never shout over the family" — a comment §2's copy pass should
-  reword to *your people*) extended to the block above it.
+  ("it must never shout over your people") extended to the block above it.
 
 **Build it only after the December test passes.** The manual version is a Stripe
 Payment Link pasted into a personal email, and that is what December uses.
@@ -594,17 +593,16 @@ submit, and this costs nothing to fix.
 remote push support in SDK 53, and the app depends on `expo-notifications`, so
 Group Zero cannot run on Expo Go. Your friends need a real build:
 
-- [ ] **[owner] Start the Apple Developer enrollment this week.** $99/yr, and it
-      is not instant — it can take days, sometimes longer if Apple asks for
-      verification. Enrollment is waiting-time, not working-time, so it costs
-      nothing to start early and blocks everything if you start late.
-      **Unpaused in LAUNCH.md step 7 on 2026-09-16** on the strength of this.
+- [x] **[owner] Apple Developer enrollment — done 2026-09-22.** It was the
+      multi-day wait this bullet warned about; LAUNCH.md step 7.
 - [ ] **TestFlight is the distribution channel**, not EAS internal distribution.
       Internal distribution means collecting eight device UDIDs from eight
       non-technical people; TestFlight is a link and an email address.
 - [ ] Slack in the schedule: the editions 1–2 / 3–4 split below means no one
-      needs the app until **week 3**. That's roughly two weeks of buffer for
-      enrollment and a first build — use it, don't spend it.
+      needs the app until **week 3**. Enrollment is done, so that buffer is now
+      for the first build — the first release build this project has ever made,
+      the first on SDK 57, and the upload that locks the bundle ID (LAUNCH.md
+      steps 7–8). Use it, don't spend it.
 
 **Install friction — ✅ addressed 2026-09-16.** Password sign-in used to be the
 only way in, which is the wrong ask for a grandmother in a family Group and for a
@@ -620,9 +618,9 @@ Three things worth knowing before Group Zero:
   through the same call; a link would have to hand back to the app, which needs
   universal links, which need the Apple Team ID you get at enrollment. The code
   needs none of that and works today.
-- **[owner] One dashboard step, and nothing works without it.** The Magic Link
-  email template must contain `{{ .Token }}` instead of `{{ .ConfirmationURL }}`,
-  or people receive a link. LAUNCH.md step 5.
+- **Both email templates carry the code** — Magic Link (sign-in) and Confirm
+  signup (sign-up), verified against production 2026-09-22 with a never-used
+  address. LAUNCH.md step 5.
 - **It improves "Posting for someone who hasn't installed" below.** You no longer
   have to set or communicate a password for the accounts you create by hand —
   they type their email, get a code, and land with the right byline. That was the
@@ -683,16 +681,22 @@ to read.
 month:
 
 - [ ] For each member who hasn't installed: Supabase dashboard →
-      Authentication → Add user, with **Auto Confirm User** checked and user
-      metadata `{"display_name": "Their Name"}`. The `on_auth_user_created`
-      trigger reads exactly that key
-      (`supabase/migrations/001_initial_schema.sql:240`), so the `public.users`
-      row and therefore the byline come out right with no further work.
+      Authentication → Add user, with **Auto Confirm User** checked and **a
+      password you keep** — with code sign-in you can't receive their code, so
+      the password is how you write as them. Then set the byline:
+      `update public.users set display_name = 'Their Name' where email = '…';`
+      The `on_auth_user_created` trigger reads `display_name` from user metadata
+      and otherwise falls back to the email's local part
+      (`supabase/migrations/001_initial_schema.sql:250`) — so without that update
+      the byline reads "sarah.k.1994". (The admin API's
+      `auth.admin.createUser({ email, password, email_confirm: true,
+      user_metadata: { display_name } })` does both in one step.)
 - [ ] Add them to the Group from the SQL editor — insert the `group_members`
       row directly. `join_group_by_invite_code` is caller-scoped
       (`supabase/migrations/20260505000000_critical_security_fixes.sql:73`) and
       can't be used on someone else's behalf.
-- [ ] Write their entries from their session, not yours.
+- [ ] Write their entries from their session, not yours — sign in as them with
+      **Use a password instead**.
 
 Two things fall out of this that are worth more than the convenience:
 
@@ -703,9 +707,12 @@ Two things fall out of this that are worth more than the convenience:
   email, not the app; this makes editions 1–2 a real test of that claim rather
   than a workaround, because the whole loop runs with zero installs.
 - **You get a cleaner install-resistance number.** An account already exists for
-  each of them, so "installing" is a password reset, and *when each person does
-  it* is a per-person date rather than the 1–2 vs. 3–4 headcount delta. Tell
-  them the account is waiting; don't make them create one.
+  each of them, so "installing" is just signing in — they type their email and
+  get a code. *When each person does it* is a per-person date rather than the
+  1–2 vs. 3–4 headcount delta; read it from their first `push_tokens` row (the
+  app installed and notifications allowed), not `last_sign_in_at`, which your
+  own sign-ins as them also move. Tell them the account is waiting; don't make
+  them create one.
 
 ### Pass condition
 
@@ -719,6 +726,10 @@ Four consecutive editions, and all three of these:
       the ritual; a newsletter nobody reads is dead even when three people
       write. Resend already reports opens and clicks per send, so this costs
       nothing and still needs no analytics in the app.
+      ⚠️ **Unresolved (2026-09-24), decide before week 1:** Resend's open
+      tracking *is* a pixel, and §5 promises the email carries none — so either
+      there is no open data, or the email breaks that promise. §9 has the
+      question.
 - [ ] **At least one post in weeks 3–4 arrives unprompted** — written without
       you reminding that person. Unprompted contribution is the only real signal
       in the exercise; everything else can be manufactured by nagging.
@@ -794,7 +805,8 @@ Where the organizers are. Join as a person, months before mentioning the app.
    is behind us. What it unblocks now runs on its own clock: the Team ID into the
    universal-link files, the APNs push key, and the first TestFlight build for
    editions 3–4. LAUNCH.md steps 2, 3 and 8.
-3. **This week** — start Group Zero: Group A, Group B, and the family Groups
+3. **Overdue — start Group Zero now** (it was "this week" on 2026-09-14; no Group
+   Zero Group exists as of 2026-09-24): Group A, Group B, and the family Groups
    (§6). It's the long pole; every week of delay is a week of evidence you don't
    have. Recruiting the Group B organizer has its own lead time, so start asking
    now. Editions 1–2 run off-app, so none of this waits on enrollment.
@@ -803,8 +815,7 @@ Where the organizers are. Join as a person, months before mentioning the app.
    to two–three family Groups (§5, "The December arithmetic"). What still expires
    is the recruiting itself: a family Group not publishing by roughly the end of
    September cannot be a December buyer.
-5. **This week, in parallel** — the copy pass (§2). Cheap, no dependencies, and
-   it stops you from launching at the wrong audience.
+5. **Done 2026-09-16** — ~~the copy pass (§2)~~.
 6. **Weeks 1–4** — community presence (§7). Also long-pole; standing accrues
    slowly and can't be bought later.
 7. **Week 4, not weeks 2–3** — the nudge (§3), and only if Group Zero showed
@@ -830,8 +841,8 @@ Where the organizers are. Join as a person, months before mentioning the app.
   integration and takes fifteen minutes. IAP and RevenueCat stay off the table
   entirely — the artifact is sold on the web (§5, §11).
 - **App Store submission** — a launch with no retention mechanism spends your one
-  shot at organic attention. The enrollment is the exception and starts now (§6);
-  everything downstream of it in LAUNCH.md stays paused, and the screenshots want
+  shot at organic attention. The enrollment was the exception and landed
+  2026-09-22 (§6); everything downstream of it in LAUNCH.md stays paused, and the screenshots want
   friend-group sample content anyway, which Group Zero produces for free.
 - **Android** — already deferred per LAUNCH.md (2026-08-22). Unchanged.
 
@@ -843,6 +854,12 @@ Where the organizers are. Join as a person, months before mentioning the app.
       30 chars). "The opposite of a feed" was the sharper line but carries no
       keyword weight; it belongs in the promotional-text field instead, which
       updates without a review cycle. In `STORE_LISTING.md` §2.
+- [ ] **How is "≥6 of 8 open the edition email" measured? Decide before Group
+      Zero week 1.** §6's pass condition leans on Resend's open reports, but
+      open tracking is a tracking pixel, and §5 (plus the privacy policy's "no
+      tracking of any kind") promises the email carries none. Either turn it on
+      and change those promises, or measure reading another way — asking each
+      member at week 4 is cheap and honest at eight people. Raised 2026-09-24.
 - [ ] Is weekly the right cadence for friend groups, or does biweekly retain
       better? Weekly is the brand and the routine is the stated point — but
       Group Zero is the only way to find out, and the schema already supports
@@ -922,11 +939,11 @@ it. Read it as a check that nothing on the board is unowned.
 | Ads get relitigated every six months | §5, "Ads — costed and rejected": the arithmetic is written down so the answer doesn't depend on taste. Do not reopen without new numbers |
 | The artifact is a family product; the primary audience is friend groups | §5, deliberate: friends distribute, families pay. But if friend-group volumes never sell, revenue scales with the *secondary* audience — worth knowing early |
 | Print economics don't survive colour photo pages | §5 is uncosted until Lulu's calculator is run; December uses real orders at real cost |
-| Nobody can install the app in time for edition 3 | §6: enrollment starts week 1; editions 1–2 run off-app for ~2 weeks of buffer |
+| Nobody can install the app in time for edition 3 | §6: enrollment done 2026-09-22; the first TestFlight build (never yet made, first on SDK 57) must land by week 3 — editions 1–2 run off-app for the buffer |
 | Family users feel abandoned by the new copy | §2: generalize, don't replace — rotate examples, keep the accessibility floor |
 | Launching before retention is proven | §8: Group Zero gates submission |
 | No organizer exists except you | §6's Group B. If nobody will take the role, the broken thing is distribution, not the product — and that changes what to build next |
-| A crash reads as "they lost interest," corrupting Group Zero's only signal | Sentry, wired 2026-09-14 (§11) |
+| A crash reads as "they lost interest," corrupting Group Zero's only signal | Sentry, wired 2026-09-14 (§11) — inert until the DSN is in the EAS environment (LAUNCH.md step 10) |
 
 **Retired.** *Photos accumulate below print DPI* — closed 2026-09-14; uploads are
 now 2600px/q0.9 with a single compression pass. The general form still stands:
@@ -980,7 +997,8 @@ than on the merits of the products.
   back.
 - **Product analytics (PostHog, Amplitude, Mixpanel) — no.** Eight users and a
   SQL editor. Resend already reports edition-email opens, which is the one
-  retention metric that matters (§6).
+  retention metric that matters (§6) — *but only if open tracking, a pixel, is
+  switched on, which §5 says the email never carries. Unresolved; §9.*
 - **Stripe — yes, but only as a hosted Payment Link.** Fifteen minutes, no
   integration, no webhook, no code. A real Stripe integration earns its keep
   somewhere north of 50 orders; until then, manual invoicing teaches more.

@@ -34,9 +34,9 @@ whether everyone has the app.
 2. **Name the Group.** It goes at the top of the paper every week. "The Sunday
    Dispatch," "Cohort 11 Weekly," "The Williams Family Weekly." Not clever —
    theirs.
-3. **Pick the day it arrives.** Monday morning is the default and it is the
-   right one: people write over the weekend, the paper lands when the week
-   starts. Set the publish time for the zone most of them live in.
+3. **Pick the day it arrives.** The app suggests Sunday at 9 a.m.; change it to
+   Monday morning — people write over the weekend, and the paper lands when the
+   week starts. Set the publish time for the zone most of them live in.
 
 ---
 
@@ -51,7 +51,8 @@ Send something close to this:
 > Random, but — I miss you and I hate that catching up now means seeing that you
 > exist on Instagram. I'm starting a thing: seven of us write a few paragraphs
 > about how our week actually went, and Monday morning it arrives as one small
-> newspaper. No feed, no notifications, nothing to scroll. Twenty minutes on a
+> newspaper. No feed, nothing to scroll, and the only notification is the one
+> that says it's here. Twenty minutes on a
 > Sunday and then it leaves you alone. Want in?
 
 When they ask what it is:

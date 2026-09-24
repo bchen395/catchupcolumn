@@ -36,8 +36,8 @@ New this pass — **all fixed in the working tree**, see the dated resolved sect
 ## ~~Pending deploy~~ — cleared
 
 The 2026-07-03 security-hardening migration is **live**. `docs/PRESUBMISSION_CHECKLIST.md`
-Gate 2 records all 29 local migrations as having a `remote` counterpart as of
-2026-08-05, which includes `20260703000000_security_hardening.sql`. The
+Gate 2 records every local migration as having a `remote` counterpart (30 as of
+2026-09-24), which includes `20260703000000_security_hardening.sql`. The
 coupled client changes shipped in the same tree. Nothing is pending here.
 
 ---
@@ -140,7 +140,9 @@ so there is no password-signup path left to create an unverified account: the
 code *is* proof of address. `enable_confirmations` can stay off deliberately
 rather than undecided. The password-length setting still applies to accounts
 created before the change; raising it in the dashboard remains worthwhile but no
-longer gates anything. Original note follows.
+longer gates anything. *(2026-09-24: `docs/LAUNCH.md` step 5 records it as
+already raised on 2026-08-22 — the two disagree; confirm in the dashboard.)*
+Original note follows.
 
 ### D2 (original). Auth: minimum password length 6, no email confirmation
 - **Where:** `supabase/config.toml` (`minimum_password_length = 6`, `[auth.email] enable_confirmations = false`). NOTE: `config.toml` governs **local** dev only — production auth settings live in the Supabase **dashboard** (Authentication → Providers/Policies). Changing the file does not change prod.
@@ -163,17 +165,28 @@ migration is live (Gate 2), `eas init` has run (`app.json` carries `owner` and
 `docs/PRESUBMISSION_CHECKLIST.md` is the authoritative submission-day list —
 this is only the code-side residue.
 
+**Ahead of all of these (found 2026-09-24): production isn't running `main`.**
+`compile-editions` and `publish-edition-now` are on the 2026-07-11 build — the
+v1 edition email, no dead-push-token pruning — because merging deploys nothing
+to Supabase. Not a code defect, but every fix to `_shared/` in this file since
+July is unshipped until they're redeployed. `docs/LAUNCH.md` → Deploying edge
+functions.
+
 1. **Build on SDK 57 and smoke-test on a device.** The 2026-09-10 upgrade
    (54 → 57) is typechecked and `expo-doctor`-clean but has never been built.
    Highest-risk spots: the splash screen (moved to the `expo-splash-screen`
    plugin with `enableFullScreenImage_legacy`), the tab bar (now
-   `expo-router/js-tabs`), and Reanimated 4.5 animations.
+   `expo-router/js-tabs`), and Reanimated 4.5 animations. **Due before
+   submission is too late:** the first build is the Group Zero TestFlight
+   build, which editions 3–4 need (POSITIONING §6).
 2. ~~**L2** — set a production `EMAIL_FROM` (verified Resend domain) before
    launch.~~ **Done** — verified 2026-09-22; it had been set since 2026-07-17.
 3. **M1** — decide whether weekly email needs per-recipient retry, or accept the
    trade-off.
-4. **Auth config (dashboard, not code):** raise minimum password length
-   (currently 6) and decide on email confirmation (currently off) — see D2/D3.
+4. **Auth config (dashboard, not code):** email confirmation is decided (stays
+   off — the code flow is proof of address, D2). Minimum password length is
+   **disputed**: `docs/LAUNCH.md` step 5 records it raised 2026-08-22, D2 below
+   believed it was still 6. Read it in the dashboard and fix the loser.
 5. **Universal links are declared nowhere — and as of 2026-09-22 this is
    actionable.** `app.json` has no
    `associatedDomains` (iOS) or `intentFilters` (Android), and the AASA file

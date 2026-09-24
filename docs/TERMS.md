@@ -14,7 +14,7 @@ friends to your groups; each person needs their own account.
 
 You are responsible for keeping your login credentials secure and for activity that
 happens under your account. Provide accurate information and keep your email address
-current so you can receive editions and reset your password.
+current so you can receive editions and your sign-in codes.
 
 ## 3. Your content
 
@@ -46,7 +46,7 @@ the members they invite.
 ## 6. Deleting content and accounts
 
 You can delete your posts before an edition is published and delete your account at
-any time from **Profile → Delete account**. Deleting your account removes your
+any time from **Profile → Delete my account**. Deleting your account removes your
 profile and content as described in the [Privacy Policy](./PRIVACY.md).
 
 ## 7. Service availability

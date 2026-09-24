@@ -60,15 +60,17 @@ npx supabase start
 curl -X POST http://localhost:54321/functions/v1/compile-editions \
   -H "Authorization: Bearer $CRON_SECRET" -H "Content-Type: application/json"
 
-# Deploy
-npx supabase functions deploy <name>
-npx supabase functions deploy unsubscribe --no-verify-jwt   # public/cron fns skip JWT
+# Deploy — by hand, after merge. --use-api bundles server-side (no Docker).
+npx supabase functions deploy <name> --use-api
 ```
+
+- **Merging deploys nothing.** CI only type-checks and renders fixtures. Every change under `supabase/functions/` must be deployed by hand, and a `_shared/` change must go to **every importer** — today `compile-editions` and `publish-edition-now` (via `edition-dispatch.ts`); `unsubscribe` and `delete-account` import nothing shared. Production sat on a 2026-07-11 build, sending the retired v1 email, until 2026-09-24 because nobody did this.
+- **Verify what's live by source, not timestamp.** Download into a scratch worktree and let git diff it — recipe in `docs/LAUNCH.md` → Deploying edge functions. Empty `git status` means production matches `main`.
 
 - **`config.toml` gotcha:** any function not verifying a Supabase JWT needs `[functions.<name>] verify_jwt = false` (set for `compile-editions` and `unsubscribe`). Forgetting it makes cron/public calls 401.
 - **Secrets:** set `RESEND_API_KEY` and `CRON_SECRET` (and `EMAIL_FROM`/`FUNCTIONS_PUBLIC_URL`/`WEB_BASE_URL` if overriding) in the Supabase dashboard / `supabase secrets set`. They are *not* in `.env`.
 - **Email preview:** `deno run --allow-write=preview-out supabase/functions/_shared/preview/render-email-fixtures.ts preview-out` renders fixture editions (thin/full/untitled/long) to HTML+text with byte sizes (Gmail clips at ~102KB). Eyeball in a browser at 600px and ~375px before shipping renderer changes.
-- **Typecheck:** `npm run typecheck` does **not** cover these (`tsconfig.json` excludes `supabase/functions/**`). Use `deno check supabase/functions/**/*.ts` if you want type checking.
+- **Typecheck:** `npm run typecheck` does **not** cover these (`tsconfig.json` excludes `supabase/functions/**`). Use `find supabase/functions -name '*.ts' -print0 | xargs -0 deno check` — not `deno check supabase/functions/**/*.ts`, whose `**` doesn't recurse in non-globstar shells and silently skips `_shared/`.
 
 ## Workflow for a function change
 

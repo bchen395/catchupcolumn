@@ -148,7 +148,7 @@ policy and terms, which is the sanctioned explicit form.
 
 ## MVP Features (in priority order)
 
-1. **Auth** — Email/password signup and login via Supabase Auth. Keep onboarding to 3 screens max: create account → set display name & avatar → create or join a Group.
+1. **Auth** — Passwordless by default since 2026-09-16: sign-up and sign-in both send a 6-digit email code (`signInWithOtp` / `verifyOtp`, `hooks/use-email-code.ts`); passwords still work behind "Use a password instead" for accounts that have one. Supabase renders sign-in from the **Magic Link** template and sign-up from **Confirm signup** — both live in `supabase/templates/` and both must carry `{{ .Token }}`. Keep onboarding to 3 screens max: create account → set display name & avatar → create or join a Group.
 2. **Group creation & invites** — Moderator creates a Group, gets a shareable invite link/code. Others join via that link.
 3. **Post composer** — Simple text editor with optional single photo upload. No rich text formatting in v1. Posts are tied to the current (unpublished) edition window.
 4. **Weekly compilation** — A Supabase Edge Function runs on a cron schedule, groups all uncompiled posts for each Group into an Edition, and triggers delivery.
@@ -217,8 +217,9 @@ npx supabase migration new <name>
 # Apply migrations
 npx supabase db push
 
-# Deploy edge functions
-npx supabase functions deploy <function-name>
+# Deploy edge functions — by hand; merging deploys nothing. A change to _shared/
+# must be deployed to every function that imports it. --use-api needs no Docker.
+npx supabase functions deploy <function-name> --use-api
 
 # Type-check the app (strict, no emit; does not cover supabase/functions)
 npm run typecheck
@@ -233,10 +234,13 @@ find supabase/functions -name '*.ts' -print0 | xargs -0 deno check
 deno run --allow-write=preview-out supabase/functions/_shared/preview/render-email-fixtures.ts preview-out
 ```
 
-All of the above run automatically in CI (`.github/workflows/ci.yml`) on every
-PR, alongside a two-platform Metro bundle and — when SQL changes — a from-scratch
-migration apply. See the `verify-changes` skill for what CI does and does not
-cover.
+The checks above — typecheck, lint, `deno check`, the fixture render — run
+automatically in CI (`.github/workflows/ci.yml`) on every PR, alongside a
+two-platform Metro bundle and — when SQL changes — a from-scratch migration
+apply. **CI deploys nothing:** migrations are pushed and edge functions deployed
+by hand, and only the Vercel site ships on merge. (Production ran a 2026-07-11
+function build until 2026-09-24 because of exactly this.) See the
+`verify-changes` skill for what CI does and does not cover.
 
 ## Code Style
 

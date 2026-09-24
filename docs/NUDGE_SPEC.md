@@ -12,7 +12,7 @@ Read the `db-migrations` and `edge-functions` skills before starting.
 
 ## The copy already exists
 
-`constants/strings.ts:167–177` (`Strings.thisWeek`) has the right register:
+`constants/strings.ts` (`Strings.thisWeek`) has the right register:
 
 - `bylines` — `"Martha and Dave have written this week"` + `bylinesAddYours` —
   `" — there's still time to add yours."`

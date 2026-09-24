@@ -44,6 +44,11 @@ Migrations are the **source of truth** for the schema, RLS, and every RPC. The a
   - `post-images` → `[1] = auth.uid()::text and [2] = 'posts'`
   - `group-covers` → `((storage.foldername(name))[1])::uuid` checked via `is_group_moderator`
   If a write policy and the app's upload path disagree, the upload "succeeds" but the read policy can't find it — silent breakage. Keep this skill's list and the `data-layer` list in sync.
+- **Direct deletes from `storage.objects` need an opt-in.** Supabase added `storage.protect_delete`, a **statement-level** trigger that rejects any direct `DELETE` on `storage.objects` — it fires even when the statement matches zero rows. It broke account deletion and moderator eject until `20260923003208_storage_delete_guard.sql`. Any SQL function that deletes objects must first run, in the same transaction:
+  ```sql
+  perform set_config('storage.allow_delete_query', 'true', true);  -- true = transaction-local
+  ```
+  CI can't catch this: it applies migrations but never *executes* the functions, and the trigger only fires when the `DELETE` actually runs. Exercise the delete against production (or a fresh Supabase project) before calling it done.
 - **Concurrency: lock before compile.** Edition-creating RPCs take a per-group advisory lock (`pg_try_advisory_xact_lock(hashtextextended('compile_due_editions:' || group_id, 0))`), select uncompiled posts `for update`, and re-check the slot guard after acquiring the lock. Copy that pattern for anything that compiles/claims; don't roll your own.
 - **Delivery uses claim/lease idempotency.** The `editions` delivery columns (`emailed_at`/`email_claim_at`/`email_attempts`, `pushed_at`/`push_claim_at`/`push_attempts`) are driven by RPCs (`claim_edition_for_email`, `mark_edition_emailed`, `release_*`, `increment_edition_push_attempts`, …) with a 5-minute stale-claim window. These columns are **server-only** — they are intentionally absent from `types/database.ts`. Don't expose them to the client.
 - **Idempotent joins / case-insensitive codes.** Membership inserts use `on conflict (group_id, user_id) do nothing`. Invite codes are matched `lower(invite_code) = lower(trim(p_invite_code))` — codes are lowercase hex; an `upper(...)` comparison silently never matches (a real past regression).

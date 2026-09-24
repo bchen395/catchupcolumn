@@ -1,7 +1,8 @@
 # TODO.md — Catch Up Column
 
 What's left. The spec is [CLAUDE.md](CLAUDE.md); the *why* and the order of work
-are [docs/POSITIONING.md](docs/POSITIONING.md) §8.
+are [docs/POSITIONING.md](docs/POSITIONING.md) §8. Orchestrating the launch from
+a fresh session? Start at [docs/HANDOFF.md](docs/HANDOFF.md).
 
 **Phases 1–7 are complete** — project skeleton, auth & onboarding, Group creation
 and invites, the post composer, weekly edition compilation, the inbox and reading
@@ -31,6 +32,11 @@ specified in CLAUDE.md. Git history has the detail if you need it.
 
 POSITIONING §8 is the authoritative sequence. The short version:
 
+- [ ] **Redeploy `compile-editions` and `publish-edition-now`** — found 2026-09-24:
+      both are on the 2026-07-11 build, so production sends the retired **v1
+      edition email** and never prunes dead push tokens. Merging deploys nothing
+      to Supabase. Do it before any Group Zero edition publishes.
+      [docs/LAUNCH.md](docs/LAUNCH.md) → Deploying edge functions
 - [x] **[owner] Apple Developer enrollment** — done 2026-09-22. Unblocks three
       things that were all waiting on it: the Apple Team ID (→ universal links,
       [docs/LAUNCH.md](docs/LAUNCH.md) step 2), the APNs push key (step 3), and

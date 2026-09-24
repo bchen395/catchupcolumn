@@ -64,7 +64,7 @@ entries to the AASA `components` array and Android needs no path list.
 **Two owner values must be filled before this activates** (until then the files are
 harmless — links just fall through to the `/edition/{id}` bouncer):
 
-1. **Apple Team ID** — replace `TEAMID` in `apple-app-site-association` with your
+1. **Apple Team ID** (available since the 2026-09-22 enrollment) — replace `TEAMID` in `apple-app-site-association` with your
    10-char Team ID (`TEAMID.com.catchupcolumn.app`). Find it in the Apple Developer
    portal → Membership, or via `eas credentials`.
 2. **Android signing SHA-256** — replace `REPLACE_WITH_YOUR_APP_SIGNING_SHA256_FINGERPRINT`
