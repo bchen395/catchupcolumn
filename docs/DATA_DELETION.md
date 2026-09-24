@@ -3,7 +3,7 @@
 ## Delete your account from the app (fastest)
 
 1. Open Catch Up Column and go to the **Profile** tab.
-2. Tap **Delete account**.
+2. Tap **Delete my account**, at the bottom.
 3. Confirm. Your account and data are removed immediately.
 
 This permanently deletes:

@@ -9,7 +9,7 @@ We usually reply within 2 business days.
 
 **How do I join a group?**
 Ask the group's creator for their invite code, then open the app and tap
-**Groups → Join a group** and enter the code.
+**Groups → Join** and enter the code.
 
 **When do editions come out?**
 Each group has its own publish day and time, set by its moderator. When an edition
@@ -26,7 +26,7 @@ or delete your post there. Once an edition is published, its posts are part of t
 issue.
 
 **How do I delete my account?**
-In the app: **Profile → Delete account**. This permanently removes your profile,
+In the app: **Profile → Delete my account**. This permanently removes your profile,
 your posts and photos, and your group memberships. If you can't access the app, see
 [Data Deletion Request](./DATA_DELETION.md).
 

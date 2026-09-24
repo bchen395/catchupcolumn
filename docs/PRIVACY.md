@@ -1,7 +1,7 @@
 # Privacy Policy — Catch Up Column
 
 **Effective date:** July 3, 2026
-**Last updated:** July 3, 2026
+**Last updated:** September 24, 2026
 
 Catch Up Column ("the app", "we", "us") is a private group newsletter you write
 together with family and friends. This policy explains what we collect, why, and
@@ -19,8 +19,11 @@ collect data from them.
 We only collect what the app needs to work:
 
 **Account information**
-- Email address — for sign-in, password reset, and delivering your group's editions.
-- Password — stored only as a salted hash by our authentication provider; we never see it.
+- Email address — for sign-in (we email you a one-time code), password resets if
+  you use a password, and delivering your group's editions.
+- Password, only if you set one — stored only as a salted hash by our
+  authentication provider; we never see it. New accounts sign in with an emailed
+  code and never create one.
 - Display name — shown as your byline to other members of your groups.
 - Profile photo (optional) and short bio (optional).
 
@@ -61,9 +64,12 @@ only to provide their service to us:
 
 - **Supabase** — database, authentication, and file storage (your account,
   content, and photos are stored here). https://supabase.com/privacy
-- **Resend** — sends the weekly edition emails. When an edition publishes, the
-  recipient email addresses and the edition content are sent to Resend for delivery.
-  https://resend.com/legal/privacy-policy
+- **Resend** — sends your sign-in codes and the weekly edition emails. When you
+  sign in, your email address is sent to Resend to deliver the code; when an
+  edition publishes, the recipient email addresses and the edition content are
+  sent to Resend for delivery. https://resend.com/legal/privacy-policy
+- **Sentry** — receives the crash reports described above, and nothing else.
+  https://sentry.io/privacy/
 - **Expo / Expo Application Services** — delivers push notifications. Your push
   token and the notification text (e.g. your group's name) pass through Expo's push
   service. https://expo.dev/privacy
@@ -78,7 +84,7 @@ Deleting your account removes your profile and content as described below.
 ## Deleting your account and data
 
 You can permanently delete your account at any time from the app: **Profile →
-Delete account**. This removes your profile, your posts and photos, your uploaded
+Delete my account**. This removes your profile, your posts and photos, your uploaded
 images, and your group memberships. If you are the sole moderator of a group,
 moderation is handed off or the group is removed as part of deletion.
 
