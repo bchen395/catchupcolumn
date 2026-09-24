@@ -1,7 +1,8 @@
 # TODO.md — Catch Up Column
 
 What's left. The spec is [CLAUDE.md](CLAUDE.md); the *why* and the order of work
-are [docs/POSITIONING.md](docs/POSITIONING.md) §8.
+are [docs/POSITIONING.md](docs/POSITIONING.md) §8. Orchestrating the launch from
+a fresh session? Start at [docs/HANDOFF.md](docs/HANDOFF.md).
 
 **Phases 1–7 are complete** — project skeleton, auth & onboarding, Group creation
 and invites, the post composer, weekly edition compilation, the inbox and reading
