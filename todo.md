@@ -32,10 +32,10 @@ specified in CLAUDE.md. Git history has the detail if you need it.
 
 POSITIONING §8 is the authoritative sequence. The short version:
 
-- [ ] **Redeploy `compile-editions` and `publish-edition-now`** — found 2026-09-24:
-      both are on the 2026-07-11 build, so production sends the retired **v1
-      edition email** and never prunes dead push tokens. Merging deploys nothing
-      to Supabase. Do it before any Group Zero edition publishes.
+- [x] **Redeployed `compile-editions` and `publish-edition-now`** — 2026-09-24.
+      They had been on a 2026-07-11 build sending the retired **v1 edition
+      email**; the v2 email is now live. Merging deploys nothing to Supabase —
+      redeploy after every function change.
       [docs/LAUNCH.md](docs/LAUNCH.md) → Deploying edge functions
 - [x] **[owner] Apple Developer enrollment** — done 2026-09-22. Unblocks three
       things that were all waiting on it: the Apple Team ID (→ universal links,

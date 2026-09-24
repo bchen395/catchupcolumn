@@ -165,12 +165,12 @@ migration is live (Gate 2), `eas init` has run (`app.json` carries `owner` and
 `docs/PRESUBMISSION_CHECKLIST.md` is the authoritative submission-day list —
 this is only the code-side residue.
 
-**Ahead of all of these (found 2026-09-24): production isn't running `main`.**
-`compile-editions` and `publish-edition-now` are on the 2026-07-11 build — the
-v1 edition email, no dead-push-token pruning — because merging deploys nothing
-to Supabase. Not a code defect, but every fix to `_shared/` in this file since
-July is unshipped until they're redeployed. `docs/LAUNCH.md` → Deploying edge
-functions.
+**Resolved 2026-09-24: production wasn't running `main`.** `compile-editions`
+and `publish-edition-now` had sat on a 2026-07-11 build — the v1 edition email,
+no dead-push-token pruning — because merging deploys nothing to Supabase. Both
+redeployed and verified matching `main` the same day. The lesson stands: a fix
+to `_shared/` in this file isn't shipped until it's deployed. `docs/LAUNCH.md` →
+Deploying edge functions.
 
 1. **Build on SDK 57 and smoke-test on a device.** The 2026-09-10 upgrade
    (54 → 57) is typechecked and `expo-doctor`-clean but has never been built.

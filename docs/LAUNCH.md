@@ -26,11 +26,10 @@ Project ref: `wvaxfyhihcfilewygtzp` · Bundle ID: `com.catchupcolumn.app`
 
 ## Current state (2026-09-24)
 
-**⚠️ Do first: production is sending the retired v1 edition email.**
-`compile-editions` and `publish-edition-now` were last deployed 2026-07-11, and
-merging deploys nothing, so the v2 email restyle and dead-push-token pruning
-have never reached production. Group Zero's first edition would go out
-in the old orange-and-polaroid dress. Redeploy before any real Group publishes —
+✅ **The v2 edition email is live — redeployed 2026-09-24.** Until that morning
+`compile-editions` and `publish-edition-now` were on a 2026-07-11 build, because
+merging deploys nothing: production was sending the retired v1 email and never
+pruning dead push tokens. Now verified matching `main` —
 [Deploying edge functions](#deploying-edge-functions).
 
 **Done and verified:** the backend, legal hosting, the Vercel site (in sync with
@@ -150,9 +149,10 @@ length 6, subject lines — step 5); account deletion fixed for Supabase's new
 moved from the apex to `www`. Then sign-up, moderator removal and account
 deletion were each verified against production. PRs #28–#32.
 
-**2026-09-24 — function drift found.** Deployed source for `compile-editions`
-and `publish-edition-now` downloaded and diffed against `main`: two months
-behind (above).
+**2026-09-24 — function drift found and fixed.** Deployed source for
+`compile-editions` and `publish-edition-now` downloaded and diffed against
+`main`: two months behind. Redeployed the same morning; the v2 edition email is
+live.
 
 ---
 
@@ -730,19 +730,26 @@ function that imports it** — today that is `compile-editions` and
 `publish-edition-now` (`_shared/edition-dispatch.ts`, which pulls in the email
 renderer). `unsubscribe` and `delete-account` import nothing shared.
 
-☐ **Redeploy `compile-editions` and `publish-edition-now` from `main`.** Found
-2026-09-24: both were last deployed 2026-07-11, and four later commits to
-`_shared/` never shipped — so production sends the **v1 edition email** (orange
-button, peach wash, Roboto Slab, taped polaroid) and never prunes dead push
-tokens. `config.toml` pins each function's `verify_jwt` to what production
-already has, so a plain deploy keeps the cron's secret-based auth working:
+✅ **`compile-editions` and `publish-edition-now` redeployed from `main`,
+2026-09-24 15:46 UTC** (v17 → v18 and v7 → v8). Found that morning: both had
+been last deployed 2026-07-11, and four later commits to `_shared/` had never
+shipped — so production was sending the **v1 edition email** (orange button,
+peach wash, Roboto Slab, taped polaroid) and never pruning dead push tokens.
+Verified afterwards by download-and-diff (no drift), `verify_jwt` unchanged, and
+the next cron tick answering `200`.
+
+To deploy after any future change — `config.toml` pins each function's
+`verify_jwt` to what production has, so a plain deploy keeps the cron's
+secret-based auth working:
 
 ```bash
 npx supabase functions deploy compile-editions publish-edition-now --use-api   # --use-api: no Docker
 ```
 
-Do it when no Group is inside its publish window (the cron runs every 15 minutes,
-and a deploy mid-dispatch is the one moment to avoid).
+Do it when no Group is inside its publish window and no edition has a live
+delivery claim (`email_claim_at`/`push_claim_at` in the last few minutes) — a
+deploy mid-dispatch is the one moment to avoid. Just after a cron tick
+(:00/:15/:30/:45) gives you the widest gap.
 
 **How to check what production is running.** `functions list`'s `updated_at` is
 accurate, but it can't tell you *what* changed. Download the deployed source into
