@@ -44,7 +44,12 @@ production 2026-09-22 (dev build).
   opens Safari.
 - No Sentry DSN anywhere. No DMARC record. Resend domain status unconfirmed.
 - The live privacy policy lacks the Sentry disclosure until the 2026-09-24 docs
-  PR merges (it publishes `web/privacy.html`).
+  PR (#33) merges (it publishes `web/privacy.html`).
+- **CI's `expo-doctor` check fails on every PR** since Expo shipped SDK 57 patch
+  releases (first seen on #33, 2026-09-24): `expo`, `expo-image-manipulator`,
+  `expo-image-picker`, `expo-linking`, `expo-notifications` and `expo-router`
+  are each one patch behind. Fix in its own PR with `npx expo install --fix`,
+  then let CI confirm. Worth doing before the first build anyway.
 
 **Not started:** Group Zero. Production has 2 test Groups, 3 users, no new user
 since 2026-06-04. No release build has ever been made (`eas build:list` empty);
@@ -215,7 +220,8 @@ volumes sell (POSITIONING §9).
 
 1. Re-verify the live-state block (five minutes, all read-only). Anything that
    changed, update here.
-2. Get the owner's OK and **redeploy the two functions**; verify by diff.
+2. Get the owner's OK and **redeploy the two functions**; verify by diff. In
+   parallel, open the `npx expo install --fix` PR so CI goes green again.
 3. Collect in one message: Team ID + bundle-ID yes/no, the Sentry DSN (or "not
    yet"), and the two Group Zero decisions (read measurement, Group B access).
 4. Start C2 (operator script), C3 (local Release build) and C5 (readout queries)
