@@ -85,9 +85,7 @@ Best storytelling shot: a compiled edition front page (the product's payoff).
 
 ## 6. URLs required at submission
 
-| Field | Store | Value |
-| --- | --- | --- |
-All live and returning 200 as of 2026-08-04. Use the `www` host — the apex
+All live and returning 200 as of 2026-09-24. Use the `www` host — the apex
 308-redirects to it.
 
 | Field | Store | Value |
@@ -162,11 +160,10 @@ Data types to declare (Collected, processed for app functionality, not for ads/t
 - The app has **user-generated content** shared within private invited groups (no
   public feed, no discovery). Answer the UGC questions accordingly; there is no
   moderation of public content because content is not public.
-- ⚠️ **Apple Guideline 1.2 exposure:** the app has published acceptable-use terms but
-  **no in-app report path and no way to remove/block a member** (`lib/groups.ts` has
-  only `leaveGroup`/`deleteGroup`). Reviewers frequently require both for social
-  apps. Either add them or prepare a reviewer note explaining the invite-only model —
-  see `docs/LAUNCH.md` step 9.
+- **Apple Guideline 1.2 — covered.** Acceptable-use terms (`docs/TERMS.md` §4), a
+  **Report this story** path on every story, and moderator removal of a member
+  (`remove_group_member`) — all shipped in PR #14 (2026-08-05); removal verified
+  against production 2026-09-22. See `docs/LAUNCH.md` step 9.
 - No violence, sexual content, profanity, gambling, or drugs in the app itself.
 - Expected outcome: **4+ (Apple)** / **Everyone (Google)**, with the UGC disclosure.
 

@@ -13,8 +13,10 @@ to bottom: each gate assumes the ones above it passed.
   [STORE_LISTING.md](./STORE_LISTING.md) — copy from there, don't retype.
 - **How to verify app changes** is in the `verify-changes` skill.
 
-Statuses below were verified against production on **2026-08-04**. Re-verify anything
-older than your last deploy.
+Statuses below carry their own dates; the last pass against production was
+**2026-09-24** (Gates 2–4). Re-verify anything older than your last deploy — and
+remember that **merging deploys nothing** to Supabase: migrations and edge
+functions ship by hand (Gate 2).
 
 ---
 
@@ -57,14 +59,15 @@ touches a device:
 ## Gate 2 — Backend parity with production
 
 - [x] `npx supabase migration list --linked` — every local migration shows a `remote`
-      counterpart *(2026-08-05: all 29 applied ✅ — the two moderation migrations
-      pushed on top of the 27 verified 2026-08-04)*
-- [ ] `npx supabase functions list` — all 4 functions `ACTIVE`
-      *(2026-08-04: deployed and current ✅)*
-      > `delete-account` reports an `updated_at` **earlier** than its last code
-      > change. That timestamp is a red herring — the deployed source does contain the
-      > `prepare_account_deletion` call (verified by `supabase functions download`).
-      > Don't redeploy on the strength of the timestamp alone.
+      counterpart *(2026-09-24: all 30 applied ✅, through `20260923003208`)*
+- [ ] `npx supabase functions list` — all 4 functions `ACTIVE` ✅ *(2026-09-24)* **and
+      the deployed source matches `main`** — ✗ *as of 2026-09-24*: `compile-editions`
+      and `publish-edition-now` are on the 2026-07-11 build and send the v1 edition
+      email. `unsubscribe` and `delete-account` match. Redeploy and re-check with
+      the download-and-diff in [LAUNCH.md → Deploying edge functions](./LAUNCH.md#deploying-edge-functions).
+      > Compare source, not timestamps. `updated_at` is accurate, but it only says
+      > *when*; `delete-account`'s once looked older than its last commit because
+      > it had been deployed from the working tree before that commit was made.
 - [x] Function secrets present: `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`,
       `WEB_BASE_URL` *(2026-08-04: all set ✅; re-checked 2026-09-22)*
 - [x] `WEB_BASE_URL` is the **`www`** host *(set 2026-09-22 — it had been the
@@ -88,9 +91,10 @@ touches a device:
 Not in `config.toml` — that governs local dev only. Set these in the dashboard under
 Authentication:
 
-- [ ] Redirect allowlist includes `catchupcolumn://` and
-      `catchupcolumn://(auth)/reset-password` (password reset breaks in release builds
-      without this)
+- [x] Redirect allowlist includes `catchupcolumn://` and
+      `catchupcolumn://(auth)/reset-password` *(set 2026-08-22 — LAUNCH step 5)*
+      (password reset breaks in release builds without this; re-confirm after the
+      first release build)
 - [x] **Magic Link email template contains `{{ .Token }}`**, not
       `{{ .ConfirmationURL }}` *(pasted 2026-09-22 from
       `supabase/templates/magic-link.html`)* — without it the code sign-in flow
@@ -110,14 +114,17 @@ Authentication:
       a never-used address — a prior failed test creates the user, so reuse tests
       sign-in. Six digits on both, no button on either.
 - [ ] Minimum password length raised from 6 → 8+ (still applies to the accounts
-      that have passwords; new sign-ups no longer create one)
-- [ ] Email confirmation: can stay **off** — the code flow is itself proof of
-      address, and there is no password-signup path any more
-- [ ] **Custom SMTP is enabled and points at Resend** — `smtp.resend.com`, user
-      `resend`, sender on the root domain. On Supabase's built-in sender the
-      6-digit code throttles partway through onboarding one Group, and the error
-      is project-wide. Set 2026-09-22; verify it survived any project changes.
-- [ ] **Auth "rate limit for sending emails" is 100/hour**, not the 30 Supabase
+      that have passwords; new sign-ups no longer create one). **The docs disagree:**
+      LAUNCH step 5 records it raised on 2026-08-22, `bugs.md` D2 (2026-09-16)
+      believed it was still 6. Read the number in the dashboard and fix the loser.
+- [x] Email confirmation: stays **off** *(decided 2026-09-16)* — the code flow is
+      itself proof of address, and there is no password-signup path any more
+- [x] **Custom SMTP is enabled and points at Resend** *(set 2026-09-22; code emails
+      verified arriving that day)* — `smtp.resend.com`, user `resend`, sender on
+      the root domain. On Supabase's built-in sender the 6-digit code throttles
+      partway through onboarding one Group, and the error is project-wide. Verify
+      it survived any project changes.
+- [x] **Auth "rate limit for sending emails" is 100/hour** *(set 2026-09-22)*, not the 30 Supabase
       defaults to when custom SMTP is switched on. Re-derive from peak signups
       per hour before launch — the 100 was sized for Group Zero, not for the
       store. Reasoning in [LAUNCH.md](./LAUNCH.md) step 5.
@@ -128,13 +135,14 @@ Authentication:
 
 ## Gate 4 — Web surface
 
-- [ ] Legal/support pages return 200 *(2026-08-04 ✅)*:
+- [x] Legal/support pages return 200 *(2026-09-24 ✅)*:
       ```bash
       for p in / /privacy /terms /support /delete-account; do
         curl -sL -o /dev/null -w "$p %{http_code}\n" "https://www.catchupcolumn.com$p"
       done
       ```
-- [ ] **Edition permalinks resolve** — this was 404ing in production and is every
+- [x] **Edition permalinks resolve** *(2026-09-24 ✅ — re-run after any
+      `vercel.json` change)* — this was 404ing in production and is every
       edition email's primary CTA:
       ```bash
       curl -s -o /dev/null -w '%{http_code}\n' \
@@ -179,8 +187,11 @@ pointers are [LAUNCH.md](./LAUNCH.md) step 9. What's left is verification.
 - [x] A way to **report** objectionable content
 - [x] A way to **block or eject** an abusive user
 
-- [ ] Re-run the Gate 1 automated checks — this code landed after Gate 1 passed
-- [ ] Smoke-test both affordances on device (folded into Gate 7 below)
+- [x] Re-run the Gate 1 automated checks — *moot since 2026-09-10: CI runs Gate 1
+      on every PR, and this code landed before that*
+- [ ] Smoke-test both affordances on device (folded into Gate 7 below). Eject is
+      already proven against production (2026-09-22); **report** has not been
+      exercised at all
 - [ ] Age rating questionnaire answer prepared: **flag user-generated content**
       (Gate 8 ticks it; getting this wrong is the rejection this gate exists to
       prevent)
@@ -212,7 +223,7 @@ Using the TestFlight / internal-testing build, with two accounts:
       is absent on your own post
 - [ ] **Moderator removes the second account** → they lose access, their unpublished
       post disappears from the next edition, and the published edition is unchanged
-- [ ] Profile → Delete account → completes and signs out
+- [ ] Profile → Delete my account → completes and signs out
 
 ## Gate 8 — Store consoles
 

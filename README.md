@@ -48,7 +48,7 @@ remaining code work is the pre-publish nudge
   only the second is subject to the Auth rate limit. [docs/LAUNCH.md](docs/LAUNCH.md) step 5
 - **Push:** Expo Notifications (token registered server‑side, pushes sent from the edge function)
 - **Fonts:** Lora (serif) + Jost (UI sans) via `@expo-google-fonts`, identical on every platform
-- **Crash reporting:** Sentry (crashes only — no tracing, no replay, no PII)
+- **Crash reporting:** Sentry (crashes only — no tracing, no replay, no PII); inert until `EXPO_PUBLIC_SENTRY_DSN` is set in the EAS environment
 - **OTA:** `expo-updates` + EAS Update, `runtimeVersion.policy: "fingerprint"`
 
 ## Repo Layout
@@ -68,7 +68,7 @@ lib/                       supabase client + domain modules (auth, groups, posts
                            edition-seen, haptics)
 types/                     Shared DB + domain types
 supabase/
-  migrations/              29 SQL migrations (schema → security hardening)
+  migrations/              30 SQL migrations (schema → security hardening)
   functions/
     compile-editions/      Cron-driven compile + email + push
     publish-edition-now/   Moderator-only immediate publish
@@ -120,11 +120,17 @@ This creates all tables, RLS policies, storage buckets (`avatars`, `post-images`
 ### 4. Deploy edge functions
 
 ```bash
-npx supabase functions deploy compile-editions
-npx supabase functions deploy publish-edition-now
-npx supabase functions deploy delete-account
-npx supabase functions deploy unsubscribe
+npx supabase functions deploy compile-editions --use-api   # --use-api: no Docker
+npx supabase functions deploy publish-edition-now --use-api
+npx supabase functions deploy delete-account --use-api
+npx supabase functions deploy unsubscribe --use-api
 ```
+
+**Merging does not deploy these.** CI type-checks the functions but nothing ships
+them — re-run the deploys after any change under `supabase/functions/` (a change
+to `_shared/` affects every function that imports it). On 2026-09-24 production
+was found still running a 2026-07-11 build, the retired v1 email included; see
+`docs/LAUNCH.md` → Deploying edge functions.
 
 Set the function secrets:
 
