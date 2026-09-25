@@ -179,6 +179,13 @@ Deploying edge functions.
    `expo-router/js-tabs`), and Reanimated 4.5 animations. **Due before
    submission is too late:** the first build is the Group Zero TestFlight
    build, which editions 3–4 need (POSITIONING §6).
+   **Partly done 2026-09-24:** an EAS `preview` build (simulator) built clean
+   on Xcode 26.6 — the splash hides, Lora/Jost load, the sign-in screen
+   renders, launch logs are clean. The tab bar and Reanimated are behind
+   sign-in and still unchecked, and nothing has run on a phone. One upstream
+   warning at launch, not ours to fix yet: *"`UIScene` lifecycle will soon be
+   required."* A local build on Xcode 26.3 fails to compile `expo-modules-jsi`
+   — SDK 57 needs Xcode ≥ 26.4 (LAUNCH step 8).
 2. ~~**L2** — set a production `EMAIL_FROM` (verified Resend domain) before
    launch.~~ **Done** — verified 2026-09-22; it had been set since 2026-07-17.
 3. **M1** — decide whether weekly email needs per-recipient retry, or accept the

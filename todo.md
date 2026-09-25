@@ -57,6 +57,21 @@ POSITIONING §8 is the authoritative sequence. The short version:
 - [ ] **[owner] Group Zero** — four consecutive editions across Groups A, B and the
       family Groups, before submitting anything.
       [docs/POSITIONING.md](docs/POSITIONING.md) §6
+- [x] **Group Zero tooling** — 2026-09-25. The operator script
+      (`scripts/group-zero/`: `create-group`, `add-member`, `post-for`, `list`)
+      is on `main` and was verified end to end against production with a
+      throwaway Group, then cleaned up; the read-only readout queries are
+      `scripts/group-zero/readout.sql`. Both Group Zero decisions are made
+      (read by asking at week 4; Group B set up by the owner with the organizer
+      as moderator). [docs/POSITIONING.md](docs/POSITIONING.md) §6
+- [ ] **First production build + TestFlight external testing** — well before
+      Group Zero week 3 (~mid-October): external testers need Apple's TestFlight
+      App Review, which needs a demo account with a password and a Beta App
+      Description; the production build needs the Sentry source-map variables
+      first. [docs/LAUNCH.md](docs/LAUNCH.md) steps 8 and 10.4
+- [x] **First EAS build** — 2026-09-24, `preview` (simulator). SDK 57 runs;
+      post-sign-in screens and anything needing a phone are still unchecked.
+      [docs/LAUNCH.md](docs/LAUNCH.md) step 8
 - [ ] **[owner] Recruit two to three family Groups this month** — a family Group
       not publishing by roughly the end of September cannot be a December buyer.
       (The extra-copies question that set this number was settled 2026-09-16:
@@ -103,8 +118,11 @@ POSITIONING §8 is the authoritative sequence. The short version:
       failure. [docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md)
 - [ ] **Decide on write-by-web** from the editions 1–2 vs. 3–4 delta.
       [docs/POSITIONING.md](docs/POSITIONING.md) §4
-- [ ] **Illustration rework** — no longer a launch gate; Group Zero's four weeks are
-      the natural window. [design/ILLUSTRATION_REWORK.md](design/ILLUSTRATION_REWORK.md)
+- [ ] **Illustration rework — required before App Store submission** (owner,
+      2026-09-25), by a commissioned illustrator. Not a gate on the TestFlight
+      build: the 8 drawings are SVG code and reach testers by OTA; only the app
+      icon and splash (native files) need a new build. Group Zero's four weeks
+      are the window. [design/ILLUSTRATION_REWORK.md](design/ILLUSTRATION_REWORK.md)
 - [ ] **App Store submission** — [docs/PRESUBMISSION_CHECKLIST.md](docs/PRESUBMISSION_CHECKLIST.md)
 
 ---

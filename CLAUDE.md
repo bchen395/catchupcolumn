@@ -227,8 +227,9 @@ npm run typecheck
 # Lint the app (eslint-config-expo; does not cover supabase/functions)
 npm run lint
 
-# Type-check the edge functions (Deno; not covered by npm run typecheck)
-find supabase/functions -name '*.ts' -print0 | xargs -0 deno check
+# Type-check the edge functions and the Group Zero operator script (Deno; not
+# covered by npm run typecheck)
+find supabase/functions scripts/group-zero -name '*.ts' -print0 | xargs -0 deno check
 
 # Render the edition-email fixtures (fails if one would hit Gmail's clip limit)
 deno run --allow-write=preview-out supabase/functions/_shared/preview/render-email-fixtures.ts preview-out

@@ -695,7 +695,16 @@ dry run until `--apply`:
 - [ ] `list --group …` shows who is in and what's waiting for the edition.
 - [ ] To set up a Group for someone else to moderate:
       `create-group --name … --moderator <their email> --timezone <theirs>`,
-      then `add-member` for their people.
+      then `add-member` for their people. **This is how Group B starts —
+      decided 2026-09-24:** with no build before about week 3, the owner creates
+      Group B with the organizer as moderator and adds the organizer's people
+      by email; editions 1–2 take entries by any channel, and everyone installs
+      from TestFlight for 3–4. Verified end to end against production
+      2026-09-25 (throwaway Group, then cleaned up; PR #40's comment).
+- [ ] **Read the results with `scripts/group-zero/readout.sql`** (read-only;
+      usage in its header): the writing pass condition per Group, when in the
+      week people write relative to the slot (tests the nudge's 48h guess), and
+      each member's install date from their first `push_tokens` row.
 
 Two things fall out of this that are worth more than the convenience:
 
@@ -721,14 +730,14 @@ Four consecutive editions, and all three of these:
       earlier bar — 3 distinct writers per edition — is 37% participation, from
       the founder's own friends, with the founder actively nagging. If that
       counts as passing, it fails at scale.)
-- [ ] **≥6 of 8 open the edition email**, every edition. Writing is only half
-      the ritual; a newsletter nobody reads is dead even when three people
-      write. Resend already reports opens and clicks per send, so this costs
-      nothing and still needs no analytics in the app.
-      ⚠️ **Unresolved (2026-09-24), decide before week 1:** Resend's open
-      tracking *is* a pixel, and §5 promises the email carries none — so either
-      there is no open data, or the email breaks that promise. §9 has the
-      question.
+- [ ] **≥6 of 8 read the edition**, every edition. Writing is only half the
+      ritual; a newsletter nobody reads is dead even when three people write.
+      **Measured by asking — decided 2026-09-24.** At week 4, ask each member
+      which editions they read. Resend's open tracking stays **off**: it is a
+      pixel, and §5 and the privacy policy promise the email carries none. At
+      eight people, asking is cheap and honest; its weakness is recall, so ask
+      per edition ("did you read the one with X's trip?"), not "did you read
+      them?". (§9 has the question as it was raised.)
 - [ ] **At least one post in weeks 3–4 arrives unprompted** — written without
       you reminding that person. Unprompted contribution is the only real signal
       in the exercise; everything else can be manufactured by nagging.
@@ -853,8 +862,9 @@ Where the organizers are. Join as a person, months before mentioning the app.
       30 chars). "The opposite of a feed" was the sharper line but carries no
       keyword weight; it belongs in the promotional-text field instead, which
       updates without a review cycle. In `STORE_LISTING.md` §2.
-- [ ] **How is "≥6 of 8 open the edition email" measured? Decide before Group
-      Zero week 1.** §6's pass condition leans on Resend's open reports, but
+- [x] **How is "≥6 of 8 open the edition email" measured?** — **decided
+      2026-09-24: ask each member at week 4; open tracking stays off** (§6 pass
+      condition). The question as raised: §6's pass condition leaned on Resend's open reports, but
       open tracking is a tracking pixel, and §5 (plus the privacy policy's "no
       tracking of any kind") promises the email carries none. Either turn it on
       and change those promises, or measure reading another way — asking each
