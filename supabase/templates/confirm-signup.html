@@ -16,10 +16,10 @@
   a dead link, and the half that breaks is sign-up — which is nearly all of
   Group Zero.
 
-  It sends a CODE, not a link. Do NOT reintroduce {{ .ConfirmationURL }}: a link
-  cannot hand back to the app until universal links are configured (app.json has
-  no associatedDomains and the AASA file still holds a literal TEAMID), so a
-  tapped link would strand the reader in Safari. The app's signup screen asks for
+  It sends a CODE, not a link. Do NOT reintroduce {{ .ConfirmationURL }}: that
+  link points at the Supabase auth domain, which the app cannot claim (universal
+  links cover only www.catchupcolumn.com/edition/*), so a tapped link would
+  strand the reader in Safari. The app's signup screen asks for
   six digits and has no way to receive a link.
 
   The code must be SIX digits: hooks/use-email-code.ts hard-codes

@@ -20,6 +20,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.catchupcolumn.app",
       "buildNumber": "1",
+      "associatedDomains": ["applinks:www.catchupcolumn.com"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }

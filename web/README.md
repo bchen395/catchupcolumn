@@ -61,17 +61,19 @@ Both scope app-opening to `/edition/*` only — the marketing and legal pages (`
 browser. To route more paths into the app later (e.g. https invite links), add
 entries to the AASA `components` array and Android needs no path list.
 
-**Two owner values must be filled before this activates** (until then the files are
+**Two owner values gate this, one per platform** (until then the files are
 harmless — links just fall through to the `/edition/{id}` bouncer):
 
-1. **Apple Team ID** (available since the 2026-09-22 enrollment) — replace `TEAMID` in `apple-app-site-association` with your
-   10-char Team ID (`TEAMID.com.catchupcolumn.app`). Find it in the Apple Developer
-   portal → Membership, or via `eas credentials`.
+1. ✅ **Apple Team ID** — filled 2026-09-24: the appID is
+   `6RDS3S724Z.com.catchupcolumn.app`, and `app.json` declares
+   `applinks:www.catchupcolumn.com`. iOS takes effect with the first native build
+   that carries it (an OTA update can't add an entitlement).
 2. **Android signing SHA-256** — replace `REPLACE_WITH_YOUR_APP_SIGNING_SHA256_FINGERPRINT`
    in `assetlinks.json` with your app-signing cert's SHA-256 (colon-separated hex).
    Get it from `eas credentials` (Android) or Play Console → App integrity.
 
-Then wire the app side in `app.json`. **Use the `www` host, not the apex** — the
+Then wire the app side in `app.json` (iOS done 2026-09-24; Android's
+`intentFilters` are still to add). **Use the `www` host, not the apex** — the
 apex 308-redirects to `www` on Vercel, and neither Apple nor Google follows
 redirects when fetching these files, so `applinks:catchupcolumn.com` would fail
 verification silently:
