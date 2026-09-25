@@ -678,25 +678,24 @@ edition, it's a wrong one — and it corrupts the exact signal Group Zero exists
 to read.
 
 **Create the accounts yourself instead.** The organizer is the app for the first
-month:
+month. **Since 2026-09-24 this is the operator script `scripts/group-zero/`
+(usage in its README).** It replaces the dashboard, SQL and "sign in as them"
+steps that used to be here. The last one meant keeping a password for every
+member, because sign-in is an emailed code you can't receive. Every command is a
+dry run until `--apply`:
 
-- [ ] For each member who hasn't installed: Supabase dashboard →
-      Authentication → Add user, with **Auto Confirm User** checked and **a
-      password you keep** — with code sign-in you can't receive their code, so
-      the password is how you write as them. Then set the byline:
-      `update public.users set display_name = 'Their Name' where email = '…';`
-      The `on_auth_user_created` trigger reads `display_name` from user metadata
-      and otherwise falls back to the email's local part
-      (`supabase/migrations/001_initial_schema.sql:250`) — so without that update
-      the byline reads "sarah.k.1994". (The admin API's
-      `auth.admin.createUser({ email, password, email_confirm: true,
-      user_metadata: { display_name } })` does both in one step.)
-- [ ] Add them to the Group from the SQL editor — insert the `group_members`
-      row directly. `join_group_by_invite_code` is caller-scoped
-      (`supabase/migrations/20260505000000_critical_security_fixes.sql:73`) and
-      can't be used on someone else's behalf.
-- [ ] Write their entries from their session, not yours — sign in as them with
-      **Use a password instead**.
+- [ ] `add-member --group <invite code> --email … --name "Their Name"` for each
+      member who hasn't installed. It creates a confirmed account with no
+      password, bylined with their name rather than the email's local part, and
+      adds them as a contributor.
+- [ ] `post-for --group … --email … --body @entry.txt [--title …] [--photo …]`
+      writes their entry under their own name. It updates their draft instead
+      of adding a second story, and refuses within 30 minutes of the publish
+      slot.
+- [ ] `list --group …` shows who is in and what's waiting for the edition.
+- [ ] To set up a Group for someone else to moderate:
+      `create-group --name … --moderator <their email> --timezone <theirs>`,
+      then `add-member` for their people.
 
 Two things fall out of this that are worth more than the convenience:
 

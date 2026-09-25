@@ -145,15 +145,16 @@ jobs:
           # Pinned major: a Deno release shouldn't be able to redefine the gate.
           deno-version: v2.x
 
-      # tsconfig.json excludes supabase/functions/**, so `npm run typecheck`
-      # never sees these. This is their only type check.
+      # tsconfig.json excludes supabase/functions/** and scripts/group-zero/**
+      # (the Deno operator script), so `npm run typecheck` never sees these.
+      # This is their only type check.
       #
       # `find`, not a `**` glob: GitHub's bash doesn't enable globstar, so
       # `supabase/functions/**/*.ts` expands only one directory deep and
       # silently skips `_shared/preview/`. A gate that quietly checks 6 of 7
       # files is worse than no gate.
-      - name: Type-check functions
-        run: find supabase/functions -name '*.ts' -print0 | xargs -0 deno check
+      - name: Type-check functions and the operator script
+        run: find supabase/functions scripts/group-zero -name '*.ts' -print0 | xargs -0 deno check
 
       # The closest thing to a unit test in this repo: renders every edition
       # email fixture and exits non-zero if any would hit Gmail's ~102KB clip
