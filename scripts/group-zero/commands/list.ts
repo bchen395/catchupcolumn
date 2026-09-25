@@ -12,8 +12,6 @@ import {
   describeSchedule,
   formatMinutes,
   formatSlot,
-  NEVER_AUTO_PUBLISHES_NOTE,
-  neverAutoPublishes,
   publishSlots,
 } from '../schedule.ts';
 
@@ -63,7 +61,7 @@ const listGroups = async (db: Db): Promise<void> => {
     g.invite_code,
     count(members.data, g.id),
     count(drafts.data, g.id),
-    describeSchedule(g) + (neverAutoPublishes(g.publish_time) ? ' (NEVER AUTO-PUBLISHES)' : ''),
+    describeSchedule(g),
   ]);
   console.log(`${rows.length} Group${rows.length === 1 ? '' : 's'}:\n`);
   table(['NAME', 'ID', 'INVITE', 'MEMBERS', 'WAITING', 'PUBLISHES'], rows);
@@ -110,7 +108,6 @@ const listGroup = async (db: Db, group: GroupRow): Promise<void> => {
   field('Invite', group.invite_code);
   field('Schedule', describeSchedule(group));
   field('Next', nextEdition(group));
-  if (neverAutoPublishes(group.publish_time)) field('WARNING', NEVER_AUTO_PUBLISHES_NOTE);
   const last = lastEdition.data as { edition_number: number; published_at: string } | null;
   field(
     'Editions',
