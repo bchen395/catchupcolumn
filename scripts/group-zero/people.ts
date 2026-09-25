@@ -27,7 +27,10 @@ export const groupSummary = (group: GroupRow): string => {
 };
 
 /**
- * Create a confirmed, passwordless auth user. `user_metadata.display_name` is
+ * Create a confirmed, passwordless auth user. "Passwordless" in practice: given
+ * no password, GoTrue's admin create stores the bcrypt hash of a random one
+ * (seen on production 2026-09-25), so `encrypted_password` is never empty and
+ * nobody knows the password. `user_metadata.display_name` is
  * what on_auth_user_created (001_initial_schema.sql) copies into
  * public.users.display_name — without it the byline is the email's local part.
  * No `needs_onboarding` flag: they already have a name and a Group, so their
@@ -42,7 +45,7 @@ export const createAccountStep = (
   title: 'Create a confirmed auth user (auth.admin.createUser)',
   lines: [
     `email          ${email}`,
-    'email_confirm  true — no confirmation email is sent, and no password is set',
+    'email_confirm  true — no confirmation email is sent; no password they know (GoTrue stores a random one)',
     `user_metadata  { display_name: ${show(displayName)} }`,
     `then           on_auth_user_created inserts public.users with display_name ${show(displayName)}`,
   ],
