@@ -196,8 +196,12 @@ printf '%s' 'https://www.catchupcolumn.com' | shasum -a 256  # → 2539b7ec69c3�
 # To re-set: npx supabase secrets set WEB_BASE_URL='https://www.catchupcolumn.com'
 ```
 
-☐ **Universal links — unblocked as of the 2026-09-22 Apple enrollment.** They stay
-dormant until you (a) replace `TEAMID` in
+◐ **Universal links — iOS half in place 2026-09-24, dormant until the first native
+build.** The AASA appID is now `6RDS3S724Z.com.catchupcolumn.app` and `app.json`
+declares `applinks:www.catchupcolumn.com`. `associatedDomains` is an entitlement,
+so it reaches phones only with the first native build (never by OTA) — until then
+the email CTA still opens Safari. Android is untouched (deferred). The original
+steps, for Android and for reference: (a) replace `TEAMID` in
 `web/.well-known/apple-app-site-association` with your Apple Team ID and the Android
 SHA-256 in `assetlinks.json`, and (b) add `associatedDomains`/`intentFilters` to
 `app.json` (snippet in `web/README.md`). **Declare `www.catchupcolumn.com`, not the
@@ -521,12 +525,14 @@ because screenshots freeze the final look and Group Zero will produce better one
   the multi-day-tail item that gated the APNs key (step 3), the Team ID for
   step 2's universal links, and the TestFlight build Group Zero's editions 3–4
   need (step 8).
-- ☐ **[owner] Copy the Apple Team ID out and use it.** It is in the developer
+- ✅ **[owner] Copy the Apple Team ID out and use it** — `6RDS3S724Z`, pasted
+  2026-09-24 (step 2). It is in the developer
   account under Membership details. Two places want it: step 2's
   `web/.well-known/apple-app-site-association` (replacing the literal `TEAMID`)
   and `app.json`'s `associatedDomains`. Nothing else in this step is blocked on it.
-- ☐ **[owner] Confirm the bundle ID `com.catchupcolumn.app` is final — before
-  the first TestFlight build, not the first submission.** It locks when the
+- ✅ **[owner] Confirm the bundle ID `com.catchupcolumn.app` is final** —
+  confirmed by the owner 2026-09-24; keep it. Why it had to be settled before
+  the first TestFlight build, not the first submission: it locks when the
   first build is *uploaded*: that binds it to the App Store Connect app record
   for good, and changing it afterwards means a new app record. The Group Zero
   TestFlight build (step 8) is that upload. It is also half of the AASA appID

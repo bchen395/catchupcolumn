@@ -204,6 +204,11 @@ Deploying edge functions.
    **The server half is fixed:** the `WEB_BASE_URL` secret pointed at the apex,
    which 308s to `www` and which universal links can't claim, so the Team ID
    alone would not have been enough. Set to `www` 2026-09-22.
+   **The iOS client half landed 2026-09-24:** AASA appID
+   `6RDS3S724Z.com.catchupcolumn.app`, `ios.associatedDomains` declared. It is
+   an entitlement, so it reaches phones only with the first native build; close
+   this item once a TestFlight build opens an edition-email link in the app.
+   Android (`assetlinks.json`, `intentFilters`) is still open and deferred.
 
 Everything else is low-risk cleanup that can ride along with normal work.
 

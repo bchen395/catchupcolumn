@@ -2,7 +2,7 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["TEAMID.com.catchupcolumn.app"],
+        "appIDs": ["6RDS3S724Z.com.catchupcolumn.app"],
         "components": [
           {
             "/": "/edition/*",

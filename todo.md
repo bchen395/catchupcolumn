@@ -41,7 +41,11 @@ POSITIONING §8 is the authoritative sequence. The short version:
       things that were all waiting on it: the Apple Team ID (→ universal links,
       [docs/LAUNCH.md](docs/LAUNCH.md) step 2), the APNs push key (step 3), and
       the first TestFlight build for Group Zero editions 3–4 (step 8).
-- [ ] **[owner] Paste the Apple Team ID into the universal-link files** — replaces
+- [x] **Apple Team ID pasted and bundle ID confirmed** — 2026-09-24. AASA appID
+      `6RDS3S724Z.com.catchupcolumn.app`; `app.json` declares
+      `applinks:www.catchupcolumn.com`; bundle ID `com.catchupcolumn.app` kept.
+      Takes effect with the first native build. The original item, for context:
+      replaces
       the literal `TEAMID` in `web/.well-known/apple-app-site-association` and adds
       `associatedDomains` to `app.json`. Until then every edition email's CTA opens
       Safari instead of the app. Cheapest of the three unblocked items, and the only

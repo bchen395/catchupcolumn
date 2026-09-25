@@ -149,7 +149,10 @@ Authentication:
         https://www.catchupcolumn.com/edition/00000000-0000-0000-0000-000000000000
       # → 200. A 404 means the /edition/* rewrite regressed.
       ```
-- [ ] If enabling universal links: `TEAMID` replaced in
+- [ ] If enabling universal links: `TEAMID` replaced in (**iOS done 2026-09-24**
+      — AASA appID `6RDS3S724Z.com.catchupcolumn.app`, `associatedDomains`
+      declared; untick-able until a native build carrying it is verified on a
+      device; Android still open)
       `web/.well-known/apple-app-site-association`, SHA-256 replaced in
       `assetlinks.json`, and `associatedDomains`/`intentFilters` added to `app.json`
       declaring **`www.catchupcolumn.com`** — Apple and Google do not follow the
@@ -230,7 +233,8 @@ Using the TestFlight / internal-testing build, with two accounts:
 - [x] Apple Developer Program ($99/yr) enrolled *(2026-09-22)*
 - [ ] Play Console ($25 one-time) enrolled — Android is deferred, so this is only
       needed if that changes
-- [ ] Bundle ID `com.catchupcolumn.app` confirmed final — **immutable after the
+- [x] Bundle ID `com.catchupcolumn.app` confirmed final — owner, 2026-09-24.
+      **Immutable after the
       first build upload**, which is the Group Zero TestFlight build, not
       submission. Decide it before that build ([LAUNCH.md](./LAUNCH.md) step 7)
 - [ ] App records created in both consoles

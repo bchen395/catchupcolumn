@@ -10,10 +10,10 @@
   address to "Confirm signup". Change the design in one, change it in both.
 
   It sends a CODE, not a link. {{ .Token }} is the 6-digit code the app's
-  sign-in screen asks for. Do NOT reintroduce {{ .ConfirmationURL }}: a link
-  cannot hand back to the app until universal links are configured (app.json has
-  no associatedDomains and the AASA file still holds a literal TEAMID), so a
-  tapped link would strand the reader in Safari.
+  sign-in screen asks for. Do NOT reintroduce {{ .ConfirmationURL }}: that link
+  points at the Supabase auth domain, which the app cannot claim (universal
+  links cover only www.catchupcolumn.com/edition/*), so a tapped link would
+  strand the reader in Safari.
 
   The code must be SIX digits: hooks/use-email-code.ts hard-codes
   CODE_LENGTH = 6 and the input truncates to it, so a longer OTP length in the

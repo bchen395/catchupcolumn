@@ -45,9 +45,9 @@ export const signInWithEmail = async ({ email, password }: Credentials) => {
  *
  * **This only sends a CODE if the project's Magic Link email template uses
  * `{{ .Token }}`.** Magic links and OTPs are the same Supabase call — with the
- * stock template the email carries a link instead, and a link cannot hand back
- * to the app until universal links are configured (`app.json` declares no
- * `associatedDomains`, and the AASA file still holds a literal `TEAMID`).
+ * stock template the email carries a link instead, and a tapped link opens
+ * Safari: it points at the Supabase auth domain, which the app cannot claim
+ * (universal links cover only `www.catchupcolumn.com/edition/*`).
  * See docs/LAUNCH.md step 5 for the dashboard change.
  *
  * `allowNewUser` is what separates the two entry points: the login screen passes
