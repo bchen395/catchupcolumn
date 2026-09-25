@@ -67,6 +67,42 @@ Two corrections to *this document*, which had drifted:
 
 ---
 
+## Late publish slots — 2026-09-25
+
+### H1. A Group publishing at 23:40 or later never auto-publishes — FIXED in a migration, pending `db push`
+- **Where:** `compile_due_editions`, last defined in
+  `supabase/migrations/20260525000000_manual_publish.sql:141` (due check),
+  `:144` (slot-scoped duplicate guard) and `:167` (the guard's re-check after
+  the advisory lock).
+- **Found by** the Group Zero readout-queries work (`scripts/group-zero/readout.sql`
+  q0 reports it as "SLOT NEVER FIRES"). Confirmed on production 2026-09-24. It
+  was never recorded here before.
+- The due check compared times of day: `local_now::time >= publish_time and
+  local_now::time < publish_time + tolerance`. `time + interval` wraps at
+  midnight (`23:45 + 20 min = 00:05`), so at the cron's 20-minute tolerance no
+  time of day satisfied both halves for any publish_time ≥ 23:40. The app's
+  picker offers 11:45 PM. A Group on that slot only ever published by hand.
+- The obvious fix has two traps. A 23:45 window runs to 00:05 on the *next*
+  day, where the day-of-week check sees the wrong day. And the duplicate guard
+  ("an edition on local_now's date, at or after publish_time") would not
+  recognise the 23:45 edition at the 00:00 tick, so the Group would get two
+  editions.
+- **Fix:** `supabase/migrations/20260925212248_fix_late_publish_slot_wrap.sql`
+  adds `due_publish_slot(...)`, which returns the matched slot as a local
+  timestamp (today's or yesterday's) or null. `compile_due_editions` now uses
+  it for the due check and both guard checks, so all three compare timestamps.
+  For every slot before 23:40 the result is identical to the old logic; the PR
+  has the production sweep that shows it. `publish_edition_now` has no slot
+  logic and is unchanged.
+- **Status: pending `supabase db push`** (the owner pushes). Until it's live,
+  `scripts/group-zero/` keeps refusing slots ≥ 23:40 and the readout's q0
+  warning stays true.
+- DST behaviour is unchanged. A slot inside the spring-forward gap (e.g. 02:30
+  America/New_York on 2026-03-08) doesn't publish that week. A slot inside the
+  fall-back repeat publishes once.
+
+---
+
 ## Medium
 
 ### M1. Per-recipient email failures are never retried
