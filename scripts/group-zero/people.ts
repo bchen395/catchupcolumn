@@ -9,8 +9,6 @@ import { type Step, show } from './plan.ts';
 import {
   describeSchedule,
   formatSlot,
-  NEVER_AUTO_PUBLISHES_NOTE,
-  neverAutoPublishes,
   publishSlots,
 } from './schedule.ts';
 
@@ -22,8 +20,7 @@ export const groupSummary = (group: GroupRow): string => {
   } catch {
     next = ' · schedule cannot be evaluated (see post-for)';
   }
-  const warning = neverAutoPublishes(group.publish_time) ? `\n          WARNING: ${NEVER_AUTO_PUBLISHES_NOTE}` : '';
-  return `${group.name} (${group.id}) · ${describeSchedule(group)}${next}${warning}`;
+  return `${group.name} (${group.id}) · ${describeSchedule(group)}${next}`;
 };
 
 /**

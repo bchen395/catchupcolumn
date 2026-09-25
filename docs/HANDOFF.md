@@ -34,9 +34,11 @@ tells you to, per PR.
 ## Live state (verified 2026-09-25 — re-check before relying on it)
 
 **Working:**
-- **Server:** v2 edition email live (functions from `main`, 2026-09-24); cron 200s
-  every 15 min; 30 migrations applied; `WEB_BASE_URL` = `www`; `EMAIL_FROM`
-  correct; Vercel in sync with `main`.
+- **Server:** v2 edition email live (functions from `main`, 2026-09-24); cron
+  firing every 15 min (but see the timeouts below); **31 migrations applied** —
+  the late-slot fix (`20260925212248`, bugs.md H1) pushed and verified
+  2026-09-25 22:01 UTC, so slots at 23:40 or later now publish; `WEB_BASE_URL` =
+  `www`; `EMAIL_FROM` correct; Vercel in sync with `main`.
 - **CI green** on every check again (Expo patch bump, #36).
 - **EAS env** (`production` + `preview`): Supabase vars and
   `EXPO_PUBLIC_SENTRY_DSN` (set 2026-09-24, read back).
@@ -55,11 +57,13 @@ tells you to, per PR.
   production 2026-09-22 (dev build).
 
 **Wrong or open right now:**
-- **A Group with a publish time ≥ 23:40 never auto-publishes** (`time + interval`
-  wraps at midnight in `compile_due_editions`; the picker offers 11:45 PM). Fix in
-  flight on branch `fix-late-publish-slot`; it needs the owner's OK to
-  `db push`. Until it's live, `create-group` refuses ≥ 23:40 and `readout.sql`
-  q0 flags such a Group — relax both *after* the push is verified.
+- **~1 in 4 cron ticks times out** at pg_net's 5 s default (bugs.md H2). Most
+  slots get one tick in their 20-minute window, so if a timed-out run is cut
+  off, that Group silently misses its edition. **Unknown until the owner reads
+  the dashboard's `compile-editions` invocation log for a timed-out tick**
+  (e.g. 2026-09-25 22:00 UTC). Fix planned with H3.
+- **One Group with an invalid timezone would fail the compile for all Groups**
+  (bugs.md H3). None exists today. Fix planned this week, before edition 1.
 - **Every production EAS build fails at the Sentry step** until `SENTRY_ORG`,
   `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` exist (LAUNCH 10.4). Deliberate:
   `preview` skips the upload, `production` doesn't.
@@ -117,12 +121,14 @@ future function change; verify by download-and-diff (LAUNCH → Deploying edge
 functions).
 
 **C. Dev work:**
-1. **Late-slot fix** — PR from `fix-late-publish-slot`; review it hard (it
-   redefines the compile and manual-publish functions), then the owner approves
-   `db push`, then verify with `pg_get_functiondef` and the next cron tick.
-2. **After (1) is live:** drop the ≥ 23:40 refusal from `scripts/group-zero/`
-   (`neverAutoPublishes` in `schedule.ts`, its uses in `create-group` and the
-   Group summaries) and the "SLOT NEVER FIRES" flag in `readout.sql` q0.
+1. ~~Late-slot fix~~ — **live 2026-09-25** (#42, pushed and verified), and the
+   operator script's ≥ 23:40 refusal and readout q0's warning removed.
+2. **Cron robustness migration (bugs.md H2 + H3)** — one migration: raise the
+   cron's `timeout_milliseconds`; consider a tolerance that gives every slot
+   two ticks (≥ 30 min); make the compile loop skip an invalid timezone; and
+   validate `groups.timezone` on write without breaking Group creation for a
+   phone whose zone Postgres doesn't know. Owner approves the push. Before
+   Group Zero's first edition.
 3. **TestFlight review account** — a password account (the operator script
    creates only code accounts; use `auth.admin.createUser` with a password, or
    the dashboard), plus a demo Group with a published edition so every screen
@@ -254,8 +260,8 @@ friend-group volumes sell (POSITIONING §9).
 
 1. Re-verify the live-state block (five minutes, all read-only). Anything that
    changed, update here.
-2. The late-slot fix: if its PR is open, review it; once merged, get the owner's
-   OK for `db push` per the PR's plan, verify, then do C2.
+2. The cron-robustness migration (C2): get the owner's read of a timed-out
+   `compile-editions` invocation first — it decides how urgent H2 is.
 3. Recruiting at the top of the check-in until ~09-30: a family Group, the
    Group B organizer's name, Group A's member list.
 4. Get the Sentry token set, then schedule the production-build session with the

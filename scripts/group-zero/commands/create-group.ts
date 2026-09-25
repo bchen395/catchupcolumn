@@ -6,24 +6,14 @@
 // with the same defaults: Sunday 09:00, the creator's timezone, the invite code
 // left to the database default. on_group_created then makes created_by the
 // moderator. No cover photo — add one from the app.
-//
-// Refuses a publish time of 23:40 or later: compile_due_editions can never
-// match such a slot (see neverAutoPublishes in schedule.ts). The app's picker
-// still offers 11:45 PM until the SQL fix lands.
 
 import type { GroupRow } from '../../../types/database.ts';
-import { parseFlags, Refusal, UsageError } from '../args.ts';
+import { parseFlags, UsageError } from '../args.ts';
 import { connect } from '../client.ts';
 import { fetchProfile, findAuthUserByEmail, validateDisplayName, validateEmail } from '../lookup.ts';
 import { createAccountStep, ensureProfileStep } from '../people.ts';
 import { banner, executePlan, field, show, type Step } from '../plan.ts';
-import {
-  COMPILE_TOLERANCE_MINUTES,
-  describeSchedule,
-  formatSlot,
-  neverAutoPublishes,
-  publishSlots,
-} from '../schedule.ts';
+import { describeSchedule, formatSlot, publishSlots } from '../schedule.ts';
 
 const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
@@ -69,13 +59,6 @@ export const createGroup = async (args: string[]): Promise<void> => {
   const description = flags.optional('description')?.trim() || null;
   const publishDay = parseDay(flags.optional('publish-day') ?? '0');
   const publishTime = parseTime(flags.optional('publish-time') ?? '09:00');
-  if (neverAutoPublishes(publishTime)) {
-    throw new Refusal(
-      `--publish-time ${publishTime.slice(0, 5)} would never publish on its own. compile_due_editions ` +
-        `matches [publish_time, publish_time + ${COMPILE_TOLERANCE_MINUTES} min), and that window wraps ` +
-        `past midnight for any time from 23:${60 - COMPILE_TOLERANCE_MINUTES} on. Pick 23:${59 - COMPILE_TOLERANCE_MINUTES} or earlier.`,
-    );
-  }
   const tzArg = flags.optional('timezone');
   const timezone = parseTimezone(tzArg ?? Temporal.Now.timeZoneId());
   const apply = flags.bool('apply');
