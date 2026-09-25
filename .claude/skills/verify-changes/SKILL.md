@@ -29,8 +29,8 @@ npm run typecheck          # strict mode. Covers app code (app/, components/, li
 npm run lint               # eslint-config-expo. Must be 0 errors; warnings are informational.
 ```
 
-- `tsconfig.json` is `strict: true` and **excludes `supabase/functions/**`**. So `npm run typecheck` does **not** check edge functions.
-- For edge functions (Deno), use `find supabase/functions -name '*.ts' -print0 | xargs -0 deno check` (a bare `**/*.ts` glob skips `_shared/` in non-globstar shells).
+- `tsconfig.json` is `strict: true` and **excludes `supabase/functions/**` and `scripts/group-zero/**`**. So `npm run typecheck` does **not** check edge functions or the operator script.
+- For both (Deno), use `find supabase/functions scripts/group-zero -name '*.ts' -print0 | xargs -0 deno check` — what CI runs (a bare `**/*.ts` glob skips `_shared/` in non-globstar shells).
 - `eslint.config.js` also skips `supabase/functions/**` (Deno's `https://` imports don't resolve under the Node resolver), plus `.expo/**` and `.claude/worktrees/**`.
 - **Warnings are expected and are not a failure.** Three React-Compiler-era rules
   (`react-hooks/refs`, `set-state-in-effect`, `immutability`) are downgraded to

@@ -160,8 +160,9 @@ Authentication:
 
 ## Gate 5 — Build & credentials
 
-> This is the **first ever release build** — `eas build:list` is empty, so nothing in
-> this app has run outside Expo Go. Budget time for it to fail once or twice.
+> This is the **first ever release build** — the only EAS build so far is a 2026-09-24
+> simulator `preview` build (LAUNCH step 8), so no signed binary has ever run on a
+> phone. Budget time for it to fail once or twice.
 
 - [ ] Push credentials uploaded: `npx eas-cli credentials` — APNs key (iOS), FCM v1
       service account (Android). Without these, production push silently never
@@ -170,6 +171,9 @@ Authentication:
       launch without `EXPO_PUBLIC_SUPABASE_URL` / `_ANON_KEY` *(2026-08-04: set ✅)*,
       and needs **`EXPO_PUBLIC_SENTRY_DSN`** here too — `.env.local` is gitignored
       and never reaches an EAS build ([LAUNCH.md](./LAUNCH.md) step 10)
+      *(2026-09-24: DSN set ✅ in production and preview)*. **Also
+      `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`** — without them the
+      production build fails at the Sentry step (LAUNCH step 10.4)
 - [ ] `npx eas-cli build --platform all --profile production`
 - [ ] **Install the signed binary** and confirm, on a real device — none of this is
       exercised by Expo Go:

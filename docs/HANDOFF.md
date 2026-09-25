@@ -1,9 +1,10 @@
 # Launch handoff — orchestration brief
 
-**Written 2026-09-24.** A living brief for whichever session is orchestrating the
-launch. It holds what the lists don't: current live state, the dependency order,
-who does what, and how to verify. **Rewrite it at the end of every orchestration
-session** (state, dates, first moves). Delete it at launch.
+**Rewritten 2026-09-25** (first written 2026-09-24). A living brief for whichever
+session is orchestrating the launch. It holds what the lists don't: current live
+state, the dependency order, who does what, and how to verify. **Rewrite it at
+the end of every orchestration session** (state, dates, first moves). Delete it
+at launch.
 
 It deliberately does **not** copy the lists — each has one home:
 
@@ -15,6 +16,7 @@ It deliberately does **not** copy the lists — each has one home:
 | Submission-day gates (authoritative over LAUNCH) | `docs/PRESUBMISSION_CHECKLIST.md` |
 | Code-side residue | `bugs.md` |
 | What the Group B organizer gets | `docs/ORGANIZER_PLAYBOOK.md` |
+| Group Zero tooling | `scripts/group-zero/` (README), `scripts/group-zero/readout.sql` |
 | How to work on each surface | `.claude/skills/*` (auto-load) |
 
 When something gets done, record it **there**, dated — then update this file.
@@ -26,173 +28,198 @@ When something gets done, record it **there**, dated — then update this file.
 Run the rest of the launch with the owner. Keep the critical path moving; do the
 dev work yourself or in parallel subagents (worktrees); hand the owner the
 owner-only steps **one at a time, with exact clicks/commands**; verify every claim
-against production (read-only) before recording it. The owner merges PRs.
+against production (read-only) before recording it. The owner merges PRs — or
+tells you to, per PR.
 
-## Live state (verified 2026-09-24 — re-check before relying on it)
+## Live state (verified 2026-09-25 — re-check before relying on it)
 
-**Working:** the **v2 edition email is live** (functions redeployed from `main`
-2026-09-24 15:46 UTC and verified by diff); cron firing end to end (200s every
-15 min); all 30 migrations applied; `WEB_BASE_URL` = `www`; `EMAIL_FROM` correct; Vercel site in sync with
-`main`; EAS env has the Supabase vars in `production` and `preview`; code
-sign-in, sign-up, moderator removal and account deletion all verified against
-production 2026-09-22 (dev build).
+**Working:**
+- **Server:** v2 edition email live (functions from `main`, 2026-09-24); cron 200s
+  every 15 min; 30 migrations applied; `WEB_BASE_URL` = `www`; `EMAIL_FROM`
+  correct; Vercel in sync with `main`.
+- **CI green** on every check again (Expo patch bump, #36).
+- **EAS env** (`production` + `preview`): Supabase vars and
+  `EXPO_PUBLIC_SENTRY_DSN` (set 2026-09-24, read back).
+- **Universal links, server + config half:** the AASA serves
+  `6RDS3S724Z.com.catchupcolumn.app` (200, `application/json`, and Apple's CDN
+  already has it); `app.json` declares `applinks:www.catchupcolumn.com`. Bundle ID
+  `com.catchupcolumn.app` confirmed final. Reaches phones with the first device
+  build.
+- **First EAS build** (2026-09-24, `preview`, simulator, build `cf9f70ee`): SDK 57
+  builds and launches — splash hides, fonts load, sign-in renders, clean logs.
+  Installed on the owner's simulator (iPhone 17 Pro).
+- **Group Zero tooling on `main`:** the operator script (verified end to end
+  against production 2026-09-25 with a throwaway Group, cleaned up — PR #40's
+  comment) and the readout queries.
+- Code sign-in, sign-up, moderator removal, account deletion verified against
+  production 2026-09-22 (dev build).
 
-**Wrong right now:**
-- Team ID not pasted (AASA still `TEAMID`, no `associatedDomains`) → email CTA
-  opens Safari.
-- No Sentry DSN anywhere. No DMARC record. Resend domain status unconfirmed.
-- The live privacy policy lacks the Sentry disclosure until the 2026-09-24 docs
-  PR (#33) merges (it publishes `web/privacy.html`).
-- **CI's `expo-doctor` check fails on every PR** since Expo shipped SDK 57 patch
-  releases (first seen on #33, 2026-09-24): `expo`, `expo-image-manipulator`,
-  `expo-image-picker`, `expo-linking`, `expo-notifications` and `expo-router`
-  are each one patch behind. Fix in its own PR with `npx expo install --fix`,
-  then let CI confirm. Worth doing before the first build anyway.
+**Wrong or open right now:**
+- **A Group with a publish time ≥ 23:40 never auto-publishes** (`time + interval`
+  wraps at midnight in `compile_due_editions`; the picker offers 11:45 PM). Fix in
+  flight on branch `fix-late-publish-slot`; it needs the owner's OK to
+  `db push`. Until it's live, `create-group` refuses ≥ 23:40 and `readout.sql`
+  q0 flags such a Group — relax both *after* the push is verified.
+- **Every production EAS build fails at the Sentry step** until `SENTRY_ORG`,
+  `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` exist (LAUNCH 10.4). Deliberate:
+  `preview` skips the upload, `production` doesn't.
+- Nothing behind sign-in has been checked on a release build (owner's simulator
+  pass pending). Nothing has run on a phone as a signed binary.
+- No DMARC record. Resend domain status unconfirmed.
+- The owner's Mac has Xcode 26.3; **local** SDK 57 builds need ≥ 26.4. EAS is
+  unaffected, so this blocks nothing.
 
-**Not started:** Group Zero. Production has 2 test Groups, 3 users, no new user
-since 2026-06-04. No release build has ever been made (`eas build:list` empty);
-SDK 57 has never run on hardware.
+**Not started:** Group Zero. Production has 2 test Groups, 3 users. Recruiting as
+of 2026-09-25: the owner has a friend group they're part of (Group A) and "can
+enlist another group easily" — **who organizes it is unconfirmed** (it must not be
+the owner). **No family Group yet.**
 
 ## Dates that bind
 
 | When | What | Why it's fixed |
 | --- | --- | --- |
 | **~2026-09-30** | 2–3 family Groups publishing | A family recruited later has too little to print for December (POSITIONING §5) |
-| Before edition 1 | The read-measurement decision | Otherwise the pass condition is unmeasurable (the function redeploy it also needed was done 2026-09-24) |
-| **Group Zero week 3** (~mid-Oct if edition 1 lands ~Oct 4) | First TestFlight build installed | Editions 3–4 require the app; Expo Go has no remote push |
+| **Early October** | First production build uploaded + external TestFlight submitted for review | Apple's TestFlight App Review has lead time, and Group Zero week 3 (~mid-Oct) needs installs |
 | Late November | The December test (hand-made volumes, Lulu by hand, Stripe link) | Q4 is 40–60% of gift revenue |
+| Before App Store submission | Illustration rework landed (commissioned illustrator) | Owner, 2026-09-25: no store release with the current drawings |
 
-## The dependency chain into the first build
+## The dependency chain into TestFlight
 
 ```
-owner: Team ID + confirm bundle ID ─┐  (bundle ID locks on first upload — irreversible)
-owner: Sentry project → DSN ────────┼─→ agent: AASA + app.json associatedDomains; eas env:set DSN
-docs PR merged (privacy discloses   │        (associatedDomains is native: can't ship by OTA)
-  Sentry) ──────────────────────────┘
-                                     ─→ local simulator Release build (smoke SDK 57)
-                                     ─→ eas build --profile production (creates APNs key)
-                                     ─→ TestFlight → Group Zero editions 3–4
+owner: Sentry auth token (+ org/project slugs) ─→ EAS env (token via dashboard, Secret)
+                                                   │
+owner at keyboard (Apple sign-in) ─────────────────┼─→ eas build --profile production
+                                                   │     (creates cert + APNs key)
+                                                   ├─→ eas submit → App Store Connect record,
+                                                   │     bundle ID locks (already confirmed)
+agent: review account WITH a password + a demo  ───┼─→ External group + Test Information
+  Group with a published edition                   │     (Beta App Description required)
+                                                   └─→ TestFlight App Review → public link
+                                                         → Group Zero installs (week 3)
 ```
 
-Budget for the first EAS build failing once; that's why the local build goes first.
+The illustration rework is **not** on this chain: the SVGs reach an installed
+build by OTA (`fingerprint` runtime policy); the icon/splash change needs one more
+build, which is cheap by then.
 
 ## Workstreams
 
-**A. Group Zero — owner-led.** Recruit Group A (owner's friends), a Group B
-organizer, and 2–3 families. Editions 1–2 accept entries by any channel; 3–4
-require the app. Agent support: the operator script (C2), the readout queries
-(C5), and turning each week's facts into dated notes in POSITIONING §6.
+**A. Group Zero — owner-led, tools ready.** Per Group: `create-group` (Group B:
+organizer as moderator — decided 2026-09-24), `add-member` for each person,
+`post-for` for entries sent by text in editions 1–2, `readout.sql` for results.
+Reading is measured by asking each member at week 4 (decided 2026-09-24; open
+tracking stays off). The owner may prefer to run the commands in their own
+terminal to keep friends' emails out of the session — offer it.
 
-**B. Production correctness — agent, owner approves each prod change.** The
-function redeploy is done (2026-09-24). What's left is the owner's dashboard
-reads (below), and redeploying after **every** future function change — verify
-each by download-and-diff (LAUNCH → Deploying edge functions).
+**B. Production correctness — agent, owner approves each prod change.** Next: the
+late-slot migration push (plan in its PR). Redeploy functions after **every**
+future function change; verify by download-and-diff (LAUNCH → Deploying edge
+functions).
 
-**C. Dev work ready to hand to subagents** (each in its own worktree; 2, 3 and 5
-can run in parallel today):
-
-1. ~~**Redeploy**~~ — done 2026-09-24 (v18 / v8), verified by diff. Kept as the
-   pattern for the next one: ask first, deploy just after a cron tick, check for
-   live delivery claims, verify by diff and by the next tick's `200`.
-2. **Group Zero operator script** (`scripts/group-zero/`, Deno — 2.9 is
-   installed). Replaces POSITIONING §6's dashboard-and-SQL routine and the
-   "sign in as them" step, which code sign-in makes awkward. Service-role key
-   from the shell env only — never a file in the repo. Commands:
-   - `add-member` — `auth.admin.createUser({ email, email_confirm: true,
-     user_metadata: { display_name } })` (sets the byline via
-     `on_auth_user_created`; without it the byline is the email's local part),
-     then insert the `group_members` row as contributor, `on conflict do
-     nothing`. No password needed — they sign in later with a code.
-   - `post-for` — write *their* post: **update their existing uncompiled post if
-     one exists** (the app keeps one per member per edition by convention —
-     `fetchCurrentPost` in `lib/posts.ts`; there is no DB constraint, so a second
-     insert becomes a second story). `edition_id` stays null. Optional photo →
-     `post-images/<user_id>/posts/<post_id>/image.jpg`, `image_url` = that path
-     (mirror `lib/posts.ts`).
-   - `list` — members and this week's posts for a Group.
-   - Safety: dry-run unless `--apply`; refuse if the author isn't a member;
-     refuse within 30 minutes of the Group's publish slot. Possibly
-     `create-group --moderator <email>` too, if the owner decides to set Group B
-     up by hand (see decisions).
-   - Verify against production with a throwaway Group + before/after queries,
-     then delete it. Update POSITIONING §6 to point at the script.
-3. **Local simulator Release build** — `npx expo run:ios --configuration
-   Release` (Xcode 26.3 installed; `ios/` is gitignored). Smoke the bugs.md #1
-   risk spots: splash hides, Lora/Jost load, `js-tabs` tab bar, Reanimated 4.5
-   animations. It reads `.env.local`, so it talks to **production** — don't
-   create junk data. Memory note: rAF can freeze in a hidden preview pane; run a
-   control before calling an animation broken.
-4. **Universal links** — needs the Team ID + bundle-ID confirmation. AASA
-   `appIDs` → `<TEAMID>.com.catchupcolumn.app`; `app.json` `ios.associatedDomains:
-   ["applinks:www.catchupcolumn.com"]` (snippet in `web/README.md` — never the
-   apex). After merge, curl the AASA (200, `application/json`, new ID) and re-run
-   the permalink curl. Takes effect with the next native build.
-5. **Group Zero readout queries** — read-only SQL, runnable with `npx supabase
-   db query --linked`: per-member post counts across editions (pass: ≥5 of 8
-   write ≥2); when in the week people write, relative to the publish slot (the
-   nudge's 48h guess); first `push_tokens` row per member (install date — not
-   `last_sign_in_at`, which the organizer's own actions move).
-6. **bugs.md L3** — a brand-new user whose profile row fails twice lands on
-   broken screens. Group Zero is the first real sign-ups. Small UI change.
+**C. Dev work:**
+1. **Late-slot fix** — PR from `fix-late-publish-slot`; review it hard (it
+   redefines the compile and manual-publish functions), then the owner approves
+   `db push`, then verify with `pg_get_functiondef` and the next cron tick.
+2. **After (1) is live:** drop the ≥ 23:40 refusal from `scripts/group-zero/`
+   (`neverAutoPublishes` in `schedule.ts`, its uses in `create-group` and the
+   Group summaries) and the "SLOT NEVER FIRES" flag in `readout.sql` q0.
+3. **TestFlight review account** — a password account (the operator script
+   creates only code accounts; use `auth.admin.createUser` with a password, or
+   the dashboard), plus a demo Group with a published edition so every screen
+   has content. Not a real person's account. LAUNCH step 8.
+4. **Illustration support, if the owner wants it** (the illustrator draws; these
+   help them and the merge): stroke-scale tokens in `constants/`, a review
+   screen showing all 8 assets + both loader variants + Reduce Motion, and a
+   script that regenerates `icon.png` / `splash-icon.png` from `paperboy-mark`
+   geometry. Scope and export contracts: `design/ILLUSTRATION_REWORK.md`.
+5. **bugs.md L3** — lower priority now: the operator script pre-creates every
+   Group Zero account with its profile.
+6. **bugs.md M1** — a decision, not a fix (recommended: accept for Group Zero).
 
 **D. Owner-only — hand these over one at a time:**
-- Recruiting (A). This is the item with the deadline; protect the owner's time for it.
-- Apple Team ID (Membership details) + a yes/no on bundle ID `com.catchupcolumn.app`.
-- Create the Sentry project; paste the DSN.
+- Recruiting — the deadline item. Protect the owner's time for it: a family Group
+  this week (their own counts), and a named Group B organizer.
+- Sign in on the simulator build and check: the tab bar, Editions → an edition →
+  a story, the compose sheet (open and close, **don't post** — it's production),
+  and the loading animation.
+- Sentry: create an auth token (*Settings → Auth Tokens*, `project:releases`),
+  put it in the expo.dev dashboard as a Secret; tell the agent the org and
+  project slugs.
+- The production build session (Apple sign-in at the keyboard).
 - DMARC TXT at `_dmarc.catchupcolumn.com` (value in LAUNCH step 4).
 - Resend dashboard: domain `verified`? plan's daily cap? Open/click tracking
-  on or off? (That last one feeds the measurement decision.)
+  **off** (the decision above depends on it)?
 - Supabase dashboard reads: minimum password length (LAUNCH and bugs.md
   disagree), per-address email interval.
 - Lulu pricing calculator at a real trim size and page count.
-- Not recorded from the 2026-09-22 sign-up test: the email's subject, sender, and
-  inbox-vs-spam placement. Ask once.
+- Not recorded from the 2026-09-22 sign-up test: the email's subject, sender,
+  and inbox-vs-spam placement. Ask once.
+- Optional: update Xcode to ≥ 26.4 for local builds.
 
 **E. Gated — do not start** (POSITIONING §8): the nudge, thin-edition design,
-write-by-web, illustration rework, store screenshots, App Store submission, the
-house ad (after the December test), the print renderer / Lulu API.
+write-by-web, store screenshots, App Store submission (after Group Zero **and**
+the illustration rework), the house ad (after the December test), the print
+renderer / Lulu API.
 
-## Decisions the owner owes, and by when
+## Decisions the owner owes
 
 | Decision | Needed by | Where |
 | --- | --- | --- |
-| How "≥6 of 8 read it" is measured — Resend open tracking is a pixel, which §5 and the privacy policy promise the email doesn't carry | Before edition 1 | POSITIONING §9 |
-| How Group B's organizer gets in with no build yet — playbook is silent. Options: owner creates the Group and hands over moderator; organizer waits for TestFlight; Expo Go (not for non-technical people) | Before recruiting Group B | ORGANIZER_PLAYBOOK, POSITIONING §6 |
-| Bundle ID final | Before the first EAS build | LAUNCH step 7 |
-| Publish day default: app says Sunday 09:00, the playbook recommends Monday (minor) | Any time | `app/group/create.tsx`, playbook |
+| Who organizes Group B | Before recruiting it | POSITIONING §6 |
+| Publish-day default: app says Sunday 09:00, the playbook recommends Monday (minor) | Any time | `app/group/create.tsx`, playbook |
+| M1: accept no per-recipient email retry for Group Zero? | Before edition 1 | bugs.md M1 |
 
-Still open, and deliberately left until after Group Zero: passwords for code-only
-accounts, weekly vs biweekly, classifieds, volume size and whether friend-group
-volumes sell (POSITIONING §9).
+Decided this session (2026-09-24/25): reading measured by asking at week 4;
+Group B set up by the owner with the organizer as moderator; bundle ID final;
+"shipping" means the App Store, and it waits for the commissioned illustration
+rework. Still open, deliberately left until after Group Zero: passwords for
+code-only accounts, weekly vs biweekly, classifieds, volume size and whether
+friend-group volumes sell (POSITIONING §9).
 
 ## How to verify without Docker
 
-- **DB, read-only:** `npx supabase db query --linked "<SQL>"`. Never run LAUNCH's
-  Vault query 2 unless the cron's HTTP responses fail — it prints secrets.
+- **DB, read-only:** `npx supabase db query --linked "<SQL>"`. Its stdout starts
+  with `Initialising login role...`, so don't pipe it into `jq`; grep/sed the
+  rows. Never run LAUNCH's Vault query 2 unless the cron's HTTP responses fail —
+  it prints secrets.
+- **Operator script / service-role calls:** derive the key inline so it's never
+  printed or written:
+  `SUPABASE_SERVICE_ROLE_KEY="$(npx supabase projects api-keys --project-ref wvaxfyhihcfilewygtzp -o json | jq -r '.[] | select(.name=="service_role") | .api_key')"`.
+  Dry runs are free; every `--apply` is a production write — ask first.
 - **Hashed secrets:** `supabase secrets list` digests are SHA-256 of the value;
   compare with `printf '%s' '<expected>' | shasum -a 256`.
 - **What code production runs:** download-and-diff (LAUNCH → Deploying edge functions).
 - **Cron:** `net._http_response` status codes, not `cron.job_run_details`.
 - **EAS env:** `npx eas-cli env:list --environment production` (pipe through
-  `sed -E 's/=.*/=<redacted>/'`).
-- **Site / DNS:** the curls in LAUNCH step 2 and PRESUBMISSION Gate 4; `dig +short
-  TXT _dmarc.catchupcolumn.com`.
+  `sed -E 's/=.*/=<redacted>/'`); a plaintext value reads back with
+  `env:get --variable-name … --variable-environment …`.
+- **EAS builds:** `npx eas-cli build:view <id> --json`; install a simulator build
+  with `npx eas-cli build:run -p ios --id <id>`; screenshot with
+  `xcrun simctl io booted screenshot <file>`.
+- **Site / DNS / AASA:** the curls in LAUNCH step 2 and PRESUBMISSION Gate 4;
+  Apple's cached copy at
+  `https://app-site-association.cdn-apple.com/a/v1/www.catchupcolumn.com`;
+  `dig +short TXT _dmarc.catchupcolumn.com`.
 - **Flows that touch auth/storage:** a throwaway account and before/after
-  snapshots of the rows and storage objects involved — how sign-up, removal and
-  deletion were proven on 2026-09-22. Clean up afterwards.
+  snapshots of the rows and storage objects involved. Clean up afterwards.
 - Edge function logs: dashboard only (`supabase functions logs` doesn't exist in
   this CLI).
 
 ## Guardrails
 
 - No Docker (owner preference). Everything above is Docker-free.
-- Branch → PR → CI green → the owner merges. Commit and PR attribution per the session's instructions.
-- **Ask before any production change** — `secrets set`, `functions deploy`,
-  writes via SQL — and show the exact command. Read-only checks need no ask.
+- **Subagents: no system installs without asking.** A 2026-09-24 subagent
+  `brew install`ed CocoaPods (plus Ruby 4 and an openssl upgrade) unasked. Say so
+  in every prompt that might need a toolchain.
+- Branch → PR → CI green → the owner merges (or says to). Commit and PR
+  attribution per the session's instructions.
+- **Ask before any production change** — `secrets set`, `env:set`,
+  `functions deploy`, `db push`, `--apply`, writes via SQL — and show the exact
+  command. Read-only checks need no ask.
 - Merging anything under `web/` publishes it (privacy, terms, AASA). Treat it
   as outward-facing.
-- Record outcomes as they are: a dev-build pass doesn't tick PRESUBMISSION
-  Gate 7 (release build); say what wasn't checked.
+- Record outcomes as they are: a simulator build doesn't tick PRESUBMISSION
+  Gate 7 (device release build); say what wasn't checked.
 - CLAUDE.md's Non-features are permanent — no engagement mechanics, ever.
 
 ## Traps already paid for
@@ -200,18 +227,26 @@ volumes sell (POSITIONING §9).
 - Two auth templates: Magic Link (sign-in), Confirm signup (sign-up). A failed
   sign-up **creates the user**, so a re-test needs a fresh address. OTP length
   must stay 6 (`CODE_LENGTH`).
+- **`auth.admin.createUser` with no password still stores a password hash** — of a
+  random password nobody knows. Script-made accounts are code-only in practice;
+  `encrypted_password` is never empty, so don't test "no password" that way.
 - `storage.protect_delete` is statement-level; direct deletes from
   `storage.objects` need `set_config('storage.allow_delete_query','true',true)`
-  (db-migrations skill).
+  (db-migrations skill) — and remove only the row; delete files through the
+  Storage API to remove the object too. Deleting a Group by SQL also needs
+  `app.deleting_group` (the last-moderator trigger).
 - `errcode = 'PGRST301'` is invalid (8 chars) in old migrations; use `P0001`.
+- `time + interval` wraps at midnight — never compare a local time of day against
+  `publish_time + tolerance`; use timestamps.
 - **Merging deploys nothing to Supabase**; a `_shared/` change needs every
   importer redeployed. CI never runs auth, email, or storage against the real project.
 - `.env.local` never reaches an EAS build; `EXPO_PUBLIC_*` is inlined at build time.
+- **SDK 57 needs Xcode ≥ 26.4** locally; EAS's `sdk-57` image is Xcode 26.6.
 - The bundle ID locks on the first TestFlight upload, not at submission.
+- External TestFlight needs Apple's review and a demo account the reviewer can
+  sign in to — an emailed code won't reach them.
 - `supabase functions download` writes every function into one `_shared/`
   folder — re-download the one you care about alone before diffing.
-- The organizer can't receive a member's sign-in code; `display_name` falls back
-  to the email's local part (C2 solves both).
 - Profile photo: the app shows the preview before **Save** uploads it. Weak
   evidence it confused anyone — watch it in Group Zero rather than fix it.
 
@@ -219,10 +254,10 @@ volumes sell (POSITIONING §9).
 
 1. Re-verify the live-state block (five minutes, all read-only). Anything that
    changed, update here.
-2. Open the `npx expo install --fix` PR so CI goes green again. (The function
-   redeploy that used to be this step was done 2026-09-24.)
-3. Collect in one message: Team ID + bundle-ID yes/no, the Sentry DSN (or "not
-   yet"), and the two Group Zero decisions (read measurement, Group B access).
-4. Start C2 (operator script), C3 (local Release build) and C5 (readout queries)
-   in parallel worktrees.
-5. Keep recruiting at the top of every check-in until ~09-30.
+2. The late-slot fix: if its PR is open, review it; once merged, get the owner's
+   OK for `db push` per the PR's plan, verify, then do C2.
+3. Recruiting at the top of the check-in until ~09-30: a family Group, the
+   Group B organizer's name, Group A's member list.
+4. Get the Sentry token set, then schedule the production-build session with the
+   owner; prepare the review account (C3) before it.
+5. Ask for the simulator sign-in results if they haven't come in.
