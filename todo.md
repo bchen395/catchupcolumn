@@ -64,7 +64,10 @@ POSITIONING §8 is the authoritative sequence. The short version:
       [docs/POSITIONING.md](docs/POSITIONING.md) §5
 - [x] **Friends-first copy pass** — landed 2026-09-16.
       [docs/POSITIONING.md](docs/POSITIONING.md) §2
-- [ ] **[owner] Sentry DSN** — the code is wired and inert until it's set. It goes
+- [x] **Sentry DSN in the EAS environment** — 2026-09-24, `production` and
+      `preview`. Still open: the source-map variables (without them the
+      production EAS build *fails* — LAUNCH step 10.4) and the smoke test
+      (10.3). The original item: the code is wired and inert until it's set. It goes
       in the **EAS environment**, not `.env.local`: that file is gitignored, so an
       EAS build never sees it and the TestFlight build would ship with Sentry off.
       [docs/LAUNCH.md](docs/LAUNCH.md) step 10

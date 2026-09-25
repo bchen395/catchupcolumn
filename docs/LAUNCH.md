@@ -614,7 +614,9 @@ matter; 4–5 make the traces readable.
 **Create Project** → platform **React Native** → name it `catch-up-column`.
 Alert frequency: "on every new issue" is right at this scale; you want the email.
 
-**2. Put the DSN in the EAS environment — not only `.env.local`.** It's shown on
+**2. Put the DSN in the EAS environment — not only `.env.local`.** ✅ **Done
+2026-09-24:** `EXPO_PUBLIC_SENTRY_DSN` set (plaintext) in `production` and
+`preview`, read back with `env:get`. Parts 1–2 are done; 3–5 are not. It's shown on
 the setup screen, and afterwards under
 *Settings → Projects → catch-up-column → Client Keys (DSN)*. It looks like
 `https://<hash>@o<org>.ingest.sentry.io/<project>`. The DSN is not a secret —
@@ -654,16 +656,28 @@ that the DSN was present at build time — `EXPO_PUBLIC_*` values are inlined
 during the bundle step, not read at runtime, so a DSN added after the build
 won't apply.
 
-**4. Source maps.** Without these, every stack frame is a minified one-liner and
-the reports are close to useless. The `@sentry/react-native` config plugin
-uploads them during an EAS build when three build-time variables are present.
-Create an auth token at *Settings → Auth Tokens* with the `project:releases`
-scope, then:
+**4. Source maps — and without them the build fails, not just the traces.**
+Found 2026-09-24 by running the plugin's build phase on its own: with no org,
+project or token, `sentry-xcode.sh` exits 1 (`An organization ID or slug is
+required`) inside *Bundle React Native code and images*, so **an EAS build with
+none of these set fails before bundling**. The `preview` profile sets
+`SENTRY_DISABLE_AUTO_UPLOAD=true` in `eas.json` so simulator builds don't need
+them; `production` deliberately doesn't, so a production build without them
+fails loudly instead of shipping unreadable traces.
+
+Without source maps every stack frame is a minified one-liner and the reports
+are close to useless. The `@sentry/react-native` config plugin uploads them
+during an EAS build when three build-time variables are present. Create an auth
+token at *Settings → Auth Tokens* with the `project:releases` scope, then set
+them — the token **in the expo.dev dashboard** (project → Environment
+variables, visibility *Secret*), so it never passes through a terminal or a
+transcript; the two names can go by CLI (`eas secret:create` is deprecated —
+use `env:set`):
 
 ```bash
-eas secret:create --scope project --name SENTRY_ORG        --value <org-slug>
-eas secret:create --scope project --name SENTRY_PROJECT    --value catch-up-column
-eas secret:create --scope project --name SENTRY_AUTH_TOKEN --value <token>
+npx eas-cli env:set --name SENTRY_ORG     --value <org-slug>     --visibility plaintext --environment production --environment preview
+npx eas-cli env:set --name SENTRY_PROJECT --value <project-slug> --visibility plaintext --environment production --environment preview
+# SENTRY_AUTH_TOKEN: dashboard, visibility Secret, production + preview
 ```
 
 `SENTRY_AUTH_TOKEN` **is** a real secret — never put it in `.env.local`, app.json,
