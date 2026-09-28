@@ -104,39 +104,59 @@ Two corrections to *this document*, which had drifted:
   America/New_York on 2026-03-08) doesn't publish that week. A slot inside the
   fall-back repeat publishes once.
 
-### H2. About 1 in 4 cron ticks times out at pg_net's 5 s default — impact unknown
+### ~~H2. About 1 in 4 cron ticks times out at pg_net's 5 s default~~ — FIXED in the `cron-robustness` PR, pending push + redeploy
 - **Where:** the `compile-editions-every-15-minutes` cron job
   (`supabase/migrations/20260426000007_compile_editions_rpc_and_cron.sql:170`)
   calls `net.http_post` with no `timeout_milliseconds`, so pg_net waits 5000 ms.
 - **Seen 2026-09-25:** 6 of the 24 retained ticks (pg_net keeps ~6 h) timed out
   — 16:30, 17:00, 18:00, 18:30, 20:30, 22:00 UTC — with no non-200s. The
   2026-09-24 check saw 11/11 at 200, mostly *before* that day's 15:46 UTC
-  function redeploy, so the heavier v2 function may be why.
-- **Why it matters:** `compile-editions` passes `p_tolerance_minutes: 20` and
-  ticks are 15 minutes apart, so most slots get **one** tick inside their
-  window (Castaways' 12:37 gets only 12:45). If a timed-out invocation is cut
-  off rather than finishing server-side, that Group misses its edition that
-  week — silently.
-- **Unknown, and the one fact that sets the priority:** whether the function
-  finishes after pg_net stops waiting. The dashboard's Edge Functions →
-  `compile-editions` invocation log for a timed-out tick (status, duration)
-  answers it.
-- **Fix either way:** raise `timeout_milliseconds` in the cron job, and consider
-  a tolerance that gives every slot two ticks (≥ 30 min with 15-min ticks —
-  the duplicate guard already makes a second in-window tick safe).
+  function redeploy, so the heavier v2 function may be why. **2026-09-28:** 5
+  of 24 (10:30, 11:00, 12:00, 14:00, 15:00 UTC — four on the hour). DNS + TLS
+  took ~60 ms of each 5 s; the rest was waiting on the function.
+- **Why it matters:** if a timed-out run is cut off rather than finishing
+  server-side (still unknown — the dashboard's invocation log answers it), a
+  run cut off mid-email leaves the edition claimed but unmarked, and 5 minutes
+  later the next tick re-sends it to every recipient; one cut off before it
+  compiles loses that tick. At the old 20-minute tolerance, slots on the
+  quarter hour (everything the app's picker offers) already got two ticks, but
+  a slot 1–10 minutes past a quarter hour got **one** — Castaways' Fri 12:37
+  gets only 12:45.
+- **Fix:** `supabase/migrations/20260928155710_compile_robustness.sql` sets
+  `timeout_milliseconds := 150000` via `cron.alter_job` — Supabase's edge
+  function request idle timeout, so pg_net never gives up before the platform
+  would. The command is otherwise byte-identical, vault lookups included.
+  `compile-editions` now passes `p_tolerance_minutes: 30`: every slot, at any
+  minute, gets exactly two in-window ticks (swept on production: 1,440 slots,
+  all two; at 20, 960 had one). The slot guard makes the second a no-op — in
+  the same sweep all 1,440 second ticks, and a replay of every production
+  cron edition, hit it. `scripts/group-zero/` mirrors the 30.
+- **Status: not live.** Needs `supabase db push` (the timeout) **and**
+  `supabase functions deploy compile-editions --use-api` (the tolerance); the
+  PR has the plan and the expected md5s.
 
-### H3. One Group with an unrecognised timezone fails the compile for every Group
+### ~~H3. One Group with an unrecognised timezone fails the compile for every Group~~ — FIXED in the `cron-robustness` PR, pending push
 - **Where:** `compile_due_editions`' Group loop. Found by the H1 work 2026-09-25.
 - The `exists (select 1 from pg_timezone_names …)` filter doesn't protect:
   `EXPLAIN` shows Postgres evaluates each Group's `at time zone` before that
   filter, so one bad `groups.timezone` raises and the whole call fails — every
-  Group misses its slot, and the cron only logs a 500. Nothing constrains the
-  column; both production Groups are valid, the app writes the phone's
-  `Intl` zone, and `scripts/group-zero/` validates with Temporal.
-- **Fix:** make the loop skip an invalid zone (filter in a materialized CTE, or
-  per-Group exception handling), and validate on write — deciding what the app
-  does when a phone reports a zone Postgres doesn't know, so creating a Group
-  can't just fail. Planned for this week, before Group Zero's first edition.
+  Group misses its slot, and the cron only logs a 500. Reproduced read-only on
+  production 2026-09-28 with a synthetic `'Mars/Olympus'` row in a CTE:
+  `22023: time zone "Mars/Olympus" not recognized`.
+- **Fix (same migration):** the loop joins `pg_timezone_names` and every
+  conversion reads the zone from the joined row, so an unknown zone can't
+  reach one in any plan — a data dependency, not a filter order. Skipped
+  Groups are reported in the result's `details` (`reason: 'invalid timezone'`,
+  plus the zone). A `check_group_timezone` trigger rejects such a zone on
+  insert/update with `invalid_timezone`; `createGroup` then retries on `UTC`
+  and the create screen tells the person, with the hour on their own clock.
+  Every other behaviour of `compile_due_editions` is byte-identical (the PR
+  diffs the body against production's `prosrc`); both production rows pass
+  the trigger.
+- **Status: not live** until `supabase db push`. The app half ships with the
+  next build; until then an unknown zone gets the trigger's error and the old
+  generic "Something went wrong" — no worse than today, when such a Group
+  would be created and then break every compile.
 
 ---
 
