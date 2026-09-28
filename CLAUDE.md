@@ -77,7 +77,7 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - `cover_image_url` (text, nullable)
 - `publish_day` (int, 0=Sunday..6=Saturday, default 0)
 - `publish_time` (time, default '09:00')
-- `timezone` (text, not null, default 'UTC') — IANA name; publish_day/time are evaluated in this zone
+- `timezone` (text, not null, default 'UTC') — IANA name; publish_day/time are evaluated in this zone. The `check_group_timezone` trigger rejects a name `pg_timezone_names` doesn't list (`invalid_timezone`); `createGroup` retries once on UTC
 - `created_by` (uuid, FK → users.id)
 - `invite_code` (text, unique) — short code for invite links
 - `created_at` (timestamptz)
@@ -119,7 +119,7 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - PK: (user_id, token)
 
 ### Notable RPCs
-`compile_due_editions` (cron compilation, slot-scoped duplicate guard), `publish_edition_now` (moderator-only immediate publish, shares the compile lock), `join_group_by_invite_code`, `get_invite_preview` (anon-callable minimal invite preview: name/description/cover/member count), `get_invite_preview_details` (authenticated: adds cadence, is_member, member sample), `delete_group_as_moderator`, `remove_group_member` (moderator-only eject; also deletes the removed member's uncompiled posts), `prepare_account_deletion`, `get_edition_email_payload` (service-role; feeds the email renderer). Full definitions in `supabase/migrations/`.
+`compile_due_editions` (cron compilation, slot-scoped duplicate guard; skips and reports a Group with an invalid timezone), `due_publish_slot` (service-role helper: the slot a tick falls in, matched on timestamps so late slots don't wrap at midnight), `publish_edition_now` (moderator-only immediate publish, shares the compile lock), `join_group_by_invite_code`, `get_invite_preview` (anon-callable minimal invite preview: name/description/cover/member count), `get_invite_preview_details` (authenticated: adds cadence, is_member, member sample), `delete_group_as_moderator`, `remove_group_member` (moderator-only eject; also deletes the removed member's uncompiled posts), `prepare_account_deletion`, `get_edition_email_payload` (service-role; feeds the email renderer). Full definitions in `supabase/migrations/`.
 
 ## Key Terminology
 

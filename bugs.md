@@ -104,7 +104,7 @@ Two corrections to *this document*, which had drifted:
   America/New_York on 2026-03-08) doesn't publish that week. A slot inside the
   fall-back repeat publishes once.
 
-### ~~H2. About 1 in 4 cron ticks times out at pg_net's 5 s default~~ — FIXED in the `cron-robustness` PR, pending push + redeploy
+### ~~H2. About 1 in 4 cron ticks times out at pg_net's 5 s default~~ — FIXED, live 2026-09-28
 - **Where:** the `compile-editions-every-15-minutes` cron job
   (`supabase/migrations/20260426000007_compile_editions_rpc_and_cron.sql:170`)
   calls `net.http_post` with no `timeout_milliseconds`, so pg_net waits 5000 ms.
@@ -131,11 +131,17 @@ Two corrections to *this document*, which had drifted:
   all two; at 20, 960 had one). The slot guard makes the second a no-op — in
   the same sweep all 1,440 second ticks, and a replay of every production
   cron edition, hit it. `scripts/group-zero/` mirrors the 30.
-- **Status: not live.** Needs `supabase db push` (the timeout) **and**
-  `supabase functions deploy compile-editions --use-api` (the tolerance); the
-  PR has the plan and the expected md5s.
+- **Status: live 2026-09-28** (#45). Migration pushed 16:45 UTC; cron row
+  `jobid 1`, md5 `29e93a5d…`, carries `timeout_milliseconds := 150000`.
+  `compile-editions` deployed 16:45 UTC as v19 (the first attempt returned a
+  Supabase-side `500 internal error` and changed nothing; the retry
+  succeeded), `verify_jwt` still false, download-and-diff against `main`
+  clean, `p_tolerance_minutes: 30`. First tick after both (17:00 UTC — on the
+  hour, where four of the five 2026-09-28 timeouts fell): `200`, not timed out.
+  **Re-count timeouts** over the next hours — expect 0; a 504 would mean the
+  function itself ran past 150 s.
 
-### ~~H3. One Group with an unrecognised timezone fails the compile for every Group~~ — FIXED in the `cron-robustness` PR, pending push
+### ~~H3. One Group with an unrecognised timezone fails the compile for every Group~~ — FIXED, live 2026-09-28
 - **Where:** `compile_due_editions`' Group loop. Found by the H1 work 2026-09-25.
 - The `exists (select 1 from pg_timezone_names …)` filter doesn't protect:
   `EXPLAIN` shows Postgres evaluates each Group's `at time zone` before that
@@ -153,10 +159,12 @@ Two corrections to *this document*, which had drifted:
   Every other behaviour of `compile_due_editions` is byte-identical (the PR
   diffs the body against production's `prosrc`); both production rows pass
   the trigger.
-- **Status: not live** until `supabase db push`. The app half ships with the
-  next build; until then an unknown zone gets the trigger's error and the old
-  generic "Something went wrong" — no worse than today, when such a Group
-  would be created and then break every compile.
+- **Status: live 2026-09-28** (#45, pushed 16:45 UTC): `compile_due_editions`
+  md5 `a6080d5d…`, `check_group_timezone` md5 `34d87e6e…` on `groups`
+  (insert, and updates of `timezone`). The app's UTC fallback ships with the
+  next build (JS, so OTA also reaches it); until then an unknown zone gets
+  the trigger's error and the generic "Something went wrong" — no worse than
+  before, when such a Group would be created and then break every compile.
 
 ---
 

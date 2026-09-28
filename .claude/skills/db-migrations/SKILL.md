@@ -31,7 +31,7 @@ Migrations are the **source of truth** for the schema, RLS, and every RPC. The a
     where group_id = p_group_id and user_id = p_user_id and role = 'moderator'
   ); $$;
   ```
-- **Authorize inside the function, against `auth.uid()`.** RPCs that mutate on behalf of a role check membership/moderator status explicitly and `raise exception` with a **stable, parseable code** (the app matches on the message string): `not_authenticated`, `not_moderator`, `no_posts_to_publish`, `publish_in_progress`, `invalid_invite_code`, `cannot_remove_self`, `not_a_member`. Reuse existing codes; don't invent synonyms.
+- **Authorize inside the function, against `auth.uid()`.** RPCs that mutate on behalf of a role check membership/moderator status explicitly and `raise exception` with a **stable, parseable code** (the app matches on the message string): `not_authenticated`, `not_moderator`, `no_posts_to_publish`, `publish_in_progress`, `invalid_invite_code`, `cannot_remove_self`, `not_a_member`, `invalid_timezone` (the `check_group_timezone` trigger on `groups`). Reuse existing codes; don't invent synonyms.
 
   Raise them with a **valid 5-character SQLSTATE** — `P0001` unless you have a
   reason. Several pre-2026-07 RPCs use `errcode = 'PGRST301'`, which is 8 characters

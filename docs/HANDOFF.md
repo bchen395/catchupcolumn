@@ -1,6 +1,6 @@
 # Launch handoff — orchestration brief
 
-**Rewritten 2026-09-25** (first written 2026-09-24). A living brief for whichever
+**Rewritten 2026-09-25, updated 2026-09-28** (first written 2026-09-24). A living brief for whichever
 session is orchestrating the launch. It holds what the lists don't: current live
 state, the dependency order, who does what, and how to verify. **Rewrite it at
 the end of every orchestration session** (state, dates, first moves). Delete it
@@ -34,11 +34,17 @@ tells you to, per PR.
 ## Live state (verified 2026-09-25 — re-check before relying on it)
 
 **Working:**
-- **Server:** v2 edition email live (functions from `main`, 2026-09-24); cron
-  firing every 15 min (but see the timeouts below); **31 migrations applied** —
-  the late-slot fix (`20260925212248`, bugs.md H1) pushed and verified
-  2026-09-25 22:01 UTC, so slots at 23:40 or later now publish; `WEB_BASE_URL` =
-  `www`; `EMAIL_FROM` correct; Vercel in sync with `main`.
+- **Server:** v2 edition email live; cron firing every 15 min; **32 migrations
+  applied**, all matching `main`:
+  - the late-slot fix (`20260925212248`, bugs.md H1, pushed 2026-09-25) — slots
+    at 23:40 or later publish;
+  - compile robustness (`20260928155710`, H2 + H3, pushed 2026-09-28 16:45 UTC) —
+    pg_net waits 150 s instead of 5 s; one invalid Group timezone is skipped and
+    reported instead of failing every Group; a trigger rejects unknown zones on
+    write;
+  - `compile-editions` **v19** (2026-09-28): a 30-minute compile window, so every
+    slot gets two ticks. Download-and-diff clean.
+  `WEB_BASE_URL` = `www`; `EMAIL_FROM` correct; Vercel in sync with `main`.
 - **CI green** on every check again (Expo patch bump, #36).
 - **EAS env** (`production` + `preview`): Supabase vars and
   `EXPO_PUBLIC_SENTRY_DSN` (set 2026-09-24, read back).
@@ -57,13 +63,11 @@ tells you to, per PR.
   production 2026-09-22 (dev build).
 
 **Wrong or open right now:**
-- **~1 in 4 cron ticks times out** at pg_net's 5 s default (bugs.md H2). Most
-  slots get one tick in their 20-minute window, so if a timed-out run is cut
-  off, that Group silently misses its edition. **Unknown until the owner reads
-  the dashboard's `compile-editions` invocation log for a timed-out tick**
-  (e.g. 2026-09-25 22:00 UTC). Fix planned with H3.
-- **One Group with an invalid timezone would fail the compile for all Groups**
-  (bugs.md H3). None exists today. Fix planned this week, before edition 1.
+- **Confirm the timeout fix held:** before 2026-09-28 16:45 UTC about 1 in 4
+  ticks timed out at 5 s; the first tick after the fix (17:00 UTC) was `200`, not
+  timed out. Re-count `timed_out` in `net._http_response` (it keeps
+  ~6 h); expect 0. Whether the old timed-out runs finished server-side was never
+  read from the dashboard — moot now, unless timeouts continue.
 - **Every production EAS build fails at the Sentry step** until `SENTRY_ORG`,
   `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` exist (LAUNCH 10.4). Deliberate:
   `preview` skips the upload, `production` doesn't.
@@ -123,12 +127,9 @@ functions).
 **C. Dev work:**
 1. ~~Late-slot fix~~ — **live 2026-09-25** (#42, pushed and verified), and the
    operator script's ≥ 23:40 refusal and readout q0's warning removed.
-2. **Cron robustness migration (bugs.md H2 + H3)** — one migration: raise the
-   cron's `timeout_milliseconds`; consider a tolerance that gives every slot
-   two ticks (≥ 30 min); make the compile loop skip an invalid timezone; and
-   validate `groups.timezone` on write without breaking Group creation for a
-   phone whose zone Postgres doesn't know. Owner approves the push. Before
-   Group Zero's first edition.
+2. ~~Cron robustness (H2 + H3)~~ — **live 2026-09-28** (#45: migration pushed,
+   `compile-editions` v19 deployed, both verified). The app's UTC fallback for a
+   zone the database doesn't know ships with the next build.
 3. **TestFlight review account** — a password account (the operator script
    creates only code accounts; use `auth.admin.createUser` with a password, or
    the dashboard), plus a demo Group with a published edition so every screen
@@ -260,8 +261,8 @@ friend-group volumes sell (POSITIONING §9).
 
 1. Re-verify the live-state block (five minutes, all read-only). Anything that
    changed, update here.
-2. The cron-robustness migration (C2): get the owner's read of a timed-out
-   `compile-editions` invocation first — it decides how urgent H2 is.
+2. Re-count cron timeouts since 2026-09-28 16:45 UTC (expect 0). If any
+   remain, read that invocation in the dashboard before anything else.
 3. Recruiting at the top of the check-in until ~09-30: a family Group, the
    Group B organizer's name, Group A's member list.
 4. Get the Sentry token set, then schedule the production-build session with the
