@@ -17,24 +17,31 @@ import { usePendingInvite } from '@/hooks/use-pending-invite';
 import { getPendingInvite } from '@/lib/pending-invite';
 
 // A code is the default way in: nothing to remember, and it works for the
-// accounts created by hand during Group Zero. The password form stays for
-// anyone who already has one and prefers it.
+// accounts created by hand during Group Zero. The password form is for anyone
+// who set one from Profile and prefers it.
 type Mode = 'code' | 'password';
 
 const LoginScreen = () => {
   const router = useRouter();
   const { invite } = usePendingInvite();
   const [mode, setMode] = useState<Mode>('code');
+  // Set by "Forgot your password?". Recovery is the ordinary code sign-in,
+  // then on to choosing a new password instead of home — no reset link, so
+  // nothing has to hand a session back to the app through a URL.
+  const [recovering, setRecovering] = useState(false);
 
   // With an invite pending, the root layout's use-auto-join-invite owns
-  // navigation (join → welcome); replacing to home now would race it.
+  // navigation (join → welcome); replacing now would race it. That holds while
+  // recovering too — they can set a password from Profile afterwards.
   const goAfterSignIn = useCallback(async () => {
     if (!(await getPendingInvite())) {
-      router.replace('/(tabs)/home');
+      router.replace(recovering ? '/(auth)/set-password' : '/(tabs)/home');
     }
-  }, [router]);
+  }, [recovering, router]);
 
   const flow = useEmailCode({ allowNewUser: false, onVerified: goAfterSignIn });
+
+  const codeSent = `We sent a ${flow.codeLength}-digit code to ${flow.email}. It expires in ${flow.codeExpiryMinutes} minutes.`;
 
   const banner = invite ? (
     <PendingInviteBanner message={Strings.invite.joiningBannerLogin(invite.groupName)} />
@@ -52,7 +59,16 @@ const LoginScreen = () => {
       <PasswordSignIn
         banner={banner}
         footer={footer}
-        onUseCode={() => setMode('code')}
+        onUseCode={(email) => {
+          flow.setEmail(email);
+          setRecovering(false);
+          setMode('code');
+        }}
+        onForgotPassword={(email) => {
+          setRecovering(true);
+          setMode('code');
+          void flow.requestCode({ email });
+        }}
         onSignedIn={goAfterSignIn}
       />
     );
@@ -62,7 +78,7 @@ const LoginScreen = () => {
     return (
       <AuthScreenShell
         title="Check your email"
-        subtitle={`We sent a ${flow.codeLength}-digit code to ${flow.email}. It expires in an hour.`}
+        subtitle={recovering ? `${codeSent} Once you’re in, you can choose a new password.` : codeSent}
         banner={banner}
       >
         <EmailCodeStep flow={flow} submitLabel="Sign in" />
@@ -72,8 +88,12 @@ const LoginScreen = () => {
 
   return (
     <AuthScreenShell
-      title="Welcome back"
-      subtitle="We'll email you a code — no password to remember."
+      title={recovering ? 'Forgot your password?' : 'Welcome back'}
+      subtitle={
+        recovering
+          ? 'We’ll email you a code to sign in. Then you can choose a new password.'
+          : 'We’ll email you a code — no password to remember.'
+      }
       banner={banner}
       footer={footer}
     >
@@ -95,7 +115,14 @@ const LoginScreen = () => {
         />
 
         <FormButton title="Email me a code" loading={flow.sending} onPress={() => flow.requestCode()} />
-        <FormButton title="Use a password instead" variant="ghost" onPress={() => setMode('password')} />
+        <FormButton
+          title="Use a password instead"
+          variant="ghost"
+          onPress={() => {
+            setRecovering(false);
+            setMode('password');
+          }}
+        />
       </View>
     </AuthScreenShell>
   );

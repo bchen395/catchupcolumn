@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useResendCooldown } from '@/hooks/use-resend-cooldown';
 import { mapAuthErrorMessage, sendEmailCode, verifyEmailCode } from '@/lib/auth';
 
-// Supabase allows one code per address per 60s by default. Mirror it in the UI
-// so "Send a new code" is visibly unavailable rather than failing with a rate
-// limit the user can't interpret.
-const RESEND_COOLDOWN_SECONDS = 60;
-
-const CODE_LENGTH = 6;
+// Two halves of numbers that live in the Supabase dashboard (Authentication →
+// the email provider): OTP Length, and OTP Expiry in seconds (600). The UI
+// copy and both email templates derive from these, so if either setting moves,
+// these move with it. docs/LAUNCH.md step 5.
+export const CODE_LENGTH = 6;
+// 10 minutes is NIST 800-63B-4 §3.1.3.2 and OWASP ASVS 5.0 6.5.5. It is also
+// the one brute-force defence we control: GoTrue limits wrong guesses per IP,
+// not per account. Decided 2026-09-25; resending is one tap after 60s.
+export const CODE_EXPIRY_MINUTES = 10;
 
 export type EmailCodeStep = 'email' | 'code';
 
@@ -34,7 +38,7 @@ export const useEmailCode = ({ allowNewUser, onVerified }: UseEmailCodeOptions) 
   const [formError, setFormError] = useState('');
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [secondsUntilResend, setSecondsUntilResend] = useState(0);
+  const { secondsLeft: secondsUntilResend, start: startCooldown } = useResendCooldown();
 
   // Guards a late verify response from touching state after unmount — the
   // screen navigates away on success, so this resolves into a dead component.
@@ -46,17 +50,15 @@ export const useEmailCode = ({ allowNewUser, onVerified }: UseEmailCodeOptions) 
     };
   }, []);
 
-  useEffect(() => {
-    if (secondsUntilResend <= 0) return;
-    const timer = setInterval(() => {
-      setSecondsUntilResend((current) => (current <= 1 ? 0 : current - 1));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [secondsUntilResend]);
-
+  // `email` overrides the field for a caller that already has the address in
+  // hand — the password form's "Forgot your password?" — so it doesn't have to
+  // wait a render for setEmail to land before sending.
   const requestCode = useCallback(
-    async ({ isResend = false }: { isResend?: boolean } = {}) => {
-      const emailError = validateEmail(email);
+    async ({ isResend = false, email: override }: { isResend?: boolean; email?: string } = {}) => {
+      const target = override ?? email;
+      if (override !== undefined) setEmail(override);
+
+      const emailError = validateEmail(target);
       setFieldError(emailError);
       setFormError('');
 
@@ -64,9 +66,9 @@ export const useEmailCode = ({ allowNewUser, onVerified }: UseEmailCodeOptions) 
 
       try {
         setSending(true);
-        await sendEmailCode(email, { allowNewUser });
+        await sendEmailCode(target, { allowNewUser });
         if (!mounted.current) return;
-        setSecondsUntilResend(RESEND_COOLDOWN_SECONDS);
+        startCooldown();
         if (!isResend) {
           setCode('');
           setStep('code');
@@ -78,7 +80,7 @@ export const useEmailCode = ({ allowNewUser, onVerified }: UseEmailCodeOptions) 
         if (mounted.current) setSending(false);
       }
     },
-    [allowNewUser, email],
+    [allowNewUser, email, startCooldown],
   );
 
   const submitCode = useCallback(async () => {
@@ -120,10 +122,9 @@ export const useEmailCode = ({ allowNewUser, onVerified }: UseEmailCodeOptions) 
       if (fieldError) setFieldError(undefined);
     },
     code,
+    // CodeField has already stripped this to digits.
     setCode: (next: string) => {
-      // The field is number-pad, but paste and some keyboards can still deliver
-      // spaces or the surrounding text of an autofilled code.
-      setCode(next.replace(/\D/g, '').slice(0, CODE_LENGTH));
+      setCode(next);
       if (fieldError) setFieldError(undefined);
     },
     fieldError,
@@ -137,6 +138,7 @@ export const useEmailCode = ({ allowNewUser, onVerified }: UseEmailCodeOptions) 
     submitCode,
     editEmail,
     codeLength: CODE_LENGTH,
+    codeExpiryMinutes: CODE_EXPIRY_MINUTES,
   };
 };
 

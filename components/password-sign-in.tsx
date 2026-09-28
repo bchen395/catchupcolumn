@@ -8,35 +8,42 @@ import { FormField } from '@/components/form-field';
 import { StatusBanner } from '@/components/status-banner';
 import { Layout } from '@/constants/layout';
 import { validateEmail } from '@/hooks/use-email-code';
-import { mapAuthErrorMessage, sendPasswordResetEmail, signInWithEmail } from '@/lib/auth';
+import { mapAuthErrorMessage, signInWithEmail } from '@/lib/auth';
 
 type PasswordSignInProps = {
   banner: ReactNode;
   footer: ReactNode;
-  onUseCode: () => void;
+  // Both hand over whatever email was typed, so the code flow starts with it.
+  onUseCode: (email: string) => void;
+  // "Forgot your password?" is a code sign-in followed by choosing a new one —
+  // the login screen owns both halves.
+  onForgotPassword: (email: string) => void;
   onSignedIn: () => Promise<void>;
 };
 
-// The password form, kept for accounts created before the code flow existed.
-// Reached from the login screen's "Use a password instead".
-export const PasswordSignIn = ({ banner, footer, onUseCode, onSignedIn }: PasswordSignInProps) => {
+// The password form: the optional second way in, for anyone who set a
+// password. Reached from the login screen's "Use a password instead".
+export const PasswordSignIn = ({
+  banner,
+  footer,
+  onUseCode,
+  onForgotPassword,
+  onSignedIn,
+}: PasswordSignInProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [formError, setFormError] = useState('');
-  const [resetNotice, setResetNotice] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [sendingReset, setSendingReset] = useState(false);
 
   const handleSignIn = async () => {
     const nextErrors: { email?: string; password?: string } = {};
     const emailError = validateEmail(email);
     if (emailError) nextErrors.email = emailError;
-    if (!password.trim()) nextErrors.password = 'Enter your password.';
+    if (!password) nextErrors.password = 'Enter your password.';
 
     setErrors(nextErrors);
     setFormError('');
-    setResetNotice('');
 
     if (Object.keys(nextErrors).length > 0) return;
 
@@ -51,23 +58,13 @@ export const PasswordSignIn = ({ banner, footer, onUseCode, onSignedIn }: Passwo
     }
   };
 
-  const handleForgotPassword = async () => {
+  const handleForgotPassword = () => {
     const emailError = validateEmail(email);
     setErrors((current) => ({ ...current, email: emailError }));
     setFormError('');
-    setResetNotice('');
 
     if (emailError) return;
-
-    try {
-      setSendingReset(true);
-      await sendPasswordResetEmail(email);
-      setResetNotice('If that email belongs to a Catch Up Column account, we sent a reset link.');
-    } catch (error) {
-      setFormError(mapAuthErrorMessage(error, 'We could not send a reset email right now.'));
-    } finally {
-      setSendingReset(false);
-    }
+    onForgotPassword(email);
   };
 
   return (
@@ -79,7 +76,6 @@ export const PasswordSignIn = ({ banner, footer, onUseCode, onSignedIn }: Passwo
     >
       <View style={styles.form}>
         {formError ? <StatusBanner variant="error" message={formError} /> : null}
-        {resetNotice ? <StatusBanner variant="success" message={resetNotice} /> : null}
 
         <FormField
           label="Email address"
@@ -103,17 +99,14 @@ export const PasswordSignIn = ({ banner, footer, onUseCode, onSignedIn }: Passwo
           error={errors.password}
           placeholder="Enter your password"
           secureTextEntry
+          onSubmitEditing={handleSignIn}
+          returnKeyType="go"
         />
 
-        <FormButton
-          title="Forgot your password?"
-          variant="ghost"
-          loading={sendingReset}
-          onPress={handleForgotPassword}
-        />
+        <FormButton title="Forgot your password?" variant="ghost" onPress={handleForgotPassword} />
 
         <FormButton title="Sign in" loading={submitting} onPress={handleSignIn} />
-        <FormButton title="Email me a code instead" variant="ghost" onPress={onUseCode} />
+        <FormButton title="Email me a code instead" variant="ghost" onPress={() => onUseCode(email)} />
       </View>
     </AuthScreenShell>
   );

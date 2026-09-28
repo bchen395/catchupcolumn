@@ -11,5 +11,8 @@
         ]
       }
     ]
+  },
+  "webcredentials": {
+    "apps": ["6RDS3S724Z.com.catchupcolumn.app"]
   }
 }

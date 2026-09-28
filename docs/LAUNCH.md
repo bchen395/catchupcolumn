@@ -289,18 +289,67 @@ npx supabase secrets set EMAIL_FROM='Catch Up Column <hello@catchupcolumn.com>'
 
 (No function redeploy needed — secrets are read at runtime.)
 
-## 5. Supabase Auth dashboard settings **[owner]** — ✅ all set and verified (2026-09-22)
+## 5. Supabase Auth dashboard settings **[owner]** — ☐ two password items wait for the next build (below); the rest ✅ set and verified (2026-09-22, 2026-09-28)
 
 These are **not** in `config.toml` (that governs local dev only) — they were set in the
-Supabase dashboard → Authentication. `config.toml` still shows the old local-dev values
-(`minimum_password_length = 6`, `enable_confirmations = false`); that is expected and
-is not a signal about production.
+Supabase dashboard → Authentication. `config.toml` mirrors the production *decisions*
+(`minimum_password_length = 8`, `secure_password_change = true`, `otp_expiry = 600`
+as of 2026-09-25), but it is not a record of what production holds — only the
+dashboard is.
 
-- ✅ **Redirect URLs:** `catchupcolumn://` and `catchupcolumn://(auth)/reset-password`
-  allowlisted, so password-reset deep links work in release builds.
-- ✅ **Minimum password length** raised from 6 — *as recorded 2026-08-22; but
-  `bugs.md` D2 (2026-09-16) believed it was still 6. Confirm the number in the
-  dashboard (Authentication → Providers → Email) and fix whichever doc is wrong.*
+### Passwords and code lifetime — items 1–4 ✅ 2026-09-28; 5 and 7 wait for the next build
+
+The 2026-09-25 change made a password an optional second way in, set from
+Profile, and turned "Forgot your password?" into a code sign-in followed by
+choosing a new one. Decisions and the standards behind them: POSITIONING §9.
+**Order matters:** items 1–4 were safe before the change merged, and were done
+then. Item 5 waits until the new "expires in 10 minutes" copy is what people
+are running, or the app will tell them a code lasts longer than it does. That
+copy can't arrive by OTA: the same change edits `app.json` (webcredentials),
+which moves the `fingerprint` runtime version, so it ships with the next native
+build.
+
+1. ✅ **Providers → Email → Minimum password length: 8** *(read 2026-09-28: it
+   was already 8 — the 2026-08-22 record was right and `bugs.md` D2 was wrong)*.
+   It must equal `PASSWORD_MIN_LENGTH` in `lib/auth.ts`. **Password
+   requirements: "No required characters".** Supabase labels the strictest
+   option "recommended"; NIST 800-63B-4 says verifiers SHALL NOT impose
+   composition rules.
+2. ✅ **Providers → Email → Secure password change: on** *(2026-09-28)*. Without
+   it, anyone holding an unlocked phone can set a password on the account, and
+   the app never asks for a code (it asks only when GoTrue refuses). **"Require
+   current password when updating" stays off**: every account carries a random
+   password its owner has never seen, so a code-only person could never
+   satisfy it.
+3. ✅ **Email Templates → Reauthentication** *(2026-09-28)*:
+   `supabase/templates/reauthentication.html`, subject *"Your Catch Up Column
+   code"*. The default template works, but it puts the code in the subject line.
+4. ✅ **Security notifications → Password changed: on** *(2026-09-28)*, with
+   `supabase/templates/password-changed.html`, subject *"Your Catch Up Column
+   password was changed"*. GoTrue ships every notification off. **Email address
+   changed** is on too, on Supabase's default template — it goes to the *old*
+   address and covers dashboard-side changes.
+5. ☐ **Providers → Email → Email OTP Expiration: 600 seconds** — only once the
+   next native build is what people run. Then paste the updated
+   `magic-link.html` and `confirm-signup.html` ("expires in 10 minutes") in the
+   same sitting. The setting also governs reauthentication codes. It must equal
+   `CODE_EXPIRY_MINUTES` in `hooks/use-email-code.ts`.
+6. ✗ **Leaked password protection — not available: the project is on Free**
+   (checked 2026-09-28; the toggle needs Pro). The substitute is
+   `lib/common-passwords.ts`, the 3,000 most common passwords that pass the
+   length rule, checked in the app by `validateNewPassword` (OWASP ASVS 5.0
+   6.2.4, L1). App-side only, so it can be skipped by calling the API directly
+   — which weakens only the caller's own account. **If the project moves to
+   Pro, turn this on** and keep the list.
+7. ☐ **URL Configuration → Redirect URLs:** remove
+   `catchupcolumn://(auth)/reset-password` once the next build is out — older
+   builds still send reset links to it. `catchupcolumn://` stays.
+
+- ~~**Redirect URLs:** `catchupcolumn://` and `catchupcolumn://(auth)/reset-password`
+  allowlisted, so password-reset deep links work in release builds.~~ The reset
+  link is gone (2026-09-25); item 7 above.
+- ~~**Minimum password length** raised from 6 — recorded 2026-08-22, disputed
+  by `bugs.md` D2.~~ Confirmed 8 on 2026-09-28; item 1 above.
 - ✅ **Email confirmation** decision made.
 - ✅ **Custom SMTP → Resend, sending limit 100/hour** (2026-09-22). Auth email no
   longer goes through Supabase's built-in sender. Detail below — it is the one
@@ -329,6 +378,10 @@ templates:
 | --- | --- | --- |
 | Sign in, existing account | `sendEmailCode(…, { allowNewUser: false })` | **Magic Link** — ✅ done |
 | Sign up, new address | `sendEmailCode(…, { allowNewUser: true })` | **Confirm signup** — ✅ done |
+| Confirm it's you, before setting a password (2026-09-25) | `sendReauthenticationCode()` → `reauthenticate()` | **Reauthentication** — ☐ item 3 above |
+
+"Forgot your password?" sends a Magic Link code — it is an ordinary sign-in —
+so the **Reset Password** template is no longer used by anything.
 
 Fixing only one leaves the other mailing a dead link, and the half that breaks is
 **sign-up** — nearly all of Group Zero. The app's signup screen asks for six
@@ -391,8 +444,9 @@ governed by anything on this page:
   `supabase/functions/_shared/edition-dispatch.ts`. Configured by the
   `RESEND_API_KEY` / `EMAIL_FROM` function secrets (step 4). Never touches
   Supabase Auth, and is **not** subject to the Auth rate limit below.
-- **Auth email** — the 6-digit sign-in code (`lib/auth.ts` → `signInWithOtp`) and
-  password reset (`resetPasswordForEmail`). These go through Supabase Auth,
+- **Auth email** — the 6-digit sign-in code (`lib/auth.ts` → `signInWithOtp`),
+  the confirm-it's-you code (`reauthenticate`), and the password-changed notice.
+  (Password reset by link, `resetPasswordForEmail`, was removed 2026-09-25.) These go through Supabase Auth,
   which until 2026-09-22 used Supabase's **built-in sender** — a testing
   facility with a low per-hour cap, on a shared IP, not intended for production.
 
@@ -431,8 +485,10 @@ small enough to notice in Resend's dashboard before Gmail does.
 
 Two companion checks, neither of which this setting covers:
 
-☐ **Confirm the per-address minimum interval** (Authentication → Rate Limits —
-Supabase defaults it to 60s). That is what actually stops one address being
+✅ **Per-address minimum interval: 60s** *(confirmed 2026-09-28)* (Authentication → Emails → **SMTP
+Settings** → "Minimum interval between emails being sent" — it is *not* on the
+Rate Limits page, which is where this item used to send people; Supabase
+defaults it to 60s, and the app's "Send a new code in Ns" countdown assumes 60). That is what actually stops one address being
 spammed, and it is what makes a 100/hour ceiling safe rather than reckless.
 `config.toml:223` shows `max_frequency = "1s"`, which is **local dev only** and
 says nothing about production — same caveat as the rest of this step.
