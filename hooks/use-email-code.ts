@@ -5,8 +5,10 @@ import { mapAuthErrorMessage, sendEmailCode, verifyEmailCode } from '@/lib/auth'
 
 // Two halves of numbers that live in the Supabase dashboard (Authentication →
 // the email provider): OTP Length, and OTP Expiry in seconds (600). The UI
-// copy and both email templates derive from these, so if either setting moves,
-// these move with it. docs/LAUNCH.md step 5.
+// copy and the code email templates derive from these, so if either setting
+// moves, these move with it. docs/LAUNCH.md step 5. The dashboard's expiry
+// stays 3600 until the build carrying this copy is what people run (step 5
+// item 5); until then "10 minutes" understates the real lifetime, harmlessly.
 export const CODE_LENGTH = 6;
 // 10 minutes is NIST 800-63B-4 §3.1.3.2 and OWASP ASVS 5.0 6.5.5. It is also
 // the one brute-force defence we control: GoTrue limits wrong guesses per IP,

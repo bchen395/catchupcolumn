@@ -1,7 +1,7 @@
 # Privacy Policy — Catch Up Column
 
 **Effective date:** July 3, 2026
-**Last updated:** September 24, 2026
+**Last updated:** September 28, 2026
 
 Catch Up Column ("the app", "we", "us") is a private group newsletter you write
 together with family and friends. This policy explains what we collect, why, and
@@ -19,11 +19,12 @@ collect data from them.
 We only collect what the app needs to work:
 
 **Account information**
-- Email address — for sign-in (we email you a one-time code), password resets if
-  you use a password, and delivering your group's editions.
-- Password, only if you set one — stored only as a salted hash by our
-  authentication provider; we never see it. New accounts sign in with an emailed
-  code and never create one.
+- Email address — for sign-in (we email you a one-time code), confirming it's
+  you before a password is set, telling you when your password changes, and
+  delivering your group's editions.
+- Password, only if you choose to set one from your profile — stored only as a
+  salted hash by our authentication provider; we never see it. Every account
+  can sign in with an emailed code, and a password is never required.
 - Display name — shown as your byline to other members of your groups.
 - Profile photo (optional) and short bio (optional).
 
@@ -64,8 +65,9 @@ only to provide their service to us:
 
 - **Supabase** — database, authentication, and file storage (your account,
   content, and photos are stored here). https://supabase.com/privacy
-- **Resend** — sends your sign-in codes and the weekly edition emails. When you
-  sign in, your email address is sent to Resend to deliver the code; when an
+- **Resend** — sends your sign-in and confirmation codes, account security
+  notices, and the weekly edition emails. When we email you a code or a notice,
+  your email address is sent to Resend to deliver it; when an
   edition publishes, the recipient email addresses and the edition content are
   sent to Resend for delivery. https://resend.com/legal/privacy-policy
 - **Sentry** — receives the crash reports described above, and nothing else.

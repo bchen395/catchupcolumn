@@ -63,6 +63,9 @@ actionable before and all of which are now:
    project has ever produced. Budget for it failing the first time. It is also
    the upload that **permanently locks the bundle ID** (step 7), and the build
    the Sentry DSN has to be baked into (step 10) — settle both before it.
+   It is also the first build to carry the 2026-09-28 auth change (#44) —
+   which can't reach older builds by OTA, because it edits `app.json` — and two
+   dashboard steps wait for it (step 5 items 5 and 7).
 
 **Still open and independent of Apple:**
 
@@ -77,9 +80,9 @@ actionable before and all of which are now:
    **EAS environment, not `.env.local`**, or the TestFlight build ships with
    Sentry silently off. Not set as of 2026-09-24 (`eas env:list` shows only the
    two Supabase variables in each environment).
-7. **Two Auth rate checks** (step 5) — the per-address interval and Resend's daily
-   cap, which auth and edition email now share. And confirm the minimum password
-   length: step 5 records it as raised, `bugs.md` D2 believed it was still 6.
+7. **One Auth rate check left** (step 5) — Resend's daily cap, which auth and
+   edition email now share. *(The per-address interval (60s) and the minimum
+   password length (8) were both read from the dashboard 2026-09-28.)*
 
 **Deferred by choice:** store screenshots (step 7), and the illustration rework
 (step 6b) — which is required before submission (owner, 2026-09-25) but not before
@@ -332,8 +335,13 @@ build.
 5. ☐ **Providers → Email → Email OTP Expiration: 600 seconds** — only once the
    next native build is what people run. Then paste the updated
    `magic-link.html` and `confirm-signup.html` ("expires in 10 minutes") in the
-   same sitting. The setting also governs reauthentication codes. It must equal
-   `CODE_EXPIRY_MINUTES` in `hooks/use-email-code.ts`.
+   same sitting — from `<!doctype html>` down:
+   `sed -n '/<!doctype html>/,$p' supabase/templates/magic-link.html | pbcopy`.
+   The setting also governs reauthentication codes. It must equal
+   `CODE_EXPIRY_MINUTES` in `hooks/use-email-code.ts`. **Afterwards, delete the
+   "PENDING" notes** this step left in the headers of those two templates, in
+   `reauthentication.html`, in `hooks/use-email-code.ts`, and in CLAUDE.md's
+   Auth line.
 6. ✗ **Leaked password protection — not available: the project is on Free**
    (checked 2026-09-28; the toggle needs Pro). The substitute is
    `lib/common-passwords.ts`, the 3,000 most common passwords that pass the
@@ -657,15 +665,23 @@ Checked against Apple's docs 2026-09-25:
 - **The reviewer needs a working sign-in.** Guideline 2.1(a): *"If your app
   includes account-based features, provide either an active demo account or
   fully-featured demo mode."* An emailed code can't be received by a reviewer,
-  so make a **review account with a password** (sign-in → *Use a password
-  instead*), give it a Group with a published edition so every screen has
-  content, and enter it under sign-in information. Don't reuse a real person's
+  so make a **review account with a password**: on this build, sign in with a
+  code, then Profile → *Set a password* (8+ characters, not a common one). The
+  reviewer signs in through *Use a password instead*. Give it a Group with a
+  published edition so every screen has content, and enter it under sign-in
+  information. Don't reuse a real person's
   account. Guideline 2.2: TestFlight builds must comply with the full review
   guidelines — the UGC items from step 9 apply already.
 
 Before submitting, install the build and confirm on-device: fonts load, the splash
 hides, a push token registers, `catchupcolumn://` deep links open, and the photo
-picker prompts with the expected permission copy.
+picker prompts with the expected permission copy. This build is also the first
+with the #44 auth change — its checks are PRESUBMISSION Gate 5 (the Keychain
+save prompt) and Gate 7 (set a password, forgot password, the common-password
+refusal, sign-out on one device).
+
+**Once Group Zero is on this build:** step 5 items 5 and 7 (code expiry → 600s
+with the updated templates, then the old redirect URL).
 
 Then complete the App Store Connect review forms (age rating / privacy — **flag
 user-generated content**) and submit for review.

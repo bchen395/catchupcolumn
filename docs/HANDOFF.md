@@ -61,6 +61,13 @@ tells you to, per PR.
   comment) and the readout queries.
 - Code sign-in, sign-up, moderator removal, account deletion verified against
   production 2026-09-22 (dev build).
+- **Auth hardening on `main`** (#44, merged 2026-09-28): optional password from
+  Profile, "Forgot your password?" as a code sign-in, 8-character minimum plus a
+  bundled common-password list, sign-out on this device only, 10-minute code
+  copy. Dashboard half done 2026-09-28 (LAUNCH step 5 → "Passwords and code
+  lifetime", items 1–4: min length 8, secure password change, the
+  Reauthentication template, password- and email-changed notices). The AASA
+  serves `webcredentials` (200, read back 2026-09-28).
 
 **Wrong or open right now:**
 - **Confirm the timeout fix held:** before 2026-09-28 16:45 UTC about 1 in 4
@@ -73,6 +80,16 @@ tells you to, per PR.
   `preview` skips the upload, `production` doesn't.
 - Nothing behind sign-in has been checked on a release build (owner's simulator
   pass pending). Nothing has run on a phone as a signed binary.
+- **#44's app half is on no build yet.** It changes `app.json`
+  (`webcredentials`), which moves the `fingerprint` runtime version, so it can't
+  reach the 2026-09-24 simulator build by OTA — that build still has the old
+  reset-link flow. The first production build carries it; its auth checks are
+  PRESUBMISSION Gate 5 (Keychain prompt) and Gate 7.
+- **Two auth dashboard steps wait for that build to be what people run**
+  (LAUNCH step 5 items 5 and 7): OTP expiry 3600 → 600 with the updated
+  `magic-link.html` / `confirm-signup.html` pasted in the same sitting, then
+  removing the `reset-password` redirect URL. Until then codes really last an
+  hour while the new copy says 10 minutes — the harmless direction.
 - No DMARC record. Resend domain status unconfirmed.
 - The owner's Mac has Xcode 26.3; **local** SDK 57 builds need ≥ 26.4. EAS is
   unaffected, so this blocks nothing.
@@ -101,9 +118,11 @@ owner at keyboard (Apple sign-in) ───────────────�
                                                    ├─→ eas submit → App Store Connect record,
                                                    │     bundle ID locks (already confirmed)
 agent: review account WITH a password + a demo  ───┼─→ External group + Test Information
-  Group with a published edition                   │     (Beta App Description required)
-                                                   └─→ TestFlight App Review → public link
+  Group with a published edition (on the new      │     (Beta App Description required)
+  build: code sign-in → Profile → Set a password)  └─→ TestFlight App Review → public link
                                                          → Group Zero installs (week 3)
+                                                         → LAUNCH step 5 items 5 + 7
+                                                           (OTP expiry, redirect URL)
 ```
 
 The illustration rework is **not** on this chain: the SVGs reach an installed

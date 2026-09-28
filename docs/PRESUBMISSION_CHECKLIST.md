@@ -124,6 +124,9 @@ Authentication:
       `supabase/templates/password-changed.html` (item 4)
 - [ ] **Email OTP expiry is 600s**, matching `CODE_EXPIRY_MINUTES` — set only
       after the "10 minutes" app copy and both code templates are live (item 5)
+- [ ] **`catchupcolumn://(auth)/reset-password` removed from Redirect URLs** —
+      after the first production build is what people run; older builds still
+      use it (item 7)
 - [x] **Common-password blocklist instead of leaked password protection** — the
       project is on Free, where the toggle isn't offered (2026-09-28);
       `lib/common-passwords.ts` is checked in the app (item 6). Turn the toggle
@@ -195,6 +198,9 @@ Authentication:
   - [ ] `catchupcolumn://` deep link opens the app
   - [ ] Photo picker prompts with the expected permission copy
   - [ ] Notification icon renders correctly (monochrome, Android)
+  - [ ] Setting a password (Profile → Set a password) offers to save it to iCloud
+        Keychain, and the password field suggests a strong one — needs the
+        `webcredentials` entitlement, which only a signed build has
 
 ## Gate 6 — App Review risk: user-generated content
 
@@ -243,6 +249,19 @@ Using the TestFlight / internal-testing build, with two accounts:
 - [ ] **Moderator removes the second account** → they lose access, their unpublished
       post disappears from the next edition, and the published edition is unchanged
 - [ ] Profile → Delete my account → completes and signs out
+- [ ] **Auth (#44, first on this build):**
+  - [ ] Sign-in and sign-up code screens say the code expires in 10 minutes
+  - [ ] Profile → Set a password, on a fresh sign-in → saves without asking for a
+        code; Profile then says "Change your password"; the password-changed email
+        arrives
+  - [ ] Sign out → *Use a password instead* → sign in with it
+  - [ ] A wrong password → "If you usually sign in with a code, use that instead."
+  - [ ] `password1` is refused as one of the most common passwords
+  - [ ] *Forgot your password?* → code arrives → lands on "Choose a new password"
+        → sign in with the new one
+  - [ ] Signed in on two devices → sign out on one → the other stays signed in
+  - [ ] *If a session over a day old is at hand:* Set a password → a confirmation
+        code is emailed, a wrong code is refused, the right one saves
 
 ## Gate 8 — Store consoles
 
