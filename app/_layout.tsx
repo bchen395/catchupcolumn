@@ -127,12 +127,15 @@ const RootLayout = () => {
 
     const inAuthGroup = segments[0] === '(auth)';
     const onOnboardingScreen = inAuthGroup && segments[1] === 'onboarding';
-    const onResetPasswordScreen = inAuthGroup && segments[1] === 'reset-password';
+    const onSetPasswordScreen = inAuthGroup && segments[1] === 'set-password';
     // The join screen is the invite-link landing page — it must work without
     // a session so a logged-out invitee can see what they were invited to.
     const onJoinScreen = segments[0] === 'group' && segments[1] === 'join';
 
-    if (onResetPasswordScreen) return;
+    // Owns its own navigation, and is reached signed in — from Profile, or
+    // straight after a "Forgot your password?" code sign-in, before this
+    // layout's session has caught up (see set-password.tsx).
+    if (onSetPasswordScreen) return;
 
     if (!session && (!inAuthGroup || onOnboardingScreen) && !onJoinScreen) {
       router.replace('/(auth)/login');

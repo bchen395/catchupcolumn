@@ -42,7 +42,7 @@ This is the app-side data layer: the `supabase-js` client, the `lib/` functions 
 | File | Owns |
 | --- | --- |
 | `supabase.ts` | The client singleton + platform storage adapters. |
-| `auth.ts` | Sign-up/in/out, profile sync (`ensureUserProfile`), avatar upload, auth error mapping. |
+| `auth.ts` | Sign-up/in/out (sign-out is this device only), optional passwords (`setPassword`, `sendReauthenticationCode`, `PASSWORD_MIN_LENGTH`), profile sync (`ensureUserProfile`), avatar upload, auth error mapping. Every account has a random password hash, so never ask for a current password. |
 | `groups.ts` | Group CRUD, membership, invite-code join/lookup (RPCs), moderator member-removal, cover upload. |
 | `names.ts` | Display-name formatting (`getInitials`). Not Supabase — it exists because three components had drifting copies. |
 | `report.ts` | Content reporting — drafts the support mailto for a post. Not Supabase; the seam to swap if reports ever get a real endpoint. |

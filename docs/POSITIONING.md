@@ -608,7 +608,7 @@ Group Zero cannot run on Expo Go. Your friends need a real build:
 only way in, which is the wrong ask for a grandmother in a family Group and for a
 digital minimalist without a password manager. A 6-digit emailed code is now the
 default for both signing in *and* signing up, so **a new account never involves
-inventing a password.** Passwords still work for anyone who already has one,
+inventing a password.** Passwords work for anyone who sets one from Profile (optional since 2026-09-25, §9),
 behind "Use a password instead". Built on `signInWithOtp`/`verifyOtp` — no new
 vendor, and the same primitive §4's web composer would need.
 
@@ -863,43 +863,43 @@ Where the organizers are. Join as a person, months before mentioning the app.
       better? Weekly is the brand and the routine is the stated point — but
       Group Zero is the only way to find out, and the schema already supports
       per-group scheduling.
-- [ ] Should a code-only account be able to attach a password later? Raised
-      2026-09-22 while testing sign-in. Today there is no intended way —
-      `updatePassword` is wired only into `app/(auth)/reset-password.tsx`, and
-      nothing in Profile offers it — but there *is* an unintended one: login →
-      "Use a password instead" → "Forgot password" sends a reset mail without
-      checking whether a password ever existed, so a code-only user can mint one
-      by claiming to have forgotten it.
-      **The outside guidance says offer it.** NN/g: *"we recommend that you offer
-      users the option to later attach a password… Users should not, however, be
-      forced to create a password"*
-      (<https://www.nngroup.com/articles/passwordless-accounts/>). Worth knowing
-      this is often misattributed to OWASP, whose Authentication Cheat Sheet does
-      not address retrofitting a password at all. NIST SP 800-63B-4 (final, July
-      2025) points the other way for anything new — phishing-resistant
-      authenticators as the baseline, synced passkeys recognized at AAL2,
-      passwords supported but modernized legacy.
-      **The argument may not transfer to us.** NN/g's reason is repeat-login
-      speed via browser autofill, and we are a native app with
-      `persistSession: true` + `autoRefreshToken: true` in `expo-secure-store`
-      (`lib/supabase.ts`), so signing in is a once-per-device event and there is
-      no repeat login to speed up. A password would then be a credential used
-      approximately never, phishable and stuffable, on an account that stays
-      email-recoverable either way — plus one more thing to explain to a
-      grandparent, against CLAUDE.md's "simplicity over capability".
-      **Leaning: don't add it**, and if sign-in friction turns out to be real,
-      reach for device biometrics or passkeys rather than a password. But the
-      friction is the part nobody has measured. NN/g's complaints — waiting for
-      the mail, app-switching, spam folders — are real and Group Zero is the
-      first time they meet people who did not build this. Decide after it, on
-      whether anyone actually got stuck. Do not close this on the reasoning
-      alone; the reasoning is why the leaning exists, not evidence.
-      Two loose ends either way: if the answer is "no passwords", that
-      forgot-password path contradicts it and wants gating, and the **Recovery**
-      email template is still Supabase stock — it mails
-      `{{ .ConfirmationURL }}`, which works via the allowlisted
-      `catchupcolumn://` deep link but is the one auth template nobody has looked
-      at (LAUNCH.md step 5 covers the other two).
+- [x] **Should a code-only account be able to attach a password later? Yes —
+      decided 2026-09-25 by the owner**, ahead of the "after Group Zero" this
+      entry originally asked for. A password is optional, set from Profile,
+      never in onboarding and never prompted (NN/g: *"offer users the option to
+      later attach a password… Users should not, however, be forced"* —
+      <https://www.nngroup.com/articles/passwordless-accounts/>).
+      **What outweighed the earlier "leaning: don't":** that leaning rebutted
+      only NN/g's repeat-login-speed argument. It missed three things. (1) Email
+      is the only way back in today, and it can fail on the project-wide
+      100/hour cap, the shared Resend budget, or a spam folder — a password is
+      the one sign-in that needs no delivered email. (2) Every account already
+      *has* a password: GoTrue stores a random one for code sign-ups
+      (`magic_link.go`) as well as for `admin.createUser`, and "Forgot
+      password" let anyone set a real one. The question was never whether, but
+      whether the path is designed or accidental. (3) The password path must
+      stay anyway for the App Review demo account (guideline 2.1(a): *"must not
+      expire"*).
+      **What shipped** (`lib/auth.ts` → `setPassword`, `app/(auth)/set-password.tsx`):
+      no current password is ever asked for — a code-only person can't know the
+      random one — and an emailed code proves identity instead, only when GoTrue's
+      Secure password change refuses a session over a day old. "Forgot your
+      password?" is now the ordinary code sign-in followed by choosing a new
+      one; the reset link and its deep-link token handoff are gone. Sign-out is
+      this device only. iOS `webcredentials` is declared so Keychain saves and
+      suggests the password.
+      **Numbers, decided the same day:** minimum 8 characters with leaked-password
+      protection and no composition rules (OWASP ASVS 5.0 6.2.1 / 6.2.12; NIST
+      800-63B-4 asks 15 of a single-factor password, but the account's floor is
+      its inbox either way, and reuse — which length doesn't catch — is the real
+      threat). Codes valid 10 minutes (NIST §3.1.3.2, ASVS 6.5.5; GoTrue limits
+      wrong guesses per IP only, so lifetime is the one lever). Dashboard steps:
+      LAUNCH.md step 5 → "Passwords and code lifetime".
+      **Still open, deliberately:** email change (the address *is* the account,
+      and school addresses lapse after graduation), and passkeys — Supabase's are
+      experimental (supabase-js ≥ 2.105, no documented React Native path). Note
+      that neither standard counts email as an authenticator at all (NIST
+      §3.1.3.1, ASVS 6.3.6), so an email-first app can meet them only in spirit.
 - [ ] What does a volume actually cost to print at *our* specs? Everything in
       §5's ladder is uncosted until Lulu's calculator has been run against a real
       trim size and page count. Colour interiors are 3–5x B&W per page, so this

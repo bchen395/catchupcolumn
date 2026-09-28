@@ -39,7 +39,7 @@ const SignupScreen = () => {
     return (
       <AuthScreenShell
         title="Check your email"
-        subtitle={`We sent a ${flow.codeLength}-digit code to ${flow.email}. It expires in an hour.`}
+        subtitle={`We sent a ${flow.codeLength}-digit code to ${flow.email}. It expires in ${flow.codeExpiryMinutes} minutes.`}
         banner={banner}
       >
         <EmailCodeStep flow={flow} submitLabel="Create my account" />

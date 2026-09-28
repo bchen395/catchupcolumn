@@ -8,6 +8,8 @@
   Sign-in and sign-up do NOT render from the same template: one call
   (supabase.auth.signInWithOtp) routes an existing account here and a brand-new
   address to "Confirm signup". Change the design in one, change it in both.
+  (A third code email, reauthentication.html, confirms it's them before a
+  password is set — same design, different job.)
 
   It sends a CODE, not a link. {{ .Token }} is the 6-digit code the app's
   sign-in screen asks for. Do NOT reintroduce {{ .ConfirmationURL }}: that link
@@ -17,7 +19,9 @@
 
   The code must be SIX digits: hooks/use-email-code.ts hard-codes
   CODE_LENGTH = 6 and the input truncates to it, so a longer OTP length in the
-  dashboard cannot be typed in. Dashboard subject line (a separate field, not
+  dashboard cannot be typed in. "Expires in 10 minutes" is the dashboard's OTP
+  Expiry (600s), mirrored by CODE_EXPIRY_MINUTES in the same file — the three
+  move together. Dashboard subject line (a separate field, not
   covered by this file): "Your Catch Up Column code" — the Supabase default is
   "Your Magic Link", which contradicts this body.
 
@@ -79,7 +83,7 @@
 
             <tr>
               <td align="center" style="padding: 20px 36px 0 36px;">
-                <p style="margin: 0; font-family: 'Lora', Georgia, 'Times New Roman', serif; font-size: 16px; font-style: italic; line-height: 24px; color: #706F6D;">The code works once and expires in an hour.</p>
+                <p style="margin: 0; font-family: 'Lora', Georgia, 'Times New Roman', serif; font-size: 16px; font-style: italic; line-height: 24px; color: #706F6D;">The code works once and expires in 10 minutes.</p>
               </td>
             </tr>
 

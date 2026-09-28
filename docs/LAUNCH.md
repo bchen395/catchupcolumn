@@ -288,18 +288,61 @@ npx supabase secrets set EMAIL_FROM='Catch Up Column <hello@catchupcolumn.com>'
 
 (No function redeploy needed — secrets are read at runtime.)
 
-## 5. Supabase Auth dashboard settings **[owner]** — ✅ all set and verified (2026-09-22)
+## 5. Supabase Auth dashboard settings **[owner]** — ☐ reopened 2026-09-25 (the password change below); the rest ✅ set and verified 2026-09-22
 
 These are **not** in `config.toml` (that governs local dev only) — they were set in the
-Supabase dashboard → Authentication. `config.toml` still shows the old local-dev values
-(`minimum_password_length = 6`, `enable_confirmations = false`); that is expected and
-is not a signal about production.
+Supabase dashboard → Authentication. `config.toml` mirrors the production *decisions*
+(`minimum_password_length = 8`, `secure_password_change = true`, `otp_expiry = 600`
+as of 2026-09-25), but it is not a record of what production holds — only the
+dashboard is.
 
-- ✅ **Redirect URLs:** `catchupcolumn://` and `catchupcolumn://(auth)/reset-password`
-  allowlisted, so password-reset deep links work in release builds.
-- ✅ **Minimum password length** raised from 6 — *as recorded 2026-08-22; but
-  `bugs.md` D2 (2026-09-16) believed it was still 6. Confirm the number in the
-  dashboard (Authentication → Providers → Email) and fix whichever doc is wrong.*
+### Passwords and code lifetime — ☐ set after the 2026-09-25 auth change ships
+
+The 2026-09-25 change made a password an optional second way in, set from
+Profile, and turned "Forgot your password?" into a code sign-in followed by
+choosing a new one. Decisions and the standards behind them: POSITIONING §9.
+**Order matters:** items 1–4 are safe the moment the change merges. Item 5
+waits until the new "expires in 10 minutes" copy is live in the app and in the
+templates, or the app will tell people a code lasts longer than it does.
+
+1. ☐ **Providers → Email → Minimum password length: 8.** Read the current value
+   first; this closes the LAUNCH-vs-bugs.md D2 dispute. It must equal
+   `PASSWORD_MIN_LENGTH` in `lib/auth.ts`. **Password requirements: "No
+   required characters".** Supabase labels the strictest option "recommended";
+   NIST 800-63B-4 says verifiers SHALL NOT impose composition rules.
+2. ☐ **Providers → Email → Secure password change: on.** Without it, anyone
+   holding an unlocked phone can set a password on the account, and the app
+   never asks for a code (it asks only when GoTrue refuses). Leave **"Require
+   current password when updating" off**: every account carries a random
+   password its owner has never seen, so a code-only person could never
+   satisfy it.
+3. ☐ **Email Templates → Reauthentication:** paste
+   `supabase/templates/reauthentication.html`, and set the subject to *"Your
+   Catch Up Column code"*. The default template works, but it puts the code in
+   the subject line.
+4. ☐ **Email Templates → Security notifications → Password changed: on.** Paste
+   `supabase/templates/password-changed.html`, subject *"Your Catch Up Column
+   password was changed"*. GoTrue ships every notification off. Turn
+   **Email address changed** on as well — it goes to the *old* address, costs
+   nothing, and covers dashboard-side changes.
+5. ☐ **Providers → Email → Email OTP Expiration: 600 seconds** — only after the
+   app update is on phones. Then paste the updated `magic-link.html` and
+   `confirm-signup.html` ("expires in 10 minutes") in the same sitting. The
+   setting also governs reauthentication codes. It must equal
+   `CODE_EXPIRY_MINUTES` in `hooks/use-email-code.ts`.
+6. ☐ **Leaked password protection** (Providers → Email → "Prevent use of leaked
+   passwords") — **if the project is on Pro**; it isn't offered on Free. The
+   minimum of 8 was chosen on the assumption this is on. If it can't be, raise
+   the question again rather than leave 8 alone.
+7. ☐ **URL Configuration → Redirect URLs:** `catchupcolumn://(auth)/reset-password`
+   is no longer used — nothing calls `resetPasswordForEmail` any more. Removing
+   it is optional tidying; `catchupcolumn://` stays.
+
+- ~~**Redirect URLs:** `catchupcolumn://` and `catchupcolumn://(auth)/reset-password`
+  allowlisted, so password-reset deep links work in release builds.~~ The reset
+  link is gone (2026-09-25); item 7 above.
+- **Minimum password length** — *recorded as raised on 2026-08-22, disputed by
+  `bugs.md` D2; superseded by item 1 above.*
 - ✅ **Email confirmation** decision made.
 - ✅ **Custom SMTP → Resend, sending limit 100/hour** (2026-09-22). Auth email no
   longer goes through Supabase's built-in sender. Detail below — it is the one
@@ -328,6 +371,10 @@ templates:
 | --- | --- | --- |
 | Sign in, existing account | `sendEmailCode(…, { allowNewUser: false })` | **Magic Link** — ✅ done |
 | Sign up, new address | `sendEmailCode(…, { allowNewUser: true })` | **Confirm signup** — ✅ done |
+| Confirm it's you, before setting a password (2026-09-25) | `sendReauthenticationCode()` → `reauthenticate()` | **Reauthentication** — ☐ item 3 above |
+
+"Forgot your password?" sends a Magic Link code — it is an ordinary sign-in —
+so the **Reset Password** template is no longer used by anything.
 
 Fixing only one leaves the other mailing a dead link, and the half that breaks is
 **sign-up** — nearly all of Group Zero. The app's signup screen asks for six
@@ -390,8 +437,9 @@ governed by anything on this page:
   `supabase/functions/_shared/edition-dispatch.ts`. Configured by the
   `RESEND_API_KEY` / `EMAIL_FROM` function secrets (step 4). Never touches
   Supabase Auth, and is **not** subject to the Auth rate limit below.
-- **Auth email** — the 6-digit sign-in code (`lib/auth.ts` → `signInWithOtp`) and
-  password reset (`resetPasswordForEmail`). These go through Supabase Auth,
+- **Auth email** — the 6-digit sign-in code (`lib/auth.ts` → `signInWithOtp`),
+  the confirm-it's-you code (`reauthenticate`), and the password-changed notice.
+  (Password reset by link, `resetPasswordForEmail`, was removed 2026-09-25.) These go through Supabase Auth,
   which until 2026-09-22 used Supabase's **built-in sender** — a testing
   facility with a low per-hour cap, on a shared IP, not intended for production.
 

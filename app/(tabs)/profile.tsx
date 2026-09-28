@@ -9,6 +9,7 @@ import { AvatarPicker } from '@/components/avatar-picker';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
 import { MugDoodle } from '@/components/illustrations/mug-doodle';
+import { PasswordSetting } from '@/components/password-setting';
 import { ProfileHeroSkeleton } from '@/components/skeletons/profile-hero-skeleton';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
@@ -376,6 +377,8 @@ const ProfileScreen = () => {
               <MaterialCommunityIcons name="pencil-outline" size={18} color={Colors.ink} />
             }
           />
+
+          <PasswordSetting user={user} />
 
           <View style={styles.accountActions}>
             <FormButton

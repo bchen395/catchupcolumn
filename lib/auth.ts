@@ -1,5 +1,5 @@
 import type { User } from '@supabase/supabase-js';
-import * as Linking from 'expo-linking';
+import { isAuthApiError, isAuthWeakPasswordError } from '@supabase/supabase-js';
 
 import { resizeImageForUpload } from '@/lib/image';
 import { unregisterPushAsync } from '@/lib/notifications';
@@ -19,13 +19,30 @@ type UploadAvatarInput = {
 
 const AVATAR_MAX_EDGE = 512;
 
+/**
+ * The password rules, in one place so the field's check, its helper text, and
+ * the server's error all say the same number.
+ *
+ * The minimum must equal Dashboard → Authentication → Providers → Email →
+ * "Minimum password length" (docs/LAUNCH.md step 5). 8 is OWASP ASVS 5.0's
+ * floor (6.2.1), chosen 2026-09-25 together with leaked-password protection —
+ * reuse is the real threat to a password, and length doesn't catch it. NIST
+ * 800-63B-4 asks 15 of a single-factor password; we don't, because every
+ * account can also sign in by emailed code, so the inbox is the security floor
+ * whatever the password is. No composition rules: NIST forbids them.
+ *
+ * The maximum is GoTrue's own: bcrypt reads only 72 bytes, so it refuses more.
+ */
+export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_MAX_LENGTH = 72;
+
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
 /**
- * Password sign-in, kept for accounts created before the code flow existed.
- * There is deliberately no password *signup* any more — a new account is created
- * by `sendEmailCode`, and a passwordless user who wants a password can set one
- * through "Forgot your password?" → the reset screen.
+ * Password sign-in — the optional second way in, for anyone who set a password
+ * from Profile (or had one before the code flow existed). There is
+ * deliberately no password *signup*: a new account is created by
+ * `sendEmailCode`, and a password is only ever added afterwards (`setPassword`).
  */
 export const signInWithEmail = async ({ email, password }: Credentials) => {
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -90,22 +107,74 @@ export const verifyEmailCode = async ({ email, code }: { email: string; code: st
   return data;
 };
 
-export const sendPasswordResetEmail = async (email: string) => {
-  const { error } = await supabase.auth.resetPasswordForEmail(normalizeEmail(email), {
-    redirectTo: Linking.createURL('/(auth)/reset-password'),
-  });
+/**
+ * Set or replace the signed-in account's password.
+ *
+ * There is no "add" versus "change": every account already has a password
+ * hash. GoTrue stores a random one for accounts created by code
+ * (`magic_link.go`) and by `admin.createUser`, so `encrypted_password` is never
+ * empty. For the same reason this never asks for the current password — a
+ * code-only person can't know theirs.
+ *
+ * An emailed code proves it's them instead. With "Secure password change" on
+ * (docs/LAUNCH.md step 5), GoTrue refuses a session more than 24 hours old
+ * with `reauthentication_needed`; the caller then sends a code with
+ * `sendReauthenticationCode` and retries with it as `nonce`. A session under a
+ * day old — including the one a "Forgot your password?" code sign-in just
+ * created — needs no code.
+ */
+export const setPassword = async ({ password, nonce }: { password: string; nonce?: string }) => {
+  const { error } = await supabase.auth.updateUser({ password, ...(nonce ? { nonce } : {}) });
+
+  if (error) {
+    throw error;
+  }
+
+  // Display-only: lets Profile say "Change" instead of "Set". Never gate
+  // anything on it — user_metadata is user-writable, and accounts that had a
+  // password before 2026-09-16 don't carry it. The password is already saved,
+  // so a failure here must not surface as "we couldn't save your password".
+  // No refreshSession: updateUser writes the new user into the local session
+  // and nothing reads this flag from the JWT.
+  const { error: flagError } = await supabase.auth.updateUser({ data: { has_password: true } });
+  if (flagError && __DEV__) {
+    console.warn('setPassword: password saved, but has_password was not recorded', flagError);
+  }
+};
+
+/**
+ * Email a 6-digit code that proves it's them, for `setPassword`'s `nonce`.
+ * Renders from the **Reauthentication** template
+ * (`supabase/templates/reauthentication.html`).
+ */
+export const sendReauthenticationCode = async () => {
+  const { error } = await supabase.auth.reauthenticate();
 
   if (error) {
     throw error;
   }
 };
 
-export const updatePassword = async (newPassword: string) => {
-  const { error } = await supabase.auth.updateUser({ password: newPassword });
+export const isReauthenticationNeeded = (error: unknown) =>
+  isAuthApiError(error) && error.code === 'reauthentication_needed';
 
-  if (error) {
-    throw error;
+export const hasSetPassword = (user: User | null | undefined) =>
+  Boolean(user?.user_metadata?.has_password);
+
+export const validateNewPassword = (password: string) => {
+  if (!password) {
+    return 'Choose a password.';
   }
+
+  if (password.length < PASSWORD_MIN_LENGTH) {
+    return `Use at least ${PASSWORD_MIN_LENGTH} characters.`;
+  }
+
+  if (password.length > PASSWORD_MAX_LENGTH) {
+    return `Keep it to ${PASSWORD_MAX_LENGTH} characters or fewer.`;
+  }
+
+  return undefined;
 };
 
 // Ensures a row exists in public.users for the given auth user.
@@ -228,11 +297,17 @@ export const clearNeedsOnboardingFlag = async () => {
 };
 
 /**
- * Sign out, and tear down the per-session state that outlives the JWT.
+ * Sign out of this device, and tear down the per-session state that outlives
+ * the JWT.
  *
  * Both of these matter for the next account signing in on this device: a push
  * token left registered keeps delivering the previous user's editions, and a
  * cached signed URL was minted under the previous session's credentials.
+ *
+ * `scope: 'local'` because supabase-js defaults to 'global', which would also
+ * sign out the person's other phones and iPads — and leave those devices' push
+ * tokens registered, since only this device's is removed here. This session's
+ * refresh token is still revoked server-side.
  */
 export const signOut = async (userId?: string | null) => {
   if (userId) {
@@ -240,7 +315,7 @@ export const signOut = async (userId?: string | null) => {
   }
   clearPostImageUrlCache();
 
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
   if (error) {
     throw error;
   }
@@ -320,9 +395,36 @@ export const mapAuthErrorMessage = (
   fallback = 'Something went wrong. Please try again.',
 ) => {
   const message = error instanceof Error ? error.message.toLowerCase() : '';
+  const code = isAuthApiError(error) ? error.code : undefined;
 
   if (message.includes('invalid login credentials')) {
-    return 'That email and password did not match. Please try again.';
+    // Most accounts have no password their owner knows (see setPassword), so
+    // the likeliest cause is someone who signs in by code trying this form.
+    return 'That email and password did not match. If you usually sign in with a code, use that instead.';
+  }
+
+  if (isAuthWeakPasswordError(error)) {
+    if (error.reasons.includes('pwned')) {
+      return 'That password has turned up in a data breach elsewhere, so it isn’t safe to use. Choose a different one.';
+    }
+    if (error.reasons.includes('length')) {
+      return passwordLengthMessage(message);
+    }
+    // 'characters' — composition rules are deliberately off (NIST forbids
+    // them), so this only appears if the dashboard setting drifts.
+    return 'Choose a different password.';
+  }
+
+  if (code === 'same_password') {
+    return 'That is already your password.';
+  }
+
+  if (code === 'reauthentication_not_valid') {
+    return 'That code did not work. Check it, or send a new one.';
+  }
+
+  if (message.includes('auth session missing')) {
+    return 'Your sign-in has ended. Sign in again, then set your password.';
   }
 
   // shouldCreateUser: false against an address with no account. Deliberately
@@ -354,7 +456,11 @@ export const mapAuthErrorMessage = (
   }
 
   if (message.includes('password should be at least')) {
-    return 'Choose a password with at least 6 characters.';
+    return passwordLengthMessage(message);
+  }
+
+  if (message.includes('cannot be longer than')) {
+    return `Keep your password to ${PASSWORD_MAX_LENGTH} characters or fewer.`;
   }
 
   if (
@@ -373,5 +479,12 @@ export const mapAuthErrorMessage = (
   }
 
   return fallback;
+};
+
+// Read the number out of GoTrue's "Password should be at least N characters",
+// so the copy follows the dashboard even if it drifts from PASSWORD_MIN_LENGTH.
+const passwordLengthMessage = (message: string) => {
+  const minimum = message.match(/at least (\d+) characters/)?.[1] ?? String(PASSWORD_MIN_LENGTH);
+  return `Choose a password with at least ${minimum} characters.`;
 };
 

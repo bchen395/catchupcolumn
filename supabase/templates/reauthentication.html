@@ -1,40 +1,29 @@
 <!--
-  Supabase Auth → Email Templates → "Confirm signup".
+  Supabase Auth → Email Templates → "Reauthentication".
 
   This file is the source of truth; the dashboard holds a copy. If you edit one,
   edit the other, or the next person will trust the wrong version.
 
-  WHY THIS FILE EXISTS, AND WHY IT IS NEARLY IDENTICAL TO magic-link.html:
-  sign-in and sign-up do NOT render from the same template. Both go through one
-  call — supabase.auth.signInWithOtp (lib/auth.ts → sendEmailCode) — but GoTrue
-  routes a brand-new address (shouldCreateUser: true) to THIS template, and an
-  existing account to Magic Link. Confirmed by testing on 2026-09-22: sign-up
-  arrived as the stock "Confirm your signup / Follow this link to confirm your
-  user", because only Magic Link had been fixed.
+  Sent by supabase.auth.reauthenticate() (lib/auth.ts → sendReauthenticationCode)
+  when someone sets a password from Profile on a session more than a day old —
+  GoTrue's "Secure password change" refuses that without a fresh code. The
+  person is already signed in; this proves it's still them holding the phone.
+  The app's set-password screen asks for the six digits and passes them to
+  updateUser as the nonce.
 
-  So both templates must carry {{ .Token }}. Fixing one leaves the other mailing
-  a dead link, and the half that breaks is sign-up — which is nearly all of
-  Group Zero.
-
-  It sends a CODE, not a link. Do NOT reintroduce {{ .ConfirmationURL }}: that
-  link points at the Supabase auth domain, which the app cannot claim (universal
-  links cover only www.catchupcolumn.com/edition/*), so a tapped link would
-  strand the reader in Safari. The app's signup screen asks for
-  six digits and has no way to receive a link.
-
-  The code must be SIX digits: hooks/use-email-code.ts hard-codes
-  CODE_LENGTH = 6 and the input truncates to it, so a longer OTP length in the
-  dashboard cannot be typed in. "Expires in 10 minutes" is the dashboard's OTP
-  Expiry (600s), mirrored by CODE_EXPIRY_MINUTES in the same file — the three
-  move together.
+  It carries {{ .Token }} only. The Supabase default does too, so this template
+  is about the design and the plain words, not about making the code work.
+  Same visual design as magic-link.html and confirm-signup.html — change the
+  three together. Six digits and "expires in 10 minutes" are the dashboard's
+  OTP Length and OTP Expiry, mirrored by CODE_LENGTH and CODE_EXPIRY_MINUTES in
+  hooks/use-email-code.ts.
 
   Dashboard subject line (a separate field, not covered by this file):
-  "Your Catch Up Column code"
+  "Your Catch Up Column code" — the Supabase default puts the code itself in
+  the subject, which lands it in lock-screen previews.
 
   Brand: BRAND.md §2/§3 — Lora + Jost, ink on warm paper, hairline rules, one
-  vermilion kicker. The code is set at 34px with wide tracking because a
-  misread digit costs the whole sign-up, and the accessibility floor applies to
-  email as much as to the app.
+  vermilion kicker.
 -->
 <!doctype html>
 <html lang="en">
@@ -58,7 +47,7 @@
 
             <tr>
               <td align="center" style="padding: 40px 36px 0 36px;">
-                <p style="margin: 0 0 12px 0; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 2.4px; text-transform: uppercase; color: #E8442E;">Welcome</p>
+                <p style="margin: 0 0 12px 0; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 2.4px; text-transform: uppercase; color: #E8442E;">Confirm it's you</p>
                 <h1 style="margin: 0; font-family: 'Lora', Georgia, 'Times New Roman', serif; font-size: 32px; line-height: 1.14; font-weight: 700; letter-spacing: -0.5px; color: #1A1A1A;">Catch Up Column</h1>
               </td>
             </tr>
@@ -71,7 +60,7 @@
 
             <tr>
               <td align="center" style="padding: 28px 36px 0 36px;">
-                <p style="margin: 0; font-family: 'Lora', Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 26px; color: #1A1A1A;">Here is your code. Type it into the app to finish setting up your account.</p>
+                <p style="margin: 0; font-family: 'Lora', Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 26px; color: #1A1A1A;">Here is your code. Type it into the app to finish saving your password.</p>
               </td>
             </tr>
 
@@ -101,7 +90,7 @@
 
             <tr>
               <td align="center" style="padding: 20px 36px 36px 36px;">
-                <p style="margin: 0; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 14px; line-height: 22px; color: #A6A4A1;">If you didn't try to sign up, you can ignore this email — nobody can use it without the code.</p>
+                <p style="margin: 0; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 14px; line-height: 22px; color: #A6A4A1;">If you didn't just try to set a password, you can ignore this email — nothing changes without the code.</p>
               </td>
             </tr>
 

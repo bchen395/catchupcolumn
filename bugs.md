@@ -142,6 +142,10 @@ rather than undecided. The password-length setting still applies to accounts
 created before the change; raising it in the dashboard remains worthwhile but no
 longer gates anything. *(2026-09-24: `docs/LAUNCH.md` step 5 records it as
 already raised on 2026-08-22 — the two disagree; confirm in the dashboard.)*
+**Decided 2026-09-25: 8**, now that anyone can set a password from Profile —
+with leaked-password protection and no composition rules, and the app's
+`PASSWORD_MIN_LENGTH` matches it. The dashboard step is LAUNCH step 5 →
+"Passwords and code lifetime" item 1, which also settles the dispute.
 Original note follows.
 
 ### D2 (original). Auth: minimum password length 6, no email confirmation
@@ -184,9 +188,10 @@ Deploying edge functions.
 3. **M1** — decide whether weekly email needs per-recipient retry, or accept the
    trade-off.
 4. **Auth config (dashboard, not code):** email confirmation is decided (stays
-   off — the code flow is proof of address, D2). Minimum password length is
-   **disputed**: `docs/LAUNCH.md` step 5 records it raised 2026-08-22, D2 below
-   believed it was still 6. Read it in the dashboard and fix the loser.
+   off — the code flow is proof of address, D2). The password settings were
+   decided 2026-09-25 (minimum 8, secure password change on, 10-minute codes,
+   notifications on); what's left is setting them in the dashboard —
+   `docs/LAUNCH.md` step 5 → "Passwords and code lifetime", in its order.
 5. **Universal links are declared nowhere — and as of 2026-09-22 this is
    actionable.** `app.json` has no
    `associatedDomains` (iOS) or `intentFilters` (Android), and the AASA file
