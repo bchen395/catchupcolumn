@@ -888,11 +888,16 @@ Where the organizers are. Join as a person, months before mentioning the app.
       one; the reset link and its deep-link token handoff are gone. Sign-out is
       this device only. iOS `webcredentials` is declared so Keychain saves and
       suggests the password.
-      **Numbers, decided the same day:** minimum 8 characters with leaked-password
-      protection and no composition rules (OWASP ASVS 5.0 6.2.1 / 6.2.12; NIST
-      800-63B-4 asks 15 of a single-factor password, but the account's floor is
-      its inbox either way, and reuse — which length doesn't catch — is the real
-      threat). Codes valid 10 minutes (NIST §3.1.3.2, ASVS 6.5.5; GoTrue limits
+      **Numbers, decided the same day:** minimum 8 characters, a blocklist, and
+      no composition rules (OWASP ASVS 5.0 6.2.1; NIST 800-63B-4 asks 15 of a
+      single-factor password, but the account's floor is its inbox either way,
+      and a common or reused password — which length doesn't catch — is the
+      real threat). The blocklist was meant to be Supabase's leaked-password
+      check (ASVS 6.2.12, L2), but that needs Pro and the project is on Free
+      (2026-09-28). So it's the 3,000 most common passwords of 8+ characters,
+      bundled and checked in the app (`lib/common-passwords.ts`, ASVS 6.2.4,
+      L1). That catches common passwords but not a reused, uncommon one; turn
+      the dashboard check on too if the project moves to Pro. Codes valid 10 minutes (NIST §3.1.3.2, ASVS 6.5.5; GoTrue limits
       wrong guesses per IP only, so lifetime is the one lever). Dashboard steps:
       LAUNCH.md step 5 → "Passwords and code lifetime".
       **Still open, deliberately:** email change (the address *is* the account,

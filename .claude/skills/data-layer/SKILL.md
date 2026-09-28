@@ -44,6 +44,7 @@ This is the app-side data layer: the `supabase-js` client, the `lib/` functions 
 | `supabase.ts` | The client singleton + platform storage adapters. |
 | `auth.ts` | Sign-up/in/out (sign-out is this device only), optional passwords (`setPassword`, `sendReauthenticationCode`, `PASSWORD_MIN_LENGTH`), profile sync (`ensureUserProfile`), avatar upload, auth error mapping. Every account has a random password hash, so never ask for a current password. |
 | `groups.ts` | Group CRUD, membership, invite-code join/lookup (RPCs), moderator member-removal, cover upload. |
+| `common-passwords.ts` | Generated blocklist of the 3,000 most common 8+ character passwords, checked by `validateNewPassword`. Not Supabase — it stands in for leaked-password protection, which needs Pro. Regenerate from its header rule; never hand-edit. |
 | `names.ts` | Display-name formatting (`getInitials`). Not Supabase — it exists because three components had drifting copies. |
 | `report.ts` | Content reporting — drafts the support mailto for a post. Not Supabase; the seam to swap if reports ever get a real endpoint. |
 | `posts.ts` | Post CRUD, image upload + signed display URLs, current-post lookup. |

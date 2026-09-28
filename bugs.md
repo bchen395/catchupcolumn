@@ -142,10 +142,12 @@ rather than undecided. The password-length setting still applies to accounts
 created before the change; raising it in the dashboard remains worthwhile but no
 longer gates anything. *(2026-09-24: `docs/LAUNCH.md` step 5 records it as
 already raised on 2026-08-22 — the two disagree; confirm in the dashboard.)*
-**Decided 2026-09-25: 8**, now that anyone can set a password from Profile —
-with leaked-password protection and no composition rules, and the app's
-`PASSWORD_MIN_LENGTH` matches it. The dashboard step is LAUNCH step 5 →
-"Passwords and code lifetime" item 1, which also settles the dispute.
+**Resolved 2026-09-28: it was already 8** — LAUNCH's 2026-08-22 record was right
+and this entry's belief was wrong. 8 stays (decided 2026-09-25, now that anyone
+can set a password from Profile), with no composition rules and the app's
+`PASSWORD_MIN_LENGTH` matching it. The project is on Free, where leaked-password
+protection isn't offered, so the app checks `lib/common-passwords.ts` instead
+(LAUNCH step 5 → "Passwords and code lifetime", item 6).
 Original note follows.
 
 ### D2 (original). Auth: minimum password length 6, no email confirmation

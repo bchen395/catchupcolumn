@@ -112,19 +112,22 @@ Authentication:
       with a never-used address, confirmed in `auth.users`)*. For a re-test, use
       a never-used address — a prior failed test creates the user, so reuse tests
       sign-in. Six digits on both, no button on either.
-- [ ] **Minimum password length is 8, with no required character types**
-      *(decided 2026-09-25)*, matching `PASSWORD_MIN_LENGTH` in `lib/auth.ts`.
+- [x] **Minimum password length is 8, with no required character types**
+      *(decided 2026-09-25; read 2026-09-28 — it was already 8)*, matching `PASSWORD_MIN_LENGTH` in `lib/auth.ts`.
       Passwords are optional and set from Profile. LAUNCH step 5 → "Passwords
       and code lifetime" item 1.
-- [ ] **Secure password change is on**; "Require current password" is **off**
+- [x] **Secure password change is on**; "Require current password" is **off** *(2026-09-28)*
       (item 2 — a code-only account has no password its owner knows)
-- [ ] **Reauthentication template** pasted from
+- [x] **Reauthentication template** *(2026-09-28)* pasted from
       `supabase/templates/reauthentication.html`, with a plain subject (item 3)
-- [ ] **Password-changed and email-changed notifications on**, with
+- [x] **Password-changed and email-changed notifications on** *(2026-09-28)*, with
       `supabase/templates/password-changed.html` (item 4)
 - [ ] **Email OTP expiry is 600s**, matching `CODE_EXPIRY_MINUTES` — set only
       after the "10 minutes" app copy and both code templates are live (item 5)
-- [ ] **Leaked password protection on**, if the plan offers it (item 6)
+- [x] **Common-password blocklist instead of leaked password protection** — the
+      project is on Free, where the toggle isn't offered (2026-09-28);
+      `lib/common-passwords.ts` is checked in the app (item 6). Turn the toggle
+      on if the project moves to Pro.
 - [x] Email confirmation: stays **off** *(decided 2026-09-16)* — the code flow is
       itself proof of address, and there is no password-signup path any more
 - [x] **Custom SMTP is enabled and points at Resend** *(set 2026-09-22; code emails
@@ -137,7 +140,8 @@ Authentication:
       per hour before launch — the 100 was sized for Group Zero, not for the
       store. Reasoning in [LAUNCH.md](./LAUNCH.md) step 5.
 - [ ] Per-address minimum interval between auth emails is still set (60s default)
-      — it is what makes the 100/hour ceiling safe
+      — it is what makes the 100/hour ceiling safe. It's under Emails → **SMTP
+      Settings** ("Minimum interval between emails being sent"), not Rate Limits
 - [ ] Resend plan's **daily** cap clears expected volume — auth email and edition
       email now share it
 

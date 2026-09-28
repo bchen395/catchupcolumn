@@ -1,6 +1,7 @@
 import type { User } from '@supabase/supabase-js';
 import { isAuthApiError, isAuthWeakPasswordError } from '@supabase/supabase-js';
 
+import { COMMON_PASSWORDS } from '@/lib/common-passwords';
 import { resizeImageForUpload } from '@/lib/image';
 import { unregisterPushAsync } from '@/lib/notifications';
 import { clearPostImageUrlCache } from '@/lib/posts';
@@ -25,8 +26,10 @@ const AVATAR_MAX_EDGE = 512;
  *
  * The minimum must equal Dashboard → Authentication → Providers → Email →
  * "Minimum password length" (docs/LAUNCH.md step 5). 8 is OWASP ASVS 5.0's
- * floor (6.2.1), chosen 2026-09-25 together with leaked-password protection —
- * reuse is the real threat to a password, and length doesn't catch it. NIST
+ * floor (6.2.1), chosen 2026-09-25 alongside a blocklist — a common or reused
+ * password is the real threat, and length doesn't catch it. Supabase's
+ * leaked-password check needs Pro and this project is on Free, so the
+ * blocklist is COMMON_PASSWORDS, checked here (decided 2026-09-28). NIST
  * 800-63B-4 asks 15 of a single-factor password; we don't, because every
  * account can also sign in by emailed code, so the inbox is the security floor
  * whatever the password is. No composition rules: NIST forbids them.
@@ -172,6 +175,10 @@ export const validateNewPassword = (password: string) => {
 
   if (password.length > PASSWORD_MAX_LENGTH) {
     return `Keep it to ${PASSWORD_MAX_LENGTH} characters or fewer.`;
+  }
+
+  if (COMMON_PASSWORDS.has(password.toLowerCase())) {
+    return 'That’s one of the most common passwords, so it’s easy to guess. Choose a different one.';
   }
 
   return undefined;
