@@ -1,10 +1,13 @@
 # Launch handoff — orchestration brief
 
-**Rewritten 2026-09-25, updated 2026-09-28** (first written 2026-09-24). A living brief for whichever
+**Rewritten 2026-09-28** (first written 2026-09-24). A living brief for whichever
 session is orchestrating the launch. It holds what the lists don't: current live
 state, the dependency order, who does what, and how to verify. **Rewrite it at
 the end of every orchestration session** (state, dates, first moves). Delete it
 at launch.
+
+**Start at "Next steps"** (after Workstreams) — every open item, in the order
+it binds. The rest of this file is the context those steps need.
 
 It deliberately does **not** copy the lists — each has one home:
 
@@ -31,7 +34,7 @@ owner-only steps **one at a time, with exact clicks/commands**; verify every cla
 against production (read-only) before recording it. The owner merges PRs — or
 tells you to, per PR.
 
-## Live state (verified 2026-09-25 — re-check before relying on it)
+## Live state (verified 2026-09-25 and 2026-09-28 — re-check before relying on it)
 
 **Working:**
 - **Server:** v2 edition email live; cron firing every 15 min; **32 migrations
@@ -68,11 +71,15 @@ tells you to, per PR.
   lifetime", items 1–4: min length 8, secure password change, the
   Reauthentication template, password- and email-changed notices). The AASA
   serves `webcredentials` (200, read back 2026-09-28).
+- **Docs match production** after #46 (cron-robustness record) and #47 (what
+  #44 left for the next build). #47 also updated the public privacy policy —
+  live at `/privacy`, "Last updated September 28, 2026" (read back 2026-09-28).
 
 **Wrong or open right now:**
 - **Confirm the timeout fix held:** before 2026-09-28 16:45 UTC about 1 in 4
-  ticks timed out at 5 s; the first tick after the fix (17:00 UTC) was `200`, not
-  timed out. Re-count `timed_out` in `net._http_response` (it keeps
+  ticks timed out at 5 s. Since the fix, **3 of 3 ticks returned `200`, none
+  timed out** (16:45, 17:00, 17:15 UTC) — too small a sample to close. Re-count
+  `timed_out` in `net._http_response` once several hours have passed (it keeps
   ~6 h); expect 0. Whether the old timed-out runs finished server-side was never
   read from the dashboard — moot now, unless timeouts continue.
 - **Every production EAS build fails at the Sentry step** until `SENTRY_ORG`,
@@ -97,7 +104,9 @@ tells you to, per PR.
 **Not started:** Group Zero. Production has 2 test Groups, 3 users. Recruiting as
 of 2026-09-25: the owner has a friend group they're part of (Group A) and "can
 enlist another group easily" — **who organizes it is unconfirmed** (it must not be
-the owner). **No family Group yet.**
+the owner). **No family Group yet.** As of 2026-09-28 nothing has moved: Group A's
+member list, the Group B organizer, and whether a family Group can start this
+week are all still owed (Next steps §1).
 
 ## Dates that bind
 
@@ -138,65 +147,119 @@ Reading is measured by asking each member at week 4 (decided 2026-09-24; open
 tracking stays off). The owner may prefer to run the commands in their own
 terminal to keep friends' emails out of the session — offer it.
 
-**B. Production correctness — agent, owner approves each prod change.** Next: the
-late-slot migration push (plan in its PR). Redeploy functions after **every**
-future function change; verify by download-and-diff (LAUNCH → Deploying edge
-functions).
+**B. Production correctness — agent, owner approves each prod change.** Nothing
+is pending to push or deploy: the late-slot fix (#42) and cron robustness (#45)
+are both live and verified. What's left is watching — the cron re-count in Next
+steps §2. Redeploy functions after **every** future function change; verify by
+download-and-diff (LAUNCH → Deploying edge functions).
 
-**C. Dev work:**
-1. ~~Late-slot fix~~ — **live 2026-09-25** (#42, pushed and verified), and the
-   operator script's ≥ 23:40 refusal and readout q0's warning removed.
-2. ~~Cron robustness (H2 + H3)~~ — **live 2026-09-28** (#45: migration pushed,
-   `compile-editions` v19 deployed, both verified). The app's UTC fallback for a
-   zone the database doesn't know ships with the next build.
-3. **TestFlight review account** — a password account, plus a demo Group with a
-   published edition so every screen has content. Not a real person's account.
-   LAUNCH step 8. Since #44 (2026-09-28) the easy way is in the app: sign in
-   with a code, then Profile → Set a password (8+ characters, not on
-   `lib/common-passwords.ts`). The operator script still creates code-only
-   accounts; `auth.admin.createUser` with a password works too.
-4. **Illustration support, if the owner wants it** (the illustrator draws; these
-   help them and the merge): stroke-scale tokens in `constants/`, a review
-   screen showing all 8 assets + both loader variants + Reduce Motion, and a
-   script that regenerates `icon.png` / `splash-icon.png` from `paperboy-mark`
-   geometry. Scope and export contracts: `design/ILLUSTRATION_REWORK.md`.
-5. **bugs.md L3** — lower priority now: the operator script pre-creates every
-   Group Zero account with its profile.
-6. **bugs.md M1** — a decision, not a fix (recommended: accept for Group Zero).
-
-**D. Owner-only — hand these over one at a time:**
-- Recruiting — the deadline item. Protect the owner's time for it: a family Group
-  this week (their own counts), and a named Group B organizer.
-- Sign in on the simulator build and check: the tab bar, Editions → an edition →
-  a story, the compose sheet (open and close, **don't post** — it's production),
-  and the loading animation.
-- Sentry: create an auth token (*Settings → Auth Tokens*, `project:releases`),
-  put it in the expo.dev dashboard as a Secret; tell the agent the org and
-  project slugs.
-- The production build session (Apple sign-in at the keyboard).
-- DMARC TXT at `_dmarc.catchupcolumn.com` (value in LAUNCH step 4).
-- Resend dashboard: domain `verified`? plan's daily cap? Open/click tracking
-  **off** (the decision above depends on it)?
-- ~~Supabase dashboard reads: minimum password length, per-address email
-  interval.~~ Done 2026-09-28 — 8 and 60s. Two auth dashboard steps now wait
-  for the next native build (LAUNCH step 5 → "Passwords and code lifetime",
-  items 5 and 7): OTP expiry → 600s with the updated code templates, and
-  dropping the `reset-password` redirect URL.
-- Lulu pricing calculator at a real trim size and page count.
-- Not recorded from the 2026-09-22 sign-up test: the email's subject, sender,
-  and inbox-vs-spam placement. Ask once.
-- Optional: update Xcode to ≥ 26.4 for local builds.
+**C, D** (dev work, owner-only steps) are folded into **Next steps** below, in
+order, as of 2026-09-28.
 
 **E. Gated — do not start** (POSITIONING §8): the nudge, thin-edition design,
 write-by-web, store screenshots, App Store submission (after Group Zero **and**
 the illustration rework), the house ad (after the December test), the print
 renderer / Lulu API.
 
+## Next steps — consolidated 2026-09-28
+
+Everything open, in the order it binds. **[owner]** = only the owner can do it —
+hand these over one at a time with exact clicks or commands. **[agent]** = the
+session does it. Each item says where its detail lives; record outcomes there,
+dated, then update this file.
+
+**§1. This week — the family-Group deadline (~2026-09-30)**
+
+1. **[owner] Three answers, so the operator script can set up Groups** (asked
+   2026-09-28, not yet answered):
+   - Group A's member list (names and emails). Offer to have the owner run
+     `add-member` in their own terminal, keeping friends' emails out of the
+     session.
+   - Who organizes Group B — not the owner.
+   - Whether a family Group can start this week — the owner's own family counts.
+2. **[agent]** With those answers: `create-group`, `add-member`, and `post-for`
+   per Workstream A. Dry run first; ask before every `--apply`.
+3. **[owner] Decide bugs.md M1** before edition 1: accept no per-recipient email
+   retry for Group Zero (recommended).
+
+**§2. Keep production honest**
+
+4. **[agent] Re-count cron timeouts** since 2026-09-28 16:45 UTC — 3 of 3 clean
+   at last look (Live state). Expect 0. If any remain, read that invocation in
+   the dashboard before anything else.
+
+**§3. The production build → TestFlight (early October)** — the chain above
+
+5. **[owner] Sentry auth token** (*Settings → Auth Tokens*, `project:releases`)
+   into the expo.dev dashboard as a Secret, plus the org and project slugs;
+   **[agent]** then sets `SENTRY_ORG` / `SENTRY_PROJECT` (LAUNCH 10.4). Until
+   then every production build fails at the Sentry step.
+6. **[owner] Simulator sign-in pass** on build `cf9f70ee`: the tab bar, Editions
+   → an edition → a story, the compose sheet (open and close — **don't post**,
+   it's production), the loading animation. It predates #44, so it shows the old
+   reset-link flow; that's expected.
+7. **[owner at the keyboard, agent driving] Production build session:**
+   `npx eas-cli build --platform ios --profile production` (Apple sign-in;
+   creates the cert and the APNs key), then `npx eas-cli submit --platform ios
+   --latest`. The bundle ID locks on this upload. The build carries #44, the UTC
+   fallback from #45, and the `webcredentials` entitlement. LAUNCH step 8.
+8. **[agent] Review account on that build:** code sign-in → Profile → *Set a
+   password* (8+ characters, not a common one), plus a demo Group with a
+   published edition so every screen has content. Not a real person's account.
+   Then the external group, the Beta App Description, and the sign-in details
+   under Test Information. LAUNCH step 8.
+9. **[owner] Device checks on the signed build:** PRESUBMISSION Gate 5 (including
+   the Keychain save prompt) and Gate 7 (including the eight #44 auth checks).
+10. TestFlight App Review → public link → Group Zero installs (week 3,
+    ~mid-October).
+
+**§4. Once Group Zero is on that build**
+
+11. **[owner] Code expiry → 600 s** (LAUNCH step 5 item 5): Email OTP Expiration
+    = 600, and paste the updated `magic-link.html` and `confirm-signup.html` in
+    the same sitting (`sed -n '/<!doctype html>/,$p' <file> | pbcopy`).
+    **[agent]** then deletes the PENDING notes in those two template headers,
+    `reauthentication.html`, `hooks/use-email-code.ts`, and CLAUDE.md's Auth
+    line.
+12. **[owner] Remove `catchupcolumn://(auth)/reset-password`** from Redirect URLs
+    (LAUNCH step 5 item 7).
+
+**§5. Owner, any time — one at a time**
+
+- DMARC TXT at `_dmarc.catchupcolumn.com` (value in LAUNCH step 4).
+- Resend dashboard: is the domain `verified`? What's the plan's daily cap — auth
+  and edition email share it, and a Sunday-09:00 burst plus onboarding can
+  collide (LAUNCH step 5)? Is open/click tracking **off**?
+- Publish-day default: the app says Sunday 09:00, the playbook recommends Monday
+  (minor; Decisions table).
+- Lulu pricing calculator at a real trim size and page count.
+- From the 2026-09-22 sign-up test, never recorded: the email's subject, sender,
+  and inbox-vs-spam placement. Ask once.
+- Optional: Xcode ≥ 26.4 for local builds.
+
+**§6. Agent, when there's slack**
+
+- Illustration support, if the owner wants it (the illustrator draws; these help
+  them and the merge): stroke-scale tokens in `constants/`, a review screen
+  showing all 8 assets + both loader variants + Reduce Motion, and a script that
+  regenerates `icon.png` / `splash-icon.png` from `paperboy-mark` geometry.
+  Scope and export contracts: `design/ILLUSTRATION_REWORK.md`.
+- bugs.md L3 — low priority: the operator script pre-creates every Group Zero
+  account with its profile.
+- Not started, deliberately: an email-change flow (the address *is* the account;
+  school addresses lapse), and passkeys once Supabase's leave experimental
+  (POSITIONING §9).
+
+**First move for the next session:** re-verify the Live-state block (five
+minutes, read-only), then §1 — the three answers — before anything else.
+
 ## Decisions the owner owes
 
 | Decision | Needed by | Where |
 | --- | --- | --- |
+| Group A's member list | ~2026-09-30 (to set the Group up with the script) | Workstream A |
 | Who organizes Group B | Before recruiting it | POSITIONING §6 |
+| Can a family Group start this week? | ~2026-09-30 | POSITIONING §5 |
 | Publish-day default: app says Sunday 09:00, the playbook recommends Monday (minor) | Any time | `app/group/create.tsx`, playbook |
 | M1: accept no per-recipient email retry for Group Zero? | Before edition 1 | bugs.md M1 |
 
@@ -204,7 +267,9 @@ Decided this session (2026-09-24/25): reading measured by asking at week 4;
 Group B set up by the owner with the organizer as moderator; bundle ID final;
 "shipping" means the App Store, and it waits for the commissioned illustration
 rework. Decided 2026-09-25 (#44), ahead of Group Zero: code-only accounts can
-set an optional password from Profile (POSITIONING §9). Still open,
+set an optional password from Profile (POSITIONING §9); the numbers — 8
+characters, a bundled common-password list (Supabase Free has no leaked-password
+check), 10-minute codes — on 2026-09-25/28. Still open,
 deliberately left until after Group Zero: weekly vs biweekly, classifieds,
 volume size and whether friend-group volumes sell (POSITIONING §9).
 
@@ -285,15 +350,3 @@ volume size and whether friend-group volumes sell (POSITIONING §9).
   folder — re-download the one you care about alone before diffing.
 - Profile photo: the app shows the preview before **Save** uploads it. Weak
   evidence it confused anyone — watch it in Group Zero rather than fix it.
-
-## First moves for the next session
-
-1. Re-verify the live-state block (five minutes, all read-only). Anything that
-   changed, update here.
-2. Re-count cron timeouts since 2026-09-28 16:45 UTC (expect 0). If any
-   remain, read that invocation in the dashboard before anything else.
-3. Recruiting at the top of the check-in until ~09-30: a family Group, the
-   Group B organizer's name, Group A's member list.
-4. Get the Sentry token set, then schedule the production-build session with the
-   owner; prepare the review account (C3) before it.
-5. Ask for the simulator sign-in results if they haven't come in.
