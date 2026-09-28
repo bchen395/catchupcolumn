@@ -103,7 +103,7 @@
 -- compile_due_editions matches one: publish_day + publish_time as wall-clock
 -- time in groups.timezone, so DST moves the UTC instant, not the local slot.
 -- The slot is the latest one at or before the edition's published_at. An
--- edition published within 20 minutes of it (compile-editions'
+-- edition published within 30 minutes of it (compile-editions'
 -- p_tolerance_minutes) is a cron edition, anchored to its slot. Anything else is
 -- off-slot — a moderator's "publish now", or a schedule changed since — and is
 -- anchored to its own published_at. Uses the Group's CURRENT schedule, so a
@@ -204,7 +204,7 @@ reminders (group_key, email, reminded_at) as (
 rules (run_length, min_editions, pass_share, cron_grace) as (
   -- §6: four consecutive editions; "≥5 of 8 members write at least twice",
   -- applied as a share. cron_grace = compile-editions' p_tolerance_minutes.
-  values (4, 2, 5.0 / 8, interval '20 minutes')
+  values (4, 2, 5.0 / 8, interval '30 minutes')
 ),
 grp as (
   -- The cohort resolved to real Groups. A key that matches nothing, or a Group
