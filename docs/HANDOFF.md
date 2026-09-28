@@ -130,10 +130,12 @@ functions).
 2. ~~Cron robustness (H2 + H3)~~ — **live 2026-09-28** (#45: migration pushed,
    `compile-editions` v19 deployed, both verified). The app's UTC fallback for a
    zone the database doesn't know ships with the next build.
-3. **TestFlight review account** — a password account (the operator script
-   creates only code accounts; use `auth.admin.createUser` with a password, or
-   the dashboard), plus a demo Group with a published edition so every screen
-   has content. Not a real person's account. LAUNCH step 8.
+3. **TestFlight review account** — a password account, plus a demo Group with a
+   published edition so every screen has content. Not a real person's account.
+   LAUNCH step 8. Since #44 (2026-09-28) the easy way is in the app: sign in
+   with a code, then Profile → Set a password (8+ characters, not on
+   `lib/common-passwords.ts`). The operator script still creates code-only
+   accounts; `auth.admin.createUser` with a password works too.
 4. **Illustration support, if the owner wants it** (the illustrator draws; these
    help them and the merge): stroke-scale tokens in `constants/`, a review
    screen showing all 8 assets + both loader variants + Reduce Motion, and a
@@ -156,8 +158,11 @@ functions).
 - DMARC TXT at `_dmarc.catchupcolumn.com` (value in LAUNCH step 4).
 - Resend dashboard: domain `verified`? plan's daily cap? Open/click tracking
   **off** (the decision above depends on it)?
-- Supabase dashboard reads: minimum password length (LAUNCH and bugs.md
-  disagree), per-address email interval.
+- ~~Supabase dashboard reads: minimum password length, per-address email
+  interval.~~ Done 2026-09-28 — 8 and 60s. Two auth dashboard steps now wait
+  for the next native build (LAUNCH step 5 → "Passwords and code lifetime",
+  items 5 and 7): OTP expiry → 600s with the updated code templates, and
+  dropping the `reset-password` redirect URL.
 - Lulu pricing calculator at a real trim size and page count.
 - Not recorded from the 2026-09-22 sign-up test: the email's subject, sender,
   and inbox-vs-spam placement. Ask once.
@@ -179,9 +184,10 @@ renderer / Lulu API.
 Decided this session (2026-09-24/25): reading measured by asking at week 4;
 Group B set up by the owner with the organizer as moderator; bundle ID final;
 "shipping" means the App Store, and it waits for the commissioned illustration
-rework. Still open, deliberately left until after Group Zero: passwords for
-code-only accounts, weekly vs biweekly, classifieds, volume size and whether
-friend-group volumes sell (POSITIONING §9).
+rework. Decided 2026-09-25 (#44), ahead of Group Zero: code-only accounts can
+set an optional password from Profile (POSITIONING §9). Still open,
+deliberately left until after Group Zero: weekly vs biweekly, classifieds,
+volume size and whether friend-group volumes sell (POSITIONING §9).
 
 ## How to verify without Docker
 
@@ -231,12 +237,16 @@ friend-group volumes sell (POSITIONING §9).
 
 ## Traps already paid for
 
-- Two auth templates: Magic Link (sign-in), Confirm signup (sign-up). A failed
-  sign-up **creates the user**, so a re-test needs a fresh address. OTP length
-  must stay 6 (`CODE_LENGTH`).
-- **`auth.admin.createUser` with no password still stores a password hash** — of a
-  random password nobody knows. Script-made accounts are code-only in practice;
-  `encrypted_password` is never empty, so don't test "no password" that way.
+- Three code templates: Magic Link (sign-in, and "Forgot your password?"),
+  Confirm signup (sign-up), Reauthentication (confirm-it's-you before setting
+  a password). A failed sign-up **creates the user**, so a re-test needs a fresh
+  address. OTP length must stay 6 (`CODE_LENGTH`), and OTP expiry must match
+  `CODE_EXPIRY_MINUTES`.
+- **Every account stores a password hash** — of a random password nobody knows,
+  for code sign-ups (GoTrue's `magic_link.go`) as much as for
+  `auth.admin.createUser` with no password. `encrypted_password` is never empty,
+  so don't test "no password" that way, and never build a "current password"
+  check — a code-only person can't pass it (`setPassword` in `lib/auth.ts`).
 - `storage.protect_delete` is statement-level; direct deletes from
   `storage.objects` need `set_config('storage.allow_delete_query','true',true)`
   (db-migrations skill) — and remove only the row; delete files through the
