@@ -1,11 +1,13 @@
 // A Group's publish slots, evaluated the way the database evaluates them.
 //
-// `compile_due_editions` (20260525000000_manual_publish.sql) compiles a Group
-// when, in the Group's own IANA `timezone`, the weekday is `publish_day`
-// (0 = Sunday) and the wall-clock time is in [publish_time, publish_time +
-// tolerance). The cron runs every 15 minutes and the compile-editions function
-// passes a 20-minute tolerance, so a post written just after the slot may land
-// in this edition or next week's depending on which tick fires first.
+// `compile_due_editions` (20260928155710_compile_robustness.sql; the slot
+// match is `due_publish_slot`, 20260925212248) compiles a Group when, in the
+// Group's own IANA `timezone`, the weekday is `publish_day` (0 = Sunday) and
+// the wall-clock time is in [publish_time, publish_time + tolerance). The cron
+// runs every 15 minutes and the compile-editions function passes a 30-minute
+// tolerance, so every slot gets two ticks inside its window, and a post written
+// just after the slot may land in this edition or next week's depending on
+// which tick compiles first.
 //
 // Temporal gives the exact instants, DST included, rather than the day-level
 // approximation `nextPublishForGroup` in lib/groups.ts settles for on screen.
@@ -13,7 +15,12 @@
 import type { GroupRow } from '../../types/database.ts';
 import { Refusal } from './args.ts';
 
-/** post-for refuses this close to a publish slot, on either side of it. */
+/**
+ * post-for refuses this close to a publish slot, on either side of it. After
+ * the slot it has to span compile-editions' whole window (p_tolerance_minutes,
+ * 30): until that closes, a new post can still land in this slot's edition.
+ * Raise it if the tolerance goes up.
+ */
 export const PUBLISH_GUARD_MINUTES = 30;
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];

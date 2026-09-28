@@ -30,17 +30,23 @@ type CompileResult = {
   skipped_no_posts: number;
   details: Array<
     | { group_id: string; group_name: string; edition_number: number; post_count: number; edition_id?: string }
-    | { group_id: string; group_name: string; skipped: true; reason: string }
+    // reason 'no posts', or 'invalid timezone' (with the zone the database
+    // doesn't know) for a Group compile_due_editions can't schedule.
+    | { group_id: string; group_name: string; skipped: true; reason: string; timezone?: string }
   >;
 };
 
 async function compileEditions(client: SupabaseClient): Promise<CompileResult> {
   const { data, error } = await client.rpc('compile_due_editions', {
-    // Tolerance is wider than the 15-minute cron interval so a late/cold-start
-    // tick still lands inside a group's publish window. Re-compiling the same
-    // slot is prevented by compile_due_editions' per-group advisory lock plus
-    // its 22-hour duplicate-edition guard, so the overlap is safe.
-    p_tolerance_minutes: 20,
+    // Two cron ticks' worth: a 30-minute window always holds exactly two of
+    // the 15-minute ticks, whatever the slot's minute, so a tick that is lost
+    // (bugs.md H2) leaves another inside the window. At 20, slots whose
+    // minute is 1-10 past a quarter hour (Friday 12:37) got only one. The
+    // second tick is a no-op once the first has compiled:
+    // compile_due_editions' slot guard skips a Group that already has an
+    // edition at or after this slot, and its per-group advisory lock covers
+    // two runs at once. scripts/group-zero/ mirrors this value.
+    p_tolerance_minutes: 30,
   });
 
   if (error) {
