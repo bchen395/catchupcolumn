@@ -1,11 +1,13 @@
 // A Group's publish slots, evaluated the way the database evaluates them.
 //
-// `compile_due_editions` (20260525000000_manual_publish.sql) compiles a Group
-// when, in the Group's own IANA `timezone`, the weekday is `publish_day`
-// (0 = Sunday) and the wall-clock time is in [publish_time, publish_time +
-// tolerance). The cron runs every 15 minutes and the compile-editions function
-// passes a 20-minute tolerance, so a post written just after the slot may land
-// in this edition or next week's depending on which tick fires first.
+// `compile_due_editions` (20260928155710_compile_robustness.sql; the slot
+// match is `due_publish_slot`, 20260925212248) compiles a Group when, in the
+// Group's own IANA `timezone`, the weekday is `publish_day` (0 = Sunday) and
+// the wall-clock time is in [publish_time, publish_time + tolerance). The cron
+// runs every 15 minutes and the compile-editions function passes a 30-minute
+// tolerance, so every slot gets two ticks inside its window, and a post written
+// just after the slot may land in this edition or next week's depending on
+// which tick compiles first.
 //
 // Temporal gives the exact instants, DST included, rather than the day-level
 // approximation `nextPublishForGroup` in lib/groups.ts settles for on screen.
@@ -13,38 +15,13 @@
 import type { GroupRow } from '../../types/database.ts';
 import { Refusal } from './args.ts';
 
-/** post-for refuses this close to a publish slot, on either side of it. */
-export const PUBLISH_GUARD_MINUTES = 30;
-
 /**
- * The compile-editions function's tolerance (p_tolerance_minutes). A slot at
- * or after 24:00 minus this never auto-publishes: compile_due_editions tests
- * `local_time >= publish_time and local_time < publish_time + tolerance`, and
- * `time + interval` wraps at midnight (23:45 + 20 min = 00:05), so no time of
- * day satisfies both. Confirmed on production 2026-09-24; the SQL fix is a
- * separate migration.
+ * post-for refuses this close to a publish slot, on either side of it. After
+ * the slot it has to span compile-editions' whole window (p_tolerance_minutes,
+ * 30): until that closes, a new post can still land in this slot's edition.
+ * Raise it if the tolerance goes up.
  */
-export const COMPILE_TOLERANCE_MINUTES = 20;
-const LAST_WORKING_MINUTE = 24 * 60 - COMPILE_TOLERANCE_MINUTES - 1; // 23:39
-
-/** Minutes past midnight for a Postgres `time` string ("23:45:00" → 1425). */
-const minuteOfDay = (time: string): number => {
-  const t = Temporal.PlainTime.from(time);
-  return t.hour * 60 + t.minute;
-};
-
-/** True when compile_due_editions can never match this publish_time. */
-export const neverAutoPublishes = (publishTime: string): boolean => {
-  try {
-    return minuteOfDay(publishTime) > LAST_WORKING_MINUTE;
-  } catch {
-    return false; // unparseable — publishSlots reports that separately
-  }
-};
-
-export const NEVER_AUTO_PUBLISHES_NOTE =
-  `publish_time is 23:${String(60 - COMPILE_TOLERANCE_MINUTES)} or later, which compile_due_editions ` +
-  'never matches (time + interval wraps at midnight) — this Group only publishes by hand';
+export const PUBLISH_GUARD_MINUTES = 30;
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -58,9 +35,12 @@ export type PublishSlots = {
 };
 
 const slotOn = (date: Temporal.PlainDate, time: Temporal.PlainTime, timezone: string) =>
-  // 'compatible' = the earlier instant on a fall-back repeat and the shifted
-  // one in a spring-forward gap — the same choice Postgres makes for
-  // `timestamp at time zone`.
+  // 'compatible' = the earlier instant on a fall-back repeat, which is when
+  // compile_due_editions actually fires: it matches on local wall-clock time,
+  // so the first pass through the repeated hour compiles and its duplicate
+  // guard skips the second. (Postgres's own `timestamp at time zone` would pick
+  // the later instant.) In a spring-forward gap the slot is shifted forward
+  // here; compile never fires for it at all, so the guard is merely cautious.
   date.toPlainDateTime(time).toZonedDateTime(timezone, { disambiguation: 'compatible' });
 
 /** Throws Refusal when the Group's schedule can't be evaluated. */

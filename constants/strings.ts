@@ -254,6 +254,15 @@ export const Strings = {
       'e.g. The Sunday Dispatch',
       'e.g. The Williams Family Weekly',
     ],
+    // Shown once, right after creating a Group, and only when the server
+    // didn't recognise the phone's time zone, so createGroup (lib/groups.ts)
+    // made the Group on UTC. Rare: it takes a phone whose time-zone list is
+    // newer than the server's. Everywhere else the app shows a Group's times
+    // without a zone, so this is the one place UTC gets named, with the
+    // person's own clock beside it. `utc` / `local`: "Sundays at 9 AM".
+    utcFallbackTitle: 'Your Group runs on UTC time',
+    utcFallbackBody: (utc: string, local: string) =>
+      `Your phone uses a time zone our servers don’t know yet, so this Group keeps UTC time. It publishes ${utc} UTC, which is ${local} for you. You can change the time in Edit Group Settings.`,
   },
 
   // The sender side: the group screen's "Invite your people" card.

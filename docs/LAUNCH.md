@@ -81,8 +81,9 @@ actionable before and all of which are now:
    cap, which auth and edition email now share. And confirm the minimum password
    length: step 5 records it as raised, `bugs.md` D2 believed it was still 6.
 
-**Deferred by choice:** the illustration rework (step 6b) and store screenshots
-(step 7). Screenshots freeze the final look, and Group Zero produces real
+**Deferred by choice:** store screenshots (step 7), and the illustration rework
+(step 6b) — which is required before submission (owner, 2026-09-25) but not before
+the TestFlight build. Screenshots freeze the final look, and Group Zero produces real
 friend-group sample content for them for free.
 
 ---
@@ -517,7 +518,12 @@ If you revisit the UI further, run the `verify-changes` checklist first — `npm
 typecheck` plus manual QA of every screen (auth, onboarding, group create/join,
 composer, editions list, edition reader, profile) at large system font sizes.
 
-## 6b. Illustration rework — ⏸ deferred (no longer the gate)
+## 6b. Illustration rework — ☐ required before submission (commissioned illustrator)
+
+**2026-09-25, owner:** the app does not ship to the App Store without the redrawn
+illustrations, and a commissioned illustrator is doing them. It still doesn't
+block the TestFlight build — the SVGs reach testers by OTA (`fingerprint`
+runtime policy); only the icon and splash need a new build.
 
 Reworking the hand-drawn illustration world (the paperboy and his dog). Scope is in
 [`design/ILLUSTRATION_REWORK.md`](../design/ILLUSTRATION_REWORK.md).
@@ -607,10 +613,21 @@ because screenshots freeze the final look and Group Zero will produce better one
 
 ## 8. Build & submit **[owner]** — ⏸ deferred; also the *first ever* release build
 
-`eas build:list` is empty. Nothing in this app has run outside Expo Go, so the first
-build is also the first test of font loading, splash-hide, push registration, deep
-links, and the notification icon on a signed binary. Budget time for it to not work
-first try.
+**First EAS build: done 2026-09-24** — `preview` profile (iOS simulator,
+unsigned), build `cf9f70ee`, 9 minutes on EAS's Xcode 26.6 image. SDK 57 runs:
+the splash hides, Lora and Jost load, the sign-in screen renders, launch logs are
+clean, and the binary carries `applinks:www.catchupcolumn.com`. **Not yet
+checked:** anything behind sign-in (tab bar, Reanimated, reading, compose), and
+everything that needs a signed binary on a phone — push registration, universal
+links, the notification icon. Two things that build taught:
+
+- **Local builds need Xcode ≥ 26.4.** SDK 57's minimum (Expo's support table); on
+  26.3 `expo-modules-jsi` fails to compile. EAS is unaffected. CocoaPods is
+  installed on the owner's Mac via Homebrew (2026-09-24).
+- **Every EAS build fails at the Sentry step until source maps are configured**
+  — step 10.4. `preview` skips the upload (`eas.json`); `production` does not.
+
+**Production build is still to come.** Budget time for it to not work first try.
 
 iOS only. Deferred until Group Zero's four editions are in (POSITIONING §8) —
 not until 6b lands; a TestFlight build for Group Zero comes first and needs only
@@ -625,6 +642,26 @@ npx eas-cli submit --platform ios --latest
 
 This is where EAS prompts for the **APNs key** (step 3's deferred item), so have the
 Apple account ready.
+
+**TestFlight for Group Zero means *external* testing — and that goes through
+Apple's review.** Group Zero members aren't on the developer team, so they join
+through an external group (public link or email invite, up to 10,000 testers).
+Checked against Apple's docs 2026-09-25:
+
+- **The first external build gets a full TestFlight App Review**; later builds
+  of the same version might not. Up to six submissions per 24 hours. Leave days,
+  not hours, before the Group needs it — this is why the first production build
+  should go up well before Group Zero week 3.
+- **A Beta App Description is required**, plus the Beta App Review contact
+  details (TestFlight → Test Information).
+- **The reviewer needs a working sign-in.** Guideline 2.1(a): *"If your app
+  includes account-based features, provide either an active demo account or
+  fully-featured demo mode."* An emailed code can't be received by a reviewer,
+  so make a **review account with a password** (sign-in → *Use a password
+  instead*), give it a Group with a published edition so every screen has
+  content, and enter it under sign-in information. Don't reuse a real person's
+  account. Guideline 2.2: TestFlight builds must comply with the full review
+  guidelines — the UGC items from step 9 apply already.
 
 Before submitting, install the build and confirm on-device: fonts load, the splash
 hides, a push token registers, `catchupcolumn://` deep links open, and the photo
@@ -813,6 +850,14 @@ shipped — so production was sending the **v1 edition email** (orange button,
 peach wash, Roboto Slab, taped polaroid) and never pruning dead push tokens.
 Verified afterwards by download-and-diff (no drift), `verify_jwt` unchanged, and
 the next cron tick answering `200`.
+
+✅ **`compile-editions` redeployed from `main`, 2026-09-28 16:45 UTC** (v18 → v19)
+for the 30-minute compile tolerance (#45, bugs.md H2). The first attempt returned
+`unexpected deploy status 500: Function deploy failed due to an internal error`
+and left v18 untouched (`functions list`: same version and `updated_at`); an
+identical retry seconds later succeeded. Verified by download-and-diff (no drift)
+and `verify_jwt` still false. `publish-edition-now` didn't change — nothing it
+imports did.
 
 To deploy after any future change — `config.toml` pins each function's
 `verify_jwt` to what production has, so a plain deploy keeps the cron's

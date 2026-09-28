@@ -67,6 +67,107 @@ Two corrections to *this document*, which had drifted:
 
 ---
 
+## Late publish slots — 2026-09-25
+
+### ~~H1. A Group publishing at 23:40 or later never auto-publishes~~ — FIXED, live 2026-09-25
+- **Where:** `compile_due_editions`, last defined in
+  `supabase/migrations/20260525000000_manual_publish.sql:141` (due check),
+  `:144` (slot-scoped duplicate guard) and `:167` (the guard's re-check after
+  the advisory lock).
+- **Found by** the Group Zero readout-queries work (`scripts/group-zero/readout.sql`
+  q0 reports it as "SLOT NEVER FIRES"). Confirmed on production 2026-09-24. It
+  was never recorded here before.
+- The due check compared times of day: `local_now::time >= publish_time and
+  local_now::time < publish_time + tolerance`. `time + interval` wraps at
+  midnight (`23:45 + 20 min = 00:05`), so at the cron's 20-minute tolerance no
+  time of day satisfied both halves for any publish_time ≥ 23:40. The app's
+  picker offers 11:45 PM. A Group on that slot only ever published by hand.
+- The obvious fix has two traps. A 23:45 window runs to 00:05 on the *next*
+  day, where the day-of-week check sees the wrong day. And the duplicate guard
+  ("an edition on local_now's date, at or after publish_time") would not
+  recognise the 23:45 edition at the 00:00 tick, so the Group would get two
+  editions.
+- **Fix:** `supabase/migrations/20260925212248_fix_late_publish_slot_wrap.sql`
+  adds `due_publish_slot(...)`, which returns the matched slot as a local
+  timestamp (today's or yesterday's) or null. `compile_due_editions` now uses
+  it for the due check and both guard checks, so all three compare timestamps.
+  For every slot before 23:40 the result is identical to the old logic; the PR
+  has the production sweep that shows it. `publish_edition_now` has no slot
+  logic and is unchanged.
+- **Status: live.** Pushed 2026-09-25 22:01 UTC with the owner's approval.
+  Verified: both functions' md5s match the PR's expected values, ACLs
+  unchanged, all 31 migrations in sync, the helper returns Friday's 23:45 slot
+  at Saturday 00:02 and null outside windows, and the first tick after the push
+  (22:15 UTC) returned 200 with a clean compile result. `scripts/group-zero/`
+  no longer refuses these slots and the readout's q0 warning is gone.
+- DST behaviour is unchanged. A slot inside the spring-forward gap (e.g. 02:30
+  America/New_York on 2026-03-08) doesn't publish that week. A slot inside the
+  fall-back repeat publishes once.
+
+### ~~H2. About 1 in 4 cron ticks times out at pg_net's 5 s default~~ — FIXED, live 2026-09-28
+- **Where:** the `compile-editions-every-15-minutes` cron job
+  (`supabase/migrations/20260426000007_compile_editions_rpc_and_cron.sql:170`)
+  calls `net.http_post` with no `timeout_milliseconds`, so pg_net waits 5000 ms.
+- **Seen 2026-09-25:** 6 of the 24 retained ticks (pg_net keeps ~6 h) timed out
+  — 16:30, 17:00, 18:00, 18:30, 20:30, 22:00 UTC — with no non-200s. The
+  2026-09-24 check saw 11/11 at 200, mostly *before* that day's 15:46 UTC
+  function redeploy, so the heavier v2 function may be why. **2026-09-28:** 5
+  of 24 (10:30, 11:00, 12:00, 14:00, 15:00 UTC — four on the hour). DNS + TLS
+  took ~60 ms of each 5 s; the rest was waiting on the function.
+- **Why it matters:** if a timed-out run is cut off rather than finishing
+  server-side (still unknown — the dashboard's invocation log answers it), a
+  run cut off mid-email leaves the edition claimed but unmarked, and 5 minutes
+  later the next tick re-sends it to every recipient; one cut off before it
+  compiles loses that tick. At the old 20-minute tolerance, slots on the
+  quarter hour (everything the app's picker offers) already got two ticks, but
+  a slot 1–10 minutes past a quarter hour got **one** — Castaways' Fri 12:37
+  gets only 12:45.
+- **Fix:** `supabase/migrations/20260928155710_compile_robustness.sql` sets
+  `timeout_milliseconds := 150000` via `cron.alter_job` — Supabase's edge
+  function request idle timeout, so pg_net never gives up before the platform
+  would. The command is otherwise byte-identical, vault lookups included.
+  `compile-editions` now passes `p_tolerance_minutes: 30`: every slot, at any
+  minute, gets exactly two in-window ticks (swept on production: 1,440 slots,
+  all two; at 20, 960 had one). The slot guard makes the second a no-op — in
+  the same sweep all 1,440 second ticks, and a replay of every production
+  cron edition, hit it. `scripts/group-zero/` mirrors the 30.
+- **Status: live 2026-09-28** (#45). Migration pushed 16:45 UTC; cron row
+  `jobid 1`, md5 `29e93a5d…`, carries `timeout_milliseconds := 150000`.
+  `compile-editions` deployed 16:45 UTC as v19 (the first attempt returned a
+  Supabase-side `500 internal error` and changed nothing; the retry
+  succeeded), `verify_jwt` still false, download-and-diff against `main`
+  clean, `p_tolerance_minutes: 30`. First tick after both (17:00 UTC — on the
+  hour, where four of the five 2026-09-28 timeouts fell): `200`, not timed out.
+  **Re-count timeouts** over the next hours — expect 0; a 504 would mean the
+  function itself ran past 150 s.
+
+### ~~H3. One Group with an unrecognised timezone fails the compile for every Group~~ — FIXED, live 2026-09-28
+- **Where:** `compile_due_editions`' Group loop. Found by the H1 work 2026-09-25.
+- The `exists (select 1 from pg_timezone_names …)` filter doesn't protect:
+  `EXPLAIN` shows Postgres evaluates each Group's `at time zone` before that
+  filter, so one bad `groups.timezone` raises and the whole call fails — every
+  Group misses its slot, and the cron only logs a 500. Reproduced read-only on
+  production 2026-09-28 with a synthetic `'Mars/Olympus'` row in a CTE:
+  `22023: time zone "Mars/Olympus" not recognized`.
+- **Fix (same migration):** the loop joins `pg_timezone_names` and every
+  conversion reads the zone from the joined row, so an unknown zone can't
+  reach one in any plan — a data dependency, not a filter order. Skipped
+  Groups are reported in the result's `details` (`reason: 'invalid timezone'`,
+  plus the zone). A `check_group_timezone` trigger rejects such a zone on
+  insert/update with `invalid_timezone`; `createGroup` then retries on `UTC`
+  and the create screen tells the person, with the hour on their own clock.
+  Every other behaviour of `compile_due_editions` is byte-identical (the PR
+  diffs the body against production's `prosrc`); both production rows pass
+  the trigger.
+- **Status: live 2026-09-28** (#45, pushed 16:45 UTC): `compile_due_editions`
+  md5 `a6080d5d…`, `check_group_timezone` md5 `34d87e6e…` on `groups`
+  (insert, and updates of `timezone`). The app's UTC fallback ships with the
+  next build (JS, so OTA also reaches it); until then an unknown zone gets
+  the trigger's error and the generic "Something went wrong" — no worse than
+  before, when such a Group would be created and then break every compile.
+
+---
+
 ## Medium
 
 ### M1. Per-recipient email failures are never retried
@@ -185,6 +286,13 @@ Deploying edge functions.
    `expo-router/js-tabs`), and Reanimated 4.5 animations. **Due before
    submission is too late:** the first build is the Group Zero TestFlight
    build, which editions 3–4 need (POSITIONING §6).
+   **Partly done 2026-09-24:** an EAS `preview` build (simulator) built clean
+   on Xcode 26.6 — the splash hides, Lora/Jost load, the sign-in screen
+   renders, launch logs are clean. The tab bar and Reanimated are behind
+   sign-in and still unchecked, and nothing has run on a phone. One upstream
+   warning at launch, not ours to fix yet: *"`UIScene` lifecycle will soon be
+   required."* A local build on Xcode 26.3 fails to compile `expo-modules-jsi`
+   — SDK 57 needs Xcode ≥ 26.4 (LAUNCH step 8).
 2. ~~**L2** — set a production `EMAIL_FROM` (verified Resend domain) before
    launch.~~ **Done** — verified 2026-09-22; it had been set since 2026-07-17.
 3. **M1** — decide whether weekly email needs per-recipient retry, or accept the

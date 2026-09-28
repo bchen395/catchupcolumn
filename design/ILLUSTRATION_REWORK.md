@@ -1,7 +1,15 @@
 # Illustration rework — working scope
 
-**Status:** scoped 2026-08-22, not started, **no longer a launch gate**
-(2026-09-16). Tracked as `docs/LAUNCH.md` step 6b.
+**Status:** scoped 2026-08-22, not started. **Required before App Store
+submission** — the owner, 2026-09-25: the app does not ship to the store with
+the current drawings. **A commissioned illustrator** is doing the redraw, to
+this document's spec. Tracked as `docs/LAUNCH.md` step 6b.
+
+**It does not block the TestFlight build.** `app.json` uses the `fingerprint`
+runtime policy, so the 8 SVG components — JS — reach an installed build by OTA
+update. The **app icon and splash** (`assets/images/icon.png`,
+`splash-icon.png`) are native and need a new build; after the first one that's
+~10 minutes on EAS plus an upload.
 
 It was the gate on the reasoning that screenshots freeze the final look.
 `docs/POSITIONING.md` §8 supersedes that: Group Zero is the long pole, it needs a

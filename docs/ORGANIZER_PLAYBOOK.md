@@ -37,6 +37,15 @@ whether everyone has the app.
 3. **Pick the day it arrives.** The app suggests Sunday at 9 a.m.; change it to
    Monday morning — people write over the weekend, and the paper lands when the
    week starts. Set the publish time for the zone most of them live in.
+4. **During Group Zero, don't create the Group in the app — there's no build to
+   install yet.** Send the owner the name, the day, time and time zone, and
+   each person's name and email. The owner sets the Group up with you as its
+   moderator and an account waiting for each of your people, so the edition
+   email reaches all of them from week 1 with no install. For weeks 1–2,
+   collect entries however people will send them (text, email, a voice memo
+   you transcribe) and pass them to the owner, who puts each one in under that
+   person's own name. Everyone installs the app from TestFlight for weeks 3–4.
+   *(Decided 2026-09-24; the tooling is `scripts/group-zero/`.)*
 
 ---
 

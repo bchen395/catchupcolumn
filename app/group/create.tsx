@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Stack, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -22,7 +23,13 @@ import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { dailyPick, Strings } from '@/constants/strings';
 import { useAuth } from '@/hooks/use-auth';
-import { createGroup, removeGroupCover, updateGroupSettings, uploadGroupCover } from '@/lib/groups';
+import {
+  createGroup,
+  describeUtcSchedule,
+  removeGroupCover,
+  updateGroupSettings,
+  uploadGroupCover,
+} from '@/lib/groups';
 
 const formatPublishTime = (hours: number, minutes: number) => {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
@@ -94,12 +101,13 @@ const CreateGroupScreen = () => {
     try {
       setSaving(true);
 
+      const deviceTimezone = getDeviceTimezone();
       const group = await createGroup({
         name: trimmedName,
         description: description.trim() || null,
         publish_day: publishDay,
         publish_time: formatPublishTime(publishHour, publishMinute),
-        timezone: getDeviceTimezone(),
+        timezone: deviceTimezone,
         created_by: user.id,
       });
 
@@ -118,6 +126,17 @@ const CreateGroupScreen = () => {
       }
 
       router.replace(`/group/${group.id}`);
+
+      // createGroup fell back to UTC because the server didn't know this
+      // phone's zone. Say so once, with the hour on the person's own clock.
+      // After navigating, so nothing waits on the alert.
+      if (group.timezone !== deviceTimezone) {
+        const schedule = describeUtcSchedule(group);
+        Alert.alert(
+          Strings.groupCreate.utcFallbackTitle,
+          Strings.groupCreate.utcFallbackBody(schedule.utc, schedule.local),
+        );
+      }
     } catch (err) {
       console.error('createGroup error:', err);
       setScreenError('Something went wrong creating your Group. Please try again.');
