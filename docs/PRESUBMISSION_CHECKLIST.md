@@ -139,7 +139,7 @@ Authentication:
       defaults to when custom SMTP is switched on. Re-derive from peak signups
       per hour before launch — the 100 was sized for Group Zero, not for the
       store. Reasoning in [LAUNCH.md](./LAUNCH.md) step 5.
-- [ ] Per-address minimum interval between auth emails is still set (60s default)
+- [x] Per-address minimum interval between auth emails is still set (60s default) *(60s, confirmed 2026-09-28)*
       — it is what makes the 100/hour ceiling safe. It's under Emails → **SMTP
       Settings** ("Minimum interval between emails being sent"), not Rate Limits
 - [ ] Resend plan's **daily** cap clears expected volume — auth email and edition

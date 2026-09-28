@@ -484,7 +484,7 @@ small enough to notice in Resend's dashboard before Gmail does.
 
 Two companion checks, neither of which this setting covers:
 
-☐ **Confirm the per-address minimum interval** (Authentication → Emails → **SMTP
+✅ **Per-address minimum interval: 60s** *(confirmed 2026-09-28)* (Authentication → Emails → **SMTP
 Settings** → "Minimum interval between emails being sent" — it is *not* on the
 Rate Limits page, which is where this item used to send people; Supabase
 defaults it to 60s, and the app's "Send a new code in Ns" countdown assumes 60). That is what actually stops one address being
