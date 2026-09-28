@@ -795,6 +795,14 @@ peach wash, Roboto Slab, taped polaroid) and never pruning dead push tokens.
 Verified afterwards by download-and-diff (no drift), `verify_jwt` unchanged, and
 the next cron tick answering `200`.
 
+✅ **`compile-editions` redeployed from `main`, 2026-09-28 16:45 UTC** (v18 → v19)
+for the 30-minute compile tolerance (#45, bugs.md H2). The first attempt returned
+`unexpected deploy status 500: Function deploy failed due to an internal error`
+and left v18 untouched (`functions list`: same version and `updated_at`); an
+identical retry seconds later succeeded. Verified by download-and-diff (no drift)
+and `verify_jwt` still false. `publish-edition-now` didn't change — nothing it
+imports did.
+
 To deploy after any future change — `config.toml` pins each function's
 `verify_jwt` to what production has, so a plain deploy keeps the cron's
 secret-based auth working:
