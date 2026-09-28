@@ -166,6 +166,37 @@ export const soonestPublish = (
   return best;
 };
 
+/**
+ * A Group's schedule read as UTC, and the same moment on this phone's clock,
+ * both as a weekly rhythm ("Sundays at 9 AM"). Only for a Group created on UTC
+ * because the database didn't know the phone's zone (createGroup), so the
+ * notice can say what the hour means here. The phone still knows its own
+ * zone; the database is what's behind.
+ */
+export const describeUtcSchedule = (
+  group: Pick<GroupRow, 'publish_day' | 'publish_time'>,
+  now: Date = new Date(),
+): { utc: string; local: string } => {
+  const [rawHour, rawMinute] = (group.publish_time ?? '09:00').split(':');
+  const hour = toMinuteOfDay(rawHour, 9);
+  const minute = toMinuteOfDay(rawMinute, 0);
+  const day = group.publish_day ?? 0;
+
+  // This coming week's slot as an instant, so the local reading uses the
+  // offset in force then (daylight saving can shift it by an hour).
+  const daysAhead = (day - now.getUTCDay() + 7) % 7;
+  const slot = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysAhead, hour, minute),
+  );
+
+  const rhythm = (weekday: number, h: number, m: number) =>
+    `${DAY_NAMES[weekday]}s at ${formatClock(h, m)}`;
+  return {
+    utc: rhythm(day, hour, minute),
+    local: rhythm(slot.getDay(), slot.getHours(), slot.getMinutes()),
+  };
+};
+
 // ---------------------------------------------------------------------------
 // Queries
 // ---------------------------------------------------------------------------
@@ -213,6 +244,10 @@ export const fetchGroupDetails = async (groupId: string): Promise<GroupWithMembe
 // Create / Update
 // ---------------------------------------------------------------------------
 
+// check_group_timezone raises the stable code 'invalid_timezone' (P0001).
+const isInvalidTimezoneError = (error: { message?: string }): boolean =>
+  (error.message ?? '').includes('invalid_timezone');
+
 export const createGroup = async (
   input: Pick<GroupInsert, 'name' | 'description' | 'publish_day' | 'publish_time' | 'timezone' | 'created_by'>,
 ): Promise<GroupRow> => {
@@ -228,12 +263,22 @@ export const createGroup = async (
     throw new Error('createGroup: created_by must match the signed-in user');
   }
 
-  const { data, error } = await supabase
-    .from('groups')
-    .insert(input)
-    .select('*')
-    .single();
+  const insertGroup = (row: typeof input) =>
+    supabase.from('groups').insert(row).select('*').single();
 
+  // The database refuses a timezone it doesn't know (check_group_timezone,
+  // 20260928155710) rather than store a Group the weekly compile could never
+  // schedule. A phone can know a zone the database doesn't yet, because its
+  // time-zone data is newer, so creating a Group must not fail over it: make
+  // the Group on UTC instead. The caller sees `timezone: 'UTC'` on the row it
+  // gets back and tells the person (app/group/create.tsx).
+  const first = await insertGroup(input);
+  const result =
+    first.error && isInvalidTimezoneError(first.error) && input.timezone !== 'UTC'
+      ? await insertGroup({ ...input, timezone: 'UTC' })
+      : first;
+
+  const { data, error } = result;
   if (error) {
     throw error;
   }
