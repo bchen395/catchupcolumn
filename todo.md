@@ -68,7 +68,21 @@ POSITIONING §8 is the authoritative sequence. The short version:
       Group Zero week 3 (~mid-October): external testers need Apple's TestFlight
       App Review, which needs a demo account with a password and a Beta App
       Description; the production build needs the Sentry source-map variables
-      first. [docs/LAUNCH.md](docs/LAUNCH.md) steps 8 and 10.4
+      first. [docs/LAUNCH.md](docs/LAUNCH.md) steps 8 and 10.4. The review
+      account is made on that build: code sign-in → Profile → Set a password.
+      It's also the first build with the #44 auth change — device checks in
+      PRESUBMISSION Gates 5 and 7
+- [ ] **After Group Zero is on that build: two auth dashboard steps** — OTP
+      expiry 3600 → 600 with the updated code templates pasted in the same
+      sitting, then remove the `reset-password` redirect URL.
+      [docs/LAUNCH.md](docs/LAUNCH.md) step 5 items 5 and 7
+- [x] **Optional passwords and auth tightened to the standards** — 2026-09-28,
+      PR #44: a password is an optional second way in, set from Profile;
+      "Forgot your password?" is a code sign-in; 8-character minimum plus a
+      bundled common-password list (the project is on Supabase Free); sign-out
+      is this device only. Dashboard items 1–4 done the same day.
+      [docs/POSITIONING.md](docs/POSITIONING.md) §9,
+      [docs/LAUNCH.md](docs/LAUNCH.md) step 5
 - [x] **First EAS build** — 2026-09-24, `preview` (simulator). SDK 57 runs;
       post-sign-in screens and anything needing a phone are still unchecked.
       [docs/LAUNCH.md](docs/LAUNCH.md) step 8

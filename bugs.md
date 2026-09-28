@@ -293,6 +293,9 @@ Deploying edge functions.
    warning at launch, not ours to fix yet: *"`UIScene` lifecycle will soon be
    required."* A local build on Xcode 26.3 fails to compile `expo-modules-jsi`
    — SDK 57 needs Xcode ≥ 26.4 (LAUNCH step 8).
+   The first production build also carries the 2026-09-28 auth change (#44),
+   which the simulator build predates; its device checks are PRESUBMISSION
+   Gates 5 and 7.
 2. ~~**L2** — set a production `EMAIL_FROM` (verified Resend domain) before
    launch.~~ **Done** — verified 2026-09-22; it had been set since 2026-07-17.
 3. **M1** — decide whether weekly email needs per-recipient retry, or accept the

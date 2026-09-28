@@ -16,7 +16,9 @@
   Same visual design as magic-link.html and confirm-signup.html — change the
   three together. Six digits and "expires in 10 minutes" are the dashboard's
   OTP Length and OTP Expiry, mirrored by CODE_LENGTH and CODE_EXPIRY_MINUTES in
-  hooks/use-email-code.ts.
+  hooks/use-email-code.ts. Pasted into the dashboard 2026-09-28, while OTP
+  Expiry was still 3600s: until docs/LAUNCH.md step 5 item 5, "10 minutes"
+  understates the real lifetime, which is the harmless direction.
 
   Dashboard subject line (a separate field, not covered by this file):
   "Your Catch Up Column code" — the Supabase default puts the code itself in
