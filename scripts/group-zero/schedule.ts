@@ -16,36 +16,6 @@ import { Refusal } from './args.ts';
 /** post-for refuses this close to a publish slot, on either side of it. */
 export const PUBLISH_GUARD_MINUTES = 30;
 
-/**
- * The compile-editions function's tolerance (p_tolerance_minutes). A slot at
- * or after 24:00 minus this never auto-publishes: compile_due_editions tests
- * `local_time >= publish_time and local_time < publish_time + tolerance`, and
- * `time + interval` wraps at midnight (23:45 + 20 min = 00:05), so no time of
- * day satisfies both. Confirmed on production 2026-09-24; the SQL fix is a
- * separate migration.
- */
-export const COMPILE_TOLERANCE_MINUTES = 20;
-const LAST_WORKING_MINUTE = 24 * 60 - COMPILE_TOLERANCE_MINUTES - 1; // 23:39
-
-/** Minutes past midnight for a Postgres `time` string ("23:45:00" → 1425). */
-const minuteOfDay = (time: string): number => {
-  const t = Temporal.PlainTime.from(time);
-  return t.hour * 60 + t.minute;
-};
-
-/** True when compile_due_editions can never match this publish_time. */
-export const neverAutoPublishes = (publishTime: string): boolean => {
-  try {
-    return minuteOfDay(publishTime) > LAST_WORKING_MINUTE;
-  } catch {
-    return false; // unparseable — publishSlots reports that separately
-  }
-};
-
-export const NEVER_AUTO_PUBLISHES_NOTE =
-  `publish_time is 23:${String(60 - COMPILE_TOLERANCE_MINUTES)} or later, which compile_due_editions ` +
-  'never matches (time + interval wraps at midnight) — this Group only publishes by hand';
-
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 type Schedule = Pick<GroupRow, 'publish_day' | 'publish_time' | 'timezone'>;
@@ -58,9 +28,12 @@ export type PublishSlots = {
 };
 
 const slotOn = (date: Temporal.PlainDate, time: Temporal.PlainTime, timezone: string) =>
-  // 'compatible' = the earlier instant on a fall-back repeat and the shifted
-  // one in a spring-forward gap — the same choice Postgres makes for
-  // `timestamp at time zone`.
+  // 'compatible' = the earlier instant on a fall-back repeat, which is when
+  // compile_due_editions actually fires: it matches on local wall-clock time,
+  // so the first pass through the repeated hour compiles and its duplicate
+  // guard skips the second. (Postgres's own `timestamp at time zone` would pick
+  // the later instant.) In a spring-forward gap the slot is shifted forward
+  // here; compile never fires for it at all, so the guard is merely cautious.
   date.toPlainDateTime(time).toZonedDateTime(timezone, { disambiguation: 'compatible' });
 
 /** Throws Refusal when the Group's schedule can't be evaluated. */

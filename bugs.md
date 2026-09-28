@@ -69,7 +69,7 @@ Two corrections to *this document*, which had drifted:
 
 ## Late publish slots — 2026-09-25
 
-### H1. A Group publishing at 23:40 or later never auto-publishes — FIXED in a migration, pending `db push`
+### ~~H1. A Group publishing at 23:40 or later never auto-publishes~~ — FIXED, live 2026-09-25
 - **Where:** `compile_due_editions`, last defined in
   `supabase/migrations/20260525000000_manual_publish.sql:141` (due check),
   `:144` (slot-scoped duplicate guard) and `:167` (the guard's re-check after
@@ -94,12 +94,49 @@ Two corrections to *this document*, which had drifted:
   For every slot before 23:40 the result is identical to the old logic; the PR
   has the production sweep that shows it. `publish_edition_now` has no slot
   logic and is unchanged.
-- **Status: pending `supabase db push`** (the owner pushes). Until it's live,
-  `scripts/group-zero/` keeps refusing slots ≥ 23:40 and the readout's q0
-  warning stays true.
+- **Status: live.** Pushed 2026-09-25 22:01 UTC with the owner's approval.
+  Verified: both functions' md5s match the PR's expected values, ACLs
+  unchanged, all 31 migrations in sync, the helper returns Friday's 23:45 slot
+  at Saturday 00:02 and null outside windows, and the first tick after the push
+  (22:15 UTC) returned 200 with a clean compile result. `scripts/group-zero/`
+  no longer refuses these slots and the readout's q0 warning is gone.
 - DST behaviour is unchanged. A slot inside the spring-forward gap (e.g. 02:30
   America/New_York on 2026-03-08) doesn't publish that week. A slot inside the
   fall-back repeat publishes once.
+
+### H2. About 1 in 4 cron ticks times out at pg_net's 5 s default — impact unknown
+- **Where:** the `compile-editions-every-15-minutes` cron job
+  (`supabase/migrations/20260426000007_compile_editions_rpc_and_cron.sql:170`)
+  calls `net.http_post` with no `timeout_milliseconds`, so pg_net waits 5000 ms.
+- **Seen 2026-09-25:** 6 of the 24 retained ticks (pg_net keeps ~6 h) timed out
+  — 16:30, 17:00, 18:00, 18:30, 20:30, 22:00 UTC — with no non-200s. The
+  2026-09-24 check saw 11/11 at 200, mostly *before* that day's 15:46 UTC
+  function redeploy, so the heavier v2 function may be why.
+- **Why it matters:** `compile-editions` passes `p_tolerance_minutes: 20` and
+  ticks are 15 minutes apart, so most slots get **one** tick inside their
+  window (Castaways' 12:37 gets only 12:45). If a timed-out invocation is cut
+  off rather than finishing server-side, that Group misses its edition that
+  week — silently.
+- **Unknown, and the one fact that sets the priority:** whether the function
+  finishes after pg_net stops waiting. The dashboard's Edge Functions →
+  `compile-editions` invocation log for a timed-out tick (status, duration)
+  answers it.
+- **Fix either way:** raise `timeout_milliseconds` in the cron job, and consider
+  a tolerance that gives every slot two ticks (≥ 30 min with 15-min ticks —
+  the duplicate guard already makes a second in-window tick safe).
+
+### H3. One Group with an unrecognised timezone fails the compile for every Group
+- **Where:** `compile_due_editions`' Group loop. Found by the H1 work 2026-09-25.
+- The `exists (select 1 from pg_timezone_names …)` filter doesn't protect:
+  `EXPLAIN` shows Postgres evaluates each Group's `at time zone` before that
+  filter, so one bad `groups.timezone` raises and the whole call fails — every
+  Group misses its slot, and the cron only logs a 500. Nothing constrains the
+  column; both production Groups are valid, the app writes the phone's
+  `Intl` zone, and `scripts/group-zero/` validates with Temporal.
+- **Fix:** make the loop skip an invalid zone (filter in a materialized CTE, or
+  per-Group exception handling), and validate on write — deciding what the app
+  does when a phone reports a zone Postgres doesn't know, so creating a Group
+  can't just fail. Planned for this week, before Group Zero's first edition.
 
 ---
 

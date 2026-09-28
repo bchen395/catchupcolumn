@@ -400,18 +400,16 @@ weeks_3_4 as (
 
 
 -- [q0] Cohort check — every key resolves; schedule; next slot. Run first.
--- "SLOT NEVER FIRES": compile_due_editions matches publish_time <= now <
--- publish_time + 20 min, and time arithmetic wraps at midnight, so a slot at
--- 23:40 or later (the app offers 11:45 PM) never matches and never publishes.
+-- (Slots at 23:40 or later used to be flagged "SLOT NEVER FIRES": the compile's
+-- time-of-day window wrapped at midnight. Fixed by migration 20260925212248,
+-- live 2026-09-25.)
 select c.label,
        g.name as group_name,
        case when g.id is null then 'NO SUCH GROUP: check the key'
             when count(*) over (partition by g.id) > 1
               then 'LISTED TWICE: counted once, as ' || (select gg.label from grp gg where gg.group_id = g.id)
             when not exists (select 1 from pg_timezone_names z where z.name = g.timezone)
-              then 'UNKNOWN TIMEZONE: this Group never publishes'
-            when g.publish_time + r.cron_grace < g.publish_time
-              then 'SLOT NEVER FIRES: publish time too close to midnight'
+              then 'UNKNOWN TIMEZONE: fails the compile for every Group, not just this one'
             else 'ok' end as status,
        g.timezone,
        (array['Sun','Mon','Tue','Wed','Thu','Fri','Sat'])[g.publish_day + 1]
