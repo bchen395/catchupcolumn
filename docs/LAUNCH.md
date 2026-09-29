@@ -58,7 +58,8 @@ actionable before and all of which are now:
    `eas build` / `eas credentials` run. Production push doesn't register without
    it, which also gates POSITIONING §3's pre-publish nudge, since the nudge is
    push-only.
-3. **The first TestFlight build (step 8).** What Group Zero's editions 3–4 need —
+3. **The first TestFlight build (step 8).** What Group Zero runs on from edition 1
+   (decided 2026-09-29, POSITIONING §6) —
    Expo Go dropped remote push in SDK 53 — and the first release build this
    project has ever produced. Budget for it failing the first time. It is also
    the upload that **permanently locks the bundle ID** (step 7), and the build
@@ -593,8 +594,8 @@ because screenshots freeze the final look and Group Zero will produce better one
 
 - ✅ **[owner] Apple Developer Program ($99/yr) — enrolled 2026-09-22.** This was
   the multi-day-tail item that gated the APNs key (step 3), the Team ID for
-  step 2's universal links, and the TestFlight build Group Zero's editions 3–4
-  need (step 8).
+  step 2's universal links, and the TestFlight build Group Zero runs on from
+  edition 1 (step 8).
 - ✅ **[owner] Copy the Apple Team ID out and use it** — `6RDS3S724Z`, pasted
   2026-09-24 (step 2). It is in the developer
   account under Membership details. Two places want it: step 2's
@@ -637,9 +638,11 @@ links, the notification icon. Two things that build taught:
 
 **Production build is still to come.** Budget time for it to not work first try.
 
-iOS only. Deferred until Group Zero's four editions are in (POSITIONING §8) —
-not until 6b lands; a TestFlight build for Group Zero comes first and needs only
-the enrollment — but settle two things first, because that build fixes them in
+iOS only. **The App Store half is deferred** until Group Zero's four editions
+are in (POSITIONING §8) and 6b lands. **The TestFlight half is the critical path
+now:** since 2026-09-29 Group Zero runs on the app from edition 1 (POSITIONING
+§6), so its first edition waits on this build and its review. It needs only the
+enrollment — but settle two things first, because the build fixes them in
 place: the bundle ID locks on its upload (step 7), and the Sentry DSN is baked
 in, so it must already be in the EAS environment (step 10).
 
@@ -659,7 +662,14 @@ Checked against Apple's docs 2026-09-25:
 - **The first external build gets a full TestFlight App Review**; later builds
   of the same version might not. Up to six submissions per 24 hours. Leave days,
   not hours, before the Group needs it — this is why the first production build
-  should go up well before Group Zero week 3.
+  should go up now: Group Zero's edition 1 waits on it.
+- **Internal testing skips that review.** Internal testers are members of the
+  App Store Connect team (up to 100) and get a build as soon as it processes.
+  The owner is one as account holder — add them to an internal group, and the
+  app is on the owner's phone for the device checks (PRESUBMISSION Gates 5 and
+  7) and in-person demos while the external review runs. Friends can't be
+  internal testers without joining the developer team, which is why they use
+  the external public link.
 - **A Beta App Description is required**, plus the Beta App Review contact
   details (TestFlight → Test Information).
 - **The reviewer needs a working sign-in.** Guideline 2.1(a): *"If your app

@@ -589,20 +589,39 @@ submit, and this costs nothing to fix.
 
 ### Before you start — how the app gets onto their phones
 
-**This collides with the sequencing and needs starting now.** Expo Go dropped
-remote push support in SDK 53, and the app depends on `expo-notifications`, so
-Group Zero cannot run on Expo Go. Your friends need a real build:
+**Decided 2026-09-29 (owner): Group Zero runs on the app from edition 1,
+through TestFlight.** The point of showing friends the concept is that they try
+the whole thing and say what they think, so the app has to be there from the
+first week, not the third. Expo Go dropped remote push support in SDK 53, and
+the app depends on `expo-notifications`, so that means a real build:
 
 - [x] **[owner] Apple Developer enrollment — done 2026-09-22.** It was the
       multi-day wait this bullet warned about; LAUNCH.md step 7.
-- [ ] **TestFlight is the distribution channel**, not EAS internal distribution.
-      Internal distribution means collecting eight device UDIDs from eight
-      non-technical people; TestFlight is a link and an email address.
-- [ ] Slack in the schedule: the editions 1–2 / 3–4 split below means no one
-      needs the app until **week 3**. Enrollment is done, so that buffer is now
-      for the first build — the first release build this project has ever made,
-      the first on SDK 57, and the upload that locks the bundle ID (LAUNCH.md
-      steps 7–8). Use it, don't spend it.
+- [ ] **TestFlight external testing, by public link, is the distribution
+      channel.** Not EAS internal distribution: that means collecting eight
+      device UDIDs from eight non-technical people, and iOS 16+ makes each of
+      them turn on Developer Mode. And not the App Store, weighed the same day:
+      it is one step easier for a friend (no TestFlight app to install first),
+      but it is public, it puts the current drawings on a store page (the
+      2026-09-25 decision says no store release with them), it needs the full
+      listing — the screenshots don't exist yet — and it gives up TestFlight's
+      built-in feedback: a tester screenshots the app, taps *Share Beta
+      Feedback*, and the note reaches App Store Connect with the device details.
+      The App Store stays where §8 puts it, after Group Zero and the
+      illustration rework.
+- [ ] **Edition 1 waits on the build.** There is no off-app buffer any more.
+      The first production build — the first release build this project has
+      ever made, the first on SDK 57, and the upload that locks the bundle ID —
+      and Apple's TestFlight review of it are the critical path (LAUNCH.md
+      steps 7–8). Recruiting doesn't wait on it; start the asks now.
+- [ ] **The owner's phone first.** As the account holder the owner is an
+      *internal* tester, and internal builds skip the TestFlight review, so the
+      app reaches the owner's phone as soon as the build finishes processing —
+      for demos in person, and for the device checks (PRESUBMISSION Gates 5 and
+      7) before any friend installs it.
+- [ ] **iPhone only.** Android is deferred (LAUNCH.md). A member on Android can
+      read every edition by email and send entries by text (below), but can't
+      use the app — note who they are, so the install numbers aren't misread.
 
 **Install friction — ✅ addressed 2026-09-16.** Password sign-in used to be the
 only way in, which is the wrong ask for a grandmother in a family Group and for a
@@ -629,7 +648,9 @@ Three things worth knowing before Group Zero:
 ### Run two groups, not one
 
 - [ ] **Group A — you as organizer.** Your actual scattered friends. Do the
-      recruiting, feel the friction.
+      recruiting, feel the friction. Create the Group in the app and send each
+      person the TestFlight link and the invite code; they sign up and join on
+      their own, so onboarding and invites get tested too (decided 2026-09-29).
 - [ ] **Group B — someone else as organizer.** Recruit one person who is not you
       to start their own Group with their own friends, from week 1, in parallel.
       **Hand them [ORGANIZER_PLAYBOOK.md](./ORGANIZER_PLAYBOOK.md), not a verbal
@@ -654,10 +675,13 @@ A thin edition has two very different causes — *the ritual doesn't hold* and
 *people wouldn't install the app* — and they call for opposite responses. Don't
 let them blur:
 
-- [ ] **Editions 1–2: accept posts by any channel.** If someone won't install,
-      text them, take the text, and put it in for them — but **not under your
-      own account.** See "Posting for someone who hasn't installed" below; the
-      naive version silently ruins the edition. This measures the ritual alone.
+- [ ] **Editions 1–2: the app is there, but any channel still counts.** If
+      someone won't install (or can't — Android), take their entry by text and
+      put it in for them — but **not under your own account.** See "Posting for
+      someone who hasn't installed" below; the naive version silently ruins the
+      edition. This keeps "didn't install" from reading as "didn't write".
+      (Until 2026-09-29 these two editions were to run with no app at all; this
+      fallback is what survives of that plan.)
 - [ ] **Editions 3–4: require the app.** The delta between the two halves *is*
       the install-resistance number, and it feeds the §4 decision much better
       than a headcount does.
@@ -677,8 +701,8 @@ all six stories are bylined *you*, with your face on each one. That isn't a thin
 edition, it's a wrong one — and it corrupts the exact signal Group Zero exists
 to read.
 
-**Create the accounts yourself instead.** The organizer is the app for the first
-month. **Since 2026-09-24 this is the operator script `scripts/group-zero/`
+**Create their account instead.** For anyone who hasn't installed, the
+organizer is the app. **Since 2026-09-24 this is the operator script `scripts/group-zero/`
 (usage in its README).** It replaces the dashboard, SQL and "sign in as them"
 steps that used to be here. The last one meant keeping a password for every
 member, because sign-in is an emailed code you can't receive. Every command is a
@@ -695,12 +719,14 @@ dry run until `--apply`:
 - [ ] `list --group …` shows who is in and what's waiting for the edition.
 - [ ] To set up a Group for someone else to moderate:
       `create-group --name … --moderator <their email> --timezone <theirs>`,
-      then `add-member` for their people. **This is how Group B starts —
-      decided 2026-09-24:** with no build before about week 3, the owner creates
-      Group B with the organizer as moderator and adds the organizer's people
-      by email; editions 1–2 take entries by any channel, and everyone installs
-      from TestFlight for 3–4. Verified end to end against production
-      2026-09-25 (throwaway Group, then cleaned up; PR #40's comment).
+      then `add-member` for their people. Verified end to end against
+      production 2026-09-25 (throwaway Group, then cleaned up; PR #40's
+      comment). It was how Group B would start (decided 2026-09-24, when there
+      was no build before about week 3). **Superseded 2026-09-29:** Groups A
+      and B are created in the app by their organizers, and their people join
+      by invite code, which tests onboarding and invites — the parts of the app
+      most worth a friend's feedback. `create-group` stays the path for a Group
+      that has to start before its organizer has the app.
 - [ ] **Read the results with `scripts/group-zero/readout.sql`** (read-only;
       usage in its header): the writing pass condition per Group, when in the
       week people write relative to the slot (tests the nudge's 48h guess), and
@@ -708,19 +734,21 @@ dry run until `--apply`:
 
 Two things fall out of this that are worth more than the convenience:
 
-- **The edition email reaches everyone from day one.** Recipients are every
+- **A holdout still gets every edition.** Recipients are every
   `group_members` row with `email_subscribed = true`
   (`supabase/migrations/20260711000000_edition_email_payload_images.sql:69`) —
-  install status is not consulted anywhere. §1 says the retention surface is the
-  email, not the app; this makes editions 1–2 a real test of that claim rather
-  than a workaround, because the whole loop runs with zero installs.
-- **You get a cleaner install-resistance number.** An account already exists for
-  each of them, so "installing" is just signing in — they type their email and
-  get a code. *When each person does it* is a per-person date rather than the
-  1–2 vs. 3–4 headcount delta; read it from their first `push_tokens` row (the
-  app installed and notifications allowed), not `last_sign_in_at`, which your
-  own sign-ins as them also move. Tell them the account is waiting; don't make
-  them create one.
+  install status is not consulted anywhere. So `add-member` a holdout **before
+  edition 1**: someone who never joins by invite code isn't a member and gets
+  nothing. §1 says the retention surface is the email, not the app; a holdout
+  who keeps reading with zero installs is evidence for that claim.
+- **You get a cleaner install-resistance number.** For a holdout the account is
+  already waiting, so installing is just signing in — they type their email and
+  get a code (the app verifies it the same way whichever button they tap).
+  *When each person does it* is a per-person date rather than the 1–2 vs. 3–4
+  headcount delta; read it from their first `push_tokens` row (the app
+  installed and notifications allowed), not `last_sign_in_at`, which your own
+  sign-ins as them also move. Tell them the account is waiting; don't make them
+  create one.
 
 ### Pass condition
 
@@ -811,13 +839,15 @@ Where the organizers are. Join as a person, months before mentioning the app.
    updates. See §11.
 2. **Done 2026-09-22** — ~~Apple Developer enrollment (§6)~~. The multi-day tail
    is behind us. What it unblocks now runs on its own clock: the Team ID into the
-   universal-link files, the APNs push key, and the first TestFlight build for
-   editions 3–4. LAUNCH.md steps 2, 3 and 8.
+   universal-link files, the APNs push key, and the first TestFlight build,
+   which Group Zero runs on from edition 1 (decided 2026-09-29, §6). LAUNCH.md
+   steps 2, 3 and 8.
 3. **Overdue — start Group Zero now** (it was "this week" on 2026-09-14; no Group
    Zero Group exists as of 2026-09-24): Group A, Group B, and the family Groups
    (§6). It's the long pole; every week of delay is a week of evidence you don't
    have. Recruiting the Group B organizer has its own lead time, so start asking
-   now. Editions 1–2 run off-app, so none of this waits on enrollment.
+   now. Since 2026-09-29 edition 1 waits on the TestFlight build (§6), so the
+   build is on the critical path too; the recruiting doesn't wait for it.
 4. **Settled 2026-09-16** — ~~the extra-copies question and the family-Group
    count~~. Extra printed copies sell at $89, which brings the recruiting target
    to two–three family Groups (§5, "The December arithmetic"). What still expires
@@ -953,7 +983,7 @@ it. Read it as a check that nothing on the board is unowned.
 | Ads get relitigated every six months | §5, "Ads — costed and rejected": the arithmetic is written down so the answer doesn't depend on taste. Do not reopen without new numbers |
 | The artifact is a family product; the primary audience is friend groups | §5, deliberate: friends distribute, families pay. But if friend-group volumes never sell, revenue scales with the *secondary* audience — worth knowing early |
 | Print economics don't survive colour photo pages | §5 is uncosted until Lulu's calculator is run; December uses real orders at real cost |
-| Nobody can install the app in time for edition 3 | §6: enrollment done 2026-09-22; the first TestFlight build (never yet made, first on SDK 57) must land by week 3 — editions 1–2 run off-app for the buffer |
+| The TestFlight build slips, and edition 1 with it | §6: since 2026-09-29 Group Zero runs on the app from edition 1, so there's no off-app buffer — the first production build (never yet made, first on SDK 57) and its TestFlight review are the critical path. Recruiting runs in parallel; a Group that can't wait can still start by email with `create-group` |
 | Family users feel abandoned by the new copy | §2: generalize, don't replace — rotate examples, keep the accessibility floor |
 | Launching before retention is proven | §8: Group Zero gates submission |
 | No organizer exists except you | §6's Group B. If nobody will take the role, the broken thing is distribution, not the product — and that changes what to build next |

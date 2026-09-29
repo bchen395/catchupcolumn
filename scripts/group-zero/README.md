@@ -43,7 +43,9 @@ deno run --allow-env --allow-net=<project-ref>.supabase.co --allow-read \
 | `add-member --group G --email E --name "Display Name"` | Creates a confirmed account with no password anyone knows (`auth.admin.createUser`, `email_confirm: true`; GoTrue stores a random one), so no email is sent, and `--name` becomes the byline. Then adds them as a contributor, `on conflict do nothing`. It reuses an account that already exists and never renames it. Re-running it is safe. |
 | `post-for --group G --email E [--body TEXT\|@file\|@-] [--title T] [--photo path.jpg \| --remove-photo]` | Writes the member's post under their own `author_id`. If they already have an uncompiled post, it **updates** it, the way the composer does (`fetchCurrentPost`). There's no DB constraint, so a second insert would print as a second story. `edition_id` stays null. The title limit is 80 characters (`posts_title_length`), and `--title ""` clears it. |
 
-A typical Group B setup, dry run first each time:
+A full setup, for a Group that has to start before its organizer has the app
+(since 2026-09-29, Groups A and B are created in the app instead and the script
+covers their holdouts — `docs/POSITIONING.md` §6). Dry run first each time:
 
 ```sh
 G=scripts/group-zero/group-zero.ts
