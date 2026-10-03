@@ -32,11 +32,11 @@ You're working on the UI of a private group-newsletter app. **Audience (set 2026
 - Accessibility floors: 16px minimum body text, `Layout.touchTargetMin` (48px) tap targets and `Layout.rowMinHeight` (56px) rows.
 - Surfaces: `paperWarm` app background everywhere; pure `paper` only for true overlays (sheets, modals) and the tab bar. No cards, pills, or tinted slabs for content — structure is drawn with hairlines.
 - Photos are flat editorial (BRAND §5): square corners, no rotation, `hairline` edge on `paperWarm`; avatars are the only round photos. Illustration is chrome-only — never on edition surfaces, always decorative/hidden from screen readers.
-- Pressed states: 92% opacity on filled controls, ~0.7 opacity on content blocks — never new colors.
+- Pressed states: 92% opacity on filled controls, ~0.7 opacity on content blocks and bare glyph buttons like `back-button` (a 92% dip is invisible without a fill) — never new colors.
 - Styles in `StyleSheet.create()` at the bottom of the file; break up components past ~150 lines.
 - Tone: warm and plain-spoken ("Write something for this week"), never technical or apologetic.
 - Motion: durations from `Motion.duration`, never hardcoded ms; ease-out timing, no springs (sole exception: the compose sheet); every animation respects Reduce Motion. Loader and skeleton knobs stay in `loading.ts` (they're ambient loops, not UI transitions).
-- **Loading: pick the affordance by the wait, not by habit** (BRAND §10). A screen whose layout you know gets a **skeleton** from `components/skeletons/` — not `PrintingPressLoading`, which is now only for cold boot, invite arrival, and publish-now. Never show a loading state over content already on screen: gate on a monotonic first-load flag, and let focus refetches revalidate silently. Reach for `FormButton loading` for button-scoped work.
+- **Loading: pick the affordance by the wait, not by habit** (BRAND §10). A screen whose layout you know gets a **skeleton** from `components/skeletons/` — not `PrintingPressLoading`, which is now only for cold boot, auto-join, and publish-now (invite arrival moved to a skeleton 2026-10-03). Never show a loading state over content already on screen: gate on a monotonic first-load flag, and let focus refetches revalidate silently. Reach for `FormButton loading` for button-scoped work.
 - Haptics only through `lib/haptics.ts`'s three verbs — `tap` for key actions, `select` for value changes (never on re-selecting the same value), `confirm` reserved for save/publish moments. When in doubt, no haptic.
 - Engagement = ritual devices (datelines, stamps, bylines), never gamification — no streaks, badges, counters, or confetti (BRAND §10, rejected on principle).
 
@@ -67,12 +67,14 @@ You're working on the UI of a private group-newsletter app. **Audience (set 2026
 | `edition-row` | One row of the Editions list: headline, folio line, and the lead photo (which it signs itself — `posts.image_url` is a private storage path, never a URL). Memoised. |
 | `custom-tab-bar` | The 5-slot bar with the raised ink-black "+". |
 | `compose-sheet-provider` / `compose-group-sheet` | The "write for…" group-picker sheet the "+" opens. |
-| `empty-state` / `error-state` | Lora Bold headline + Jost body + ink-pill CTA. `EmptyState` takes a §4 doodle `scene` (falls back to a plain ink icon); error states keep the quiet `error`-color icon. Copy from `Strings`. |
+| `empty-state` / `error-state` | Lora Bold headline + Jost body + ink-pill CTA. `EmptyState` takes a §4 doodle `scene` (falls back to a plain ink icon); error states keep the quiet `error`-color icon. `ErrorState` also takes `busy` (spinner in the CTA while a retry runs) and an optional bare-text second action. Copy from `Strings`. |
+| `back-button` | Every back affordance — native `headerLeft` or a custom top bar. 48×48, optically centered SVG chevron (BRAND §9). Never hand-roll one; pass `accessibilityLabel` only when back isn't obvious. |
+| `profile-setup-error` | The root layout's stand-in for the app when a new account's profile row couldn't be created (bugs.md L3): retry, sign out, support address. |
 | `status-banner` | Text-first hairline band (BRAND §9): kicker voice + one Jost line. Success wears the info dress. |
 | `ink-stamp` | The §11 stamp system — one recipe, faces by props: FILED (tilt −4, 'moment'), JOINED (tilt +3, 'record'). Never two stamps on one screen. |
-| `printing-press-loading` | Branded loading screen: `ride` (paperboy, wheels spin — default) and `press` (flywheel + sheets, for compile/publish waits). **Only for cold boot, invite arrival, and publish-now** — everything else uses a skeleton. Static under Reduce Motion; retune via `constants/loading.ts`, not the component. |
+| `printing-press-loading` | Branded loading screen: `ride` (paperboy, wheels spin — default) and `press` (flywheel + sheets, for compile/publish waits). **Only for cold boot, auto-join, and publish-now** — everything else uses a skeleton. Static under Reduce Motion; retune via `constants/loading.ts`, not the component. |
 | `skeleton` | Skeleton primitives: `Skeleton` (wrapper — owns the one shared pulse and the single screen-reader announcement), `SkeletonBar`/`SkeletonLines` (type-shaped, sized from a `Typography.scale` variant so nothing shifts on arrival), `SkeletonBlock` (photos; `outlined` for chips), `SkeletonCircle`, `SkeletonRule` (a real rule — structure never pulses). |
-| `skeletons/*` | One per screen, mirroring its real geometry: `editions-list`, `groups-list`, `edition-page`, `story`, `group-detail`, plus the partial `home-hero`, `profile-hero`, and `composer`. Match the screen's own style values when you touch either side. |
+| `skeletons/*` | One per screen, mirroring its real geometry: `editions-list`, `groups-list`, `edition-page`, `story`, `group-detail`, `invite` (deep-link arrival), plus the partial `home-hero`, `profile-hero`, `composer`, and `compose-sheet` (the "Write for…" rows). Match the screen's own style values when you touch either side. |
 | `form-field` / `form-button` | Inputs and buttons in auth, group, and settings forms. |
 | `auth-screen-shell` | Shared chrome for auth/onboarding screens. |
 | `code-field` | The 6-digit emailed-code input (digits only, OS autofill, wide tracking). Every screen that takes a code uses it — sign-in, sign-up, set-password. |
