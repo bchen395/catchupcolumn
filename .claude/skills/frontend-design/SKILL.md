@@ -48,7 +48,7 @@ You're working on the UI of a private group-newsletter app. **Audience (set 2026
 | `themed-view` | A `paperWarm` surface; `card` = paper + hairline edge, for boxed overlay content only. |
 | `app-image` | Any image — expo-image wrapper with fade-in, caching, quiet ink-wash placeholder. |
 | `icon` | Rendering an `IconDescriptor` from `constants/icons.ts`. |
-| `editorial-photo` | Any user photo (BRAND §5): flat, square, hairline edge, optional "Photo by Ruth" credit. Replaces the deleted polaroid. |
+| `editorial-photo` | Any user photo (BRAND §5): flat, square, hairline edge, optional "Photo by Ruth" credit. Replaces the deleted polaroid. For a post photo pass `photoDisplayPath(photo)` — never `image_url`, the print master; a surface that shows a post as one picture takes `coverPhotoFor(post)`. |
 | `illustrations/rolled-paper-glyph` | The colophon/masthead dingbat — the one sanctioned inked mark on editorial surfaces. |
 | `illustrations/paperboy-mark` | The brand mark: paperboy on his bike (vermilion cap). Exports wheel geometry + `WheelSpokes` so the loader can spin the wheels. |
 | `illustrations/paperboy-mailbox-scene` | Empty-editions doodle: the paperboy waiting at a flag-down mailbox. |
@@ -60,11 +60,12 @@ You're working on the UI of a private group-newsletter app. **Audience (set 2026
 | `edition-secondary` | The cover's second story — mid-weight: optional photo, `title` headline, excerpt, read cue. |
 | `edition-brief-column` | One cell of the "IN BRIEF" grid (`rowTitle` headline, byline, 14px excerpt). |
 | `edition-briefs-grid` | The "IN BRIEF" section: labeled rule header + two-column rows with hairline rules; odd last brief runs full-width. Reports tapped-cell frames for the enlarge overlay. |
-| `story-article` | One full post in the reader: headline, avatar byline, credited photo, lettrine body. |
+| `story-article` | One full post in the reader: headline, avatar byline, then its pieces via `story-blocks`. |
+| `story-blocks` | A post's text and photos in reading order (BRAND §5): text in the `read` voice with the lettrine on the first piece, photos flat in their orientation buckets, "Photo by" once under the first. Always fed `postBlocksOf(post)`. |
 | `story-reader` | Host-agnostic reader body + Next/Previous paging; rendered by both the `[postId]` route and the enlarge overlay. |
 | `report-story-link` | The BRAND §9 report affordance at the foot of a story. Renders nothing on your own post; drafts a support mailto via `lib/report.ts`. |
 | `story-reader-overlay` | The enlarge transition: tapped cover section grows into the full-screen reader (Modal + reanimated); reverse-shrinks on close. |
-| `edition-row` | One row of the Editions list: headline, folio line, and the lead photo (which it signs itself — `posts.image_url` is a private storage path, never a URL). Memoised. |
+| `edition-row` | One row of the Editions list: headline, folio line, and the lead story's first photo as its display copy (which it signs itself — a storage path, never a URL). Memoised. |
 | `custom-tab-bar` | The 5-slot bar with the raised ink-black "+". |
 | `compose-sheet-provider` / `compose-group-sheet` | The "write for…" group-picker sheet the "+" opens. |
 | `empty-state` / `error-state` | Lora Bold headline + Jost body + ink-pill CTA. `EmptyState` takes a §4 doodle `scene` (falls back to a plain ink icon); error states keep the quiet `error`-color icon. Copy from `Strings`. |
