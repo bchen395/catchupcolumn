@@ -735,7 +735,8 @@ Alert frequency: "on every new issue" is right at this scale; you want the email
 
 **2. Put the DSN in the EAS environment — not only `.env.local`.** ✅ **Done
 2026-09-24:** `EXPO_PUBLIC_SENTRY_DSN` set (plaintext) in `production` and
-`preview`, read back with `env:get`. Parts 1–2 are done; 3–5 are not. It's shown on
+`preview`, read back with `env:get`. Parts 1–2 are done, and part 4's variables
+were set 2026-10-03; 3 and 5 are not. It's shown on
 the setup screen, and afterwards under
 *Settings → Projects → catch-up-column → Client Keys (DSN)*. It looks like
 `https://<hash>@o<org>.ingest.sentry.io/<project>`. The DSN is not a secret —
@@ -776,6 +777,10 @@ during the bundle step, not read at runtime, so a DSN added after the build
 won't apply.
 
 **4. Source maps — and without them the build fails, not just the traces.**
+✅ **Variables set 2026-10-03** in `production` and `preview`:
+`SENTRY_AUTH_TOKEN` as a Secret (`env:get` refuses to display it — correct),
+`SENTRY_ORG=catch-up-column`, `SENTRY_PROJECT=catchupcolumn` (owner confirmed
+both slugs in Sentry's settings). The first production build is the proof.
 Found 2026-09-24 by running the plugin's build phase on its own: with no org,
 project or token, `sentry-xcode.sh` exits 1 (`An organization ID or slug is
 required`) inside *Bundle React Native code and images*, so **an EAS build with

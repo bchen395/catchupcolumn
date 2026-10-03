@@ -70,8 +70,9 @@ POSITIONING §8 is the authoritative sequence. The short version:
 - [ ] **First production build + TestFlight external testing** — now: since
       2026-09-29 Group Zero's edition 1 waits on it. External testers need
       Apple's TestFlight App Review, which needs a demo account with a password
-      and a Beta App Description; the production build needs the Sentry
-      source-map variables first. [docs/LAUNCH.md](docs/LAUNCH.md) steps 8 and 10.4. The review
+      and a Beta App Description. The Sentry source-map variables it needed
+      are set (2026-10-03). The owner plans the build for 2026-10-04.
+      [docs/LAUNCH.md](docs/LAUNCH.md) steps 8 and 10.4. The review
       account is made on that build: code sign-in → Profile → Set a password.
       It's also the first build with the #44 auth change — device checks in
       PRESUBMISSION Gates 5 and 7
@@ -97,9 +98,9 @@ POSITIONING §8 is the authoritative sequence. The short version:
 - [x] **Friends-first copy pass** — landed 2026-09-16.
       [docs/POSITIONING.md](docs/POSITIONING.md) §2
 - [x] **Sentry DSN in the EAS environment** — 2026-09-24, `production` and
-      `preview`. Still open: the source-map variables (without them the
-      production EAS build *fails* — LAUNCH step 10.4) and the smoke test
-      (10.3). The original item: the code is wired and inert until it's set. It goes
+      `preview`. The source-map variables followed 2026-10-03 (LAUNCH step
+      10.4; the first production build proves them). Still open: the smoke
+      test (10.3). The original item: the code is wired and inert until it's set. It goes
       in the **EAS environment**, not `.env.local`: that file is gitignored, so an
       EAS build never sees it and the TestFlight build would ship with Sentry off.
       [docs/LAUNCH.md](docs/LAUNCH.md) step 10
