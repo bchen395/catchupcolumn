@@ -74,9 +74,7 @@ export const ComposerPhotoView = ({
         style={({ pressed }) => pressed && styles.pressed}
       >
         <AppImage
-          // Cached by storage path, not by the signed URL, which changes
-          // every session.
-          source={uri ? { uri, cacheKey: localUri ? undefined : (displayPath ?? undefined) } : undefined}
+          source={uri ? { uri } : undefined}
           style={[
             styles.image,
             { aspectRatio: displayRatioFor(orientation ?? 'landscape') },
