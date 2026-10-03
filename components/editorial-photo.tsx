@@ -9,8 +9,9 @@ import { AppImage } from './app-image';
 import { ThemedText } from './themed-text';
 
 type Props = {
-  // Raw `posts.image_url` value (storage path or passthrough URI). Signed on
-  // demand by usePostImageUrl.
+  // A storage path in `post-images` (for a post photo, its display copy —
+  // photoDisplayPath) or a passthrough URI. Signed on demand by
+  // usePostImageUrl.
   imageUrl: string | null | undefined;
   // NYT-style credit line under the photo ("Photo by Ruth"). Left-aligned
   // Jost caption in inkSoft — microcopy, so the 12px caption size is legal.

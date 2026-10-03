@@ -4,8 +4,10 @@ import type { EditionRow, EditionWithPosts, GroupRow, PostRow, UserRow } from '@
 
 export type EditionListItem = EditionRow & {
   group: Pick<GroupRow, 'id' | 'name' | 'cover_image_url' | 'timezone'>;
-  // Trimmed posts (just what the front-page lead picker + headline need) so the
-  // inbox and home can show each edition's lead story without a second query.
+  // Trimmed posts (just what the front-page lead picker, headline and lead
+  // photo need) so the inbox and home can show each edition's lead story
+  // without a second query. `blocks` rides along so the lead photo can be its
+  // display copy rather than the print master `image_url` points at.
   posts: LeadPostLike[];
 };
 
@@ -48,7 +50,7 @@ export const fetchEditionsForUser = async (
     .select(
       `id, group_id, edition_number, published_at, created_at,
        group:groups!inner(id, name, cover_image_url, timezone),
-       posts(title, body, image_url, author:users(display_name))`,
+       posts(title, body, image_url, blocks, author:users(display_name))`,
     )
     .in('group_id', groupIds)
     .order('published_at', { ascending: false })
@@ -73,7 +75,7 @@ export const fetchEditionWithPosts = async (editionId: string): Promise<EditionW
     .select(
       `id, group_id, edition_number, published_at, created_at,
        posts(
-         id, group_id, author_id, title, body, image_url, edition_id, created_at, updated_at,
+         id, group_id, author_id, title, body, image_url, blocks, edition_id, created_at, updated_at,
          author:users(id, display_name, avatar_url, bio, created_at)
        )`,
     )
