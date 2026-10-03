@@ -42,10 +42,10 @@ rows verified 2026-10-03.
 **Working:**
 - **Server:** v2 edition email live; cron firing every 15 min; **32 migrations
   applied**, all matching `main` — including the late-slot fix (`20260925212248`,
-  bugs.md H1) and compile robustness (`20260928155710`, H2 + H3: pg_net waits
+  bugs.md H1: slots at 23:40 or later now publish) and compile robustness (`20260928155710`, H2 + H3: pg_net waits
   150 s, one invalid Group timezone is skipped and reported, a trigger rejects
   unknown zones). `compile-editions` **v19** (2026-09-28): a 30-minute compile
-  window, so every slot gets two ticks. `WEB_BASE_URL` = `www`; `EMAIL_FROM`
+  window, so every slot gets two ticks; download-and-diff clean. `WEB_BASE_URL` = `www`; `EMAIL_FROM`
   correct; Vercel in sync with `main`.
 - **CI green** on every check (#49, 2026-10-03 — after the second Expo patch
   bump; see Traps).
@@ -64,7 +64,10 @@ rows verified 2026-10-03.
   `6RDS3S724Z.com.catchupcolumn.app` with `applinks` and `webcredentials` (200,
   `application/json`, on Apple's CDN). Reaches phones with the first device build.
 - **First EAS build** (2026-09-24, `preview`, simulator, `cf9f70ee`): SDK 57
-  launches — splash, fonts, sign-in, clean logs. Predates #44.
+  launches — splash, fonts, sign-in, clean logs. On the owner's simulator
+  (iPhone 17 Pro). Predates #44, so it still has the old reset-link flow.
+- **Verified against production 2026-09-22** (dev build): code sign-in,
+  sign-up, moderator removal, account deletion.
 - **Group Zero tooling on `main`** — the operator script (verified end to end
   against production 2026-09-25, PR #40's comment) and the readout queries.
 - **Auth on `main`** (#44, 2026-09-28): code sign-in by default, an optional
@@ -72,6 +75,9 @@ rows verified 2026-10-03.
   minimum + common-password list, sign-out on this device only. Dashboard items
   1–4 done 2026-09-28 (LAUNCH step 5).
 - **Docs match the plan** after #49 (2026-10-03): the Group Zero re-plan below.
+  The public privacy policy is current — live at `/privacy`, "Last updated
+  September 28, 2026" (read back 2026-09-28); TestFlight's Test Information
+  needs its URL.
 
 **Wrong or open right now:**
 - **No production build yet** — nothing has run on a phone as a signed binary,
@@ -84,13 +90,17 @@ rows verified 2026-10-03.
 - **Two auth dashboard steps wait for that build to be what people run**
   (LAUNCH step 5 items 5 and 7; §5 below). Until then codes really last an hour
   while the copy says 10 minutes — the harmless direction.
-- **Cron timeout re-count never done.** 3 of 3 ticks clean right after the
-  2026-09-28 fix; expect 0 (§4).
+- **Cron timeout re-count never done.** Before the 2026-09-28 16:45 UTC fix
+  about 1 in 4 ticks timed out at 5 s; the 3 ticks right after it were all
+  `200`, too few to close. Expect 0 now (§4). Whether the old timed-out runs
+  finished server-side was never read — moot unless timeouts continue.
 - No DMARC record. Resend domain status unconfirmed. Both before edition 1.
 - The owner's Mac has Xcode 26.3; **local** SDK 57 builds need ≥ 26.4. EAS is
   unaffected.
 
-**Group Zero: not started.** Production has 2 test Groups, 3 users. **Re-planned
+**Group Zero: not started.** Production has 2 test Groups, 3 users. As of
+2026-09-25 the owner has Group A (a friend group they're in) and "can enlist
+another group easily" for Group B — its organizer still unnamed. **Re-planned
 2026-09-29 (owner, #49):** Group Zero runs on the app from edition 1, through a
 TestFlight public link — not the App Store, and no longer off-app for weeks
 1–2. Groups A and B are created in the app by their organizers and filled by
@@ -147,6 +157,13 @@ their list. Whatever is merged to `main` before the build is in it.
   check the first one on the owner's phone.
 - Run the `verify-changes` skill before calling a fix done, and keep CI green
   (Traps: Expo patch drift).
+- **Worth raising with the owner: bugs.md L3.** It was "low priority" because
+  the operator script pre-created every Group Zero account with its profile.
+  Under the 2026-09-29 invite flow every friend signs up in the app, so every
+  one of them is the "genuinely-new user" L3 can strand — if profile creation
+  fails twice, they land on screens that join on `users.id`. Rare, but it's a
+  first impression. The fix (a retry/error screen in `app/_layout.tsx`) is
+  JS-only, so it could also follow the build over the air.
 
 **[agent] Prep for tomorrow, if there's time:**
 - Draft the TestFlight **Test Information** as a new section of
@@ -157,7 +174,8 @@ their list. Whatever is merged to `main` before the build is in it.
   address, so the sign-in code reaches them — never a friend's account.
 - Optional: after the fixes merge, a fresh `preview` simulator build from `main`
   (no Apple sign-in needed) to check the fixes behind sign-in, and to make the
-  review account (code sign-in → Profile → *Set a password*) plus its demo
+  review account (code sign-in → Profile → *Set a password*, 8+ characters,
+  not a common one) plus its demo
   Group with a published edition. Production writes — ask first. Doing it today
   takes it off tomorrow's path.
 
@@ -168,7 +186,9 @@ their list. Whatever is merged to `main` before the build is in it.
    **Yes** to logging in to Apple (then Apple ID, password, 2FA), to the
    distribution certificate, the provisioning profile, and the push key (APNs —
    without it push never arrives). Team ID `6RDS3S724Z` if asked. If it stops on
-   an agreement, accept it at developer.apple.com → Account and re-run.
+   an agreement, accept it at developer.apple.com → Account and re-run. The
+   build carries #44's auth, #45's UTC fallback, the `webcredentials`
+   entitlement, and whatever of §1 has merged.
 2. **[agent] Watch it:** `npx eas-cli build:list --platform ios --limit 1`, then
    `build:view <id> --json`. This is the first build to run the Sentry upload —
    if it fails, read the log before retrying.
@@ -186,7 +206,10 @@ their list. Whatever is merged to `main` before the build is in it.
    build → Test Information (from the §1 draft) → enable the public link →
    submit for review.
 6. Apple's beta review → public link → each Group Zero yes gets the link and the
-   invite code (ORGANIZER_PLAYBOOK step 4).
+   invite code (ORGANIZER_PLAYBOOK step 4). Each sign-up sends a code email:
+   Supabase's 100/hour limit was sized for a whole Group onboarding in one
+   sitting, two Groups included (LAUNCH step 5); Resend's daily cap is the
+   unknown (item 11).
 
 **§3. Group Zero — settle before the link goes out**
 
@@ -196,7 +219,8 @@ their list. Whatever is merged to `main` before the build is in it.
    - Who organizes Group B — not the owner. They get ORGANIZER_PLAYBOOK.md and
      the public link.
    - The family Group: start by email now with `create-group` and `add-member`
-     (the family installs later), or wait for the app? Overdue either way.
+     (the family installs later), or wait for the app? Overdue either way. The
+     owner's own family counts.
    - Is anyone in Group A or B on Android? The build is iPhone-only.
 8. **[owner] Recruit now, 1:1** (playbook step 1) — the asks don't wait for the
    link.
@@ -209,7 +233,8 @@ their list. Whatever is merged to `main` before the build is in it.
     Group Zero publish for failed recipients and forward by hand.
 11. **[owner] Before edition 1:** the DMARC TXT at `_dmarc.catchupcolumn.com`
     (value in LAUNCH step 4), and in Resend: is the domain `verified`, what is
-    the daily cap (auth and edition email share it), is open/click tracking
+    the daily cap (auth and edition email share it, and a Sunday-09:00 edition
+    burst plus onboarding can collide — LAUNCH step 5), is open/click tracking
     **off**?
 
 **§4. Keep production honest**
@@ -242,13 +267,15 @@ their list. Whatever is merged to `main` before the build is in it.
 
 **§7. Agent, when there's slack**
 
-- Illustration support, if the owner wants it: stroke-scale tokens in
+- Illustration support, if the owner wants it (the illustrator draws; these
+  help them and the merge): stroke-scale tokens in
   `constants/`, a review screen showing all 8 assets + both loader variants +
   Reduce Motion, and a script that regenerates `icon.png` / `splash-icon.png`
-  from `paperboy-mark` geometry. Scope: `design/ILLUSTRATION_REWORK.md`.
-- bugs.md L3 — low priority.
-- Not started, deliberately: an email-change flow, and passkeys once
-  Supabase's leave experimental (POSITIONING §9).
+  from `paperboy-mark` geometry. Scope and export contracts:
+  `design/ILLUSTRATION_REWORK.md`.
+- Not started, deliberately: an email-change flow (the address *is* the
+  account; school addresses lapse), and passkeys once Supabase's leave
+  experimental (POSITIONING §9).
 
 **First move for the next session:** the owner opens it to fix the app — start
 from their list, with §1's native-vs-JS rule in mind; skim Live state first.
@@ -268,7 +295,8 @@ Then §1's prep if there's time. §2 is tomorrow.
 Decided: 2026-10-03 — Sentry slugs as set; skip the simulator pass; build
 2026-10-04. 2026-09-29 (#49) — the Group Zero re-plan (Live state).
 2026-09-24/25 — reading measured by asking; bundle ID final; "shipping" means
-the App Store, after the illustration rework; #44's password rules. Left until
+the App Store, after the illustration rework; #44's password rules (the
+bundled list because Supabase Free has no leaked-password check). Left until
 after Group Zero: weekly vs biweekly, classifieds, volume size, whether
 friend-group volumes sell (POSITIONING §9).
 
@@ -343,9 +371,11 @@ friend-group volumes sell (POSITIONING §9).
   address. OTP length must stay 6 (`CODE_LENGTH`), and OTP expiry must match
   `CODE_EXPIRY_MINUTES`.
 - **Every account stores a password hash** — of a random password nobody knows,
-  for code sign-ups as much as for `auth.admin.createUser` with no password.
-  `encrypted_password` is never empty, so don't test "no password" that way,
-  and never build a "current password" check (`setPassword` in `lib/auth.ts`).
+  for code sign-ups (GoTrue's `magic_link.go`) as much as for
+  `auth.admin.createUser` with no password. `encrypted_password` is never
+  empty, so don't test "no password" that way, and never build a "current
+  password" check — a code-only person can't pass it (`setPassword` in
+  `lib/auth.ts`).
 - `storage.protect_delete` is statement-level; direct deletes from
   `storage.objects` need `set_config('storage.allow_delete_query','true',true)`
   (db-migrations skill) — and remove only the row; delete files through the
