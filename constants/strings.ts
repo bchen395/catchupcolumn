@@ -68,6 +68,18 @@ export const Strings = {
     backToFrontPage: 'Back to the front page',
   },
 
+  // Shown in place of the app when a new account's profile couldn't be saved
+  // at sign-in (bugs.md L3). Rare, and it lands on someone who has just
+  // entered their first code, so it says what to do and never sounds broken:
+  // try again, or sign out, or write to us.
+  profileSetup: {
+    title: 'Your account is almost ready',
+    body: (supportEmail: string) =>
+      `We couldn’t finish setting it up just now. Check your connection and try again. If it keeps happening, email us at ${supportEmail}.`,
+    retry: 'Try again',
+    signOut: 'Sign out',
+  },
+
   // StatusBanner kicker lead-ins (BRAND §9) — warm small-caps voices, never
   // technical. Success wears the info dress; the words carry the good news.
   banner: {

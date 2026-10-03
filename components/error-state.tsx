@@ -1,10 +1,11 @@
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { Colors } from '@/constants/colors';
 import { Icons, type IconDescriptor } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 
+import { FormButton } from './form-button';
 import { Icon } from './icon';
 import { ThemedText } from './themed-text';
 
@@ -14,6 +15,11 @@ interface ErrorStateProps {
   body?: string;
   ctaLabel?: string;
   onRetry?: () => void;
+  // The retry is in flight: the CTA shows a spinner and both actions hold.
+  busy?: boolean;
+  // A quieter way out under the CTA, set as a bare-text button (BRAND §9).
+  secondaryLabel?: string;
+  onSecondary?: () => void;
   style?: ViewStyle;
 }
 
@@ -26,6 +32,9 @@ export const ErrorState = ({
   body = Strings.error.generic.body,
   ctaLabel = Strings.error.generic.cta,
   onRetry,
+  busy = false,
+  secondaryLabel,
+  onSecondary,
   style,
 }: ErrorStateProps) => {
   return (
@@ -40,13 +49,27 @@ export const ErrorState = ({
       {onRetry ? (
         <Pressable
           onPress={onRetry}
+          disabled={busy}
           accessibilityRole="button"
+          accessibilityState={{ busy, disabled: busy }}
           style={({ pressed }) => [styles.cta, pressed ? styles.ctaPressed : null]}
         >
-          <ThemedText variant="uiStrong" style={styles.ctaText}>
+          {/* The label stays (invisible) under the spinner so the pill keeps
+              its width and screen readers keep its name. */}
+          <ThemedText variant="uiStrong" style={[styles.ctaText, busy ? styles.hidden : null]}>
             {ctaLabel}
           </ThemedText>
+          {busy ? <ActivityIndicator color={Colors.paper} style={StyleSheet.absoluteFill} /> : null}
         </Pressable>
+      ) : null}
+      {secondaryLabel && onSecondary ? (
+        <FormButton
+          title={secondaryLabel}
+          variant="ghost"
+          onPress={onSecondary}
+          disabled={busy}
+          style={styles.secondary}
+        />
       ) : null}
     </View>
   );
@@ -83,5 +106,11 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     color: Colors.paper,
+  },
+  hidden: {
+    opacity: 0,
+  },
+  secondary: {
+    alignSelf: 'center',
   },
 });

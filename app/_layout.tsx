@@ -21,6 +21,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { PrintingPressLoading } from '@/components/printing-press-loading';
+import { ProfileSetupError } from '@/components/profile-setup-error';
 import { useAuth } from '@/hooks/use-auth';
 import { useAutoJoinInvite } from '@/hooks/use-auto-join-invite';
 import { needsOnboarding } from '@/lib/auth';
@@ -77,7 +78,7 @@ const RootLayout = () => {
     Jost_600SemiBold,
     Jost_700Bold,
   });
-  const { session, loading } = useAuth();
+  const { session, loading, profileError, retryProfile } = useAuth();
   const router = useRouter();
   // Read as plain strings, not typed route segments. `useSegments()`'s tuple
   // type is derived from `.expo/types/router.d.ts`, which is generated, and
@@ -111,7 +112,11 @@ const RootLayout = () => {
     return () => sub.remove();
   }, [router]);
 
-  const ready = fontsLoaded && !loading;
+  // A signed-in account whose profile row couldn't be created isn't ready
+  // either (bugs.md L3): the retry screen below stands in for the navigator,
+  // so nothing here may navigate — the redirect gate and auto-join both wait
+  // on `ready`, and resume from a fresh navigator once the retry lands.
+  const ready = fontsLoaded && !loading && !profileError;
   const requiresOnboarding = needsOnboarding(session?.user);
 
   // Consumes a pending invite (saved by the join screen before signup) once
@@ -153,11 +158,11 @@ const RootLayout = () => {
     }
   }, [session, ready, requiresOnboarding, holdAuthRedirect, segments]);
 
-  if (!ready) {
-    // Fonts not ready → render nothing to avoid FOUC. Once fonts are loaded
-    // but auth is still resolving, show the press animation.
-    return fontsLoaded ? <PrintingPressLoading /> : null;
-  }
+  // Fonts not ready → render nothing to avoid FOUC. Once fonts are loaded
+  // but auth is still resolving, the paperboy rides.
+  if (!fontsLoaded) return null;
+  if (loading) return <PrintingPressLoading />;
+  if (profileError) return <ProfileSetupError onRetry={retryProfile} />;
 
   return (
     <>
