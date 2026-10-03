@@ -75,7 +75,7 @@ The warmth engine, and the only place the app is allowed to be cute.
 - Every asset sits directly on `paperWarm`/`paper` — never in a colored container, never with a drop shadow.
 
 **Where doodles live (and don't).** Chrome only; **editions stay editorial** (decided 2026-07-17):
-- **Splash/loading:** the paperboy rides; wheels spin (§10). Long waits (compile, publish) get the printing press running. **Narrowed 2026-08-22:** the rider now covers cold boot and invite arrival only — ordinary in-app navigation gets a skeleton instead (§9/§10).
+- **Splash/loading:** the paperboy rides; wheels spin (§10). Long waits (compile, publish) get the printing press running. **Narrowed 2026-08-22:** the rider now covers cold boot and invite arrival only — ordinary in-app navigation gets a skeleton instead (§9/§10). **Narrowed again 2026-10-03:** invite arrival moved to a skeleton too, so the rider is cold boot and auto-join.
 - **Empty states:** scene + Lora Bold headline + Jost body, warm and never apologetic. (Empty editions list: paperboy waiting at a mailbox. No groups: dog holding a rolled paper, "Start your group's paper.")
 - **Onboarding, invite, welcome:** the dog catches the paper on the welcome screen; the ticket carries the invite (§11).
 - **Profile/settings flourishes and hidden corners:** small easter-egg doodles in quiet corners — the dog asleep under the final hairline of the editions list, a mug by the settings footer. Delight, zero function.
@@ -138,6 +138,7 @@ Flat editorial. **The polaroid (tape, tilt, white frame) is fully retired** — 
 - **Chips/tags:** outlined hairline pills, Jost `meta`, ink text. No filled chips.
 - **Status/banners:** text-first on a hairline-ruled band: `kicker` + one Jost line. Info = ink kicker; warning = vermilion kicker; error = `error` kicker. No tinted background slabs. **There is no success color** (v1 green retired, decided 2026-07-17): success banners use the info voice — the warm words carry it — and true celebration moments belong to the stamp system (§11).
 - **Sheets/modals:** `paper`, top-rounded 20, grab handle, hairline header rule. The compose sheet keeps its sanctioned spring (§10).
+- **Back button** (added 2026-10-03): one component, `back-button`, on every screen that has one. A 48×48 square (the touch floor) with no margins, an ink chevron at 24, drawn as an SVG of Ionicons' `chevron-back` rather than set from the icon font, nudged 1px toward its point so it reads as centered. Pressed = ~0.7 opacity: the 92% dip is for filled buttons and is invisible on a bare glyph. Why it exists: on iOS 26 the header draws a Liquid Glass circle around any custom back view, centered on that view's frame, and six hand-rolled buttons with their own margins, sizes, and stretched text boxes each sat off-center in that circle. A font glyph also lands wherever the platform's line metrics put it, which a path doesn't. Screens say where back goes only when it isn't obvious ("Back to the front page").
 - **Empty states:** doodle scene (§4) + Lora Bold headline + Jost body + one primary action.
 - **Skeletons** (added 2026-08-22): the affordance for ordinary in-app waits — see §10 for which wait gets which. Placeholder type is drawn as `hairline` bars at `borderRadius.sm`, sized from the real variant (`fontSize × 0.62`) inside a box of its real `lineHeight` and scaled by `PixelRatio.getFontScale()`, so content lands with **no layout shift**. Photos and covers become hairline-edged blocks (the fill `AppImage` already shows for an unloaded photo); avatars become circles; role chips keep their outline and stay unfilled (§9's no-filled-chips rule holds even in a placeholder). **Structure is drawn for real** — rules, gaps, and section bands don't depend on the fetch, so they render at full strength and only the data-shaped slots breathe. Primitives live in `components/skeleton.tsx`; per-screen compositions in `components/skeletons/`, each mirroring one screen's real geometry. Never a card, never a tinted slab, never vermilion.
   - *Not to be confused with greeked lines* (§14): those are 7px `full`-radius pills, static, dissolving down a column, and they mean "the story continues" inside real content. Skeleton bars are taller, squared, and breathing. The two never appear on screen at the same time.
@@ -156,11 +157,13 @@ Flat editorial. **The polaroid (tape, tilt, white frame) is fully retired** — 
 
 | Wait | Affordance |
 | --- | --- |
-| Cold boot (fonts + auth), invite deep-link arrival, auto-join | the paperboy rides — no layout to preview, and it continues the splash (§12) |
+| Cold boot (fonts + auth), auto-join | the paperboy rides — no layout to preview, and it continues the splash (§12) |
 | Compile + deliver an edition (publish now) | the printing press runs — the one multi-second job |
-| Navigating to a screen whose layout we know | a **skeleton** of that screen (§9) |
+| Navigating to a screen whose layout we know — including an invite deep link's arrival and the compose sheet's first open | a **skeleton** of that screen (§9) |
 | Revalidating with content already on screen | **nothing** — never flash over what someone is reading |
 | A button-scoped action | the button's own spinner |
+
+**Moved 2026-10-03** (owner decision): invite deep-link arrival left the rider for a skeleton of the invitation page (`skeletons/invite-skeleton`), since the invitation's layout is known and the row above says a known layout gets a skeleton. The compose sheet's first open, which had a bare system spinner, now shows skeleton Group rows. The rider keeps cold boot and auto-join, where there is still no page to preview.
 
 The skeleton's breath is a **third motion register**, licensed here and nowhere else: a slow opacity pulse (~1100ms, trough 0.6) on placeholder fills only. It is ambient like illustration motion — it never blocks or delays, and it parks static under Reduce Motion — but it is allowed outside an illustration because it *is* the loading affordance rather than decoration on one. Nothing else in the UI may pulse or breathe.
 
@@ -206,6 +209,8 @@ Screen-by-screen mapping is in progress; this table is the contract for it.
 **Landed (loading pass, 2026-08-22):** skeleton placeholders (§9) replace the illustrated loader on the five in-app waits whose layout is knowable — Editions, Groups, the edition front page, the story reader, and group detail — and fill three screens that previously showed *nothing* while loading (Home's hero slot, the profile byline hero, the composer's page). `PrintingPressLoading` goes from 9 call sites to 4: cold boot and auto-join (`app/_layout.tsx`), invite deep-link arrival (`app/group/join.tsx`), and publish-now, which keeps the `press` variant. New: `components/skeleton.tsx` + `components/skeletons/`, `SkeletonConfig` in `constants/loading.ts`, `Strings.loading.*` a11y lines.
 
 Two behaviours changed alongside the visuals, because the swap is worthless without them: (1) the tab screens re-entered their loading state inside `useFocusEffect`, so the loader fired on **every** visit to Editions or Groups — the flag is now monotonic per account, and focus refetches revalidate silently behind the content; (2) the edition front page ran three sequential round trips before first paint, and the last two now go together (`Promise.all`), shortening the app's longest wait.
+
+**Landed (back button + loaders, 2026-10-03):** the shared `back-button` (§9) replaces six hand-rolled ones. Invite deep-link arrival and the compose sheet's first open get skeletons (§10), which leaves `PrintingPressLoading` with three call sites: cold boot and auto-join (`app/_layout.tsx`, the rider) and publish-now (`app/group/[id].tsx`, the press).
 
 **Still pending:** redefining `caption` to the 12px spec once the last v1 caption usages migrate.
 
