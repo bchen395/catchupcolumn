@@ -26,10 +26,12 @@ Every command is a dry run until you add --apply. --group takes a Group id or in
       and add it to the Group as a contributor. Safe to re-run.
 
   post-for --group G --email E [--body TEXT|@file|@-] [--title T]
-           [--photo path.jpg | --remove-photo] [--apply]
+           [--photo path.jpg]... [--remove-photo] [--apply]
       Write this member's post for the next edition, under their name. Updates
-      their existing draft if they have one. Refuses within 30 minutes of the
-      Group's publish slot, and for anyone who isn't a member.
+      their existing draft if they have one. --photo repeats, up to 4: the text,
+      then the photos in that order (replacing any photos the draft had).
+      Refuses within 30 minutes of the Group's publish slot, and for anyone who
+      isn't a member.
 
   create-group --name N --moderator E [--moderator-name "Name"] [--description D]
                [--publish-day 0-6|sunday] [--publish-time HH:MM] [--timezone Area/City] [--apply]

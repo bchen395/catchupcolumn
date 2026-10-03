@@ -1,8 +1,11 @@
 // Prepares a post photo the way the app's composer does before upload
-// (uploadPostImage + resizeImageForUpload in lib/posts.ts / lib/image.ts):
+// (uploadPostPhoto + resizeImage in lib/posts.ts / lib/image.ts):
 //
-//   * longest edge clamped to 2600px (print size — never upscaled),
-//   * one JPEG encode at quality 0.9, always JPEG, always `image.jpg`,
+//   * the print master: longest edge clamped to 2600px (never upscaled), one
+//     JPEG encode at quality 0.9,
+//   * the display copy the app and the email show: longest edge 1280px, one
+//     JPEG encode at quality 0.8 — made from the original, like the master,
+//     so neither is compressed twice,
 //   * metadata dropped by the re-encode — including GPS, which matters: these
 //     files are emailed and printed.
 //
@@ -23,15 +26,21 @@ import { Jimp } from 'https://esm.sh/jimp@1.6.1';
 
 import { Refusal } from './args.ts';
 
-// Mirrors POST_IMAGE_MAX_EDGE / POST_IMAGE_QUALITY in lib/posts.ts.
+// Mirror POST_IMAGE_MAX_EDGE / POST_IMAGE_QUALITY and POST_DISPLAY_MAX_EDGE /
+// POST_DISPLAY_QUALITY in lib/posts.ts.
 export const POST_IMAGE_MAX_EDGE = 2600;
 const POST_IMAGE_QUALITY = 90;
+const POST_DISPLAY_MAX_EDGE = 1280;
+const POST_DISPLAY_QUALITY = 80;
 const MAX_INPUT_BYTES = 60 * 1024 * 1024;
 
+export type EncodedJpeg = { bytes: Uint8Array; width: number; height: number };
+
 export type PreparedPhoto = {
-  bytes: Uint8Array;
-  width: number;
-  height: number;
+  /** The print master — `<photo_id>.jpg`. */
+  master: EncodedJpeg;
+  /** The display copy — `<photo_id>-display.jpg`. */
+  display: EncodedJpeg;
   source: { format: 'jpeg' | 'png'; width: number; height: number; bytes: number };
   iccProfileCopied: boolean;
 };
@@ -123,41 +132,53 @@ export const preparePostPhoto = async (path: string): Promise<PreparedPhoto> => 
   }
   if (format === 'unknown') throw new Refusal(`--photo ${path} is not a JPEG or PNG`);
 
-  const image = await Jimp.read(src.slice().buffer);
-  const source = { format, width: image.bitmap.width, height: image.bitmap.height, bytes: src.length };
+  // Each output decodes the original afresh: jimp resizes in place, and a
+  // display copy cut from the encoded master would be compressed twice.
+  const encode = async (
+    maxEdge: number,
+    quality: number,
+  ): Promise<{ jpeg: EncodedJpeg; copied: boolean; sourceWidth: number; sourceHeight: number }> => {
+    const image = await Jimp.read(src.slice().buffer);
+    const { width, height } = image.bitmap;
+    const longest = Math.max(width, height);
+    if (longest > maxEdge) {
+      const scale = maxEdge / longest;
+      // No `mode`: jimp's default resizer area-averages when shrinking, which
+      // is what a downscale wants (point-sampled modes alias).
+      image.resize({ w: Math.round(width * scale), h: Math.round(height * scale) });
+    }
+    const encoded = new Uint8Array(await image.getBuffer('image/jpeg', { quality }));
+    const { bytes, copied } =
+      format === 'jpeg' ? withIccProfile(encoded, src) : { bytes: encoded, copied: false };
+    assertNoMetadata(bytes);
+    return {
+      jpeg: { bytes, width: image.bitmap.width, height: image.bitmap.height },
+      copied,
+      sourceWidth: width,
+      sourceHeight: height,
+    };
+  };
 
-  const longest = Math.max(source.width, source.height);
-  if (longest > POST_IMAGE_MAX_EDGE) {
-    const scale = POST_IMAGE_MAX_EDGE / longest;
-    // No `mode`: jimp's default resizer area-averages when shrinking, which is
-    // what a downscale for print wants (point-sampled modes alias).
-    image.resize({
-      w: Math.round(source.width * scale),
-      h: Math.round(source.height * scale),
-    });
-  }
-
-  const encoded = new Uint8Array(await image.getBuffer('image/jpeg', { quality: POST_IMAGE_QUALITY }));
-  const { bytes, copied } =
-    format === 'jpeg' ? withIccProfile(encoded, src) : { bytes: encoded, copied: false };
-  assertNoMetadata(bytes);
+  const master = await encode(POST_IMAGE_MAX_EDGE, POST_IMAGE_QUALITY);
+  const display = await encode(POST_DISPLAY_MAX_EDGE, POST_DISPLAY_QUALITY);
 
   return {
-    bytes,
-    width: image.bitmap.width,
-    height: image.bitmap.height,
-    source,
-    iccProfileCopied: copied,
+    master: master.jpeg,
+    display: display.jpeg,
+    source: { format, width: master.sourceWidth, height: master.sourceHeight, bytes: src.length },
+    iccProfileCopied: master.copied,
   };
 };
 
-/** "2600×1950 JPEG, 412 KB (from a 4032×3024 JPEG, 3.1 MB; colour profile kept)" */
-export const describePhoto = (p: PreparedPhoto): string => {
-  const size = (n: number) =>
-    n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
-  return (
-    `${p.width}×${p.height} JPEG, ${size(p.bytes.length)} ` +
-    `(from a ${p.source.width}×${p.source.height} ${p.source.format.toUpperCase()}, ${size(p.source.bytes)}` +
-    `${p.iccProfileCopied ? '; colour profile kept' : ''}; metadata stripped)`
-  );
-};
+const size = (n: number) =>
+  n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
+
+/**
+ * "2600×1950 JPEG, 412 KB + display 1280×960, 160 KB (from a 4032×3024 JPEG,
+ * 3.1 MB; colour profile kept; metadata stripped)"
+ */
+export const describePhoto = (p: PreparedPhoto): string =>
+  `${p.master.width}×${p.master.height} JPEG, ${size(p.master.bytes.length)} ` +
+  `+ display ${p.display.width}×${p.display.height}, ${size(p.display.bytes.length)} ` +
+  `(from a ${p.source.width}×${p.source.height} ${p.source.format.toUpperCase()}, ${size(p.source.bytes)}` +
+  `${p.iccProfileCopied ? '; colour profile kept' : ''}; metadata stripped)`;
