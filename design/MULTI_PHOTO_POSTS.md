@@ -65,7 +65,16 @@ window of days.
   renders the blocks with display copies (and a fixture at 8 posts × 4 photos
   under Gmail's clip). `AppImage` cache keys. `post-for --photo` repeatable.
   CLAUDE.md schema and the data-layer / edge-functions skills. Backward
-  compatible, so it merges on its own, before the go.
+  compatible, so it merges on its own, before the go. *As built:* the check
+  also rejects unknown keys and non-positive width/height, and accepts a
+  photo with id `legacy` at `<folder>/image.jpg`, so a composer can save a
+  pre-multi-photo draft's photo back as a block. The payload also returns
+  `author_id`, and the email worker re-checks every photo's folder before
+  signing — which also closes the same hole for legacy `image_url`, left
+  unconstrained in the database for old builds. `AppImage` keeps the per-URL
+  cache key for the legacy `image.<ext>` name, which the single-photo composer
+  overwrites in place. `post-for` uploads display copies (jimp) and deletes
+  the files of photos it replaces or removes.
 - **C — composer.** The block editor and the redesign. Unmerged until the go.
 - **D — reading surfaces.** Story reader, edition front page, Home hero,
   thumbnails, through `postBlocksOf` and `photoDisplayPath`. Unmerged until the
