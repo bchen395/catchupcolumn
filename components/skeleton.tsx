@@ -27,8 +27,10 @@ import { useReduceMotion } from '@/hooks/use-reduce-motion';
 /**
  * Skeleton placeholders (BRAND §9/§10) — the affordance for ordinary in-app
  * waits, where we already know the shape of the page we're about to draw. The
- * illustrated loaders (`PrintingPressLoading`) stay for cold starts and the
- * long publish job; see BRAND §10 for the boundary.
+ * illustrated loader (`PrintingPressLoading`) has three call sites left: the
+ * rider for cold boot and auto-join (app/_layout.tsx) and the press for
+ * publish-now (app/group/[id].tsx). Invite deep-link arrival moved to a
+ * skeleton on 2026-10-03. See BRAND §10 for the boundary.
  *
  * Two rules make these read as editorial rather than bolted-on:
  *

@@ -13,6 +13,11 @@
  * deliberately *not* here — `custom-tab-bar.tsx` owns its own `TAB_META`
  * (a known inconsistency, noted in the `frontend-design` skill); duplicating
  * them here just left dead tokens behind.
+ *
+ * The back chevron isn't here either: `components/back-button.tsx` draws it as
+ * an SVG path, because a font glyph lands wherever the platform's line metrics
+ * put it and that button has to center its arrow exactly (BRAND §9). Use the
+ * component; don't add a back glyph token.
  */
 
 import type { ComponentProps } from 'react';
