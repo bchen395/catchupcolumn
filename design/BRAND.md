@@ -6,12 +6,14 @@ The v2 migration has reached every screen, including the illustration phase (pap
 
 ## 1. The idea
 
-Two references, one split of responsibilities:
+Two references, one split of responsibilities. This is how v2 began (2026-07-17):
 
 - **NYT owns structure.** Hierarchy, hairline rules, kickers, decks, small-caps metadata, edge-to-edge content columns, restraint. The edition — real stories from your people, real photos — is treated with the dignity of photojournalism.
 - **HeyTea owns charm.** A recurring hand-drawn monoline character and his world carry all the warmth. Illustration lives in the app's *chrome* (splash, loading, empty states, celebrations, invites) and never competes with members' content.
 
 The two registers are kept deliberately separate. When they blur — doodles in the edition, bouncy buttons, colored surfaces — the design fails in both directions at once.
+
+**The drawings move away from HeyTea (2026-10-03).** The split above is v2's history. NYT still owns structure, and the illustrations still carry the warmth and stay in chrome. But a commissioned artist is redrawing the illustrations (§4), and the redraw deliberately leaves HeyTea behind. The drawing style is now described in our own terms: the newspaper's world, drawn in the artist's own hand. HeyTea is named only as what to stay away from. The local `screenshots/HeyTea/` references record where v2 started. They are not a reference for the drawings and don't go to the artist. Nothing else in the app changes for this reason: the stamps, the small caps and the raised "+" all stay.
 
 ## 2. Color
 
@@ -65,23 +67,33 @@ Body text never below 16px; `meta`/`caption`/`kicker` are the only sub-16 sizes 
 
 The warmth engine, and the only place the app is allowed to be cute.
 
-**Cast.** A **paperboy** — cap, bike, canvas bag of rolled papers — in HeyTea's monoline style. His **dog** runs alongside and catches the paper. Supporting objects: rolled newspapers, the **printing press**, a mailbox, a coffee mug, reading glasses, the ticket and stamp (§11). One world, one hand.
+**Cast.** A **paperboy** — cap, bike, canvas bag of rolled papers. His **dog** runs alongside and catches the paper. Supporting objects: rolled newspapers, the **printing press**, a mailbox, a coffee mug, reading glasses, the press pass and the stamp (§11). One world, one hand. The cast is fixed; the redraw changes how they're drawn, not who they are.
+
+**The style, in our own terms** (rewritten 2026-10-03; it used to be defined as HeyTea's, see §1). These are the paper's own spot drawings: the small inked drawings a newspaper runs in its margins and at the end of a column. They are economical, confident and a little funny, and made to print small in black ink plus one spot color. Inside that frame, the goal is the commissioned artist's own hand. **HeyTea is a "don't."** The v2 drafts leaned on it, and the redraw should not look like it. If a sketch reads as HeyTea, it's off-brief.
 
 **Style spec (binding for every asset):**
-- Monoline ink stroke, uniform weight (~2.5% of the asset's height — reads as ~2px at 80px), round caps and joins, `#000` strokes.
-- Minimal fills: flat black for hair/cap-band-type masses (like HeyTea's boy), paper-white elsewhere. No gradients, no gray shading, no outlines-around-fills.
-- Vermilion appears only as a deliberate spot: the cap, a stamped `EXTRA!`, hand-lettering on a ticket. At most one vermilion element per scene.
-- Wobble is honest: lines drawn by hand (or convincingly so), not a mechanical "sketchy" filter. Proportions are HeyTea's — big heads, simple hands, no faces beyond a line-nose and dot-eye.
+- **A monoline ink line.** Each line holds an even weight along its length. No brush swell, no taper, no hatching, and no mechanical "sketchy" filter. Lines are drawn by hand, or convincingly so. Strokes are `#000`.
+- **Line weight is the artist's call** (decided 2026-10-03). There is no rule up front. In the sketch round the artist proposes the line treatment: one weight or a contour/detail pair, plus how lines end and join. Once agreed, it is fixed for the whole set and written here. The one hard requirement is legibility at each drawing's rendered size: the mug renders at 40pt, the sleeping dog at 84 × 38.5pt, the Home rider at 48pt tall, the colophon glyph at 14pt. *(Retired: "uniform weight, ~2.5% of the asset's height." No draft met it, and at doodle sizes it would have made the lines vanish. The record is in `ILLUSTRATION_REWORK.md`.)*
+- **Flat color only.** Use flat `#000` for ink masses (hair, a dog's ears), paper-white (`paper`) inside closed shapes, and the one vermilion spot. No gradients, no gray shading or tints, no texture, no outlines-around-fills.
+- **At most one vermilion spot per scene.** It is the paper's single spot ink: the paperboy's cap, the wrap band on a rolled paper, the press lever's knob. The press pass spends its spot on the live invite code (§11), so the drawing itself has none.
+- **Proportions, faces and poses are the artist's.** The test is that each one reads at the size it's rendered.
 - Every asset sits directly on `paperWarm`/`paper` — never in a colored container, never with a drop shadow.
 
 **Where doodles live (and don't).** Chrome only; **editions stay editorial** (decided 2026-07-17):
 - **Splash/loading:** the paperboy rides; wheels spin (§10). Long waits (compile, publish) get the printing press running. **Narrowed 2026-08-22:** the rider now covers cold boot and invite arrival only — ordinary in-app navigation gets a skeleton instead (§9/§10). **Narrowed again 2026-10-03:** invite arrival moved to a skeleton too, so the rider is cold boot and auto-join.
 - **Empty states:** scene + Lora Bold headline + Jost body, warm and never apologetic. (Empty editions list: paperboy waiting at a mailbox. No groups: dog holding a rolled paper, "Start your group's paper.")
-- **Onboarding, invite, welcome:** the dog catches the paper on the welcome screen; the ticket carries the invite (§11).
+- **Onboarding, invite, welcome:** the press pass carries the invite (§11; the ticket does until the pass is drawn). The dog catching the paper on the welcome screen was promised here but never built. It is round-2 work (see "The commissioned redraw" below).
 - **Profile/settings flourishes and hidden corners:** small easter-egg doodles in quiet corners — the dog asleep under the final hairline of the editions list, a mug by the settings footer. Delight, zero function.
 - **The edition front page and story reader get none of this.** Members' photos never share a page with cartoons. The single sanctioned mark: a tiny inked ornament (rolled-paper glyph) in the masthead/colophon where v1 used ◆.
 
-**Pipeline.** `react-native-svg` components, one file per asset, strokes/fills bound to tokens. Motion (wheel spin, press cycle, dog leap) is Reanimated transforms on SVG groups — no Lottie dependency. Draft assets may be AI-assisted or self-drawn *to this spec*; a commissioned illustrator can later redraw to the same spec without touching call sites. (Decided 2026-07-17: the full set — characters included — ships as in-house drafts to spec; commissioning is a later, optional upgrade.)
+**Pipeline.** `react-native-svg` components, one file per asset, strokes/fills bound to tokens. Motion (wheel spin, press cycle, dog leap) is Reanimated transforms on SVG groups — no Lottie dependency. (Decided 2026-07-17: the full set, characters included, shipped as in-house drafts, with commissioning left as a later, optional upgrade. That is now superseded, below.)
+
+**The commissioned redraw** (decided 2026-09-25 and 2026-10-03). An outside artist is redrawing the set. The App Store release waits for it; TestFlight doesn't.
+- *Round 1:* the 8 existing drawings, the press pass (replacing the ticket, §11), the app icon and the splash (§12).
+- *Round 2, after Group Zero:* new moments, chosen from what testers show. Those are the dog catching the paper on the welcome screen, art for the sign-in screen, and art for error states.
+- *Deliverable:* vector SVG plus source files, with the animated parts as named groups placed on the full artboard. The full file spec, the export contracts and the rendered sizes are in `ILLUSTRATION_REWORK.md`, which folds into this section when the art lands.
+- *Integration is agent work:* each SVG goes into its existing component file and keeps that file's export contract, so call sites don't change. The animation geometry is re-measured in the same commit. The SVGs reach installed builds by OTA update; the icon and splash need a new build.
+- The owner negotiates rights, fee and dates; they aren't recorded here.
 
 ## 5. Photography
 
@@ -169,13 +181,14 @@ The skeleton's breath is a **third motion register**, licensed here and nowhere 
 
 **Haptics:** v1 system survives verbatim — `tap()` / `select()` / `confirm()`, sparse on purpose, secondary buttons silent.
 
-## 11. Artifacts — the HeyTea devices
+## 11. Artifacts — the paper's own objects
 
-Physical-print objects rendered as monoline drawings. All four are in the component library; each has a strict scope.
+Physical-print objects rendered as monoline drawings, each with a strict scope. (This section was called "the HeyTea devices" until 2026-10-03; renamed with §1's move away from HeyTea.)
 
-- **The ticket** (`invite-ticket`): invite codes render as a hand-drawn perforated ticket — wobbly outline, dashed tear line, the dog on the stub. **The code is live text** (Jost Bold, tracked, vermilion — the ticket's one accent), not the baked hand-lettering originally sketched here: codes are per-Group dynamic, so hand-lettering can't carry them (decided 2026-07-17; §3's rule stands — hand-lettering remains for static words baked into art only). Used for the sender's invite card. Replaces the plain code chip. The QR variant keeps a true-`paper` quiet zone (nothing may texture the code).
+- **The press pass** (decided 2026-10-03). It replaces the ticket below once the artist's drawing lands. The invite becomes a drawn newspaper staff card: the Group's name is its masthead, and the invite code is the credential number. The framing is *you're joining the staff*: everyone in a Group writes, so an invitation is a press credential, not an admission ticket. The masthead and the code are both **live text**, because both are different for every Group and §3 keeps changing text out of drawn art. The name is set as a masthead in Lora Bold. The code is Jost Bold, tracked, in vermilion, which is the pass's one accent, so the drawing carries no vermilion. The artist leaves a defined rectangle for each; the spec is in `ILLUSTRATION_REWORK.md`. The pass goes on the sender's invite card (`invite-card`) and is still the whole tap-to-copy target there. The QR variant keeps its true-`paper` quiet zone.
+- **The ticket** (`invite-ticket`; in the app until the press pass lands): invite codes render as a hand-drawn perforated ticket — wobbly outline, dashed tear line, the dog on the stub. **The code is live text** (Jost Bold, tracked, vermilion — the ticket's one accent), not the baked hand-lettering originally sketched here: codes are per-Group dynamic, so hand-lettering can't carry them (decided 2026-07-17; §3's rule stands — hand-lettering remains for static words baked into art only). Used for the sender's invite card. Replaces the plain code chip. The QR variant keeps a true-`paper` quiet zone (nothing may texture the code).
 - **The stamp system** (`ink-stamp`): one recipe, a family of faces — `FILED` (compose save, −4°), `JOINED · {date}` (welcome, +3°), `DELIVERED` (edition email/push moments). Vermilion ink, small caps, slight tilt, 350ms press-in + `confirm()` haptic, screen-reader announced. The sanctioned use of vermilion-as-celebration; never two stamps on one screen.
-- **The hand-drawn border** — ~~`sketch-border`~~, **deleted 2026-09-10**. HeyTea's wobbly rectangle, one SVG component: it framed *special announcements only* — a new edition banner, a birthday-adjacent moment; never regular list content, never twice on a screen. It shipped in the 2026-07-17 illustration phase but was never imported by any screen, and `ILLUSTRATION_REWORK.md` ("Adjacent gaps") called for either wiring it or deleting it rather than leaving it undecided. Deleted in the 2026-09-10 audit. **The rule above still stands** — recreate the component from this paragraph if an announcement moment ever earns it; recover the original with `git show 5c44dd9:components/illustrations/sketch-border.tsx`.
+- **The hand-drawn border** — ~~`sketch-border`~~, **deleted 2026-09-10**. A wobbly hand-drawn rectangle, one SVG component: it framed *special announcements only* — a new edition banner, a birthday-adjacent moment; never regular list content, never twice on a screen. It shipped in the 2026-07-17 illustration phase but was never imported by any screen, and `ILLUSTRATION_REWORK.md` ("Adjacent gaps") called for either wiring it or deleting it rather than leaving it undecided. Deleted in the 2026-09-10 audit. **The rule above still stands** — recreate the component from this paragraph if an announcement moment ever earns it; recover the original with `git show 5c44dd9:components/illustrations/sketch-border.tsx`.
 - **Hidden corner doodles:** tiny, functionless, tucked into quiet corners (list ends, settings footer, error screens). The rule: below the fold of function, small (≤48px), and never animated.
 
 ## 12. Brand & identity
