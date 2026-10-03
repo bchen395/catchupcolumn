@@ -59,6 +59,7 @@ export const Strings = {
     story: 'Turning to the story…',
     profile: 'Finding your desk…',
     composer: 'Getting your page ready…',
+    invite: 'Opening your invitation…',
   },
 
   // Screen-reader labels for the shared back button (components/back-button).
@@ -208,7 +209,6 @@ export const Strings = {
   // have the app yet, so every line stays warm and person-to-person.
   invite: {
     kicker: 'You’re invited',
-    loading: 'Opening your invitation…',
     introManual: 'Someone saving you a seat? Ask them for the invite code on their Group’s page.',
     codeLabel: 'Invite code',
     codePlaceholder: 'e.g. A1B2C3',

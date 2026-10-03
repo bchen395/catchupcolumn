@@ -15,7 +15,7 @@ import { BackButton } from '@/components/back-button';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
 import { InviteHero } from '@/components/invite-hero';
-import { PrintingPressLoading } from '@/components/printing-press-loading';
+import { InviteSkeleton } from '@/components/skeletons/invite-skeleton';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/colors';
@@ -158,7 +158,9 @@ const JoinGroupScreen = () => {
     <>
       <Stack.Screen
         options={{
-          title: inInvitationMode ? '' : 'Join a Group',
+          // The arriving invitation is a page with no title, so its skeleton
+          // gets none either — "Join a Group" belongs to code entry.
+          title: inInvitationMode || openingLink ? '' : 'Join a Group',
           headerLeft: () => (
             <BackButton
               onPress={() => {
@@ -174,7 +176,7 @@ const JoinGroupScreen = () => {
         }}
       />
       {openingLink ? (
-        <PrintingPressLoading message={Strings.invite.loading} />
+        <InviteSkeleton signedIn={Boolean(user)} />
       ) : (
         <KeyboardAvoidingView
           style={styles.flex}
