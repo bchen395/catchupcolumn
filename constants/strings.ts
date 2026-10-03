@@ -61,6 +61,12 @@ export const Strings = {
     composer: 'Getting your page ready…',
   },
 
+  // Screen-reader labels for the shared back button (components/back-button).
+  nav: {
+    back: 'Go back',
+    backToFrontPage: 'Back to the front page',
+  },
+
   // StatusBanner kicker lead-ins (BRAND §9) — warm small-caps voices, never
   // technical. Success wears the info dress; the words carry the good news.
   banner: {

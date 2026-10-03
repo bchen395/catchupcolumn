@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -6,13 +5,13 @@ import {
     Keyboard,
     KeyboardAvoidingView,
     Platform,
-    Pressable,
     ScrollView,
     StyleSheet,
     View,
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
+import { BackButton } from '@/components/back-button';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
 import { InviteHero } from '@/components/invite-hero';
@@ -161,7 +160,7 @@ const JoinGroupScreen = () => {
         options={{
           title: inInvitationMode ? '' : 'Join a Group',
           headerLeft: () => (
-            <Pressable
+            <BackButton
               onPress={() => {
                 // On a cold deep-link start there may be nothing to pop.
                 if (router.canGoBack()) {
@@ -170,13 +169,7 @@ const JoinGroupScreen = () => {
                   router.replace(user ? '/(tabs)/home' : '/(auth)/login');
                 }
               }}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-              style={styles.backButton}
-              hitSlop={8}
-            >
-              <Ionicons name="chevron-back" size={26} color={Colors.ink} />
-            </Pressable>
+            />
           ),
         }}
       />
@@ -311,9 +304,6 @@ const JoinGroupScreen = () => {
 export default JoinGroupScreen;
 
 const styles = StyleSheet.create({
-  backButton: {
-    marginLeft: 4,
-  },
   flex: {
     flex: 1,
     backgroundColor: Colors.paperWarm,
