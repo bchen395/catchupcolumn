@@ -90,6 +90,7 @@ Flat editorial. **The polaroid (tape, tilt, white frame) is fully retired** — 
 - Square corners, no rotation, no frames. A `hairline` edge on photos that touch `paperWarm` (newsprint photos have edges).
 - Sizes: full-measure or column-width per layout — orientation buckets from v1 (`use-image-orientation`: 4:3 / 4:5 / 1:1, portrait holds a text-wrapped column) survive unchanged; only the skin changes.
 - Captions/credits: `caption` Jost in `inkSoft` below the photo, left-aligned, NYT-style ("Photo by Ruth").
+- **Photos set into a post** (decided 2026-10-03, `design/MULTI_PHOTO_POSTS.md`): a post can set up to four photos into its writing, and the story reader shows them in place, in reading order, each in its own orientation bucket (`story-blocks`). The credit runs **once per post, under its first photo** — every photo in a post is its author's, so a line under each would be noise. A photo set into text gets a 32px gap above and below (a little more than a paragraph break); consecutive photos close to a 16px gutter so a run reads as one set. Anywhere a post is shown as one picture — the front-page slots, Home's hero, the Editions-list thumbnail — it's the post's first photo; the rest wait in the reader. Screens load each photo's ~1280px display copy, never the 2600px print master, and a photo that carries its size reserves its exact plate from the first frame (older photos are measured as they load).
 - Avatars stay round (bylines, member stacks) — the one curved photo shape, and it reads as a byline convention, not a card.
 
 ## 6. Layout & density
