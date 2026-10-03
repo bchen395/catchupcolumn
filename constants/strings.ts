@@ -177,6 +177,48 @@ export const Strings = {
     newFlag: 'New',
   },
 
+  // The composer (BRAND §9): one page — an optional headline, then your
+  // writing with photos set into it — and a pinned bar with "Add a photo",
+  // a quiet save line, and the one finishing action. You "file" a story,
+  // you don't "save a form"; autosave is the silent safety net.
+  compose: {
+    fileCta: 'File my story',
+    updateCta: 'Update my story',
+    headlinePlaceholder: 'Add a headline',
+    bodyPlaceholder: 'What’s been happening this week?',
+    // A story is writing first — the first save needs some words.
+    needsWords: 'Write a few words before filing your story.',
+    addPhoto: 'Add a photo',
+    // Under the disabled "Add a photo" once a story has all its photos.
+    photoLimit: (max: number) => `Up to ${max} photos per story`,
+    removePhoto: 'Remove photo',
+    retryPhoto: 'Try again',
+    photoFailed: 'This photo didn’t upload.',
+    // The bar's quiet status line, most important first.
+    autosaveError: 'Couldn’t save — your words are still here',
+    photoFailedStatus: 'A photo didn’t upload',
+    photosWaitForWords: 'Photos save once you’ve written a few words',
+    uploadingPhotos: (count: number) => (count === 1 ? 'Adding your photo…' : 'Adding your photos…'),
+    saving: 'Saving…',
+    saved: 'Saved',
+    removePostLink: 'Remove this week’s post',
+    removePostTitle: 'Remove this week’s post?',
+    removePostBody:
+      'Your story and its photos will come out of this week’s edition. You can write a new one any time before it goes out.',
+    removePostCta: 'Remove',
+    cancel: 'Cancel',
+    // Screen-reader names for the pieces of the page.
+    a11yStory: 'Your story',
+    a11yStoryAfterPhoto: (n: number) => `Your story, after photo ${n}`,
+    a11yPhoto: (n: number, total: number) => `Photo ${n} of ${total}`,
+    a11yPhotoUploading: 'uploading',
+    a11yPhotoFailed: 'didn’t upload',
+    a11yPhotoHint: 'Double-tap to select it.',
+    a11yPhotoSelected: (n: number, total: number) =>
+      `Photo ${n} of ${total} selected. Press delete again to remove it.`,
+    a11yPhotoRemoved: 'Photo removed.',
+  },
+
   // The edition's closing folio — a newspaper's "end of the page, on purpose"
   // mark. `brand` and `folio` print on every edition; `nextEdition` is the
   // forward-looking loop line shown only on a Group's most-recent edition (the

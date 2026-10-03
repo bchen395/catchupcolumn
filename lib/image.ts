@@ -42,7 +42,16 @@ const getImageSize = (uri: string): Promise<{ width: number; height: number }> =
 export const resizeImageForUpload = async (
   uri: string,
   options: ResizeOptions = {},
-): Promise<string> => {
+): Promise<string> => (await resizeImage(uri, options)).uri;
+
+/**
+ * `resizeImageForUpload`, also returning the result's pixel size — post photos
+ * store it so layouts can reserve their space before the image loads.
+ */
+export const resizeImage = async (
+  uri: string,
+  options: ResizeOptions = {},
+): Promise<{ uri: string; width: number; height: number }> => {
   const maxEdge = options.maxEdge ?? DEFAULT_MAX_EDGE;
   const quality = options.quality ?? DEFAULT_QUALITY;
 
@@ -63,5 +72,5 @@ export const resizeImageForUpload = async (
     format: ImageManipulator.SaveFormat.JPEG,
   });
 
-  return result.uri;
+  return { uri: result.uri, width: result.width, height: result.height };
 };

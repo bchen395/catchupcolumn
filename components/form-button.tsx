@@ -15,6 +15,9 @@ type FormButtonProps = {
   loading?: boolean;
   disabled?: boolean;
   accessory?: ReactNode;
+  // Caps Dynamic Type for a button pinned in chrome (the composer's bar), so
+  // it can't grow over the content it serves. Uncapped everywhere else.
+  maxFontSizeMultiplier?: number;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -25,6 +28,7 @@ export const FormButton = ({
   loading = false,
   disabled = false,
   accessory,
+  maxFontSizeMultiplier,
   style,
 }: FormButtonProps) => {
   const inactive = disabled || loading;
@@ -55,7 +59,11 @@ export const FormButton = ({
       ) : (
         <>
           {accessory}
-          <ThemedText variant="label" style={textStyles[variant]}>
+          <ThemedText
+            variant="label"
+            style={textStyles[variant]}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
+          >
             {title}
           </ThemedText>
         </>

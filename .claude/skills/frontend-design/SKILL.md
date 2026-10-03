@@ -67,6 +67,7 @@ You're working on the UI of a private group-newsletter app. **Audience (set 2026
 | `edition-row` | One row of the Editions list: headline, folio line, and the lead photo (which it signs itself — `posts.image_url` is a private storage path, never a URL). Memoised. |
 | `custom-tab-bar` | The 5-slot bar with the raised ink-black "+". |
 | `compose-sheet-provider` / `compose-group-sheet` | The "write for…" group-picker sheet the "+" opens. |
+| `composer/*` | The composer (BRAND §9 → "The composer"): `composer-page` (the sheet — headline, rule, the flow of `composer-text-piece` fields and `composer-photo`s), `compose-action-bar` (pinned bar: labeled "Add a photo", status line, "File my story"; labels capped at 1.6×), `composer-masthead` (Group name/switcher + dateline), `composer-status` (the status line's ranking). Editing rules live in `lib/composer-blocks.ts`; draft/autosave/uploads in `hooks/use-composer-draft.ts`; cursor and backspace behaviour in `hooks/use-block-editor.ts`. |
 | `empty-state` / `error-state` | Lora Bold headline + Jost body + ink-pill CTA. `EmptyState` takes a §4 doodle `scene` (falls back to a plain ink icon); error states keep the quiet `error`-color icon. Copy from `Strings`. |
 | `status-banner` | Text-first hairline band (BRAND §9): kicker voice + one Jost line. Success wears the info dress. |
 | `ink-stamp` | The §11 stamp system — one recipe, faces by props: FILED (tilt −4, 'moment'), JOINED (tilt +3, 'record'). Never two stamps on one screen. |

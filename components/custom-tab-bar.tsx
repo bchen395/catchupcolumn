@@ -92,7 +92,9 @@ export const CustomTabBar = ({ state, navigation }: BottomTabBarProps) => {
 };
 
 const RAISED_DIAMETER = 64;
-const RAISED_LIFT = 24;
+// How far the "+" rises above the bar. Anything pinned to the bar's top edge
+// (the composer's action bar) keeps this much room clear.
+export const RAISED_LIFT = 24;
 const BAR_HEIGHT = 60;
 
 const styles = StyleSheet.create({

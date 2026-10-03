@@ -1,6 +1,7 @@
-import { resizeImageForUpload } from '@/lib/image';
+import { resizeImage } from '@/lib/image';
+import { postPhotoPaths } from '@/lib/post-blocks';
 import { supabase } from '@/lib/supabase';
-import type { PostInsert, PostRow, PostUpdate } from '@/types';
+import type { PostInsert, PostPhotoBlock, PostRow, PostUpdate } from '@/types';
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -87,7 +88,7 @@ export const fetchThisWeeksBylines = async (groupIds: string[]): Promise<WeeklyB
 // ---------------------------------------------------------------------------
 
 export const createPost = async (
-  input: Pick<PostInsert, 'group_id' | 'author_id' | 'body' | 'image_url' | 'title'>,
+  input: Pick<PostInsert, 'group_id' | 'author_id' | 'body' | 'image_url' | 'title' | 'blocks'>,
 ): Promise<PostRow> => {
   const { data, error } = await supabase
     .from('posts')
@@ -153,25 +154,24 @@ const POST_IMAGE_SIGNED_TTL_SECONDS = 60 * 60; // 1 hour
 const POST_IMAGE_MAX_EDGE = 2600;
 const POST_IMAGE_QUALITY = 0.9;
 
-// Storage RLS on `post-images` requires the first path segment to equal
-// auth.uid()::text, so the path must start with the uploading user's id.
-export const uploadPostImage = async (
-  userId: string,
-  postId: string,
-  imageUri: string,
-): Promise<string> => {
-  // Resize + JPEG-recompress at print bounds (see POST_IMAGE_MAX_EDGE above).
-  const resizedUri = await resizeImageForUpload(imageUri, {
-    maxEdge: POST_IMAGE_MAX_EDGE,
-    quality: POST_IMAGE_QUALITY,
-  });
-  const imageResponse = await fetch(resizedUri);
+// The display copy saved beside each master (decided 2026-10-03). The Free
+// plan has no image transformations, so without it every screen and every
+// email recipient downloaded the ~1.5 MB print master; at Group Zero's size
+// that alone would pass the plan's 5 GB monthly egress. 1280px covers a
+// full-width photo on the widest phone at 3x; the app and email show this,
+// and only print reads the master.
+const POST_DISPLAY_MAX_EDGE = 1280;
+const POST_DISPLAY_QUALITY = 0.8;
+
+// Upload one local JPEG to `post-images`. Storage RLS requires the first path
+// segment to equal auth.uid()::text, so `storagePath` must start with the
+// uploading user's id.
+const uploadJpeg = async (storagePath: string, localUri: string): Promise<void> => {
+  const imageResponse = await fetch(localUri);
   if (!imageResponse.ok) {
     throw new Error(`Failed to read image for upload (${imageResponse.status})`);
   }
   const imageBuffer = await imageResponse.arrayBuffer();
-  // After resize we always have JPEG, so the extension is fixed.
-  const storagePath = `${userId}/posts/${postId}/image.jpg`;
 
   const { error } = await supabase.storage
     .from(POST_IMAGE_BUCKET)
@@ -180,8 +180,62 @@ export const uploadPostImage = async (
   if (error) {
     throw error;
   }
+};
 
-  return storagePath;
+// Upload one photo of a post: the print master, then its display copy, both
+// made from the original so neither is compressed twice. Returns the block to
+// put in `posts.blocks`. A failed display upload isn't fatal — the block
+// keeps `display_path: null` and screens fall back to the master.
+export const uploadPostPhoto = async (
+  authorId: string,
+  postId: string,
+  photoId: string,
+  localUri: string,
+): Promise<PostPhotoBlock> => {
+  const { path, display_path } = postPhotoPaths(authorId, postId, photoId);
+
+  const master = await resizeImage(localUri, {
+    maxEdge: POST_IMAGE_MAX_EDGE,
+    quality: POST_IMAGE_QUALITY,
+  });
+  await uploadJpeg(path, master.uri);
+
+  let displayPath: string | null = display_path;
+  try {
+    const display = await resizeImage(localUri, {
+      maxEdge: POST_DISPLAY_MAX_EDGE,
+      quality: POST_DISPLAY_QUALITY,
+    });
+    await uploadJpeg(display_path, display.uri);
+  } catch (err) {
+    console.warn('Display copy upload failed; the master will be shown', err);
+    displayPath = null;
+  }
+
+  return {
+    type: 'photo',
+    id: photoId,
+    path,
+    display_path: displayPath,
+    width: master.width,
+    height: master.height,
+  };
+};
+
+// Remove photos' files (master and display copy). Call only after the save
+// that drops them from `blocks` has succeeded, so no stored post ever points
+// at a deleted file. Legacy photos are skipped: their path may be an old
+// public URL rather than a storage path.
+export const deletePostPhotoFiles = async (photos: PostPhotoBlock[]): Promise<void> => {
+  const paths = photos
+    .filter((p) => p.id !== 'legacy')
+    .flatMap((p) => (p.display_path ? [p.path, p.display_path] : [p.path]));
+  if (paths.length === 0) return;
+
+  const { error } = await supabase.storage.from(POST_IMAGE_BUCKET).remove(paths);
+  if (error) {
+    throw error;
+  }
 };
 
 // Legacy rows stored the full public URL; extract the storage path so we can
