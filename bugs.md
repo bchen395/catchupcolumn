@@ -285,7 +285,7 @@ Deploying edge functions.
    plugin with `enableFullScreenImage_legacy`), the tab bar (now
    `expo-router/js-tabs`), and Reanimated 4.5 animations. **Due before
    submission is too late:** the first build is the Group Zero TestFlight
-   build, which editions 3–4 need (POSITIONING §6).
+   build, which Group Zero runs on from edition 1 (POSITIONING §6).
    **Partly done 2026-09-24:** an EAS `preview` build (simulator) built clean
    on Xcode 26.6 — the splash hides, Lora/Jost load, the sign-in screen
    renders, launch logs are clean. The tab bar and Reanimated are behind

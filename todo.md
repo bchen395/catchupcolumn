@@ -40,7 +40,7 @@ POSITIONING §8 is the authoritative sequence. The short version:
 - [x] **[owner] Apple Developer enrollment** — done 2026-09-22. Unblocks three
       things that were all waiting on it: the Apple Team ID (→ universal links,
       [docs/LAUNCH.md](docs/LAUNCH.md) step 2), the APNs push key (step 3), and
-      the first TestFlight build for Group Zero editions 3–4 (step 8).
+      the first TestFlight build, which Group Zero runs on (step 8).
 - [x] **Apple Team ID pasted and bundle ID confirmed** — 2026-09-24. AASA appID
       `6RDS3S724Z.com.catchupcolumn.app`; `app.json` declares
       `applinks:www.catchupcolumn.com`; bundle ID `com.catchupcolumn.app` kept.
@@ -55,20 +55,23 @@ POSITIONING §8 is the authoritative sequence. The short version:
       half of this fix, was moved from the apex to `www` 2026-09-22.)
       [docs/LAUNCH.md](docs/LAUNCH.md) steps 2 and 7
 - [ ] **[owner] Group Zero** — four consecutive editions across Groups A, B and the
-      family Groups, before submitting anything.
-      [docs/POSITIONING.md](docs/POSITIONING.md) §6
+      family Groups, before submitting anything. **On the app from edition 1,
+      via a TestFlight public link** (decided 2026-09-29): organizers create
+      their Groups in the app and people join by invite code; the script is for
+      holdouts. [docs/POSITIONING.md](docs/POSITIONING.md) §6
 - [x] **Group Zero tooling** — 2026-09-25. The operator script
       (`scripts/group-zero/`: `create-group`, `add-member`, `post-for`, `list`)
       is on `main` and was verified end to end against production with a
       throwaway Group, then cleaned up; the read-only readout queries are
       `scripts/group-zero/readout.sql`. Both Group Zero decisions are made
       (read by asking at week 4; Group B set up by the owner with the organizer
-      as moderator). [docs/POSITIONING.md](docs/POSITIONING.md) §6
-- [ ] **First production build + TestFlight external testing** — well before
-      Group Zero week 3 (~mid-October): external testers need Apple's TestFlight
-      App Review, which needs a demo account with a password and a Beta App
-      Description; the production build needs the Sentry source-map variables
-      first. [docs/LAUNCH.md](docs/LAUNCH.md) steps 8 and 10.4. The review
+      as moderator — superseded 2026-09-29, the organizer now creates it in the
+      app). [docs/POSITIONING.md](docs/POSITIONING.md) §6
+- [ ] **First production build + TestFlight external testing** — now: since
+      2026-09-29 Group Zero's edition 1 waits on it. External testers need
+      Apple's TestFlight App Review, which needs a demo account with a password
+      and a Beta App Description; the production build needs the Sentry
+      source-map variables first. [docs/LAUNCH.md](docs/LAUNCH.md) steps 8 and 10.4. The review
       account is made on that build: code sign-in → Profile → Set a password.
       It's also the first build with the #44 auth change — device checks in
       PRESUBMISSION Gates 5 and 7

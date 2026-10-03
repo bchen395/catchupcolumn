@@ -104,16 +104,19 @@ tells you to, per PR.
 **Not started:** Group Zero. Production has 2 test Groups, 3 users. Recruiting as
 of 2026-09-25: the owner has a friend group they're part of (Group A) and "can
 enlist another group easily" — **who organizes it is unconfirmed** (it must not be
-the owner). **No family Group yet.** As of 2026-09-28 nothing has moved: Group A's
-member list, the Group B organizer, and whether a family Group can start this
-week are all still owed (Next steps §1).
+the owner). **No family Group yet.** **Re-planned 2026-09-29 (owner):** Group
+Zero runs on the app from edition 1, through a TestFlight public link — not the
+App Store, and no longer off-app for weeks 1–2. Groups A and B are created in the
+app by their organizers and filled by invite code; the operator script is for
+holdouts (texted entries still count in editions 1–2). So edition 1 now waits on
+the production build and its TestFlight review (POSITIONING §6).
 
 ## Dates that bind
 
 | When | What | Why it's fixed |
 | --- | --- | --- |
-| **~2026-09-30** | 2–3 family Groups publishing | A family recruited later has too little to print for December (POSITIONING §5) |
-| **Early October** | First production build uploaded + external TestFlight submitted for review | Apple's TestFlight App Review has lead time, and Group Zero week 3 (~mid-Oct) needs installs |
+| **~2026-09-30** | 2–3 family Groups publishing | A family recruited later has too little to print for December (POSITIONING §5). Since 2026-09-29 a family Group either starts by email with `create-group` or waits for the app — owner's call |
+| **This week** | First production build uploaded + external TestFlight submitted for review | Since 2026-09-29 Group Zero's **edition 1** needs installs, so Apple's review lead time is now in front of the first edition |
 | Late November | The December test (hand-made volumes, Lulu by hand, Stripe link) | Q4 is 40–60% of gift revenue |
 | Before App Store submission | Illustration rework landed (commissioned illustrator) | Owner, 2026-09-25: no store release with the current drawings |
 
@@ -129,7 +132,7 @@ owner at keyboard (Apple sign-in) ───────────────�
 agent: review account WITH a password + a demo  ───┼─→ External group + Test Information
   Group with a published edition (on the new      │     (Beta App Description required)
   build: code sign-in → Profile → Set a password)  └─→ TestFlight App Review → public link
-                                                         → Group Zero installs (week 3)
+                                                         → Group Zero installs (edition 1)
                                                          → LAUNCH step 5 items 5 + 7
                                                            (OTP expiry, redirect URL)
 ```
@@ -140,17 +143,21 @@ build, which is cheap by then.
 
 ## Workstreams
 
-**A. Group Zero — owner-led, tools ready.** Per Group: `create-group` (Group B:
-organizer as moderator — decided 2026-09-24), `add-member` for each person,
-`post-for` for entries sent by text in editions 1–2, `readout.sql` for results.
-Reading is measured by asking each member at week 4 (decided 2026-09-24; open
-tracking stays off). The owner may prefer to run the commands in their own
-terminal to keep friends' emails out of the session — offer it.
+**A. Group Zero — owner-led, on the app from edition 1 (re-planned
+2026-09-29).** Groups A and B: the organizer creates the Group in the app and
+sends each person the TestFlight link plus the invite code; people sign up and
+join themselves. The script is for holdouts: `add-member` anyone not in by
+edition 1 (else they get no email), `post-for` their texted entries in editions
+1–2. `create-group` only for a Group that must start before its organizer has
+the app (possibly a family Group this week). `readout.sql` for results. Reading
+is measured by asking each member at week 4 (decided 2026-09-24; open tracking
+stays off). The owner may prefer to run the commands in their own terminal to
+keep friends' emails out of the session — offer it.
 
 **B. Production correctness — agent, owner approves each prod change.** Nothing
 is pending to push or deploy: the late-slot fix (#42) and cron robustness (#45)
 are both live and verified. What's left is watching — the cron re-count in Next
-steps §2. Redeploy functions after **every** future function change; verify by
+steps §3. Redeploy functions after **every** future function change; verify by
 download-and-diff (LAUNCH → Deploying edge functions).
 
 **C, D** (dev work, owner-only steps) are folded into **Next steps** below, in
@@ -161,67 +168,79 @@ write-by-web, store screenshots, App Store submission (after Group Zero **and**
 the illustration rework), the house ad (after the December test), the print
 renderer / Lulu API.
 
-## Next steps — consolidated 2026-09-28
+## Next steps — consolidated 2026-09-28, re-planned 2026-09-29
 
 Everything open, in the order it binds. **[owner]** = only the owner can do it —
 hand these over one at a time with exact clicks or commands. **[agent]** = the
 session does it. Each item says where its detail lives; record outcomes there,
 dated, then update this file.
 
-**§1. This week — the family-Group deadline (~2026-09-30)**
+Since 2026-09-29 Group Zero runs on the app from edition 1 (POSITIONING §6), so
+the build chain comes first and the Group setup runs alongside it.
 
-1. **[owner] Three answers, so the operator script can set up Groups** (asked
-   2026-09-28, not yet answered):
-   - Group A's member list (names and emails). Offer to have the owner run
-     `add-member` in their own terminal, keeping friends' emails out of the
-     session.
-   - Who organizes Group B — not the owner.
-   - Whether a family Group can start this week — the owner's own family counts.
-2. **[agent]** With those answers: `create-group`, `add-member`, and `post-for`
-   per Workstream A. Dry run first; ask before every `--apply`.
-3. **[owner] Decide bugs.md M1** before edition 1: accept no per-recipient email
-   retry for Group Zero (recommended).
+**§1. This week — the app onto phones (edition 1 waits on it)** — the chain above
 
-**§2. Keep production honest**
-
-4. **[agent] Re-count cron timeouts** since 2026-09-28 16:45 UTC — 3 of 3 clean
-   at last look (Live state). Expect 0. If any remain, read that invocation in
-   the dashboard before anything else.
-
-**§3. The production build → TestFlight (early October)** — the chain above
-
-5. **[owner] Sentry auth token** (*Settings → Auth Tokens*, `project:releases`)
+1. **[owner] Sentry auth token** (*Settings → Auth Tokens*, `project:releases`)
    into the expo.dev dashboard as a Secret, plus the org and project slugs;
    **[agent]** then sets `SENTRY_ORG` / `SENTRY_PROJECT` (LAUNCH 10.4). Until
    then every production build fails at the Sentry step.
-6. **[owner] Simulator sign-in pass** on build `cf9f70ee`: the tab bar, Editions
+2. **[owner] Simulator sign-in pass** on build `cf9f70ee`: the tab bar, Editions
    → an edition → a story, the compose sheet (open and close — **don't post**,
    it's production), the loading animation. It predates #44, so it shows the old
    reset-link flow; that's expected.
-7. **[owner at the keyboard, agent driving] Production build session:**
+3. **[owner at the keyboard, agent driving] Production build session:**
    `npx eas-cli build --platform ios --profile production` (Apple sign-in;
    creates the cert and the APNs key), then `npx eas-cli submit --platform ios
    --latest`. The bundle ID locks on this upload. The build carries #44, the UTC
    fallback from #45, and the `webcredentials` entitlement. LAUNCH step 8.
-8. **[agent] Review account on that build:** code sign-in → Profile → *Set a
+4. **[owner] The owner's phone, as an internal tester** — internal builds skip
+   the TestFlight review, so this is as soon as the build processes. Device
+   checks: PRESUBMISSION Gate 5 (including the Keychain save prompt) and Gate 7
+   (including the eight #44 auth checks). In-person demos from here.
+5. **[agent] Review account on that build:** code sign-in → Profile → *Set a
    password* (8+ characters, not a common one), plus a demo Group with a
    published edition so every screen has content. Not a real person's account.
    Then the external group, the Beta App Description, and the sign-in details
-   under Test Information. LAUNCH step 8.
-9. **[owner] Device checks on the signed build:** PRESUBMISSION Gate 5 (including
-   the Keychain save prompt) and Gate 7 (including the eight #44 auth checks).
-10. TestFlight App Review → public link → Group Zero installs (week 3,
-    ~mid-October).
+   under Test Information, and submit the build for external testing. LAUNCH
+   step 8.
+6. TestFlight review → public link → Groups A and B install, for edition 1.
+
+**§2. Group Zero setup — alongside §1**
+
+7. **[owner] Answers still owed** (asked 2026-09-28, re-scoped 2026-09-29):
+   - Group A: its name, and the publish day, time and time zone. No member
+     emails are needed unless someone holds out (item 9).
+   - Who organizes Group B — not the owner. They get ORGANIZER_PLAYBOOK.md and,
+     once it exists, the public link.
+   - A family Group: start by email this week with `create-group` and
+     `add-member` (the family installs later) to hold the ~2026-09-30 date, or
+     wait for the app? The owner's own family counts.
+   - Is anyone in Group A or B on Android? The build is iPhone-only.
+8. **[owner] Recruit now, 1:1** (playbook step 1) — the asks don't wait for the
+   build. Create Group A in the app once item 4 puts it on the owner's phone;
+   send each yes the public link and the invite code once item 6 lands.
+9. **[agent] Holdouts:** `add-member` anyone not in by edition 1 (else they get
+   no email), and `post-for` their texted entries in editions 1–2. Dry run
+   first; ask before every `--apply`.
+10. **[owner] Decide bugs.md M1** before edition 1: accept no per-recipient email
+    retry for Group Zero (recommended). A holdout has only the email, so check
+    each Group Zero publish for failed recipients and forward by hand.
+
+**§3. Keep production honest**
+
+11. **[agent] Re-count cron timeouts** since 2026-09-28 16:45 UTC — 3 of 3 clean
+    at last look (Live state). Expect 0. If any remain, read that invocation in
+    the dashboard before anything else.
 
 **§4. Once Group Zero is on that build**
 
-11. **[owner] Code expiry → 600 s** (LAUNCH step 5 item 5): Email OTP Expiration
+12. **[owner] Code expiry → 600 s** (LAUNCH step 5 item 5): Email OTP Expiration
     = 600, and paste the updated `magic-link.html` and `confirm-signup.html` in
     the same sitting (`sed -n '/<!doctype html>/,$p' <file> | pbcopy`).
     **[agent]** then deletes the PENDING notes in those two template headers,
     `reauthentication.html`, `hooks/use-email-code.ts`, and CLAUDE.md's Auth
     line.
-12. **[owner] Remove `catchupcolumn://(auth)/reset-password`** from Redirect URLs
+13. **[owner] Remove `catchupcolumn://(auth)/reset-password`** from Redirect URLs
     (LAUNCH step 5 item 7).
 
 **§5. Owner, any time — one at a time**
@@ -251,20 +270,27 @@ dated, then update this file.
   (POSITIONING §9).
 
 **First move for the next session:** re-verify the Live-state block (five
-minutes, read-only), then §1 — the three answers — before anything else.
+minutes, read-only), then §1 item 1 — the Sentry token — with §2's answers
+alongside it.
 
 ## Decisions the owner owes
 
 | Decision | Needed by | Where |
 | --- | --- | --- |
-| Group A's member list | ~2026-09-30 (to set the Group up with the script) | Workstream A |
+| Group A's name, publish day, time and time zone | Before creating it in the app (Next steps item 8) | Workstream A |
 | Who organizes Group B | Before recruiting it | POSITIONING §6 |
-| Can a family Group start this week? | ~2026-09-30 | POSITIONING §5 |
+| A family Group: start by email this week, or wait for the app? | ~2026-09-30 | POSITIONING §5, §6 |
+| Anyone in Group A or B on Android? (build is iPhone-only) | Before the asks go out | POSITIONING §6 |
 | Publish-day default: app says Sunday 09:00, the playbook recommends Monday (minor) | Any time | `app/group/create.tsx`, playbook |
 | M1: accept no per-recipient email retry for Group Zero? | Before edition 1 | bugs.md M1 |
 
-Decided this session (2026-09-24/25): reading measured by asking at week 4;
-Group B set up by the owner with the organizer as moderator; bundle ID final;
+Decided 2026-09-29: Group Zero runs on the app from edition 1, through a
+TestFlight public link rather than the App Store; Groups A and B are created in
+the app by their organizers and filled by invite code, with the script kept for
+holdouts; texted entries still count in editions 1–2 (POSITIONING §6).
+Decided 2026-09-24/25: reading measured by asking at week 4;
+Group B set up by the owner with the organizer as moderator (superseded
+2026-09-29); bundle ID final;
 "shipping" means the App Store, and it waits for the commissioned illustration
 rework. Decided 2026-09-25 (#44), ahead of Group Zero: code-only accounts can
 set an optional password from Profile (POSITIONING §9); the numbers — 8

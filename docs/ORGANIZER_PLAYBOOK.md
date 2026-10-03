@@ -37,15 +37,16 @@ whether everyone has the app.
 3. **Pick the day it arrives.** The app suggests Sunday at 9 a.m.; change it to
    Monday morning — people write over the weekend, and the paper lands when the
    week starts. Set the publish time for the zone most of them live in.
-4. **During Group Zero, don't create the Group in the app — there's no build to
-   install yet.** Send the owner the name, the day, time and time zone, and
-   each person's name and email. The owner sets the Group up with you as its
-   moderator and an account waiting for each of your people, so the edition
-   email reaches all of them from week 1 with no install. For weeks 1–2,
-   collect entries however people will send them (text, email, a voice memo
-   you transcribe) and pass them to the owner, who puts each one in under that
-   person's own name. Everyone installs the app from TestFlight for weeks 3–4.
-   *(Decided 2026-09-24; the tooling is `scripts/group-zero/`.)*
+4. **During Group Zero the app comes through TestFlight**, Apple's app for
+   trying apps before they're in the App Store. The owner sends you a
+   TestFlight link. Install TestFlight from the App Store, open the link,
+   install Catch Up Column, and sign up with your email — it sends a 6-digit
+   code; there's no password. Then create the Group with the name, day, time
+   and time zone from steps 2–3, and find its invite code on the Group's page.
+   When someone says yes in Step 1, send them both, in this order: *install
+   TestFlight, open this link, install the app, then enter this code.* iPhone
+   only for now — for anyone on Android, or anyone who won't install, see
+   "When it goes wrong." *(Decided 2026-09-29.)*
 
 ---
 
@@ -140,7 +141,10 @@ Repeat steps 3 and 4. Two things to watch for:
 
 **"I'm not going to download an app."** Fine — don't fight it. Take their entry
 by text and put it in for them. During Group Zero specifically, message the
-owner and he'll set the account up so the byline is theirs, not yours; see
+owner **before the first edition** — they'll set the account up so the paper
+still reaches that person by email and the byline is theirs, not yours.
+Texted entries count in weeks 1–2; from week 3 the app is the way in, except
+for anyone on Android, who can't install it yet. See
 [POSITIONING.md](./POSITIONING.md) §6, "Posting for someone who hasn't
 installed." Never paste someone's writing under your own name.
 
@@ -166,6 +170,7 @@ You are the experiment, so the interesting data is where this page was wrong:
 - Which steps did you skip, and why?
 - Which words did you change because they didn't sound like you?
 - Where did you need to know something this page doesn't say?
+- Where did installing (TestFlight, the app, the invite code) trip anyone up?
 - How many of your six said yes? How many wrote in week 1? In week 4?
 - At any point, did you consider quitting? What was happening that week?
 
