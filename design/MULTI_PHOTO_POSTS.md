@@ -17,7 +17,7 @@ then delete this file.
 | Limit | **4 photos per post** | Free-plan storage (1 GB), email length, printed page count; raising it later is one constant, lowering it takes something away |
 | Display copies | **Every photo also gets a ~1280px display copy**; app and email show it, print keeps the 2600px master | Without it each view downloads the ~1.5 MB master; Group Zero alone would pass the Free plan's 5 GB/month egress |
 | App image cache | **Keyed by storage path, not signed URL** | Signed URLs change every session, so expo-image re-downloaded every photo every session |
-| Composer | **Rewritten once, with the July redesign folded in** (`design/COMPOSER_REDESIGN.md`) | The photo button has to ride above the keyboard anyway — that's the redesign's central idea |
+| Composer | **Rewritten once, with the July redesign folded in** (now BRAND §9 → "The composer") | The photo button has to ride above the keyboard anyway — that's the redesign's central idea |
 | Upload timing | **Each photo uploads when it's inserted** (once the draft exists); removing one deletes its files after the save that drops it | Filing never waits on four uploads |
 
 ## The contract (on branch `multi-photo/contract`)
