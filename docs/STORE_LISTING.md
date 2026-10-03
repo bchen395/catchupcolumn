@@ -179,3 +179,211 @@ standard HTTPS/TLS. No extra export documentation is required.
 
 Keep it there rather than duplicating it here: this doc owns *metadata and
 questionnaire answers*, the checklist owns *what to run and in what order*.
+
+---
+
+## 12. TestFlight Test Information — external testing (Group Zero)
+
+**Drafted 2026-10-03** for the first external build (`LAUNCH.md` step 8;
+`HANDOFF.md` §2 item 5). Group Zero's testers are the owner's real friend
+groups, installing through the TestFlight public link and joining their Group by
+invite code.
+
+**Where each field goes:**
+
+- **App-level, entered once:** App Store Connect → the app → **TestFlight** →
+  sidebar, under *Additional* → **Test Information**. Beta App Description,
+  Feedback Email, the URLs, and Beta App Review Information all live here and
+  carry over to later builds.
+- **Per build:** *What to Test* — the build's **Test Details**, also offered when
+  the build is added to the external group. Each later build gets its own; a
+  line on what changed is enough.
+
+Apple requires the Beta App Description and the Beta App Review Information
+before a build can go to external testers ([Provide test
+information](https://developer.apple.com/help/app-store-connect/test-a-beta-version/provide-test-information/)).
+
+**Field limits.** Apple's help pages name these fields but publish no character
+limits (checked 2026-10-03). The limits below are **assumed**: 4,000 characters
+for each long text field, the cap App Store Connect uses for its other long
+text fields. The longest draft here is about half that, so the exact number
+can't bite. If the form shows a different limit, the form wins.
+
+| Field | Limit | Value |
+| --- | --- | --- |
+| Beta App Description | 4,000 chars (assumed) | §12.1 — 728 chars |
+| What to Test (build 1) | 4,000 chars (assumed) | §12.2 — 1,291 chars |
+| Feedback Email | one address | `support@catchupcolumn.com` — **read the warning in §12.3** |
+| Marketing URL (optional) | one URL | `https://www.catchupcolumn.com` |
+| Privacy Policy URL | one URL | `https://www.catchupcolumn.com/privacy` |
+| Beta App Review contact: first name, last name, phone, email | one value each | `{{owner's name, phone, and an address that receives mail}}` |
+| Sign-in required | checkbox | **Ticked** |
+| User name / Password | one value each | `{{review account address}}` / `{{review account password}}` — §12.4 |
+| Review Notes | 4,000 chars (assumed) | §12.5 — 2,084 chars |
+| License Agreement | — | Leave Apple's standard EULA |
+
+The character counts are for the text as written. Filling in the
+`{{placeholders}}` changes them slightly.
+
+### 12.1 Beta App Description
+
+Testers see this in the TestFlight app. Uses the store voice (§3) and "your
+people" (CLAUDE.md, Audience vocabulary).
+
+```
+Catch Up Column is a private weekly newspaper you make with your people — the friends you never see enough of, your family, or both.
+
+Through the week, everyone in your Group writes a short post, with a photo if they like. On your Group's publish day it all comes together as one edition, delivered to everyone in the app and by email. No feed to scroll, no strangers, no ads — just the people you chose, catching up.
+
+To join: whoever invited you will send an invite code. Install the app, tap "Create one", and sign up with your email — we send you a 6-digit code, so there's no password to make up. Then go to Groups → Join and enter the code.
+
+Your posts are only ever seen by the members of your Group. iPhone only for now.
+```
+
+### 12.2 What to Test — build 1
+
+Covers the five things this build exists to prove with real people: code
+sign-up, invite-code join, writing a post, the edition arriving, and the email.
+
+```
+Thanks for trying Catch Up Column this early. You're in one of the first Groups ever to use it, so everything you notice helps, especially the small stuff.
+
+What we'd love you to try:
+
+1. Sign up. On the first screen tap "Create one", enter your email, and type in the 6-digit code we send you. Did the code arrive quickly? Did it land in spam?
+
+2. Join your Group. Go to Groups → Join and enter the invite code you were sent.
+
+3. Write a post for this week. Tap the + in the middle of the bottom bar. A few sentences is a real post; add a photo if you like. You can change it until the edition goes out.
+
+4. Read the edition when it arrives. On your Group's publish day it shows up in the app (the Editions tab) and in your email. Does the email look right? Did it reach your inbox, or spam or Promotions?
+
+5. Say yes to notifications when the app asks. That's how it tells you the edition is out, and it's the only notification it sends.
+
+Something confusing, broken or slow? Take a screenshot in the app, tap the preview, and choose Share Beta Feedback. Or just tell whoever invited you. "I didn't know what to do here" is the most useful feedback there is.
+
+iPhone only for now. If someone in your Group is on Android, tell whoever invited you. They can still get every edition by email.
+```
+
+The text deliberately sends feedback through TestFlight's screenshot feedback
+and the organizer, not by email. Screenshot feedback reaches App Store Connect
+with the device details attached (POSITIONING §6), and it doesn't depend on
+§12.3's open item.
+
+### 12.3 Feedback Email and URLs
+
+- **Feedback Email:** `support@catchupcolumn.com`. This is the address
+  `docs/SUPPORT.md` and `docs/PRIVACY.md` already publish, and the address the
+  in-app **Report this story** link writes to (`Strings.legal.supportEmail`).
+  Apple shows it to testers in TestFlight and uses it as the reply-to on
+  emailed invitations.
+
+  > **{{TODO owner}}: this address can't receive mail yet.** As of 2026-10-03,
+  > `catchupcolumn.com` has **no MX record**: `dig +short MX catchupcolumn.com`
+  > returns nothing, and so do 1.1.1.1 and 8.8.8.8. Only `send.` has an MX, and
+  > that one is Resend's bounce handling. Mail sent to `support@` has nowhere to
+  > land, so this goes beyond TestFlight. The same address is on Guideline 1.2's
+  > report path (§9), the privacy policy's deletion-by-email route, and the
+  > DMARC `rua` in `LAUNCH.md` step 4. The DNS is on Cloudflare, so the smallest
+  > fix is probably Cloudflare Email Routing, forwarding `support@` to your own
+  > inbox. That is a DNS change, so it's yours to make. Then send a test from
+  > another account. Until it's fixed, use an address you read here instead,
+  > and switch to `support@` once mail arrives.
+- **Marketing URL:** `https://www.catchupcolumn.com`. Optional.
+- **Privacy Policy URL:** `https://www.catchupcolumn.com/privacy`. It is live
+  and reads "Last updated September 28, 2026". Use `www`, as everywhere: the
+  apex 308-redirects (§6).
+
+### 12.4 Beta App Review Information — contact and demo account
+
+**Contact information.** Enter `{{first name}}`, `{{last name}}`, `{{phone}}` and
+`{{email}}` — the owner's. Apple uses these if the review stalls. Use an
+address that receives mail, which rules out `support@` until §12.3 is fixed.
+
+**Sign-in information.** Tick **Sign-in required**. Then enter:
+
+- **User name:** `{{review account address}}`
+- **Password:** `{{review account password}}`
+
+A reviewer can't receive our emailed code, which is why the review account
+needs a password (`LAUNCH.md` step 8, Guideline 2.1(a)). The account must
+not expire.
+
+**Making the review account** (owner, on the production build, before
+submitting for review — `HANDOFF.md` §1 and §2 item 5). Each step is a
+production write.
+
+1. **Address:** a `+alias` of the owner's own address, such as
+   `{{you}}+appreview@{{your domain}}`, so the sign-in code reaches the owner.
+   Never use a friend's account. Before relying on it, check that your mail
+   provider delivers `+` addresses to you.
+2. **Sign up** on the build with a code. For the display name use something
+   plain, such as "App Review". Then go to Profile → **Set a password**: 8+
+   characters, not a common one. Keep it in your password manager. If it's
+   lost, *Forgot your password?* sends a code to the alias, so you can recover
+   it, but the reviewer can't.
+3. **Demo Group:** create `{{demo Group name}}`. Write one post with a photo.
+   All content is the owner's own invention — never a real friend's writing.
+4. **A second member — this step matters.** Make a second `+alias` account
+   (e.g. `+appreview2`), join the demo Group by invite code, and write a post.
+   *Report this story* is hidden on your own stories
+   (`components/report-story-link.tsx`), and *Remove* only appears next to
+   other members. Without a second member, the reviewer can't see either of
+   Guideline 1.2's in-app affordances.
+5. **Publish:** as the review account, open the Group page and tap **Publish
+   now**. Edition 1 now exists. Both aliases get the edition email, which
+   doubles as a check that it arrives.
+6. **Rehearse the reviewer's path:** sign out, tap *Use a password instead*,
+   and sign in with the review password.
+
+If Apple reports the account is gone (for example, a reviewer tried *Delete my
+account*), repeat steps 2–5 and update the sign-in information.
+
+### 12.5 Review Notes
+
+Replace `{{demo Group name}}` before pasting.
+
+```
+Catch Up Column is a private weekly newsletter for a small group of friends or a family. During the week, members write short posts (text and an optional photo). On the Group's publish day, the app gathers them into one edition that everyone reads in the app and receives by email. Groups are invite-only. There is no public content, feed, search or discovery.
+
+SIGNING IN
+Accounts normally sign up and sign in with a 6-digit code we email to them. There is no password at sign-up. So that you don't need to receive our email, the demo account also has a password:
+1. On the "Welcome back" screen, tap "Use a password instead".
+2. Enter the email and password from Sign-in Information, then tap "Sign in".
+
+THE DEMO ACCOUNT
+It moderates a demo Group, "{{demo Group name}}", which has one published edition with posts from two members.
+- Editions tab: open the edition, then tap a story to read it.
+- The + button in the middle of the tab bar: write a post for this week's edition.
+- Groups tab → the demo Group: its invite code, its members, and "Publish now", which turns this week's posts into an edition right away.
+
+USER-GENERATED CONTENT (Guideline 1.2)
+- Acceptable-use terms: https://www.catchupcolumn.com/terms, section 4.
+- Report: every story by another member ends with "Report this story", which drafts an email to us with the story's identifiers. It is hidden on your own stories.
+- Remove: on the Group page, a moderator can tap "Remove" next to a member. Their unpublished posts are deleted with them.
+Posts are only ever visible to members of the Group they were written in.
+
+ACCOUNT DELETION
+Profile → Delete my account. This permanently deletes the account.
+
+PERMISSIONS
+The app asks for notification permission, to say when an edition arrives, and photo library access, to attach a photo to a post or profile. Both are optional.
+
+NOT IN THIS APP
+No in-app purchases, subscriptions, ads, analytics or tracking, so there is no App Tracking Transparency prompt. The only third-party SDK is Sentry crash reporting, which carries no name, email or content.
+
+iPhone only.
+```
+
+Every claim above is checked against the code and `docs/PRIVACY.md` as of
+2026-10-03:
+
+- **No in-app purchases, ads or analytics:** none in `package.json` or the app.
+- **Sentry is the only third-party SDK and carries no identity:** PRIVACY.md,
+  "Crash reports"; §7.
+- **Photos is the only permission besides notifications:** the
+  `expo-image-picker` plugin in `app.json` declares `photosPermission` only.
+- **Push is only ever the edition notification:** the only push send is in
+  `_shared/edition-dispatch.ts`.
+
+If any of these changes before submission, update both this section and §7.
