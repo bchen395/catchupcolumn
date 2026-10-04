@@ -32,6 +32,21 @@ specified in CLAUDE.md. Git history has the detail if you need it.
 
 POSITIONING §8 is the authoritative sequence. The short version:
 
+- [ ] **[owner] Make `support@catchupcolumn.com` receive mail** — found
+      2026-10-03: the apex has no MX record, so *Report this story*, the
+      privacy policy's deletion route and the TestFlight feedback address all
+      bounce. Cloudflare Email Routing; before the external link goes out.
+      [docs/HANDOFF.md](docs/HANDOFF.md) §1
+- [~] **Multi-photo posts** (decided 2026-10-03: one writing area, up to 4
+      photos). Data layer merged (#55) — migration and function deploys not yet
+      pushed; the composer (#56) and reading surfaces (#52) are gated on the
+      owner's **2026-10-08 go/no-go**, tested first through the `staging`
+      channel. Before edition 1, else after edition 4.
+      [design/MULTI_PHOTO_POSTS.md](design/MULTI_PHOTO_POSTS.md)
+- [x] **App fixes for the build** — 2026-10-03, #54: one shared back button
+      (the off-center arrow), skeletons for invite-link arrival and the compose
+      sheet, and bugs.md L3's retry screen.
+
 - [x] **Redeployed `compile-editions` and `publish-edition-now`** — 2026-09-24.
       They had been on a 2026-07-11 build sending the retired **v1 edition
       email**; the v2 email is now live. Merging deploys nothing to Supabase —
@@ -140,7 +155,10 @@ POSITIONING §8 is the authoritative sequence. The short version:
       2026-09-25), by a commissioned illustrator. Not a gate on the TestFlight
       build: the 8 drawings are SVG code and reach testers by OTA; only the app
       icon and splash (native files) need a new build. Group Zero's four weeks
-      are the window. [design/ILLUSTRATION_REWORK.md](design/ILLUSTRATION_REWORK.md)
+      are the window. Scoped and briefed 2026-10-03 (#53): round 1 = the redrawn
+      set + a press pass replacing the invite ticket + the icon; HeyTea is a
+      "don't". The owner sends the brief and agrees fee, rights and dates.
+      [design/ILLUSTRATION_REWORK.md](design/ILLUSTRATION_REWORK.md)
 - [ ] **App Store submission** — [docs/PRESUBMISSION_CHECKLIST.md](docs/PRESUBMISSION_CHECKLIST.md)
 
 ---
