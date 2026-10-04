@@ -82,14 +82,29 @@ window of days.
 
 ## Shipping order (each a production change — the owner approves each)
 
-1. `supabase db push` (B's migration).
+B (#55) merged 2026-10-03, so the 10-04 binary carries the data layer. C (#56)
+and D (#52) stay unmerged until the go.
+
+1. `supabase db push` (B's migration). **Before anything below** — every save
+   from the new composer writes `blocks`, and D's queries select it.
 2. Deploy every function that imports `_shared/` (`compile-editions`,
    `publish-edition-now`); verify by download-and-diff.
-3. On go: merge C and D, then `npx eas-cli update --channel production` — the
-   project's first OTA, so check it on the owner's phone.
+3. **The owner's test lane** (decided 2026-10-03): a second build from `main`
+   with the `staging` profile in `eas.json` — same binary, its own `staging`
+   channel, production environment variables — submitted to TestFlight and
+   given to Internal Testing (the owner) only. Then, from a throwaway branch
+   with D and C merged on top of `main`:
+   `npx eas-cli update --channel staging --message "multi-photo test"`.
+   Friends on the `production` channel never see it. Test on the phone with
+   the verification list below. Fixes go back into the PRs and out to
+   `staging` again.
+4. On go (by 10-08): merge D, then C (rebase C first: a docs-only conflict in
+   the frontend-design skill), then `npx eas-cli update --channel production`
+   — the project's first production OTA, so check it on a phone that runs the
+   production build.
 
 No go by 10-08: steps 1–2 still ship (they cost nothing and fix egress); C and D
-wait until after edition 4.
+wait until after edition 4, and nothing multi-photo goes to `production`.
 
 ## Verification
 
