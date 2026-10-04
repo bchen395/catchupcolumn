@@ -53,6 +53,29 @@ export type GroupMemberUpdate = {
   role?: 'moderator' | 'contributor';
 };
 
+// A post is one flow of plain text with up to four photos set into it
+// (design/MULTI_PHOTO_POSTS.md). `blocks` holds the pieces in reading order.
+export type PostTextBlock = { type: 'text'; text: string };
+
+export type PostPhotoBlock = {
+  type: 'photo';
+  // Unique within its post, and the photo's file name in storage.
+  id: string;
+  // The print master in `post-images`: <author_id>/posts/<post_id>/<id>.jpg.
+  // On a legacy photo this is whatever `image_url` held (a path, or an old
+  // public URL).
+  path: string;
+  // The display copy beside it (<id>-display.jpg) — what the app and the
+  // email show. Null on legacy photos, which display the master.
+  display_path: string | null;
+  // The master's pixel size, so layouts can reserve space before it loads.
+  // Null on legacy photos.
+  width: number | null;
+  height: number | null;
+};
+
+export type PostBlock = PostTextBlock | PostPhotoBlock;
+
 export type PostRow = {
   id: string;
   group_id: string;
@@ -60,20 +83,33 @@ export type PostRow = {
   // Optional headline. Used as the story title on the front page, story
   // reader, and the weekly email; null falls back to the author's name.
   title: string | null;
+  // Every text block joined by a blank line. Kept in step with `blocks` on
+  // every save (lib/post-blocks.ts → toPostFields), so excerpts, push copy,
+  // the front-page "longest wins" rule, and builds from before multi-photo
+  // all keep reading it.
   body: string;
+  // The first photo's master path, kept in step with `blocks` the same way.
+  // Posts from before multi-photo have only this.
   image_url: string | null;
+  // Null on posts written before multi-photo, and by builds that predate it;
+  // read through postBlocksOf() rather than directly.
+  blocks: PostBlock[] | null;
   edition_id: string | null;
   created_at: string;
   updated_at: string;
 };
 
-export type PostInsert = Omit<PostRow, 'id' | 'created_at' | 'updated_at' | 'edition_id' | 'image_url' | 'title'> & {
+export type PostInsert = Omit<
+  PostRow,
+  'id' | 'created_at' | 'updated_at' | 'edition_id' | 'image_url' | 'title' | 'blocks'
+> & {
   id?: string;
   created_at?: string;
   updated_at?: string;
   edition_id?: string | null;
   image_url?: string | null;
   title?: string | null;
+  blocks?: PostBlock[] | null;
 };
 
 export type PostUpdate = Partial<Omit<PostRow, 'id' | 'group_id' | 'author_id'>>;

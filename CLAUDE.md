@@ -97,8 +97,9 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - `group_id` (uuid, FK → groups.id)
 - `author_id` (uuid, FK → users.id)
 - `title` (text, nullable, max 80 chars) — optional headline; UI falls back to a "From {first name}" byline
-- `body` (text, not null)
-- `image_url` (text, nullable)
+- `blocks` (jsonb, nullable) — the post as one flow of text with up to 4 photos, in reading order: `{type:'text', text}` and `{type:'photo', id, path, display_path, width, height}` (design/MULTI_PHOTO_POSTS.md). Null on posts written before multi-photo (2026-10-03) or by builds that predate it — always read through `postBlocksOf()` (`lib/post-blocks.ts`), which turns those into `[photo?, text]`. The `posts_blocks_valid` CHECK enforces the shape, ≤ 4 photos, and that every photo path is a file in the author's own `<author_id>/posts/<post_id>/` folder
+- `body` (text, not null) — derived from `blocks` on every save (`toPostFields`): the text pieces joined by a blank line. Still required non-empty to file
+- `image_url` (text, nullable) — derived the same way: the first photo's print-master path. The only photo of a pre-multi-photo post
 - `edition_id` (uuid, nullable, FK → editions.id) — null until compiled
 - `created_at` (timestamptz)
 - `updated_at` (timestamptz)
@@ -119,7 +120,7 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - PK: (user_id, token)
 
 ### Notable RPCs
-`compile_due_editions` (cron compilation, slot-scoped duplicate guard; skips and reports a Group with an invalid timezone), `due_publish_slot` (service-role helper: the slot a tick falls in, matched on timestamps so late slots don't wrap at midnight), `publish_edition_now` (moderator-only immediate publish, shares the compile lock), `join_group_by_invite_code`, `get_invite_preview` (anon-callable minimal invite preview: name/description/cover/member count), `get_invite_preview_details` (authenticated: adds cadence, is_member, member sample), `delete_group_as_moderator`, `remove_group_member` (moderator-only eject; also deletes the removed member's uncompiled posts), `prepare_account_deletion`, `get_edition_email_payload` (service-role; feeds the email renderer). Full definitions in `supabase/migrations/`.
+`compile_due_editions` (cron compilation, slot-scoped duplicate guard; skips and reports a Group with an invalid timezone), `due_publish_slot` (service-role helper: the slot a tick falls in, matched on timestamps so late slots don't wrap at midnight), `publish_edition_now` (moderator-only immediate publish, shares the compile lock), `join_group_by_invite_code`, `get_invite_preview` (anon-callable minimal invite preview: name/description/cover/member count), `get_invite_preview_details` (authenticated: adds cadence, is_member, member sample), `delete_group_as_moderator`, `remove_group_member` (moderator-only eject; also deletes the removed member's uncompiled posts), `prepare_account_deletion`, `get_edition_email_payload` (service-role; feeds the email renderer, each post with its `blocks` and `author_id`). Full definitions in `supabase/migrations/`.
 
 ## Key Terminology
 
