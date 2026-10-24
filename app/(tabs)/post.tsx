@@ -1,25 +1,17 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    TextInput,
-    View,
-} from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Keyboard, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
-import { AppImage } from '@/components/app-image';
 import { useComposeSheet } from '@/components/compose-sheet-provider';
+import { ComposeActionBar } from '@/components/composer/compose-action-bar';
+import { ComposerMasthead } from '@/components/composer/composer-masthead';
+import { ComposerPage } from '@/components/composer/composer-page';
+import { composerStatus } from '@/components/composer/composer-status';
+import { RAISED_LIFT } from '@/components/custom-tab-bar';
 import { EmptyState } from '@/components/empty-state';
-import { FormButton } from '@/components/form-button';
 import { DogWithPaperScene } from '@/components/illustrations/dog-with-paper-scene';
 import { InkStamp } from '@/components/ink-stamp';
-import { Icon } from '@/components/icon';
 import { ComposerSkeleton } from '@/components/skeletons/composer-skeleton';
 import { StatusBanner } from '@/components/status-banner';
 import { ThemedText } from '@/components/themed-text';
@@ -27,413 +19,122 @@ import { Colors } from '@/constants/colors';
 import { Icons } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
-import { Typography } from '@/constants/typography';
-import { useAuth } from '@/hooks/use-auth';
-import { usePostImageUrl } from '@/hooks/use-post-image-url';
+import { useBlockEditor } from '@/hooks/use-block-editor';
+import { useComposerDraft } from '@/hooks/use-composer-draft';
+import { useKeyboardInset } from '@/hooks/use-keyboard-inset';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
+import { photosIn } from '@/lib/composer-blocks';
 import { nextPublishForGroup } from '@/lib/groups';
 import { Haptics } from '@/lib/haptics';
-import {
-    createPost,
-    deletePost,
-    fetchCurrentPost,
-    updatePost,
-    uploadPostImage,
-} from '@/lib/posts';
-import type { PostRow } from '@/types';
+import { MAX_POST_PHOTOS } from '@/lib/post-blocks';
 
-// ---------------------------------------------------------------------------
-// Auto-save
-// ---------------------------------------------------------------------------
-
-// Idle delay before a draft is quietly persisted. Long enough to avoid saving
-// mid-word, short enough that a brief pause commits your work.
-const AUTOSAVE_DELAY = 1200;
-
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
-
-// ---------------------------------------------------------------------------
-// Screen
-// ---------------------------------------------------------------------------
-
+// The composer (BRAND §9): this week's page for one Group — a headline, one
+// flow of writing with photos set into it, and a pinned bar to add a photo
+// and file the story. The draft (lib + hooks/use-composer-draft) and the
+// editing behaviour (hooks/use-block-editor) live apart from this layout.
 const PostScreen = () => {
-  const { user } = useAuth();
   const router = useRouter();
-  // The Group to write for is chosen via the compose sheet (the + button or
-  // the tappable masthead) and arrives as a route param.
+  // The Group arrives as a route param from the compose sheet (the "+" or
+  // the tappable masthead).
   const { groupId: groupIdParam } = useLocalSearchParams<{ groupId?: string }>();
   const { groups, loadingGroups, openComposeSheet, reloadGroups } = useComposeSheet();
-
-  // ── Post ──────────────────────────────────────────────────────────────────
-  const [existingPost, setExistingPost] = useState<PostRow | null>(null);
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [imageChanged, setImageChanged] = useState(false);
-  const [loadingPost, setLoadingPost] = useState(false);
-
-  // ── UI state ──────────────────────────────────────────────────────────────
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [screenError, setScreenError] = useState('');
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
-  const [isFocused, setIsFocused] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  // The "filed" stamp shows once per explicit Save (never on autosave).
-  const [stampVisible, setStampVisible] = useState(false);
-  // Bumped on each save so FiledStamp remounts and replays its animation even
-  // on rapid consecutive saves (a true→true flag flip would be a no-op).
-  const [stampKey, setStampKey] = useState(0);
   const reduceMotion = useReduceMotion();
+  const draft = useComposerDraft();
+  const screenRef = useRef<View>(null);
+  const viewportRef = useRef<View>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const { inset: keyboardInset, onLayout: onScreenLayout } = useKeyboardInset(screenRef);
+  const editor = useBlockEditor({ draft, viewportRef, scrollRef, keyboardInset });
+  const [refreshing, setRefreshing] = useState(false);
+  // The FILED stamp: bumped per filing so it replays; unmounts when done.
+  const [stampKey, setStampKey] = useState(0);
+  const [stampVisible, setStampVisible] = useState(false);
+  // The post filed from this page — it reads "Update my story" from then on.
+  const [filedPostId, setFiledPostId] = useState<string | null>(null);
 
-  const bodyInputRef = useRef<TextInput>(null);
-  // Resolves storage paths from the DB into signed URLs; passes local file://
-  // URIs through unchanged for previewing freshly-picked images.
-  const previewUri = usePostImageUrl(imageUri);
-
-  // Trust the param (it's set by our own navigation); otherwise fall back to the
-  // user's only group so direct visits still land on a writable page.
+  // Trust the param (our own navigation sets it); otherwise fall back to the
+  // user's only Group so a direct visit still lands on a writable page.
   const selectedGroupId = useMemo<string | null>(() => {
     if (groupIdParam) return groupIdParam;
     if (!loadingGroups && groups.length === 1) return groups[0].id;
     return null;
   }, [groupIdParam, groups, loadingGroups]);
 
-  // ── Auto-save plumbing ──────────────────────────────────────────────────────
-  // Refs hold the live values the debounced save reads, so the timer callback
-  // never closes over a stale render. `lastSavedBody` is what's persisted in the
-  // DB; we only write when the current text differs from it.
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isSavingRef = useRef(false);
-  const lastSavedBodyRef = useRef('');
-  const lastSavedTitleRef = useRef('');
-  const bodyRef = useRef('');
-  const titleRef = useRef('');
-  const existingPostRef = useRef<PostRow | null>(null);
-  // Points at the latest performAutoSave so the timer always runs current logic.
-  const autoSaveRef = useRef<() => void>(() => {});
-
-  // Keep existingPostRef in lockstep with state for the debounced save.
+  const { load } = draft;
   useEffect(() => {
-    existingPostRef.current = existingPost;
-  }, [existingPost]);
+    if (selectedGroupId) load(selectedGroupId);
+  }, [selectedGroupId, load]);
 
-  const clearAutoSaveTimer = () => {
-    if (saveTimerRef.current) {
-      clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = null;
-    }
-  };
-
-  const scheduleAutoSave = () => {
-    clearAutoSaveTimer();
-    saveTimerRef.current = setTimeout(() => autoSaveRef.current(), AUTOSAVE_DELAY);
-  };
-
-  const performAutoSave = async () => {
-    if (!user || !selectedGroupId || loadingPost) return;
-    const text = bodyRef.current.trim();
-    const titleText = titleRef.current.trim();
-    // Never auto-create or persist an empty draft; a headline alone isn't a
-    // post. Clearing your text won't delete the post — deleting stays explicit.
-    if (text === '') return;
-    // Bail when nothing changed since the last save (body or headline).
-    if (text === lastSavedBodyRef.current && titleText === lastSavedTitleRef.current) return;
-    // A save is already in flight — try again once it settles.
-    if (isSavingRef.current) {
-      scheduleAutoSave();
-      return;
-    }
-
-    isSavingRef.current = true;
-    setSaveStatus('saving');
-    try {
-      const titleValue = titleText === '' ? null : titleText;
-      if (existingPostRef.current) {
-        const updated = await updatePost(existingPostRef.current.id, { body: text, title: titleValue });
-        existingPostRef.current = updated;
-        setExistingPost(updated);
-      } else {
-        const created = await createPost({
-          group_id: selectedGroupId,
-          author_id: user.id,
-          body: text,
-          title: titleValue,
-        });
-        existingPostRef.current = created;
-        setExistingPost(created);
-      }
-      lastSavedBodyRef.current = text;
-      lastSavedTitleRef.current = titleText;
-      setSaveStatus('saved');
-      // Caught more typing while the request was out? Schedule a follow-up.
-      // (Only on success — a failed save waits for the next keystroke or an
-      // explicit Save, so a persistent error never becomes a retry storm.)
-      const currentBody = bodyRef.current.trim();
-      const currentTitle = titleRef.current.trim();
-      if (
-        currentBody !== '' &&
-        (currentBody !== lastSavedBodyRef.current || currentTitle !== lastSavedTitleRef.current)
-      ) {
-        scheduleAutoSave();
-      }
-    } catch {
-      setSaveStatus('error');
-    } finally {
-      isSavingRef.current = false;
-    }
-  };
-  autoSaveRef.current = performAutoSave;
-
-  // Cancel any pending save when the screen unmounts.
-  useEffect(() => clearAutoSaveTimer, []);
-
-  const handleChangeBody = (text: string) => {
-    setBody(text);
-    bodyRef.current = text;
-    scheduleAutoSave();
-  };
-
-  const handleChangeTitle = (text: string) => {
-    setTitle(text);
-    titleRef.current = text;
-    scheduleAutoSave();
-  };
-
-  // ── Load existing post for selected group ─────────────────────────────────
-
-  const loadPost = useCallback(async (groupId: string) => {
-    if (!user) return;
-    // Switching groups: drop any pending save for the previous group so its
-    // draft never lands on the wrong post.
-    clearAutoSaveTimer();
-    setLoadingPost(true);
-    setScreenError('');
-    setSaveStatus('idle');
-    try {
-      const post = await fetchCurrentPost(groupId, user.id);
-      const loadedBody = post?.body ?? '';
-      const loadedTitle = post?.title ?? '';
-      setExistingPost(post);
-      setBody(loadedBody);
-      setTitle(loadedTitle);
-      setImageUri(post?.image_url ?? null);
-      setImageChanged(false);
-      // Seed the auto-save baseline so loading a post doesn't trigger a save.
-      bodyRef.current = loadedBody;
-      titleRef.current = loadedTitle;
-      lastSavedBodyRef.current = loadedBody.trim();
-      lastSavedTitleRef.current = loadedTitle.trim();
-      existingPostRef.current = post;
-    } catch {
-      setScreenError(Strings.error.postLoad);
-    } finally {
-      setLoadingPost(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (selectedGroupId) {
-      loadPost(selectedGroupId);
-    }
-  }, [selectedGroupId, loadPost]);
-
-  // ── Refresh ───────────────────────────────────────────────────────────────
+  const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null;
+  const nextPublish = selectedGroup ? nextPublishForGroup(selectedGroup) : null;
+  const post = draft.existingPost;
+  const filedBefore = post !== null && (draft.openedWithPost || filedPostId === post.id);
+  const photoCount = photosIn(draft.blocks).length;
+  const editable = !draft.filing && !draft.deleting;
+  const status = composerStatus({
+    blocks: draft.blocks,
+    saveStatus: draft.saveStatus,
+    filed: draft.filed,
+    dayLabel: nextPublish?.dayLabel ?? null,
+  });
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await reloadGroups();
-    if (selectedGroupId) await loadPost(selectedGroupId);
+    if (selectedGroupId) await draft.load(selectedGroupId);
     setRefreshing(false);
   };
 
-  // ── Image picker ──────────────────────────────────────────────────────────
-
-  const handlePickImage = async () => {
+  const handleAddPhoto = async () => {
+    // Where the photos go is read before the picker can take the focus.
+    const at = editor.captureCaret();
+    const room = MAX_POST_PHOTOS - photoCount;
+    if (room <= 0) return;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: true,
-      // Quality 1 = no compression here. lib/posts.ts recompresses once at
-      // print quality on upload; compressing twice showed in print.
+      allowsMultipleSelection: true,
+      selectionLimit: room,
+      orderedSelection: true,
+      // Quality 1 = no compression here: lib/posts.ts makes the print master
+      // and the display copy from the original, so nothing is compressed twice.
       quality: 1,
     });
-    if (!result.canceled && result.assets[0]) {
-      setImageUri(result.assets[0].uri);
-      setImageChanged(true);
-    }
-  };
-
-  const handleRemoveImage = () => {
-    setImageUri(null);
-    setImageChanged(true);
-  };
-
-  // ── Save / Update ─────────────────────────────────────────────────────────
-  // The explicit Save flushes the text and commits the photo (photos aren't
-  // auto-uploaded on every keystroke — only here).
-
-  const handleSave = async () => {
-    if (!user || !selectedGroupId) return;
-    if (body.trim() === '') {
-      setScreenError('Please write something before saving.');
-      return;
-    }
-    // Cancels a *scheduled* autosave. One already in flight can't be
-    // cancelled, so wait it out below.
-    clearAutoSaveTimer();
-    setScreenError('');
-    setSaving(true);
-    setSaveStatus('saving');
-
-    // A debounced autosave fires 1.2s after the last keystroke, so tapping
-    // Save right after typing can land while that request is still out. If it
-    // is a *create*, both calls would insert and the author would end up with
-    // two posts in one edition — so let it settle and pick up the row it made
-    // (existingPostRef, which the autosave keeps current), rather than the
-    // `existingPost` state, which is still null until its setState lands.
-    for (let waited = 0; isSavingRef.current && waited < 10000; waited += 50) {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-    isSavingRef.current = true;
-
-    const titleValue = title.trim() === '' ? null : title.trim();
-
-    try {
-      const saved = existingPostRef.current;
-      let finalImageUrl: string | null = saved?.image_url ?? null;
-
-      if (saved) {
-        if (imageChanged) {
-          if (imageUri) {
-            setUploadingImage(true);
-            finalImageUrl = await uploadPostImage(user.id, saved.id, imageUri);
-            setUploadingImage(false);
-          } else {
-            finalImageUrl = null;
-          }
-        }
-        const updated = await updatePost(saved.id, {
-          title: titleValue,
-          body: body.trim(),
-          image_url: finalImageUrl,
-        });
-        existingPostRef.current = updated;
-        setExistingPost(updated);
-        setImageUri(updated.image_url);
-        setImageChanged(false);
-      } else {
-        const created = await createPost({
-          group_id: selectedGroupId,
-          author_id: user.id,
-          title: titleValue,
-          body: body.trim(),
-        });
-        existingPostRef.current = created;
-
-        if (imageUri && imageChanged) {
-          setUploadingImage(true);
-          finalImageUrl = await uploadPostImage(user.id, created.id, imageUri);
-          setUploadingImage(false);
-          const withImage = await updatePost(created.id, { image_url: finalImageUrl });
-          existingPostRef.current = withImage;
-          setExistingPost(withImage);
-          setImageUri(withImage.image_url);
-        } else {
-          setExistingPost(created);
-        }
-        setImageChanged(false);
-      }
-      lastSavedBodyRef.current = body.trim();
-      lastSavedTitleRef.current = title.trim();
-      setSaveStatus('saved');
-      // The explicit Save is the "my story is in" moment — stamp the page.
-      // Only when a group (and thus a publish date) is selected, since the
-      // stamp prints that date; otherwise the flag would latch with nothing
-      // ever rendering it to reset. Bump the key so each save replays it.
-      Haptics.confirm();
-      const groupForStamp = groups.find((g) => g.id === selectedGroupId) ?? null;
-      if (groupForStamp) {
-        setStampKey((k) => k + 1);
-        setStampVisible(true);
-      }
-    } catch {
-      setUploadingImage(false);
-      setScreenError(Strings.error.postSave);
-      setSaveStatus('error');
-    } finally {
-      isSavingRef.current = false;
-      setSaving(false);
-    }
-  };
-
-  // ── Delete ────────────────────────────────────────────────────────────────
-
-  const handleDelete = () => {
-    Alert.alert(
-      'Delete this post?',
-      "This will remove your post for this week. You can always write a new one before the edition publishes.",
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            if (!existingPost) return;
-            clearAutoSaveTimer();
-            setDeleting(true);
-            setScreenError('');
-            try {
-              await deletePost(existingPost.id);
-              setExistingPost(null);
-              setBody('');
-              setTitle('');
-              setImageUri(null);
-              setImageChanged(false);
-              bodyRef.current = '';
-              titleRef.current = '';
-              lastSavedBodyRef.current = '';
-              lastSavedTitleRef.current = '';
-              existingPostRef.current = null;
-              setSaveStatus('idle');
-            } catch {
-              setScreenError(Strings.error.postDelete);
-            } finally {
-              setDeleting(false);
-            }
-          },
-        },
-      ]
+    if (result.canceled || result.assets.length === 0) return;
+    editor.insertPhotos(
+      at,
+      result.assets.map(({ uri, width, height }) => ({ uri, width, height })),
     );
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // Filing closes the writing moment: the keyboard drops so the stamp and
+  // the settled bar are in full view. No navigation afterwards — the
+  // reassurance stays on screen.
+  const handleFile = async () => {
+    Keyboard.dismiss();
+    const filedId = await draft.file();
+    if (!filedId) return;
+    setFiledPostId(filedId);
+    Haptics.confirm();
+    if (nextPublish) {
+      setStampKey((k) => k + 1);
+      setStampVisible(true);
+    }
+  };
 
-  const isEditing = existingPost !== null;
-  const isBusy = saving || deleting;
-  const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null;
-  const canSwitchGroup = groups.length > 1;
-  // Names the destination ("…will run in Sunday's edition") so writing feels
-  // pointed at a real arrival, not dropped into a void.
-  const nextPublish = selectedGroup ? nextPublishForGroup(selectedGroup) : null;
-  const subtitle = nextPublish
-    ? isEditing
-      ? Strings.thisWeek.composerSubtitleEditing(nextPublish.dayLabel)
-      : Strings.thisWeek.composerSubtitle(nextPublish.dayLabel)
-    : isEditing
-      ? 'Editing your entry for this week'
-      : 'Your entry for this week';
+  const handleRemovePost = () => {
+    Alert.alert(Strings.compose.removePostTitle, Strings.compose.removePostBody, [
+      { text: Strings.compose.cancel, style: 'cancel' },
+      { text: Strings.compose.removePostCta, style: 'destructive', onPress: draft.removePost },
+    ]);
+  };
 
-  // No group selected yet: resolve quietly, then either send to Groups (none) or
-  // prompt to choose one (several).
+  // No Group yet: resolve quietly, then send to Groups (none) or ask which.
   if (!selectedGroupId) {
     if (loadingGroups) {
       return (
-        <View style={styles.flex}>
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-            <ComposerSkeleton withHeader />
-          </ScrollView>
-        </View>
+        <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+          <ComposerSkeleton withHeader />
+        </ScrollView>
       );
     }
     if (groups.length === 0) {
@@ -458,318 +159,132 @@ const PostScreen = () => {
     );
   }
 
+  const showPage = !draft.loading && !draft.loadFailed;
+  const subtitle = nextPublish
+    ? draft.openedWithPost
+      ? Strings.thisWeek.composerSubtitleEditing(nextPublish.dayLabel)
+      : Strings.thisWeek.composerSubtitle(nextPublish.dayLabel)
+    : 'Your entry for this week';
+
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={90}
+    // Ends at the keyboard's top edge while it's up (`inset`), so the bar
+    // rides it; otherwise at the tab bar.
+    <View
+      ref={screenRef}
+      onLayout={onScreenLayout}
+      style={[styles.screen, { paddingBottom: keyboardInset }]}
     >
-      <ScrollView
-        style={styles.flex}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={Colors.ink}
+      <View ref={viewportRef} style={styles.viewport}>
+        <ScrollView
+          ref={scrollRef}
+          style={styles.viewport}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          onScroll={editor.onScroll}
+          scrollEventThrottle={32}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.ink} />
+          }
+        >
+          {draft.error ? <StatusBanner variant="error" message={draft.error} /> : null}
+          <ComposerMasthead
+            groupName={selectedGroup ? selectedGroup.name : 'This week'}
+            subtitle={subtitle}
+            onSwitchGroup={groups.length > 1 ? openComposeSheet : null}
           />
-        }
-      >
-        {/* ── Error banner ── */}
-        {screenError ? (
-          <StatusBanner variant="error" message={screenError} style={styles.banner} />
-        ) : null}
-
-        {/* Masthead — names the publication you're writing for. With more than
-            one Group it's tappable, reopening the menu to switch. */}
-        <View style={styles.composeHeader}>
-          {canSwitchGroup ? (
+          {draft.loading ? <ComposerSkeleton /> : null}
+          {showPage ? (
+            <ComposerPage
+              title={draft.title}
+              onChangeTitle={draft.setTitle}
+              blocks={draft.blocks}
+              editable={editable}
+              editor={editor}
+              onRetryPhoto={draft.retryPhoto}
+            />
+          ) : null}
+          {/* Removing is legitimate but never competes with writing — a
+              quiet line below the page, once there's a post to remove. */}
+          {showPage && post ? (
             <Pressable
-              onPress={openComposeSheet}
               accessibilityRole="button"
-              accessibilityLabel="Switch Group"
-              style={({ pressed }) => [styles.titleChip, pressed && styles.titleChipPressed]}
+              disabled={!editable}
+              onPress={handleRemovePost}
+              style={({ pressed }) => [styles.removeLink, pressed && styles.pressed]}
             >
-              <ThemedText variant="subheadline" style={styles.composeTitle} numberOfLines={1}>
-                {selectedGroup ? selectedGroup.name : 'This week'}
+              <ThemedText variant="ui" style={styles.removeLinkText}>
+                {Strings.compose.removePostLink}
               </ThemedText>
-              <Icon icon={Icons.chevronDown} size={14} color={Colors.inkSoft} />
             </Pressable>
-          ) : (
-            <ThemedText variant="subheadline" style={styles.composeTitle}>
-              {selectedGroup ? selectedGroup.name : 'This week'}
-            </ThemedText>
-          )}
-          <ThemedText variant="caption" style={styles.composeSubtitle}>
-            {subtitle}
-          </ThemedText>
-        </View>
+          ) : null}
+        </ScrollView>
+        {stampVisible && nextPublish ? (
+          // FILED owns −4° (BRAND §11). Pressed onto the page just above the
+          // bar, where "Filed for …" then settles in.
+          <InkStamp
+            key={stampKey}
+            label={Strings.thisWeek.filedStamp(nextPublish.dayLabel)}
+            tilt={-4}
+            behavior="moment"
+            reduceMotion={reduceMotion}
+            onDone={() => setStampVisible(false)}
+            style={styles.stamp}
+          />
+        ) : null}
+      </View>
 
-        {!loadingPost ? (
-          <>
-            {/* The page — a white sheet lifted off the warm desk. Shadow deepens
-                while focused so writing feels tactile. */}
-            <View style={[styles.composeCard, isFocused && styles.composeCardFocused]}>
-              {/* Optional headline. A short serif title that becomes the story's
-                  headline on the front page and in the email; left blank, the
-                  post just runs under the author's name. */}
-              <TextInput
-                style={styles.titleInput}
-                value={title}
-                onChangeText={handleChangeTitle}
-                placeholder="Headline"
-                placeholderTextColor={Colors.inkMuted}
-                selectionColor={Colors.vermilion}
-                editable={!isBusy}
-                maxLength={80}
-                returnKeyType="next"
-                onSubmitEditing={() => bodyInputRef.current?.focus()}
-              />
-              <View style={styles.titleRule} />
-              <View style={styles.bodyWrap}>
-                <TextInput
-                  ref={bodyInputRef}
-                  style={styles.bodyInput}
-                  value={body}
-                  onChangeText={handleChangeBody}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  multiline
-                  selectionColor={Colors.vermilion}
-                  editable={!isBusy}
-                  textAlignVertical="top"
-                />
-                {/* Custom italic-serif placeholder. Overlaying it (rather than the
-                    native placeholder) keeps the warm voice without italicizing
-                    the upright serif body the user types. */}
-                {body === '' ? (
-                  <View style={styles.placeholderWrap} pointerEvents="none">
-                    <ThemedText style={styles.placeholder}>
-                      What&apos;s been happening this week?
-                    </ThemedText>
-                  </View>
-                ) : null}
-              </View>
-              {stampVisible && nextPublish ? (
-                // FILED owns −4°; JOINED owns +3° (BRAND §11). Overlaps the
-                // page's top-right corner like a stamp that didn't quite line
-                // up — deliberate.
-                <InkStamp
-                  key={stampKey}
-                  label={Strings.thisWeek.filedStamp(nextPublish.dayLabel)}
-                  tilt={-4}
-                  behavior="moment"
-                  reduceMotion={reduceMotion}
-                  onDone={() => setStampVisible(false)}
-                  style={styles.stamp}
-                />
-              ) : null}
-            </View>
-
-            {/* Quiet save status — reassurance, not a quota. */}
-            <View style={styles.saveStatusRow}>
-              {saveStatus === 'saving' ? (
-                <ThemedText variant="caption" style={styles.saveStatusText}>
-                  Saving…
-                </ThemedText>
-              ) : saveStatus === 'saved' ? (
-                <ThemedText variant="caption" style={styles.saveStatusText}>
-                  Saved
-                </ThemedText>
-              ) : saveStatus === 'error' ? (
-                <ThemedText
-                  variant="caption"
-                  style={[styles.saveStatusText, styles.saveStatusError]}
-                >
-                  Couldn&apos;t save — your words are still here
-                </ThemedText>
-              ) : null}
-            </View>
-
-            <View style={styles.section}>
-              <ThemedText variant="kicker">Photo</ThemedText>
-              {imageUri ? (
-                <View style={styles.imagePreviewWrapper}>
-                  <AppImage
-                    source={previewUri ? { uri: previewUri } : undefined}
-                    style={styles.imagePreview}
-                  />
-                  <View style={styles.imageActions}>
-                    <FormButton
-                      title="Change photo"
-                      variant="secondary"
-                      onPress={handlePickImage}
-                      disabled={isBusy}
-                    />
-                    <FormButton
-                      title="Remove photo"
-                      variant="ghost"
-                      onPress={handleRemoveImage}
-                      disabled={isBusy}
-                    />
-                  </View>
-                </View>
-              ) : (
-                <FormButton
-                  title="Add a photo"
-                  variant="secondary"
-                  onPress={handlePickImage}
-                  disabled={isBusy}
-                />
-              )}
-            </View>
-
-            <View style={styles.actions}>
-              <FormButton
-                title={isEditing ? 'Update' : 'Save'}
-                onPress={handleSave}
-                loading={saving || uploadingImage}
-                disabled={isBusy}
-              />
-              {isEditing ? (
-                <FormButton
-                  title="Delete this post"
-                  variant="destructive"
-                  onPress={handleDelete}
-                  loading={deleting}
-                  disabled={isBusy}
-                />
-              ) : null}
-            </View>
-          </>
-        ) : (
-          <ComposerSkeleton />
-        )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+      {showPage ? (
+        <ComposeActionBar
+          onAddPhoto={handleAddPhoto}
+          photoLimitNote={photoCount >= MAX_POST_PHOTOS ? Strings.compose.photoLimit(MAX_POST_PHOTOS) : null}
+          statusText={status.text}
+          statusTone={status.tone}
+          settleStatus={status.settle}
+          reduceMotion={reduceMotion}
+          primaryLabel={filedBefore ? Strings.compose.updateCta : Strings.compose.fileCta}
+          onPrimary={handleFile}
+          primaryLoading={draft.filing}
+          disabled={!editable}
+          // Resting on the tab bar, leave the raised "+" its room; on the
+          // keyboard, the tab bar is under it.
+          clearance={keyboardInset > 0 ? 0 : RAISED_LIFT}
+        />
+      ) : null}
+    </View>
   );
 };
 
 export default PostScreen;
 
 const styles = StyleSheet.create({
-  flex: {
+  screen: {
     flex: 1,
     backgroundColor: Colors.paperWarm,
   },
-  scrollContent: {
+  viewport: {
+    flex: 1,
+  },
+  content: {
     padding: Layout.padding.lg,
     gap: Layout.padding.lg,
     paddingBottom: Layout.padding.xl,
   },
-  section: {
-    gap: Layout.padding.sm,
-  },
-  banner: {},
-  // Overlaps the page's top-right corner (host is position: relative).
   stamp: {
     position: 'absolute',
-    top: -10,
-    right: 12,
+    right: Layout.padding.lg,
+    bottom: Layout.padding.md,
   },
-  // Masthead above the page.
-  composeHeader: {
-    gap: Layout.padding.xs,
+  // Danger in words, not a slab; centered under the page at a full target.
+  removeLink: {
+    minHeight: Layout.touchTargetMin,
+    alignSelf: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Layout.padding.md,
   },
-  // Tappable group switcher: name + down-caret.
-  titleChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Layout.padding.sm,
-    alignSelf: 'flex-start',
-    paddingVertical: Layout.padding.xs,
+  pressed: {
+    opacity: 0.7,
   },
-  titleChipPressed: {
-    opacity: 0.6,
-  },
-  composeTitle: {
-    color: Colors.ink,
-  },
-  composeSubtitle: {
-    color: Colors.inkSoft,
-  },
-  // The page — a white sheet on the warm desk. The one content surface that
-  // keeps its lift in v2: the sheet IS the composing metaphor, and it behaves
-  // like a true overlay (a page laid on the desk, not a card in a feed).
-  composeCard: {
-    ...Layout.shadow.paper,
-    position: 'relative',
-    backgroundColor: Colors.paper,
-    borderRadius: Layout.borderRadius.lg,
-    borderWidth: Layout.rule.hairline,
-    borderColor: Colors.hairline,
-    minHeight: 360,
-    padding: Layout.padding.lg,
-  },
-  composeCardFocused: {
-    ...Layout.shadow.paperRaised,
-  },
-  // Headline line at the top of the page — Lora Bold, sized between body and
-  // a real headline so it reads as a title without dwarfing the writing area.
-  titleInput: {
-    color: Colors.ink,
-    fontFamily: Typography.families.serifBold,
-    fontSize: Typography.sizes.xl,
-    lineHeight: 28,
-    paddingVertical: Layout.padding.xs,
-  },
-  // Hairline separating the headline from the body, echoing the masthead rule.
-  titleRule: {
-    height: Layout.rule.hairline,
-    backgroundColor: Colors.hairline,
-    marginTop: Layout.padding.xs,
-    marginBottom: Layout.padding.md,
-  },
-  bodyWrap: {
-    position: 'relative',
-  },
-  bodyInput: {
-    minHeight: 312,
-    color: Colors.ink,
-    fontFamily: Typography.families.serif,
-    fontSize: Typography.sizes.lg,
-    lineHeight: 30,
-  },
-  // Anchored to the body wrapper's origin so the italic placeholder sits
-  // exactly where typed text begins, below the headline.
-  placeholderWrap: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-  },
-  placeholder: {
-    fontFamily: Typography.families.serifItalic,
-    fontSize: Typography.sizes.lg,
-    lineHeight: 30,
-    color: Colors.inkSoft,
-  },
-  saveStatusRow: {
-    minHeight: 22,
-    alignSelf: 'flex-end',
-  },
-  saveStatusText: {
-    color: Colors.inkMuted,
-  },
-  saveStatusError: {
+  removeLinkText: {
     color: Colors.error,
-  },
-  imagePreviewWrapper: {
-    gap: Layout.padding.sm,
-  },
-  // Flat editorial preview (BRAND §5): square corners, hairline edge.
-  imagePreview: {
-    width: '100%',
-    height: 200,
-    borderWidth: Layout.rule.hairline,
-    borderColor: Colors.hairline,
-  },
-  imageActions: {
-    flexDirection: 'row',
-    gap: Layout.padding.sm,
-  },
-  actions: {
-    gap: Layout.padding.sm,
   },
 });

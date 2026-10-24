@@ -58,6 +58,7 @@ This is the app-side data layer: the `supabase-js` client, the `lib/` functions 
 | `image.ts` | `resizeImage` (returns the result's pixel size, which photo blocks store) / `resizeImageForUpload`, used before upload. |
 | `haptics.ts` | Haptic feedback wrappers. |
 | `edition-layout.ts` | Front-page layout computation for the reader. |
+| `composer-blocks.ts` | The composer's working copy of a post (pure, not Supabase): inserting photos at the cursor, removing one and joining the text, backspace-select, and `blocksToSave` — the only bridge into `post-blocks.ts`'s `toPostFields`. |
 
 Group a new data function with its entity's file; create a new `lib/<entity>.ts` only for a genuinely new noun.
 

@@ -1,4 +1,4 @@
-import { resizeImage, resizeImageForUpload } from '@/lib/image';
+import { resizeImage } from '@/lib/image';
 import { postPhotoPaths } from '@/lib/post-blocks';
 import { supabase } from '@/lib/supabase';
 import type { PostInsert, PostPhotoBlock, PostRow, PostUpdate } from '@/types';
@@ -180,24 +180,6 @@ const uploadJpeg = async (storagePath: string, localUri: string): Promise<void> 
   if (error) {
     throw error;
   }
-};
-
-// The single-photo upload from before multi-photo; kept until the block
-// composer replaces its last caller.
-export const uploadPostImage = async (
-  userId: string,
-  postId: string,
-  imageUri: string,
-): Promise<string> => {
-  // Resize + JPEG-recompress at print bounds (see POST_IMAGE_MAX_EDGE above).
-  const resizedUri = await resizeImageForUpload(imageUri, {
-    maxEdge: POST_IMAGE_MAX_EDGE,
-    quality: POST_IMAGE_QUALITY,
-  });
-  // After resize we always have JPEG, so the extension is fixed.
-  const storagePath = `${userId}/posts/${postId}/image.jpg`;
-  await uploadJpeg(storagePath, resizedUri);
-  return storagePath;
 };
 
 // Upload one photo of a post: the print master, then its display copy, both
