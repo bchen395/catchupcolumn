@@ -455,8 +455,20 @@ const GroupDetailScreen = () => {
     );
   };
 
+  // An invite can land here with nothing beneath: auto-join, or an invite link
+  // that opened the app cold. Set on the skeleton too, so a slow load still
+  // has a way out; the error state has its own "Back to Groups".
+  const headerLeft = () => <BackButton onPress={() => goBackOr(router, '/groups')} />;
+
   if (!hydrated) {
-    return <GroupDetailSkeleton />;
+    return (
+      <>
+        {/* An empty title until the name loads; unset, the header shows the
+            raw route name ("[id]"). */}
+        <Stack.Screen options={{ title: '', headerLeft }} />
+        <GroupDetailSkeleton />
+      </>
+    );
   }
 
   // Publishing compiles and delivers the edition — the one true long wait in
@@ -488,9 +500,7 @@ const GroupDetailScreen = () => {
       <Stack.Screen
         options={{
           title: group.name,
-          // An invite can land here with nothing beneath: auto-join, or an
-          // invite link that opened the app cold.
-          headerLeft: () => <BackButton onPress={() => goBackOr(router, '/groups')} />,
+          headerLeft,
         }}
       />
       {screenError ? (
