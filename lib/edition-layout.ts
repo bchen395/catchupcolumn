@@ -10,12 +10,20 @@
 // Next/Previous on the story reader follows the same visual priority the
 // front page shows, so the two always agree on sequence.
 
+import { photoBlocksOf, postBlocksOf } from '@/lib/post-blocks';
+import type { PostBlock, PostPhotoBlock } from '@/types';
+
 // Structural minimum the layout needs — satisfied by PostWithAuthor and by the
 // trimmed post shape nested into the inbox query.
 export type LeadPostLike = {
   title: string | null;
   body: string;
+  // The first photo's print master — enough for the photo-leads rule below,
+  // never for display (see coverPhotoFor).
   image_url: string | null;
+  // Null on posts from before multi-photo; optional so a query that doesn't
+  // need the photos can leave them out.
+  blocks?: PostBlock[] | null;
   author: { display_name: string };
 };
 
@@ -50,6 +58,13 @@ export const orderEdition = <T extends LeadPostLike>(posts: T[]): EditionOrder<T
   const ordered = secondary ? [lead, secondary, ...briefs] : [lead];
   return { lead, secondary, briefs, ordered };
 };
+
+// The photo a post shows wherever it's represented by one picture — the
+// front-page slots, Home's hero, the Editions-list thumbnail: its first photo
+// in reading order, or null for a text-only post. Display it through
+// photoDisplayPath (the ~1280px copy), not `image_url` (the 2600px master).
+export const coverPhotoFor = (post: LeadPostLike): PostPhotoBlock | null =>
+  photoBlocksOf(postBlocksOf(post))[0] ?? null;
 
 // First name only — warmer and fits a headline better than the full name.
 export const firstName = (displayName: string): string => {

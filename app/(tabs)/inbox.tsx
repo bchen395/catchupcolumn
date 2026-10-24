@@ -17,8 +17,9 @@ import { Icons } from '@/constants/icons';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { useAuth } from '@/hooks/use-auth';
-import { formatWeekOf, headlineFor, orderEdition } from '@/lib/edition-layout';
+import { coverPhotoFor, formatWeekOf, headlineFor, orderEdition } from '@/lib/edition-layout';
 import { fetchEditionsForUser, type EditionListItem } from '@/lib/editions';
+import { photoDisplayPath } from '@/lib/post-blocks';
 
 type Section = {
   groupId: string;
@@ -122,12 +123,14 @@ const InboxScreen = () => {
     ({ item }: { item: EditionListItem }) => {
       // Lead with the edition's lead-story headline when there is one — it
       // sells the issue far better than a bare date. Fall back to the date.
+      // The thumbnail is the lead's first photo, as its display copy.
       const lead = orderEdition(item.posts ?? []).lead;
+      const photo = lead ? coverPhotoFor(lead) : null;
       return (
         <EditionRow
           headline={lead ? headlineFor(lead) : formatWeekOf(item.published_at, item.group.timezone)}
           folio={folioFor(item)}
-          leadImageUrl={lead?.image_url ?? null}
+          leadPhotoPath={photo ? photoDisplayPath(photo) : null}
           onPress={() => router.push(`/edition/${item.id}`)}
         />
       );

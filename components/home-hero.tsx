@@ -5,8 +5,9 @@ import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { displayRatioFor, useImageOrientation } from '@/hooks/use-image-orientation';
-import { deckFor, firstName, headlineFor, orderEdition } from '@/lib/edition-layout';
+import { coverPhotoFor, deckFor, firstName, headlineFor, orderEdition } from '@/lib/edition-layout';
 import type { EditionListItem } from '@/lib/editions';
+import { photoDisplayPath } from '@/lib/post-blocks';
 
 import { AppImage } from './app-image';
 import { EditorialPhoto } from './editorial-photo';
@@ -39,10 +40,13 @@ type HomeHeroProps = {
 // the old group cover went invisible by week three), its headline is the
 // headline, and the group name demotes to the folio line. Falls back to the
 // group cover, then to a type-only front — the rule/kicker/headline frame
-// carries the block even with no photo at all.
+// carries the block even with no photo at all. The lead photo is the lead
+// story's first, as its display copy.
 export const HomeHero = ({ edition, isNew, onPress }: HomeHeroProps) => {
   const lead = orderEdition(edition.posts ?? []).lead;
-  const { orientation, onNaturalSize } = useImageOrientation(lead?.image_url);
+  const photo = lead ? coverPhotoFor(lead) : null;
+  const photoPath = photo ? photoDisplayPath(photo) : null;
+  const { orientation, onNaturalSize } = useImageOrientation(photoPath, photo);
   const headline = lead ? headlineFor(lead) : edition.group.name;
 
   return (
@@ -63,12 +67,12 @@ export const HomeHero = ({ edition, isNew, onPress }: HomeHeroProps) => {
           </View>
         ) : null}
       </View>
-      {lead?.image_url ? (
+      {lead && photoPath ? (
         // Landscape keeps the 4:3 plate; portrait/square crop to 1:1 so the
         // hero stays a front page, not a poster (a full-width 4:5 would push
         // everything else below the fold).
         <EditorialPhoto
-          imageUrl={lead.image_url}
+          imageUrl={photoPath}
           photoAspectRatio={orientation === 'landscape' ? displayRatioFor('landscape') : 1}
           onNaturalSize={onNaturalSize}
           credit={`Photo by ${firstName(lead.author.display_name)}`}

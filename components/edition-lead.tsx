@@ -4,7 +4,8 @@ import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
 import { displayRatioFor, useImageOrientation } from '@/hooks/use-image-orientation';
-import { deckFor, headlineFor } from '@/lib/edition-layout';
+import { coverPhotoFor, deckFor, headlineFor } from '@/lib/edition-layout';
+import { photoDisplayPath } from '@/lib/post-blocks';
 import type { PostWithAuthor } from '@/types';
 
 import { Avatar } from './avatar';
@@ -22,9 +23,13 @@ type Props = {
 // continues in the reader. Landscape and square photos run the full measure
 // with the text below; a portrait photo sits in its own column with the text
 // running beside it, newspaper-style. The whole block is the tap target.
+// The photo is the post's first (its display copy); the rest wait in the
+// reader.
 export const EditionLead = ({ post, onPress }: Props) => {
   const headline = headlineFor(post);
-  const { orientation, onNaturalSize } = useImageOrientation(post.image_url);
+  const photo = coverPhotoFor(post);
+  const photoPath = photo ? photoDisplayPath(photo) : null;
+  const { orientation, onNaturalSize } = useImageOrientation(photoPath, photo);
   // Until the photo reports its shape, lay out as landscape — the common case.
   const portrait = orientation === 'portrait';
 
@@ -53,11 +58,11 @@ export const EditionLead = ({ post, onPress }: Props) => {
         <ThemedText style={styles.byline} numberOfLines={2}>By {post.author.display_name}</ThemedText>
       </View>
 
-      {post.image_url && portrait ? (
+      {photoPath && portrait ? (
         // Portrait: the photo holds one column, the teaser runs beside it.
         <View style={styles.sideBySide}>
           <EditorialPhoto
-            imageUrl={post.image_url}
+            imageUrl={photoPath}
             photoAspectRatio={displayRatioFor('portrait')}
             onNaturalSize={onNaturalSize}
             style={styles.portraitPhoto}
@@ -66,9 +71,9 @@ export const EditionLead = ({ post, onPress }: Props) => {
         </View>
       ) : (
         <>
-          {post.image_url ? (
+          {photoPath ? (
             <EditorialPhoto
-              imageUrl={post.image_url}
+              imageUrl={photoPath}
               photoAspectRatio={displayRatioFor(orientation ?? 'landscape')}
               onNaturalSize={onNaturalSize}
               style={styles.photo}

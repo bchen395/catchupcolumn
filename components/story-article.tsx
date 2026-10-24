@@ -3,13 +3,13 @@ import { StyleSheet, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
-import { displayRatioFor, useImageOrientation } from '@/hooks/use-image-orientation';
 import { firstName, headlineFor } from '@/lib/edition-layout';
+import { postBlocksOf } from '@/lib/post-blocks';
 import type { PostWithAuthor } from '@/types';
 
 import { Avatar } from './avatar';
-import { EditorialPhoto } from './editorial-photo';
 import { ReportStoryLink } from './report-story-link';
+import { StoryBlocks } from './story-blocks';
 import { ThemedText } from './themed-text';
 
 type Props = {
@@ -17,21 +17,13 @@ type Props = {
 };
 
 // One contributor's full story, as read in the reader. Headline (the post's
-// title or a warm byline fallback), an avatar byline, the credited photo when
-// present, then the body set for long-form reading with a raised initial.
-//
-// The raised initial is an inline "lettrine", not a true CSS-float drop cap
-// (React Native has no float). It reads as the same flourish without risking a
-// clipped glyph. Skipped when the body opens on punctuation/whitespace.
+// title or a warm byline fallback), an avatar byline, then the post itself:
+// its writing and up to four photos in the order they were set, the first
+// photo credited and the first text piece opening on a raised initial
+// (StoryBlocks). Posts from before multi-photo read as they always did —
+// their one photo above the text.
 export const StoryArticle = ({ post }: Props) => {
-  const { author, body, image_url } = post;
-  const { orientation, onNaturalSize } = useImageOrientation(image_url);
-
-  const trimmed = body.trimStart();
-  const firstChar = trimmed.charAt(0);
-  const showCap = firstChar !== '' && !/[\s"'“”‘’(){}[\].,!?;:—–-]/.test(firstChar);
-  const initial = showCap ? firstChar : '';
-  const rest = showCap ? trimmed.slice(1) : body;
+  const { author } = post;
 
   return (
     <View style={styles.article}>
@@ -47,20 +39,10 @@ export const StoryArticle = ({ post }: Props) => {
         </View>
       </View>
 
-      {image_url ? (
-        <EditorialPhoto
-          imageUrl={image_url}
-          credit={`Photo by ${firstName(author.display_name)}`}
-          photoAspectRatio={displayRatioFor(orientation ?? 'landscape')}
-          onNaturalSize={onNaturalSize}
-          style={[styles.photo, orientation === 'portrait' && styles.photoPortrait]}
-        />
-      ) : null}
-
-      <ThemedText style={styles.body}>
-        {showCap ? <ThemedText style={styles.dropCap}>{initial}</ThemedText> : null}
-        {rest}
-      </ThemedText>
+      <StoryBlocks
+        blocks={postBlocksOf(post)}
+        credit={`Photo by ${firstName(author.display_name)}`}
+      />
 
       <ReportStoryLink post={post} />
     </View>
@@ -94,30 +76,6 @@ const styles = StyleSheet.create({
     fontFamily: Typography.families.serifBold,
     fontSize: Typography.sizes.xl,
     lineHeight: 28,
-    color: Colors.ink,
-  },
-  photo: {
-    marginTop: Layout.padding.xs,
-    marginBottom: Layout.padding.md,
-  },
-  // A tall photo at full width would tower over the page — bring it in to a
-  // narrower centered measure instead, like a portrait plate in a paper.
-  photoPortrait: {
-    width: '78%',
-    alignSelf: 'center',
-  },
-  body: {
-    fontFamily: Typography.families.serif,
-    fontSize: Typography.sizes.read,
-    lineHeight: Typography.lineHeights.read,
-    color: Colors.ink,
-  },
-  // The lettrine is set in ink — vermilion never decorates reading copy
-  // (BRAND §2), and the reader page spends no accent at all.
-  dropCap: {
-    fontFamily: Typography.families.serifBold,
-    fontSize: 36,
-    lineHeight: 40,
     color: Colors.ink,
   },
 });

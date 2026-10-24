@@ -3,7 +3,8 @@ import { Pressable, StyleSheet } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
-import { deckFor, headlineFor } from '@/lib/edition-layout';
+import { coverPhotoFor, deckFor, headlineFor } from '@/lib/edition-layout';
+import { photoDisplayPath } from '@/lib/post-blocks';
 import type { PostWithAuthor } from '@/types';
 
 import { EditorialPhoto } from './editorial-photo';
@@ -16,12 +17,14 @@ type Props = {
 };
 
 // One cell of the "in brief" grid: a small square photo when the post has
-// one, then headline, byline, a few lines of newsprint excerpt dissolving
-// into greeked lines. No read cue at half-column width; the whole cell is the
-// tap target and the headline signals it. The grid owns the column geometry —
-// this cell just fills whatever width it's given.
+// one (its first, as the display copy), then headline, byline, a few lines of
+// newsprint excerpt dissolving into greeked lines. No read cue at half-column
+// width; the whole cell is the tap target and the headline signals it. The
+// grid owns the column geometry — this cell just fills whatever width it's
+// given.
 export const EditionBriefColumn = ({ post, onPress }: Props) => {
   const headline = headlineFor(post);
+  const photo = coverPhotoFor(post);
   return (
     <Pressable
       onPress={onPress}
@@ -29,8 +32,12 @@ export const EditionBriefColumn = ({ post, onPress }: Props) => {
       accessibilityLabel={`Read ${headline}, by ${post.author.display_name}`}
       style={({ pressed }) => [styles.wrap, pressed && styles.pressed]}
     >
-      {post.image_url ? (
-        <EditorialPhoto imageUrl={post.image_url} photoAspectRatio={1} style={styles.thumb} />
+      {photo ? (
+        <EditorialPhoto
+          imageUrl={photoDisplayPath(photo)}
+          photoAspectRatio={1}
+          style={styles.thumb}
+        />
       ) : null}
       <ThemedText style={styles.headline} numberOfLines={3}>
         {headline}

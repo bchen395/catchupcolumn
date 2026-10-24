@@ -4,7 +4,8 @@ import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Typography } from '@/constants/typography';
 import { displayRatioFor, useImageOrientation } from '@/hooks/use-image-orientation';
-import { deckFor, headlineFor } from '@/lib/edition-layout';
+import { coverPhotoFor, deckFor, headlineFor } from '@/lib/edition-layout';
+import { photoDisplayPath } from '@/lib/post-blocks';
 import type { PostWithAuthor } from '@/types';
 
 import { Avatar } from './avatar';
@@ -22,9 +23,12 @@ type Props = {
 // (photo-first so its silhouette differs from the lead's headline-first
 // block); a portrait photo drops into a column beside the excerpt instead.
 // The excerpt dissolves into greeked lines. The whole block is the tap target.
+// The photo is the post's first (its display copy), as on the lead.
 export const EditionSecondary = ({ post, onPress }: Props) => {
   const headline = headlineFor(post);
-  const { orientation, onNaturalSize } = useImageOrientation(post.image_url);
+  const photo = coverPhotoFor(post);
+  const photoPath = photo ? photoDisplayPath(photo) : null;
+  const { orientation, onNaturalSize } = useImageOrientation(photoPath, photo);
   // Until the photo reports its shape, lay out as landscape — the common case.
   const portrait = orientation === 'portrait';
 
@@ -35,9 +39,9 @@ export const EditionSecondary = ({ post, onPress }: Props) => {
       accessibilityLabel={`Read ${headline}, by ${post.author.display_name}`}
       style={({ pressed }) => [styles.wrap, pressed && styles.pressed]}
     >
-      {post.image_url && !portrait ? (
+      {photoPath && !portrait ? (
         <EditorialPhoto
-          imageUrl={post.image_url}
+          imageUrl={photoPath}
           photoAspectRatio={displayRatioFor(orientation ?? 'landscape')}
           onNaturalSize={onNaturalSize}
           style={styles.photo}
@@ -54,10 +58,10 @@ export const EditionSecondary = ({ post, onPress }: Props) => {
 
       {/* Newsprint teaser — capped scaling so accessibility sizes grow it
           without blowing up the page; full reading is the 17px reader. */}
-      {post.image_url && portrait ? (
+      {photoPath && portrait ? (
         <View style={styles.sideBySide}>
           <EditorialPhoto
-            imageUrl={post.image_url}
+            imageUrl={photoPath}
             photoAspectRatio={displayRatioFor('portrait')}
             onNaturalSize={onNaturalSize}
             style={styles.portraitPhoto}

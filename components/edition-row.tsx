@@ -14,19 +14,20 @@ type Props = {
   /** `FEB 9 · 6 STORIES · 4 WRITERS` — the row's folio line. */
   folio: string;
   /**
-   * Raw `posts.image_url` of the lead story (a private storage path), or null.
-   * Signed here rather than by the caller: `post-images` is a private bucket,
-   * so handing the stored path straight to an <Image> renders nothing.
+   * Storage path of the lead story's first photo — its display copy, via
+   * `photoDisplayPath` — or null. Signed here rather than by the caller:
+   * `post-images` is a private bucket, so handing the stored path straight to
+   * an <Image> renders nothing.
    */
-  leadImageUrl: string | null;
+  leadPhotoPath: string | null;
   onPress: () => void;
 };
 
 // One edition in the Editions list (BRAND §6): hairline-separated, headline
 // left, square lead-photo thumbnail right, no chevron, whole row is the
 // target. Memoised so a list re-render doesn't re-sign every thumbnail.
-export const EditionRow = memo(({ headline, folio, leadImageUrl, onPress }: Props) => {
-  const thumbUri = usePostImageUrl(leadImageUrl);
+export const EditionRow = memo(({ headline, folio, leadPhotoPath, onPress }: Props) => {
+  const thumbUri = usePostImageUrl(leadPhotoPath);
 
   return (
     <Pressable
@@ -43,7 +44,7 @@ export const EditionRow = memo(({ headline, folio, leadImageUrl, onPress }: Prop
           {folio}
         </ThemedText>
       </View>
-      {leadImageUrl ? (
+      {leadPhotoPath ? (
         <AppImage
           source={thumbUri ? { uri: thumbUri } : undefined}
           style={styles.rowThumb}
