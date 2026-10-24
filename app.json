@@ -41,12 +41,19 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
       "expo-font",
       [
         "expo-image-picker",
         {
-          "photosPermission": "Catch Up Column needs access to your photos so you can add a picture to your post."
+          "photosPermission": "Catch Up Column uses your photos so you can add them to your posts, your profile and your Group's cover.",
+          "cameraPermission": false,
+          "microphonePermission": false
         }
       ],
       [
