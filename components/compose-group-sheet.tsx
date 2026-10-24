@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
     Animated,
     Modal,
     PanResponder,
@@ -20,6 +19,7 @@ import { Haptics } from '@/lib/haptics';
 import type { GroupWithMembers } from '@/types';
 
 import { Icon } from './icon';
+import { ComposeSheetSkeleton } from './skeletons/compose-sheet-skeleton';
 import { ThemedText } from './themed-text';
 
 // How far off-screen the sheet sits when hidden, and the drag thresholds that
@@ -145,9 +145,7 @@ export const ComposeGroupSheet = ({
           </View>
 
           {loading && groups.length === 0 ? (
-            <View style={styles.stateWrap}>
-              <ActivityIndicator color={Colors.ink} />
-            </View>
+            <ComposeSheetSkeleton />
           ) : groups.length === 0 ? (
             <View style={styles.stateWrap}>
               <Icon icon={Icons.emptyGroups} size={36} color={Colors.inkSoft} />

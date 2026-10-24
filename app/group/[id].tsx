@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -12,6 +11,7 @@ import {
 } from 'react-native';
 
 import { AppImage } from '@/components/app-image';
+import { BackButton } from '@/components/back-button';
 import { DaySelector } from '@/components/day-selector';
 import { ErrorState } from '@/components/error-state';
 import { FormButton } from '@/components/form-button';
@@ -487,17 +487,7 @@ const GroupDetailScreen = () => {
       <Stack.Screen
         options={{
           title: group.name,
-          headerLeft: () => (
-            <Pressable
-              onPress={() => router.back()}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-              style={styles.backButton}
-              hitSlop={8}
-            >
-              <Ionicons name="chevron-back" size={26} color={Colors.ink} />
-            </Pressable>
-          ),
+          headerLeft: () => <BackButton onPress={() => router.back()} />,
         }}
       />
       {screenError ? (
@@ -674,9 +664,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingBottom: Layout.padding.xl,
-  },
-  backButton: {
-    marginLeft: 4,
   },
   banner: {
     margin: Layout.padding.md,

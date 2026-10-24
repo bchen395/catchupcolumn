@@ -1,6 +1,5 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Modal, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -14,8 +13,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Motion } from '@/constants/motion';
+import { Strings } from '@/constants/strings';
 import type { PostWithAuthor } from '@/types';
 
+import { BackButton } from './back-button';
 import { StoryReader } from './story-reader';
 import { ThemedText } from './themed-text';
 
@@ -108,19 +109,12 @@ export const StoryReaderOverlay = ({
           style={[styles.reader, { width: winW, height: winH, paddingTop: insets.top, paddingBottom: insets.bottom }, readerStyle]}
         >
           <View style={styles.topBar}>
-            <Pressable
-              onPress={close}
-              accessibilityRole="button"
-              accessibilityLabel="Back to the front page"
-              style={styles.backButton}
-            >
-              <Ionicons name="chevron-back" size={22} color={Colors.ink} />
-            </Pressable>
+            <BackButton onPress={close} accessibilityLabel={Strings.nav.backToFrontPage} />
             <ThemedText variant="meta" style={styles.topBarTitle}>
               {`${index + 1} of ${posts.length}`}
             </ThemedText>
             {/* Mirrors the back button so the title stays centered. */}
-            <View style={styles.backButton} />
+            <View style={styles.backSpacer} />
           </View>
           <StoryReader
             posts={posts}
@@ -171,10 +165,9 @@ const styles = StyleSheet.create({
   topBarTitle: {
     textAlign: 'center',
   },
-  backButton: {
+  // BackButton's own footprint, so the folio sits dead center between them.
+  backSpacer: {
     width: Layout.touchTargetMin,
     height: Layout.touchTargetMin,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

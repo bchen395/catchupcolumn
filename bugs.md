@@ -185,11 +185,26 @@ Two corrections to *this document*, which had drifted:
 - Falls back to `'Catch Up Column <onboarding@resend.dev>'` when the env var is unset. Fine for dev; tanks deliverability in production.
 - **Production was never on the fallback.** Verified 2026-09-22 by comparing the `secrets list` digest (the SHA-256 of the value) against the expected string: `EMAIL_FROM` is exactly `Catch Up Column <hello@catchupcolumn.com>`, and has been since 2026-07-17. The fallback stays in code for dev. Whether Resend has the domain `verified` is a separate check, still open in `docs/LAUNCH.md` step 4.
 
-### L3. Auth init still proceeds if profile creation fails twice
+### ~~L3. Auth init still proceeds if profile creation fails twice~~ — FIXED 2026-10-03
 - **Where:** `hooks/use-auth.ts:23`
 - `ensureUserProfile` now throws (good) and the hook retries once (added 2026-06-27), but if **both** attempts fail it still `console.warn`s and clears loading, so a brand-new user whose profile row was never created lands on screens that join on `users.id`.
 - Intentionally *not* an auto-sign-out (that would log out returning users on a flaky network — their profile already exists, so the failure is harmless). Residual risk is limited to genuinely-new users on a hard RLS/network failure.
-- **Fix (if you want zero residual):** surface the error through the hook and show a retry/error screen in `app/_layout.tsx` instead of rendering the tab tree.
+- **Why it moved up:** under the Group Zero invite flow every friend is that genuinely-new user.
+- **Fix (2026-10-03):** `useAuth` now returns `profileError` and `retryProfile`.
+  When both writes fail, `settleProfile` reads the row before deciding:
+  present means a returning user on a bad signal, so carry on as before;
+  missing means block. If the read fails too, it blocks only an account still
+  owing onboarding (brand new, almost certainly no row). A returning user is
+  still never locked out over a flaky network, which keeps the original
+  no-auto-sign-out reasoning above. While blocked, `app/_layout.tsx` renders
+  `ProfileSetupError` instead of the navigator ("Your account is almost
+  ready": *Try again*, *Sign out*, and the support address). `ready` is
+  false meanwhile, so the redirect gate and the pending-invite auto-join wait,
+  and pick up from a fresh navigator once a retry succeeds. Push registration
+  now waits for the row too, since `push_tokens.user_id` references it.
+- **Not exercised on a device.** Typechecked and linted only. To see it, make
+  the profile insert fail for a brand-new account (for example, a
+  local stack whose `users` insert policy rejects it) and sign up.
 
 ### L4. `fetchThisWeeksBylines` dedupes by author across all of the user's groups
 - **Where:** `lib/posts.ts:46`

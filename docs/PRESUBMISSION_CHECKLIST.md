@@ -283,6 +283,13 @@ Using the TestFlight / internal-testing build, with two accounts:
 - [ ] Age rating questionnaire — **flag user-generated content**
 - [ ] Microphone/audio does *not* appear in Play's permission list (the bogus
       `RECORD_AUDIO` declaration was removed 2026-08-04; verify it didn't come back)
+      > **It had come back** — `expo-image-picker`'s config plugin adds
+      > `RECORD_AUDIO` (Android) and generic camera and microphone purpose
+      > strings (iOS) unless told not to, and `expo-secure-store`'s adds a Face
+      > ID one. The app uses none of the three. Set to `false` in `app.json`
+      > 2026-10-24; check with
+      > `npx expo config --type introspect --json | jq '.ios.infoPlist'`, which
+      > should show `NSPhotoLibraryUsageDescription` as the only usage string.
 - [ ] Export compliance: `ITSAppUsesNonExemptEncryption: false` is set — no extra docs
 
 ## Gate 9 — Submit

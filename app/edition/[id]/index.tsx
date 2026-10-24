@@ -1,8 +1,8 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
+import { BackButton } from '@/components/back-button';
 import { EditionBriefColumn } from '@/components/edition-brief-column';
 import { EditionBriefsGrid } from '@/components/edition-briefs-grid';
 import { EditionColophon } from '@/components/edition-colophon';
@@ -190,16 +190,7 @@ const EditionFrontPage = () => {
             headerStyle: { backgroundColor: Colors.paperWarm },
             headerShadowVisible: false,
             headerTintColor: Colors.ink,
-            headerLeft: () => (
-              <Pressable
-                onPress={() => router.back()}
-                accessibilityRole="button"
-                accessibilityLabel="Go back"
-                style={styles.backButton}
-              >
-                <Ionicons name="chevron-back" size={22} color={Colors.ink} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton onPress={() => router.back()} />,
           }}
         />
 
@@ -306,13 +297,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingBottom: Layout.padding.xl,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   banner: {
     margin: Layout.padding.md,

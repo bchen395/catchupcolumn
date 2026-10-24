@@ -11,15 +11,25 @@ export class UsageError extends Error {}
 /** A safety rule said no. Nothing was written. Exit code 1. */
 export class Refusal extends Error {}
 
-export type FlagSpec = Record<string, 'string' | 'boolean'>;
+/**
+ * 'string' and 'boolean' flags may be given once. 'strings' may repeat, and
+ * keeps every value in command-line order (`--photo a.jpg --photo b.jpg`).
+ */
+export type FlagSpec = Record<string, 'string' | 'strings' | 'boolean'>;
 
 export class Flags {
-  constructor(private readonly values: Map<string, string | true>) {}
+  constructor(private readonly values: Map<string, string | string[] | true>) {}
 
   /** A string flag, or undefined when absent. `--title ""` returns "". */
   optional(name: string): string | undefined {
     const value = this.values.get(name);
     return typeof value === 'string' ? value : undefined;
+  }
+
+  /** Every value of a repeatable flag, in order; [] when absent. */
+  all(name: string): string[] {
+    const value = this.values.get(name);
+    return Array.isArray(value) ? value : [];
   }
 
   required(name: string, hint?: string): string {
@@ -36,7 +46,7 @@ export class Flags {
 }
 
 export const parseFlags = (args: string[], spec: FlagSpec): Flags => {
-  const values = new Map<string, string | true>();
+  const values = new Map<string, string | string[] | true>();
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -53,7 +63,7 @@ export const parseFlags = (args: string[], spec: FlagSpec): Flags => {
       const known = Object.keys(spec).map((k) => `--${k}`).join(', ');
       throw new UsageError(`unknown flag --${name} (this command takes: ${known})`);
     }
-    if (values.has(name)) {
+    if (values.has(name) && kind !== 'strings') {
       throw new UsageError(`--${name} was given twice`);
     }
 
@@ -75,7 +85,12 @@ export const parseFlags = (args: string[], spec: FlagSpec): Flags => {
       }
     }
     if (value === undefined) throw new UsageError(`--${name} needs a value`);
-    values.set(name, value);
+    if (kind === 'strings') {
+      const earlier = values.get(name);
+      values.set(name, [...(Array.isArray(earlier) ? earlier : []), value]);
+    } else {
+      values.set(name, value);
+    }
   }
 
   return new Flags(values);

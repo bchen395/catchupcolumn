@@ -1,8 +1,8 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { BackButton } from '@/components/back-button';
 import { ErrorState } from '@/components/error-state';
 import { StorySkeleton } from '@/components/skeletons/story-skeleton';
 import { StoryReader } from '@/components/story-reader';
@@ -91,14 +91,10 @@ const StoryReaderScreen = () => {
             fontSize: Typography.scale.meta.fontSize,
           },
           headerLeft: () => (
-            <Pressable
+            <BackButton
               onPress={() => router.back()}
-              accessibilityRole="button"
-              accessibilityLabel="Back to the front page"
-              style={styles.backButton}
-            >
-              <Ionicons name="chevron-back" size={22} color={Colors.ink} />
-            </Pressable>
+              accessibilityLabel={Strings.nav.backToFrontPage}
+            />
           ),
         }}
       />
@@ -121,12 +117,5 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
     backgroundColor: Colors.paperWarm,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
@@ -13,6 +12,7 @@ import {
 } from 'react-native';
 
 import { AppImage } from '@/components/app-image';
+import { BackButton } from '@/components/back-button';
 import { DaySelector } from '@/components/day-selector';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
@@ -149,15 +149,7 @@ const CreateGroupScreen = () => {
     <>
       <Stack.Screen
         options={{
-          headerLeft: () => (
-            <Pressable
-              onPress={() => router.back()}
-              style={styles.backButton}
-              hitSlop={8}
-            >
-              <Ionicons name="chevron-back" size={28} color={Colors.ink} />
-            </Pressable>
-          ),
+          headerLeft: () => <BackButton onPress={() => router.back()} />,
         }}
       />
       <KeyboardAvoidingView
@@ -301,11 +293,6 @@ const styles = StyleSheet.create({
     minHeight: Layout.input.multilineMinHeight,
     paddingTop: Layout.input.paddingV,
     textAlignVertical: 'top',
-  },
-  backButton: {
-    paddingHorizontal: Layout.padding.sm,
-    minWidth: 48,
-    justifyContent: 'center',
   },
   submitButton: {
     marginTop: Layout.padding.sm,

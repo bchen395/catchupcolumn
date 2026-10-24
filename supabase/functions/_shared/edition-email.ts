@@ -2,10 +2,13 @@
 //
 // This is the most-seen surface in the product: every member gets it weekly,
 // including readers who never open the app — so the email carries the full
-// edition (every post, full body, photos) styled as the group's own
-// newspaper. Photos come from the private `post-images` bucket; the dispatch
-// worker signs them (`image_signed_url`) before rendering, and a post whose
-// photo can't be signed simply renders without it.
+// edition (every post, full text, every photo) styled as the group's own
+// newspaper. A post is one flow of text with up to four photos set into it
+// (`posts.blocks`, read through postBlocksOf — design/MULTI_PHOTO_POSTS.md),
+// and the email prints its pieces in that reading order. Photos come from the
+// private `post-images` bucket: the dispatch worker signs each one's display
+// copy (`signed_photo_urls`) before rendering, and a photo that can't be
+// signed is simply left out.
 //
 // Visual system: v2 editorial (design/BRAND.md) — "NYT structure, HeyTea
 // charm". Near-monochrome ink on warm paper, hairline rules, Lora serif over
@@ -23,14 +26,25 @@
 //   • Light scheme declared explicitly so Apple Mail keeps the warm paper.
 //   • Total HTML must stay well under ~102KB or Gmail clips the message.
 
+import { postBlocksOf } from './post-blocks.ts';
+import type { PostBlock } from './post-blocks.ts';
+
 export type EditionEmailPost = {
   id: string;
+  author_id: string;
   title: string | null;
+  // Every text piece joined by a blank line (derived from blocks on save).
   body: string;
-  // Raw value from `posts.image_url` (storage path or legacy public URL).
+  // Raw value from `posts.image_url` (storage path or legacy public URL) —
+  // the only photo of a post from before multi-photo.
   image_url: string | null;
-  // Signed, directly-renderable URL attached by the dispatch worker.
-  image_signed_url?: string | null;
+  // `posts.blocks`: the post's pieces in reading order. Null on posts from
+  // before multi-photo; always read through postBlocksOf().
+  blocks: PostBlock[] | null;
+  // Signed, directly-renderable URLs attached by the dispatch worker, keyed by
+  // photo block id (a legacy photo's id is 'legacy'). A photo with no entry
+  // couldn't be signed, and the email leaves it out.
+  signed_photo_urls?: Record<string, string>;
   author_name: string;
   author_avatar_url: string | null;
   created_at: string;
@@ -189,20 +203,45 @@ const renderMasthead = (payload: EditionEmailPayload): string => {
     </td>`;
 };
 
+// A post's pieces as the email prints them: its blocks in reading order, minus
+// empty text and any photo the worker couldn't sign. Legacy posts come out of
+// postBlocksOf as [photo?, text] — the photo-above-text order they always had.
+type EmailPiece = { type: 'text'; text: string } | { type: 'photo'; src: string };
+
+const emailPiecesOf = (post: EditionEmailPost): EmailPiece[] =>
+  postBlocksOf(post).flatMap((block): EmailPiece[] => {
+    if (block.type === 'text') {
+      return block.text.trim() ? [{ type: 'text', text: block.text }] : [];
+    }
+    const src = post.signed_photo_urls?.[block.id];
+    return src ? [{ type: 'photo', src }] : [];
+  });
+
 // Flat editorial photo (BRAND §5): square corners, no rotation, no frame, no
-// shadow — just a hairline edge (newsprint photos have edges) and a Jost
-// credit below, left-aligned, "Photo by Ruth". The taped polaroid is retired.
-const renderPhoto = (src: string, authorName: string): string => `
+// shadow — just a hairline edge (newsprint photos have edges). The Jost credit
+// ("Photo by Ruth", left-aligned below) runs once per post, under its first
+// photo: one person took them all, and four identical credits read as noise.
+// The taped polaroid is retired.
+const renderPhoto = (src: string, alt: string, credit: string | null): string => `
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 4px 0 18px 0;">
     <tr>
       <td style="font-size: 0; line-height: 0;">
-        <img src="${escape(src)}" alt="Photo by ${escape(authorName)}" width="100%" style="display: block; width: 100%; height: auto; border: 1px solid ${HAIRLINE};">
+        <img src="${escape(src)}" alt="${escape(alt)}" width="100%" style="display: block; width: 100%; height: auto; border: 1px solid ${HAIRLINE};">
       </td>
-    </tr>
+    </tr>${credit ? `
     <tr>
-      <td style="padding: 8px 0 0 0; font-family: ${SANS}; font-size: 12px; letter-spacing: 0.4px; color: ${INK_SOFT};">Photo by ${escape(firstName(authorName))}</td>
-    </tr>
+      <td style="padding: 8px 0 0 0; font-family: ${SANS}; font-size: 12px; letter-spacing: 0.4px; color: ${INK_SOFT};">${escape(credit)}</td>
+    </tr>` : ''}
   </table>`;
+
+// One text piece: paragraphs split on blank lines, single newlines kept.
+const renderParagraphs = (text: string): string =>
+  text
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p style="margin: 0 0 16px 0; font-family: ${SERIF}; font-size: 17px; line-height: 26px; color: ${INK};">${escape(p).replace(/\n/g, '<br>')}</p>`)
+    .join('');
 
 const renderByline = (post: EditionEmailPost): string => {
   const hasTitle = Boolean(post.title?.trim());
@@ -228,15 +267,19 @@ const renderPost = (post: EditionEmailPost, isLast: boolean): string => {
     ? `<h2 style="margin: 0 0 8px 0; font-family: ${SERIF}; font-size: 26px; line-height: 1.25; font-weight: 700; color: ${INK};">${escape(title)}</h2>`
     : '';
 
-  const photo = post.image_signed_url
-    ? renderPhoto(post.image_signed_url, post.author_name)
-    : '';
-
-  const paragraphs = post.body
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .map((p) => `<p style="margin: 0 0 16px 0; font-family: ${SERIF}; font-size: 17px; line-height: 26px; color: ${INK};">${escape(p).replace(/\n/g, '<br>')}</p>`)
+  const pieces = emailPiecesOf(post);
+  const photoCount = pieces.filter((p) => p.type === 'photo').length;
+  let photoIndex = 0;
+  const body = pieces
+    .map((piece) => {
+      if (piece.type === 'text') return renderParagraphs(piece.text);
+      photoIndex += 1;
+      const alt = photoCount === 1
+        ? `Photo by ${post.author_name}`
+        : `Photo ${photoIndex} of ${photoCount} by ${post.author_name}`;
+      const credit = photoIndex === 1 ? `Photo by ${firstName(post.author_name)}` : null;
+      return renderPhoto(piece.src, alt, credit);
+    })
     .join('');
 
   const divider = isLast ? '' : `border-bottom: 1px solid ${HAIRLINE};`;
@@ -246,8 +289,7 @@ const renderPost = (post: EditionEmailPost, isLast: boolean): string => {
       <td style="padding: 28px 36px 20px 36px; ${divider}">
         ${headline}
         ${renderByline(post)}
-        ${photo}
-        ${paragraphs}
+        ${body}
       </td>
     </tr>`;
 };
@@ -338,8 +380,20 @@ export const renderEditionEmailText = (payload: EditionEmailPayload): string => 
   const sections = payload.posts.map((post) => {
     const title = post.title?.trim();
     const heading = title ? `${title}\nBy ${post.author_name}` : post.author_name;
-    const photoNote = post.image_signed_url ? '[Photo — view it in the app or the web edition]\n\n' : '';
-    return `${heading}\n\n${photoNote}${post.body.trim()}`;
+    // Same reading order as the HTML, each photo marked where it sits. The
+    // first note says where to see them; the rest just keep count.
+    const pieces = emailPiecesOf(post);
+    const photoCount = pieces.filter((p) => p.type === 'photo').length;
+    let photoIndex = 0;
+    const parts = pieces.map((piece) => {
+      if (piece.type === 'text') return piece.text.trim();
+      photoIndex += 1;
+      if (photoCount === 1) return '[Photo — view it in the app or the web edition]';
+      return photoIndex === 1
+        ? `[Photo 1 of ${photoCount} — view them in the app or the web edition]`
+        : `[Photo ${photoIndex} of ${photoCount}]`;
+    });
+    return `${heading}\n\n${parts.join('\n\n')}`;
   });
 
   return [

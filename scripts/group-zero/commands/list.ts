@@ -5,6 +5,7 @@
 
 import type { GroupRow, PostRow, UserRow } from '../../../types/database.ts';
 import { parseFlags } from '../args.ts';
+import { photoBlocksOf, postBlocksOf } from '../blocks.ts';
 import { connect, type Db } from '../client.ts';
 import { fetchUncompiledPosts, preview, resolveGroup } from '../lookup.ts';
 import { field, show } from '../plan.ts';
@@ -20,6 +21,12 @@ type MemberRow = {
   role: 'moderator' | 'contributor';
   joined_at: string;
   email_subscribed: boolean;
+};
+
+/** "no photos", "1 photo", "3 photos" — read through blocks, legacy posts included. */
+const describePhotos = (post: PostRow): string => {
+  const n = photoBlocksOf(postBlocksOf(post)).length;
+  return n === 0 ? 'no photos' : n === 1 ? '1 photo' : `${n} photos`;
 };
 
 const localTime = (timestamp: string): string => {
@@ -140,7 +147,7 @@ const listGroup = async (db: Db, group: GroupRow): Promise<void> => {
     console.log(`  - ${nameOf(p.author_id)}: ${p.title ? show(p.title) : '(no headline)'}`);
     console.log(`      ${preview(p.body)}`);
     console.log(
-      `      ${[...p.body].length} chars · photo ${p.image_url ? show(p.image_url) : 'none'} · ` +
+      `      ${[...p.body].length} chars · ${describePhotos(p)} · ` +
         `written ${localTime(p.created_at)} · updated ${localTime(p.updated_at)} · id ${p.id}`,
     );
   }
