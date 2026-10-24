@@ -39,6 +39,7 @@ import {
     updateGroupSettings,
     uploadGroupCover,
 } from '@/lib/groups';
+import { goBackOr } from '@/lib/navigation';
 import type { GroupWithMembers } from '@/types';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -487,7 +488,9 @@ const GroupDetailScreen = () => {
       <Stack.Screen
         options={{
           title: group.name,
-          headerLeft: () => <BackButton onPress={() => router.back()} />,
+          // An invite can land here with nothing beneath: auto-join, or an
+          // invite link that opened the app cold.
+          headerLeft: () => <BackButton onPress={() => goBackOr(router, '/groups')} />,
         }}
       />
       {screenError ? (

@@ -31,6 +31,7 @@ import {
     joinGroupByInviteCode,
     publishCadenceParts,
 } from '@/lib/groups';
+import { goBackOr } from '@/lib/navigation';
 import { savePendingInvite } from '@/lib/pending-invite';
 import type { InvitePreview, InvitePreviewDetails } from '@/types';
 
@@ -161,16 +162,10 @@ const JoinGroupScreen = () => {
           // The arriving invitation is a page with no title, so its skeleton
           // gets none either — "Join a Group" belongs to code entry.
           title: inInvitationMode || openingLink ? '' : 'Join a Group',
+          // On a cold deep-link start there may be nothing to pop.
           headerLeft: () => (
             <BackButton
-              onPress={() => {
-                // On a cold deep-link start there may be nothing to pop.
-                if (router.canGoBack()) {
-                  router.back();
-                } else {
-                  router.replace(user ? '/(tabs)/home' : '/(auth)/login');
-                }
-              }}
+              onPress={() => goBackOr(router, user ? '/(tabs)/home' : '/(auth)/login')}
             />
           ),
         }}

@@ -24,6 +24,7 @@ import { formatWeekOf, orderEdition } from '@/lib/edition-layout';
 import { markEditionOpened } from '@/lib/edition-seen';
 import { fetchEditionWithPosts, fetchGroupForEdition, fetchLatestEditionNumber } from '@/lib/editions';
 import { nextPublishForGroup } from '@/lib/groups';
+import { goBackOr } from '@/lib/navigation';
 import type { EditionWithPosts, GroupRow } from '@/types';
 
 type GroupSummary = Pick<
@@ -190,7 +191,10 @@ const EditionFrontPage = () => {
             headerStyle: { backgroundColor: Colors.paperWarm },
             headerShadowVisible: false,
             headerTintColor: Colors.ink,
-            headerLeft: () => <BackButton onPress={() => router.back()} />,
+            // An email link can open this cold, and publish-now replaces the
+            // Group page with it — either can leave nothing beneath. Then
+            // back is the Editions tab.
+            headerLeft: () => <BackButton onPress={() => goBackOr(router, '/inbox')} />,
           }}
         />
 

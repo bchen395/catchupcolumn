@@ -13,6 +13,7 @@ import { Typography } from '@/constants/typography';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { orderEdition } from '@/lib/edition-layout';
 import { fetchEditionWithPosts } from '@/lib/editions';
+import { goBackOr } from '@/lib/navigation';
 import type { PostWithAuthor } from '@/types';
 
 // Route shell for the story reader. The front page normally opens stories in
@@ -57,6 +58,10 @@ const StoryReaderScreen = () => {
     };
   }, [load]);
 
+  // A link that opens a story cold has no front page beneath it, so back
+  // opens the front page instead of doing nothing.
+  const backToFrontPage = () => goBackOr(router, `/edition/${id}`);
+
   if (!hydrated) {
     return <StorySkeleton />;
   }
@@ -92,7 +97,7 @@ const StoryReaderScreen = () => {
           },
           headerLeft: () => (
             <BackButton
-              onPress={() => router.back()}
+              onPress={backToFrontPage}
               accessibilityLabel={Strings.nav.backToFrontPage}
             />
           ),
@@ -103,7 +108,7 @@ const StoryReaderScreen = () => {
         key={`${start}-${posts.length}`}
         posts={posts}
         initialIndex={start}
-        onExit={() => router.back()}
+        onExit={backToFrontPage}
         reduceMotion={reduceMotion}
         onIndexChange={setHeaderIndex}
       />
