@@ -59,6 +59,25 @@ export const Strings = {
     story: 'Turning to the story…',
     profile: 'Finding your desk…',
     composer: 'Getting your page ready…',
+    invite: 'Opening your invitation…',
+  },
+
+  // Screen-reader labels for the shared back button (components/back-button).
+  nav: {
+    back: 'Go back',
+    backToFrontPage: 'Back to the front page',
+  },
+
+  // Shown in place of the app when a new account's profile couldn't be saved
+  // at sign-in (bugs.md L3). Rare, and it lands on someone who has just
+  // entered their first code, so it says what to do and never sounds broken:
+  // try again, or sign out, or write to us.
+  profileSetup: {
+    title: 'Your account is almost ready',
+    body: (supportEmail: string) =>
+      `We couldn’t finish setting it up just now. Check your connection and try again. If it keeps happening, email us at ${supportEmail}.`,
+    retry: 'Try again',
+    signOut: 'Sign out',
   },
 
   // StatusBanner kicker lead-ins (BRAND §9) — warm small-caps voices, never
@@ -202,7 +221,6 @@ export const Strings = {
   // have the app yet, so every line stays warm and person-to-person.
   invite: {
     kicker: 'You’re invited',
-    loading: 'Opening your invitation…',
     introManual: 'Someone saving you a seat? Ask them for the invite code on their Group’s page.',
     codeLabel: 'Invite code',
     codePlaceholder: 'e.g. A1B2C3',

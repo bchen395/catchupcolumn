@@ -97,8 +97,9 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - `group_id` (uuid, FK → groups.id)
 - `author_id` (uuid, FK → users.id)
 - `title` (text, nullable, max 80 chars) — optional headline; UI falls back to a "From {first name}" byline
-- `body` (text, not null)
-- `image_url` (text, nullable)
+- `blocks` (jsonb, nullable) — the post as one flow of text with up to 4 photos, in reading order: `{type:'text', text}` and `{type:'photo', id, path, display_path, width, height}` (design/MULTI_PHOTO_POSTS.md). Null on posts written before multi-photo (2026-10-03) or by builds that predate it — always read through `postBlocksOf()` (`lib/post-blocks.ts`), which turns those into `[photo?, text]`. The `posts_blocks_valid` CHECK enforces the shape, ≤ 4 photos, and that every photo path is a file in the author's own `<author_id>/posts/<post_id>/` folder
+- `body` (text, not null) — derived from `blocks` on every save (`toPostFields`): the text pieces joined by a blank line. Still required non-empty to file
+- `image_url` (text, nullable) — derived the same way: the first photo's print-master path. The only photo of a pre-multi-photo post
 - `edition_id` (uuid, nullable, FK → editions.id) — null until compiled
 - `created_at` (timestamptz)
 - `updated_at` (timestamptz)
@@ -119,7 +120,7 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - PK: (user_id, token)
 
 ### Notable RPCs
-`compile_due_editions` (cron compilation, slot-scoped duplicate guard; skips and reports a Group with an invalid timezone), `due_publish_slot` (service-role helper: the slot a tick falls in, matched on timestamps so late slots don't wrap at midnight), `publish_edition_now` (moderator-only immediate publish, shares the compile lock), `join_group_by_invite_code`, `get_invite_preview` (anon-callable minimal invite preview: name/description/cover/member count), `get_invite_preview_details` (authenticated: adds cadence, is_member, member sample), `delete_group_as_moderator`, `remove_group_member` (moderator-only eject; also deletes the removed member's uncompiled posts), `prepare_account_deletion`, `get_edition_email_payload` (service-role; feeds the email renderer). Full definitions in `supabase/migrations/`.
+`compile_due_editions` (cron compilation, slot-scoped duplicate guard; skips and reports a Group with an invalid timezone), `due_publish_slot` (service-role helper: the slot a tick falls in, matched on timestamps so late slots don't wrap at midnight), `publish_edition_now` (moderator-only immediate publish, shares the compile lock), `join_group_by_invite_code`, `get_invite_preview` (anon-callable minimal invite preview: name/description/cover/member count), `get_invite_preview_details` (authenticated: adds cadence, is_member, member sample), `delete_group_as_moderator`, `remove_group_member` (moderator-only eject; also deletes the removed member's uncompiled posts), `prepare_account_deletion`, `get_edition_email_payload` (service-role; feeds the email renderer, each post with its `blocks` and `author_id`). Full definitions in `supabase/migrations/`.
 
 ## Key Terminology
 
@@ -187,7 +188,7 @@ Two lists that are often confused. The first is permanent; the second is sequenc
 The full visual system lives in `design/BRAND.md` (source of truth for design decisions — update it as decisions evolve), with token values in `constants/`. The `frontend-design` skill (`.claude/skills/frontend-design/`) catches a session up before UI work. Headlines:
 
 - **Accessibility first.** Minimum 16px body text, 48px touch targets (rows ≥56px), high contrast. Vermilion text only in bold small-caps kicker/stamp roles, never body copy. Test with larger system font sizes.
-- **Editorial aesthetic (v2, 2026-07-17).** "NYT structure, HeyTea charm": near-monochrome ink-on-paper, hairline rules, no cards or pills for content. Serif: Lora; UI sans: Jost (same on every platform). Warmth comes from a hand-drawn monoline illustration world (the paperboy and his dog) that lives in app chrome only — never inside editions.
+- **Editorial aesthetic (v2, 2026-07-17).** "NYT structure, HeyTea charm": near-monochrome ink-on-paper, hairline rules, no cards or pills for content. Serif: Lora; UI sans: Jost (same on every platform). Warmth comes from a hand-drawn monoline illustration world (the paperboy and his dog) that lives in app chrome only — never inside editions. Since 2026-10-03 a commissioned artist is redrawing those illustrations in the newspaper's own terms, and HeyTea is now a "don't" for the drawings (BRAND §1/§4; scope in `design/ILLUSTRATION_REWORK.md`).
 - **Near-monochrome palette.** Ink `#1A1A1A` on warm paper `paperWarm`, structure drawn with `hairline` rules, one scarce vermilion `#E8442E` accent (kickers, stamps, live moments — never fills or surfaces). Always use tokens from `constants/colors.ts` — never raw hex in components.
 - **Minimal navigation.** 5-slot bottom bar: Home, Editions, raised ink-black "+" (opens the compose sheet), Groups, Profile. The Group create/join/detail flow lives off-tab under `app/group/`, reached from the Groups tab and Home. No hamburger menus or deep nesting.
 - **Language tone.** Friendly, clear, non-technical. "Your Group is ready!" not "Edition #4 has been published." Say "Write something for this week" not "Create a new post." Never assume the Group is a family — see Audience vocabulary under Key Terminology.

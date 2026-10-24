@@ -18,6 +18,7 @@ import {
   renderEditionEmailSubject,
   renderEditionEmailText,
 } from './edition-email.ts';
+import { photoBlocksOf, photoDisplayPath, postBlocksOf } from './post-blocks.ts';
 
 export const MAX_PUSH_ATTEMPTS = 3;
 export const EMAIL_FROM =
@@ -93,21 +94,59 @@ const toStoragePath = (raw: string): string | null => {
   return match ? match[1] : null;
 };
 
-// Attach `image_signed_url` to every post whose photo we can sign. Photo
-// failures are logged and skipped — a send never fails over a photo.
+// One file name directly inside a post's folder — the same test the database
+// applies to block paths (post_blocks_valid, 20261003154759): a single dot, no
+// slash, so nothing can climb out of the folder.
+const FILE_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9_-]*\.[A-Za-z0-9]+$/;
+
+// This worker signs with the service role, which bypasses storage RLS, so it
+// only ever signs a file in the post author's own folder for that post. The
+// database already holds blocks to this; checking here as well covers
+// `image_url`, which it leaves unconstrained for old builds — without this, a
+// legacy post could name another member's file and have it signed into this
+// Group's email.
+const isInPostFolder = (path: string, post: EditionEmailPost): boolean => {
+  const folder = `${post.author_id}/posts/${post.id}/`;
+  return path.startsWith(folder) && FILE_NAME_RE.test(path.slice(folder.length));
+};
+
+// Attach `signed_photo_urls` to every post: every photo of every post, signed
+// in one createSignedUrls batch. Each is signed from its display copy
+// (photoDisplayPath, falling back to the master for legacy photos), so a
+// recipient downloads ~1280px, not the 2600px print master. A photo that
+// can't be signed is logged and left out — a send never fails over a photo.
 async function attachSignedPhotoUrls(
   client: SupabaseClient,
   posts: EditionEmailPost[],
 ): Promise<EditionEmailPost[]> {
-  const pathByPostId = new Map<string, string>();
-  for (const post of posts) {
-    if (!post.image_url) continue;
-    const path = toStoragePath(post.image_url);
-    if (path) pathByPostId.set(post.id, path);
+  // A payload without author_id comes from get_edition_email_payload as it was
+  // before 20261003154759 (functions deployed ahead of `db push`). It can't
+  // carry blocks either, so each post's only photo is its legacy image_url,
+  // which is then signed unchecked — exactly what the previous worker did —
+  // rather than dropping every photo from an email that is sent only once.
+  const canCheckFolder = posts.every((post) => typeof post.author_id === 'string');
+  if (!canCheckFolder) {
+    console.error('Email payload has no author_id: the 20261003154759 migration has not been applied.');
   }
-  if (pathByPostId.size === 0) return posts;
 
-  const uniquePaths = [...new Set(pathByPostId.values())];
+  // post id → photo block id → storage path to sign
+  const pathsByPost = new Map<string, Map<string, string>>();
+  for (const post of posts) {
+    const byPhoto = new Map<string, string>();
+    for (const photo of photoBlocksOf(postBlocksOf(post))) {
+      const path = toStoragePath(photoDisplayPath(photo));
+      if (!path) continue;
+      if (canCheckFolder && !isInPostFolder(path, post)) {
+        console.error(`Skipping photo ${photo.id} of post ${post.id}: not a file in its author's post folder.`);
+        continue;
+      }
+      byPhoto.set(photo.id, path);
+    }
+    if (byPhoto.size > 0) pathsByPost.set(post.id, byPhoto);
+  }
+  if (pathsByPost.size === 0) return posts;
+
+  const uniquePaths = [...new Set([...pathsByPost.values()].flatMap((m) => [...m.values()]))];
   const { data, error } = await client.storage
     .from(POST_IMAGE_BUCKET)
     .createSignedUrls(uniquePaths, PHOTO_URL_TTL_SECONDS);
@@ -121,13 +160,20 @@ async function attachSignedPhotoUrls(
   for (const item of data) {
     if (item.path && item.signedUrl && !item.error) {
       signedByPath.set(item.path, item.signedUrl);
+    } else {
+      console.error(`Could not sign edition photo ${item.path ?? '(no path)'}: ${item.error ?? 'no URL'}`);
     }
   }
 
   return posts.map((post) => {
-    const path = pathByPostId.get(post.id);
-    const signed = path ? signedByPath.get(path) : undefined;
-    return signed ? { ...post, image_signed_url: signed } : post;
+    const byPhoto = pathsByPost.get(post.id);
+    if (!byPhoto) return post;
+    const signed: Record<string, string> = {};
+    for (const [photoId, path] of byPhoto) {
+      const url = signedByPath.get(path);
+      if (url) signed[photoId] = url;
+    }
+    return { ...post, signed_photo_urls: signed };
   });
 }
 

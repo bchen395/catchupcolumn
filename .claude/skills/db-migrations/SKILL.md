@@ -41,9 +41,10 @@ Migrations are the **source of truth** for the schema, RLS, and every RPC. The a
 - **`grant execute` deliberately.** Caller-facing RPCs → `to authenticated`. Worker/dispatch RPCs called only by edge functions with the service role → `to service_role` (e.g. `compile_due_editions`). Don't over-grant.
 - **Storage policies gate on path segments.** Buckets are private; policies parse the object path with `(storage.foldername(name))[n]`. Match the app's path conventions exactly:
   - `avatars` → `[1] = auth.uid()::text`
-  - `post-images` → `[1] = auth.uid()::text and [2] = 'posts'`
+  - `post-images` → `[1] = auth.uid()::text and [2] = 'posts'`; reads, member removal and account deletion key on `[3]` (the post id) / `[1]`. Files: `<photo_id>.jpg` + `<photo_id>-display.jpg`; legacy `image.jpg`
   - `group-covers` → `((storage.foldername(name))[1])::uuid` checked via `is_group_moderator`
   If a write policy and the app's upload path disagree, the upload "succeeds" but the read policy can't find it — silent breakage. Keep this skill's list and the `data-layer` list in sync.
+- **A path the service role will sign must be pinned to its owner's folder.** The email worker signs post photos with the service role (no storage RLS), so `posts.blocks` carries a CHECK, `posts_blocks_valid` → `post_blocks_valid(blocks, author_id, id)` (`20261003154759`): shape, ≤ 4 photos, and every photo path a plain file name inside `<author_id>/posts/<post_id>/`. Any new column that stores a storage path the worker reads needs the same. A CHECK runs its function as the **writing role**, so such a function must stay `grant execute … to authenticated, service_role`.
 - **Direct deletes from `storage.objects` need an opt-in.** Supabase added `storage.protect_delete`, a **statement-level** trigger that rejects any direct `DELETE` on `storage.objects` — it fires even when the statement matches zero rows. It broke account deletion and moderator eject until `20260923003208_storage_delete_guard.sql`. Any SQL function that deletes objects must first run, in the same transaction:
   ```sql
   perform set_config('storage.allow_delete_query', 'true', true);  -- true = transaction-local
