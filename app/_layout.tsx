@@ -17,7 +17,7 @@ import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { PrintingPressLoading } from '@/components/printing-press-loading';
@@ -99,18 +99,31 @@ const RootLayout = () => {
     }
   }, [fontsLoaded, loading]);
 
-  // Deep-link push-notification taps to the edition reading view.
+  // A tapped edition push opens that edition. The listener only hears taps
+  // while the app runs; the tap that launched it is read back with
+  // getLastNotificationResponse. Either way the tap waits in pendingTap
+  // until it can open (see the effect below the redirect gate).
+  const [pendingTap, setPendingTap] = useState<{ responseId: string; editionId: string } | null>(
+    null,
+  );
+  const handledResponse = useRef<string | null>(null);
+  const openedResponse = useRef<string | null>(null);
   useEffect(() => {
-    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+    const take = (response: Notifications.NotificationResponse | null) => {
+      if (!response) return;
+      const responseId = response.notification.request.identifier;
+      if (handledResponse.current === responseId) return;
+      handledResponse.current = responseId;
+      Notifications.clearLastNotificationResponse();
       const data = response.notification.request.content.data as
         | { edition_id?: string }
         | undefined;
-      if (data?.edition_id) {
-        router.push(`/edition/${data.edition_id}`);
-      }
-    });
+      if (data?.edition_id) setPendingTap({ responseId, editionId: data.edition_id });
+    };
+    take(Notifications.getLastNotificationResponse());
+    const sub = Notifications.addNotificationResponseReceivedListener(take);
     return () => sub.remove();
-  }, [router]);
+  }, []);
 
   // A signed-in account whose profile row couldn't be created isn't ready
   // either (bugs.md L3): the retry screen below stands in for the navigator,
@@ -157,6 +170,19 @@ const RootLayout = () => {
       router.replace('/(tabs)/home');
     }
   }, [session, ready, requiresOnboarding, holdAuthRedirect, segments]);
+
+  // Opens a tapped edition once the gate above has let the person in. On a
+  // cold start that means waiting until it has moved them off the auth
+  // screens, so the edition lands on top of the tabs (back goes home)
+  // instead of being replaced by them. Before the Stack exists, or signed
+  // out, there is nothing to push onto.
+  useEffect(() => {
+    if (!pendingTap || openedResponse.current === pendingTap.responseId) return;
+    if (!ready || !session || consumingInvite) return;
+    if (segments.length === 0 || segments[0] === '(auth)') return;
+    openedResponse.current = pendingTap.responseId;
+    router.push(`/edition/${pendingTap.editionId}`);
+  }, [pendingTap, ready, session, consumingInvite, segments, router]);
 
   // Fonts not ready → render nothing to avoid FOUC. Once fonts are loaded
   // but auth is still resolving, the paperboy rides.
