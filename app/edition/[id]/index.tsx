@@ -24,6 +24,7 @@ import { formatWeekOf, orderEdition } from '@/lib/edition-layout';
 import { markEditionOpened } from '@/lib/edition-seen';
 import { fetchEditionWithPosts, fetchGroupForEdition, fetchLatestEditionNumber } from '@/lib/editions';
 import { nextPublishForGroup } from '@/lib/groups';
+import { goBackOr } from '@/lib/navigation';
 import type { EditionWithPosts, GroupRow } from '@/types';
 
 type GroupSummary = Pick<
@@ -110,21 +111,45 @@ const EditionFrontPage = () => {
     setRefreshing(false);
   };
 
+  // An email link can open this cold, and publish-now replaces the Group page
+  // with it — either can leave nothing beneath, and then back is the Editions
+  // tab. Set on the skeleton and the error too, not only the loaded page: a
+  // slow or failed load from a link would otherwise have no way out.
+  const header = (
+    <Stack.Screen
+      options={{
+        title: '',
+        headerStyle: { backgroundColor: Colors.paperWarm },
+        headerShadowVisible: false,
+        headerTintColor: Colors.ink,
+        headerLeft: () => <BackButton onPress={() => goBackOr(router, '/inbox')} />,
+      }}
+    />
+  );
+
   if (!hydrated) {
-    return <EditionPageSkeleton />;
+    return (
+      <>
+        {header}
+        <EditionPageSkeleton />
+      </>
+    );
   }
 
   if (!edition || !group) {
     return (
-      <ErrorState
-        icon={Icons.errorGeneric}
-        title={Strings.error.generic.title}
-        body={screenError || 'Edition not found.'}
-        onRetry={() => {
-          setHydrated(false);
-          load().finally(() => setHydrated(true));
-        }}
-      />
+      <>
+        {header}
+        <ErrorState
+          icon={Icons.errorGeneric}
+          title={Strings.error.generic.title}
+          body={screenError || 'Edition not found.'}
+          onRetry={() => {
+            setHydrated(false);
+            load().finally(() => setHydrated(true));
+          }}
+        />
+      </>
     );
   }
 
@@ -184,15 +209,7 @@ const EditionFrontPage = () => {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.ink} />
         }
       >
-        <Stack.Screen
-          options={{
-            title: '',
-            headerStyle: { backgroundColor: Colors.paperWarm },
-            headerShadowVisible: false,
-            headerTintColor: Colors.ink,
-            headerLeft: () => <BackButton onPress={() => router.back()} />,
-          }}
-        />
+        {header}
 
         {screenError ? (
           <StatusBanner variant="error" message={screenError} style={styles.banner} />

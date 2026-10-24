@@ -13,6 +13,7 @@ import { Typography } from '@/constants/typography';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { orderEdition } from '@/lib/edition-layout';
 import { fetchEditionWithPosts } from '@/lib/editions';
+import { goBackOr } from '@/lib/navigation';
 import type { PostWithAuthor } from '@/types';
 
 // Route shell for the story reader. The front page normally opens stories in
@@ -57,21 +58,38 @@ const StoryReaderScreen = () => {
     };
   }, [load]);
 
+  // A link that opens a story cold has no front page beneath it, so back
+  // opens the front page instead of doing nothing. The button is set on the
+  // skeleton and the error too: a slow or failed load from a link would
+  // otherwise have no way out.
+  const backToFrontPage = () => goBackOr(router, `/edition/${id}`);
+  const headerLeft = () => (
+    <BackButton onPress={backToFrontPage} accessibilityLabel={Strings.nav.backToFrontPage} />
+  );
+
   if (!hydrated) {
-    return <StorySkeleton />;
+    return (
+      <>
+        <Stack.Screen options={{ headerLeft }} />
+        <StorySkeleton />
+      </>
+    );
   }
 
   if (posts.length === 0) {
     return (
-      <ErrorState
-        icon={Icons.errorGeneric}
-        title={Strings.error.generic.title}
-        body={screenError || 'Story not found.'}
-        onRetry={() => {
-          setHydrated(false);
-          load().finally(() => setHydrated(true));
-        }}
-      />
+      <>
+        <Stack.Screen options={{ headerLeft }} />
+        <ErrorState
+          icon={Icons.errorGeneric}
+          title={Strings.error.generic.title}
+          body={screenError || 'Story not found.'}
+          onRetry={() => {
+            setHydrated(false);
+            load().finally(() => setHydrated(true));
+          }}
+        />
+      </>
     );
   }
 
@@ -90,12 +108,7 @@ const StoryReaderScreen = () => {
             color: Colors.inkSoft,
             fontSize: Typography.scale.meta.fontSize,
           },
-          headerLeft: () => (
-            <BackButton
-              onPress={() => router.back()}
-              accessibilityLabel={Strings.nav.backToFrontPage}
-            />
-          ),
+          headerLeft,
         }}
       />
 
@@ -103,7 +116,7 @@ const StoryReaderScreen = () => {
         key={`${start}-${posts.length}`}
         posts={posts}
         initialIndex={start}
-        onExit={() => router.back()}
+        onExit={backToFrontPage}
         reduceMotion={reduceMotion}
         onIndexChange={setHeaderIndex}
       />

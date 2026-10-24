@@ -31,6 +31,7 @@ import {
     joinGroupByInviteCode,
     publishCadenceParts,
 } from '@/lib/groups';
+import { goBackOr } from '@/lib/navigation';
 import { savePendingInvite } from '@/lib/pending-invite';
 import type { InvitePreview, InvitePreviewDetails } from '@/types';
 
@@ -54,6 +55,9 @@ const JoinGroupScreen = () => {
   const [preview, setPreview] = useState<InvitePreview | InvitePreviewDetails | null>(null);
   const [looking, setLooking] = useState(false);
   const [openingLink, setOpeningLink] = useState(Boolean(codeParam));
+  // Whether the invitation on screen replaced the deep-link skeleton. It then
+  // fades in exactly where the skeleton drew it; after code entry it rises.
+  const [overSkeleton, setOverSkeleton] = useState(false);
   const [joining, setJoining] = useState(false);
 
   // Details (cadence, faces, is_member) only exist for signed-in lookups.
@@ -65,6 +69,10 @@ const JoinGroupScreen = () => {
       setCodeError(Strings.invite.errorEmptyCode);
       return;
     }
+    // True only for a link's first lookup — the one the skeleton covers. The
+    // deep-link effect calls this from the first render, while openingLink
+    // is still true; every later lookup sees it false.
+    const fromSkeleton = openingLink;
     Keyboard.dismiss();
     setCodeError('');
     setScreenError('');
@@ -80,6 +88,7 @@ const JoinGroupScreen = () => {
         return;
       }
       setPreview(found);
+      setOverSkeleton(fromSkeleton);
       AccessibilityInfo.announceForAccessibility(Strings.invite.a11yFound(found.name));
     } catch (_err) {
       setScreenError(Strings.invite.errorNetwork);
@@ -161,22 +170,16 @@ const JoinGroupScreen = () => {
           // The arriving invitation is a page with no title, so its skeleton
           // gets none either — "Join a Group" belongs to code entry.
           title: inInvitationMode || openingLink ? '' : 'Join a Group',
+          // On a cold deep-link start there may be nothing to pop.
           headerLeft: () => (
             <BackButton
-              onPress={() => {
-                // On a cold deep-link start there may be nothing to pop.
-                if (router.canGoBack()) {
-                  router.back();
-                } else {
-                  router.replace(user ? '/(tabs)/home' : '/(auth)/login');
-                }
-              }}
+              onPress={() => goBackOr(router, user ? '/(tabs)/home' : '/(auth)/login')}
             />
           ),
         }}
       />
       {openingLink ? (
-        <InviteSkeleton signedIn={Boolean(user)} />
+        <InviteSkeleton />
       ) : (
         <KeyboardAvoidingView
           style={styles.flex}
@@ -191,7 +194,11 @@ const JoinGroupScreen = () => {
               {inInvitationMode ? (
                 <Animated.View
                   key={preview.group_id}
-                  entering={reduceMotion ? undefined : FadeInDown.duration(Motion.duration.settle)}
+                  entering={
+                    reduceMotion
+                      ? undefined
+                      : (overSkeleton ? FadeIn : FadeInDown).duration(Motion.duration.settle)
+                  }
                   style={styles.invitation}
                 >
                   <InviteHero
