@@ -170,7 +170,11 @@ Two corrections to *this document*, which had drifted:
 
 ## Medium
 
-### M1. Per-recipient email failures are never retried
+### ~~M1. Per-recipient email failures are never retried~~ — ACCEPTED for launch 2026-10-30
+- **Decision (owner, 2026-10-30): accept the trade-off for launch.** A
+  recipient whose send fails misses that edition's email; the edition still
+  reaches them in the app and by push. The fix below stays on file for when
+  delivery guarantees matter.
 - **Where:** `supabase/functions/_shared/edition-dispatch.ts:154`
 - `mark_edition_emailed` is called after the send loop **regardless of `failed > 0`**, and the function never re-attempts the recipients that errored. A transient Resend 4xx/5xx for a subset of members means those members **permanently** miss that edition's email.
 - This is a **deliberate trade-off** (the inline comment: "not retrying to avoid duplicate sends") — the edition still arrives in-app and via push. Flagged so it's a conscious decision, not an oversight.
@@ -183,7 +187,7 @@ Two corrections to *this document*, which had drifted:
 ### ~~L2. EMAIL_FROM defaults to the Resend sandbox sender~~ — RESOLVED 2026-09-22
 - **Where:** `supabase/functions/_shared/edition-dispatch.ts:22`
 - Falls back to `'Catch Up Column <onboarding@resend.dev>'` when the env var is unset. Fine for dev; tanks deliverability in production.
-- **Production was never on the fallback.** Verified 2026-09-22 by comparing the `secrets list` digest (the SHA-256 of the value) against the expected string: `EMAIL_FROM` is exactly `Catch Up Column <hello@catchupcolumn.com>`, and has been since 2026-07-17. The fallback stays in code for dev. Whether Resend has the domain `verified` is a separate check, still open in `docs/LAUNCH.md` step 4.
+- **Production was never on the fallback.** Verified 2026-09-22 by comparing the `secrets list` digest (the SHA-256 of the value) against the expected string: `EMAIL_FROM` is exactly `Catch Up Column <hello@catchupcolumn.com>`, and has been since 2026-07-17. The fallback stays in code for dev. Whether Resend has the domain `verified` is a separate check, ~~still open in `docs/LAUNCH.md` step 4~~ — `verified`, read from the Resend dashboard by the owner 2026-10-30 (`docs/LAUNCH.md` step 4).
 
 ### ~~L3. Auth init still proceeds if profile creation fails twice~~ — FIXED 2026-10-03
 - **Where:** `hooks/use-auth.ts:23`
@@ -313,8 +317,8 @@ Deploying edge functions.
    Gates 5 and 7.
 2. ~~**L2** — set a production `EMAIL_FROM` (verified Resend domain) before
    launch.~~ **Done** — verified 2026-09-22; it had been set since 2026-07-17.
-3. **M1** — decide whether weekly email needs per-recipient retry, or accept the
-   trade-off.
+3. ~~**M1** — decide whether weekly email needs per-recipient retry, or accept the
+   trade-off.~~ **Decided 2026-10-30:** accepted for launch (owner).
 4. **Auth config (dashboard, not code):** email confirmation is decided (stays
    off — the code flow is proof of address, D2). The password settings were
    decided 2026-09-25 (minimum 8, secure password change on, 10-minute codes,

@@ -80,10 +80,11 @@ touches a device:
       apex, which universal links can't claim)*. Values are hashed in
       `secrets list`, but the digest is the SHA-256 of the raw value, so compare
       rather than re-set blind — [LAUNCH.md](./LAUNCH.md) step 2 has the commands.
-- [ ] Resend **sending domain is verified**, and `EMAIL_FROM` uses it (not
+- [x] Resend **sending domain is verified**, and `EMAIL_FROM` uses it (not
       `onboarding@resend.dev`) — the `EMAIL_FROM` half ✅ *(digest-verified
-      2026-09-22: `Catch Up Column <hello@catchupcolumn.com>`)*; the domain
-      status is still unconfirmed
+      2026-09-22: `Catch Up Column <hello@catchupcolumn.com>`)*; ~~the domain
+      status is still unconfirmed~~ the domain ✅ *(`verified` in the Resend
+      dashboard, read by the owner 2026-10-30)*
 - [x] `compile-editions` cron is actually firing *(verified end to end
       2026-09-22 — `200`s in `net._http_response` on every tick)*. **A `succeeded` row in
       `cron.job_run_details` does not prove this** — pg_net is async, so the job
@@ -156,7 +157,9 @@ Authentication:
       — it is what makes the 100/hour ceiling safe. It's under Emails → **SMTP
       Settings** ("Minimum interval between emails being sent"), not Rate Limits
 - [ ] Resend plan's **daily** cap clears expected volume — auth email and edition
-      email now share it
+      email now share it *(cap read 2026-10-30: 100/day, 3,000/month. Whether
+      that clears launch volume is the re-derivation LAUNCH step 5 asks for at App Store
+      launch)*
 
 ## Gate 4 — Web surface
 
@@ -222,7 +225,8 @@ pointers are [LAUNCH.md](./LAUNCH.md) step 9. What's left is verification.
 - [x] A way to **report** objectionable content
 - [x] A way to **block or eject** an abusive user — *eject only (found
       2026-10-30): a member can't block anyone, and a removed member who still
-      has the invite code can rejoin. `STORE_LISTING.md` §9.3*
+      has the invite code can rejoin. `STORE_LISTING.md` §9.3. To be closed in
+      code before the final build (owner, 2026-10-30)*
 
 - [x] Re-run the Gate 1 automated checks — *moot since 2026-09-10: CI runs Gate 1
       on every PR, and this code landed before that*
@@ -231,8 +235,8 @@ pointers are [LAUNCH.md](./LAUNCH.md) step 9. What's left is verification.
       exercised at all
 - [ ] Age rating questionnaire answer prepared: **flag user-generated content**
       (Gate 8 ticks it; getting this wrong is the rejection this gate exists to
-      prevent) — *drafted 2026-10-30 in `STORE_LISTING.md` §9.1; the override
-      and Messaging and Chat are the owner's call. §9.3 lists what Guideline
+      prevent) — *drafted 2026-10-30 in `STORE_LISTING.md` §9.1; the owner
+      chose the 18+ override and Messaging and Chat: Yes the same day. §9.3 lists what Guideline
       1.2 asks for that the app doesn't have yet.*
 
 ## Gate 7 — On-device smoke test

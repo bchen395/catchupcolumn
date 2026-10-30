@@ -101,7 +101,8 @@ actionable before and all of which are now:
 4. **Resend** (step 4) — DNS is correctly provisioned and `EMAIL_FROM` is
    verified correct; confirm Resend flipped the domain to `verified`~~, and add
    the missing DMARC record~~. *(DMARC ✅ 2026-10-24, the same day `support@`
-   started receiving mail.)*
+   started receiving mail. Domain ✅ `verified`, read from the Resend dashboard
+   by the owner 2026-10-30.)*
 5. ✅ **The `compile-editions` cron is firing** — verified end to end
    2026-09-22; see
    [Verifying the compile-editions cron](#verifying-the-compile-editions-cron).
@@ -114,7 +115,8 @@ actionable before and all of which are now:
    open. Group Zero was skipped 2026-10-24.)*
 7. **One Auth rate check left** (step 5) — Resend's daily cap, which auth and
    edition email now share. *(The per-address interval (60s) and the minimum
-   password length (8) were both read from the dashboard 2026-09-28.)*
+   password length (8) were both read from the dashboard 2026-09-28. The cap was
+   read 2026-10-30: 100/day and 3,000/month.)*
 
 **Deferred by choice:** store screenshots (step 7), and the illustration rework
 (step 6b) — which is required before submission (owner, 2026-09-25) but not before
@@ -286,7 +288,7 @@ time.
 linked, an unsigned iOS *simulator* build already works today if you want to smoke-test
 the binary before enrolling (see step 6b).
 
-## 4. Email deliverability — Resend **[owner]** — DNS verified, ~~two checks left~~ DMARC ✅ 2026-10-24, one check left
+## 4. Email deliverability — Resend **[owner]** — DNS verified, ~~two checks left~~ DMARC ✅ 2026-10-24, domain `verified` ✅ 2026-10-30
 
 **DNS is correctly provisioned** (checked 2026-08-22). The records match Resend's
 standard layout for the **root** domain `catchupcolumn.com`:
@@ -322,7 +324,8 @@ delivery:
 _dmarc.catchupcolumn.com  TXT  "v=DMARC1; p=none; rua=mailto:support@catchupcolumn.com"
 ```
 
-☐ **Confirm Resend flipped the domain to `verified`.** Correct DNS is not the same as
+✅ **Resend shows the domain `verified`** — read from the Resend dashboard by the
+owner, 2026-10-30. ~~☐ **Confirm Resend flipped the domain to `verified`.**~~ Correct DNS is not the same as
 Resend having confirmed it:
 
 ```bash
@@ -553,7 +556,9 @@ spammed, and it is what makes a 100/hour ceiling safe rather than reckless.
 `config.toml:223` shows `max_frequency = "1s"`, which is **local dev only** and
 says nothing about production — same caveat as the rest of this step.
 
-☐ **Check the Resend plan's daily cap.** On the free tier (100/day, 3,000/month —
+✅ **Resend plan's caps: 100/day and 3,000/month** — read from the Resend
+dashboard by the owner, 2026-10-30: the free-tier numbers below, now confirmed.
+~~☐ **Check the Resend plan's daily cap.**~~ On the free tier (100/day, 3,000/month —
 verify in the Resend dashboard) a 100/hour Auth ceiling is notional, because Auth
 email now shares that daily budget with edition email. Note the collision:
 `groups.publish_day` defaults to 0 (Sunday) and `publish_time` to 09:00, so
@@ -678,7 +683,8 @@ because screenshots freeze the final look ~~and Group Zero will produce better o
   (§13 is the field-by-field sheet, 2026-10-30.)
 - ⏸ Age rating questionnaire — **flag user-generated content** (the app has it, and
   step 9's affordances are what make that answer safe). Every answer is in
-  STORE_LISTING §9.1 (2026-10-30); the override is the owner's call.
+  STORE_LISTING §9.1 (2026-10-30); the owner chose the 18+ override the same
+  day, to match Terms §1.
 
 *Play Console enrollment and Android shots move to [Android — deferred](#android--deferred).*
 

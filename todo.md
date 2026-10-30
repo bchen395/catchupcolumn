@@ -162,7 +162,9 @@ POSITIONING §8 is the authoritative sequence. The short version:
       API and was never affected. Sending limit set to **100/hour** — sized off
       peak concurrent onboarding, not total users, and re-derive it at launch.
       Two open sub-checks (per-address interval, Resend's daily cap) in
-      [docs/LAUNCH.md](docs/LAUNCH.md) step 5.
+      [docs/LAUNCH.md](docs/LAUNCH.md) step 5. *(Both read since: 60s on
+      2026-09-28; 100/day and 3,000/month on 2026-10-30. The Resend domain is
+      `verified`, 2026-10-30.)*
 - [ ] **Pre-publish nudge** — after Group Zero, and only if the run showed people
       forgetting rather than declining. *(Group Zero skipped 2026-10-24, so
       this has no trigger yet — the owner re-keys it.)*
