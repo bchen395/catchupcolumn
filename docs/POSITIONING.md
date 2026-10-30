@@ -581,7 +581,11 @@ what keeps this compatible with an audience leaving monetized connection.
 
 ## 6. Work item — Group Zero [owner]
 
-**Status: not started. This is the validation gate for everything above.**
+**Status: ~~not started. This is the validation gate for everything above.~~
+Skipped — owner decision, 2026-10-24.** No Group Zero run, so no external
+TestFlight and no Beta App Review: the app goes straight to App Store review
+once the illustration rework lands and the presubmission checks pass (§8). The
+plan below is kept as written.
 
 The app has never been run on real people — everything to date is seed data. A
 weekly-ritual product whose ritual has never been lived once is not ready to
@@ -841,13 +845,15 @@ Where the organizers are. Join as a person, months before mentioning the app.
    is behind us. What it unblocks now runs on its own clock: the Team ID into the
    universal-link files, the APNs push key, and the first TestFlight build,
    which Group Zero runs on from edition 1 (decided 2026-09-29, §6). LAUNCH.md
-   steps 2, 3 and 8.
-3. **Overdue — start Group Zero now** (it was "this week" on 2026-09-14; no Group
+   steps 2, 3 and 8. *(Group Zero skipped 2026-10-24: that build now goes to
+   App Store review.)*
+3. ~~**Overdue — start Group Zero now** (it was "this week" on 2026-09-14; no Group
    Zero Group exists as of 2026-09-24): Group A, Group B, and the family Groups
    (§6). It's the long pole; every week of delay is a week of evidence you don't
    have. Recruiting the Group B organizer has its own lead time, so start asking
    now. Since 2026-09-29 edition 1 waits on the TestFlight build (§6), so the
-   build is on the critical path too; the recruiting doesn't wait for it.
+   build is on the critical path too; the recruiting doesn't wait for it.~~
+   **Skipped — owner decision, 2026-10-24** (§6).
 4. **Settled 2026-09-16** — ~~the extra-copies question and the family-Group
    count~~. Extra printed copies sell at $89, which brings the recruiting target
    to two–three family Groups (§5, "The December arithmetic"). What still expires
@@ -860,9 +866,14 @@ Where the organizers are. Join as a person, months before mentioning the app.
    people *forgetting* rather than declining. Shipping it mid-run was the
    earlier plan and it's the wrong order twice over: it's a fix for a churn
    mechanism nobody has observed yet, and it destroys the clean four-edition
-   baseline you're trying to read.
+   baseline you're trying to read. *(Keyed to Group Zero's weeks; with Group
+   Zero skipped 2026-10-24 it has no trigger yet.)*
 8. **Week 4** — decide on write-by-web (§4) from the editions 1–2 vs. 3–4 delta.
-9. **After 4 clean editions** — App Store submission (resume LAUNCH.md).
+   *(Same: that delta was Group Zero's.)*
+9. ~~**After 4 clean editions**~~ **Once the illustration rework lands and the
+   presubmission checks pass** (owner, 2026-10-24: Group Zero skipped) — App
+   Store submission (resume LAUNCH.md). Multi-photo posts ship in it (owner,
+   2026-10-24).
 10. **Late November — the December test (§5).** Hand-made volumes, uploaded to
    Lulu by hand, sold by invoice or Payment Link. This is the only revenue item
    with a deadline attached: Q4 is 40–60% of annual revenue for gift products,
@@ -882,6 +893,8 @@ Where the organizers are. Join as a person, months before mentioning the app.
   shot at organic attention. The enrollment was the exception and landed
   2026-09-22 (§6); everything downstream of it in LAUNCH.md stays paused, and the screenshots want
   friend-group sample content anyway, which Group Zero produces for free.
+  *(Superseded 2026-10-24: the owner skipped Group Zero, and submission follows
+  the illustration rework and the presubmission checks — item 9.)*
 - **Android** — already deferred per LAUNCH.md (2026-08-22). Unchanged.
 
 ---

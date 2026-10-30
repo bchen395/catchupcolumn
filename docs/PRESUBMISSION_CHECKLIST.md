@@ -3,9 +3,12 @@
 The run-through before pressing submit in App Store Connect / Play Console. Work top
 to bottom: each gate assumes the ones above it passed.
 
-- **Don't start this yet.** [POSITIONING.md](./POSITIONING.md) §8 gates submission
+- ~~**Don't start this yet.** [POSITIONING.md](./POSITIONING.md) §8 gates submission
   on four clean editions of a real Group (its §6). Nothing below is wrong; it's
-  just not due until Group Zero has run.
+  just not due until Group Zero has run.~~ **No longer gated on Group Zero —
+  the owner skipped it on 2026-10-24.** There is no external TestFlight and no
+  Beta App Review: once the illustration rework lands ([LAUNCH.md](./LAUNCH.md)
+  step 6b) and these gates pass, the build goes straight to App Store review.
 - **This doc owns the procedure.** [LAUNCH.md](./LAUNCH.md) is the *narrative*
   runbook (what happened, what's left, why) and points here rather than keeping a
   second copy of any list. Where the two ever disagree, this one wins.
@@ -14,7 +17,8 @@ to bottom: each gate assumes the ones above it passed.
 - **How to verify app changes** is in the `verify-changes` skill.
 
 Statuses below carry their own dates; the last pass against production was
-**2026-09-24** (Gates 2–4). Re-verify anything older than your last deploy — and
+**2026-09-24** (Gates 2–4), with Gate 2's migrations and functions re-done
+**2026-10-24**. Re-verify anything older than your last deploy — and
 remember that **merging deploys nothing** to Supabase: migrations and edge
 functions ship by hand (Gate 2).
 
@@ -59,11 +63,13 @@ touches a device:
 ## Gate 2 — Backend parity with production
 
 - [x] `npx supabase migration list --linked` — every local migration shows a `remote`
-      counterpart *(2026-09-24: all 30 applied ✅, through `20260923003208`)*
+      counterpart *(2026-09-24: all 30 applied ✅, through `20260923003208`;
+      2026-10-24: all 33 ✅, through `20261003154759_multi_photo_posts`)*
 - [x] `npx supabase functions list` — all 4 functions `ACTIVE` **and the deployed
       source matches `main`** *(2026-09-24 ✅ — after redeploying `compile-editions`
       and `publish-edition-now`, which had been on a 2026-07-11 build sending the v1
-      email)*. Re-check before submission with the download-and-diff in
+      email; 2026-10-24 ✅ — `compile-editions` v20 and `publish-edition-now` v9
+      deployed, then all four downloaded and diffed clean)*. Re-check before submission with the download-and-diff in
       [LAUNCH.md → Deploying edge functions](./LAUNCH.md#deploying-edge-functions).
       > Compare source, not timestamps. `updated_at` is accurate, but it only says
       > *when*; `delete-account`'s once looked older than its last commit because
@@ -93,7 +99,8 @@ Authentication:
 
 - [x] Redirect allowlist includes `catchupcolumn://` *(set 2026-08-22 — LAUNCH
       step 5)*. The `catchupcolumn://(auth)/reset-password` entry has been unused
-      since 2026-09-25 — the reset link was replaced by a code sign-in.
+      since 2026-09-25 — the reset link was replaced by a code sign-in — and was
+      removed 2026-10-30 (item 7, below).
 - [x] **Magic Link email template contains `{{ .Token }}`**, not
       `{{ .ConfirmationURL }}` *(pasted 2026-09-22 from
       `supabase/templates/magic-link.html`)* — without it the code sign-in flow
@@ -122,11 +129,14 @@ Authentication:
       `supabase/templates/reauthentication.html`, with a plain subject (item 3)
 - [x] **Password-changed and email-changed notifications on** *(2026-09-28)*, with
       `supabase/templates/password-changed.html` (item 4)
-- [ ] **Email OTP expiry is 600s**, matching `CODE_EXPIRY_MINUTES` — set only
+- [x] **Email OTP expiry is 600s**, matching `CODE_EXPIRY_MINUTES` — set only
       after the "10 minutes" app copy and both code templates are live (item 5)
-- [ ] **`catchupcolumn://(auth)/reset-password` removed from Redirect URLs** —
+      *(set 2026-10-30, with both code templates pasted in the same sitting —
+      before the build: Group Zero is skipped, so no older build is in anyone's
+      hands)*
+- [x] **`catchupcolumn://(auth)/reset-password` removed from Redirect URLs** —
       after the first production build is what people run; older builds still
-      use it (item 7)
+      use it (item 7) *(removed 2026-10-30, for the same reason)*
 - [x] **Common-password blocklist instead of leaked password protection** — the
       project is on Free, where the toggle isn't offered (2026-09-28);
       `lib/common-passwords.ts` is checked in the app (item 6). Turn the toggle
@@ -210,7 +220,9 @@ pointers are [LAUNCH.md](./LAUNCH.md) step 9. What's left is verification.
 
 - [x] Published acceptable-use terms — `docs/TERMS.md §4` / `web/terms.html`
 - [x] A way to **report** objectionable content
-- [x] A way to **block or eject** an abusive user
+- [x] A way to **block or eject** an abusive user — *eject only (found
+      2026-10-30): a member can't block anyone, and a removed member who still
+      has the invite code can rejoin. `STORE_LISTING.md` §9.3*
 
 - [x] Re-run the Gate 1 automated checks — *moot since 2026-09-10: CI runs Gate 1
       on every PR, and this code landed before that*
@@ -219,7 +231,9 @@ pointers are [LAUNCH.md](./LAUNCH.md) step 9. What's left is verification.
       exercised at all
 - [ ] Age rating questionnaire answer prepared: **flag user-generated content**
       (Gate 8 ticks it; getting this wrong is the rejection this gate exists to
-      prevent)
+      prevent) — *drafted 2026-10-30 in `STORE_LISTING.md` §9.1; the override
+      and Messaging and Chat are the owner's call. §9.3 lists what Guideline
+      1.2 asks for that the app doesn't have yet.*
 
 ## Gate 7 — On-device smoke test
 
@@ -270,10 +284,13 @@ Using the TestFlight / internal-testing build, with two accounts:
       needed if that changes
 - [x] Bundle ID `com.catchupcolumn.app` confirmed final — owner, 2026-09-24.
       **Immutable after the
-      first build upload**, which is the Group Zero TestFlight build, not
+      first build upload**, which is the ~~Group Zero TestFlight~~ first
+      production build (Group Zero skipped 2026-10-24), not
       submission. Decide it before that build ([LAUNCH.md](./LAUNCH.md) step 7)
 - [ ] App records created in both consoles
-- [ ] Screenshots captured: iPhone 6.9" required (Home, edition front page, composer,
+- [ ] Screenshots captured: ~~iPhone 6.9" required~~ iPhone with Dynamic Island
+      (medium display) required, large display too — sizes in `STORE_LISTING.md`
+      §5, checked 2026-10-30 (Home, edition front page, composer,
       group) + Android phone. No iPad shots (iPad support is off).
       > `/screenshots` in the repo holds design-reference images only — no store
       > shots exist yet.

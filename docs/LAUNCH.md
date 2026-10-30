@@ -12,19 +12,44 @@ iOS-only unless it says otherwise. Play Console, the FCM service account, and
 ## Where this fits
 
 - **[POSITIONING.md](./POSITIONING.md) sets the order, and it outranks this
-  file.** Submission is gated on four clean editions of a real Group (its §6), so
-  this runbook stays paused at step 7 until Group Zero has run. Read it first.
+  file.** ~~Submission is gated on four clean editions of a real Group (its §6), so
+  this runbook stays paused at step 7 until Group Zero has run.~~ **Group Zero
+  was skipped (owner, 2026-10-24):** no external TestFlight and no Beta App
+  Review. The app goes straight to App Store review once the illustration rework
+  (step 6b) lands and the presubmission checks pass. Read it first.
 - **[PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md)** is the flat,
   tickable list for submission day, including the on-device smoke test. This doc
   is the narrative — what happened, what's left, and why. **Where the two
   overlap, the checklist is authoritative and this file points at it.**
 - **[STORE_LISTING.md](./STORE_LISTING.md)** — metadata, descriptions, and the
-  exact privacy/data-safety answers. POSITIONING §2's copy pass rewrites it
-  before anything gets pasted into App Store Connect.
+  exact privacy/data-safety answers. ~~POSITIONING §2's copy pass rewrites it
+  before anything gets pasted into App Store Connect.~~ The copy pass landed
+  2026-09-16; its §13 is the App Store Connect sheet for 1.0 (2026-10-30).
 
 Project ref: `wvaxfyhihcfilewygtzp` · Bundle ID: `com.catchupcolumn.app`
 
 ## Current state (2026-09-24)
+
+**Update 2026-10-24** — two owner decisions and a production pass. The
+2026-09-24 snapshot below is kept as written, with struck or annotated lines
+where it changed.
+
+- **Group Zero is skipped** (owner, 2026-10-24). No external TestFlight, no
+  Beta App Review: the app goes straight to App Store review once the
+  illustration rework (step 6b) lands and the presubmission checks pass. This
+  overrides POSITIONING §8's gate.
+- **Multi-photo posts ship in v1** (owner, 2026-10-24). #52 (reading) and #56
+  (composer) are merged; a post holds up to four photos (`MAX_POST_PHOTOS`,
+  `design/MULTI_PHOTO_POSTS.md`).
+- **Production:** `support@catchupcolumn.com` receives mail through Cloudflare
+  Email Routing, and a DMARC record (`p=none`) is in (step 4). Migration
+  `20261003154759_multi_photo_posts` is pushed, so production has all 33.
+  `compile-editions` v20 and `publish-edition-now` v9 are deployed, and all
+  four live functions were downloaded and diffed clean against `main`
+  ([Deploying edge functions](#deploying-edge-functions)).
+- **Also merged:** #58 (the photo library is the only iOS permission; Android
+  `RECORD_AUDIO` is gone), #59 (back-button fallbacks, the invite skeleton),
+  #60 (a tapped edition push opens the edition, even from a cold start).
 
 ✅ **The v2 edition email is live — redeployed 2026-09-24.** Until that morning
 `compile-editions` and `publish-edition-now` were on a 2026-07-11 build, because
@@ -58,21 +83,25 @@ actionable before and all of which are now:
    `eas build` / `eas credentials` run. Production push doesn't register without
    it, which also gates POSITIONING §3's pre-publish nudge, since the nudge is
    push-only.
-3. **The first TestFlight build (step 8).** What Group Zero runs on from edition 1
+3. **The first TestFlight build (step 8).** ~~What Group Zero runs on from edition 1
    (decided 2026-09-29, POSITIONING §6) —
-   Expo Go dropped remote push in SDK 53 — and the first release build this
+   Expo Go dropped remote push in SDK 53 — and~~ *The build that goes to App
+   Store review (Group Zero skipped 2026-10-24), and* the first release build this
    project has ever produced. Budget for it failing the first time. It is also
    the upload that **permanently locks the bundle ID** (step 7), and the build
    the Sentry DSN has to be baked into (step 10) — settle both before it.
    It is also the first build to carry the 2026-09-28 auth change (#44) —
-   which can't reach older builds by OTA, because it edits `app.json` — and two
-   dashboard steps wait for it (step 5 items 5 and 7).
+   which can't reach older builds by OTA, because it edits `app.json` ~~— and two
+   dashboard steps wait for it (step 5 items 5 and 7)~~. ✅ Those two dashboard
+   steps (step 5 items 5 and 7) were done 2026-10-30, before the build: with
+   Group Zero skipped, no older build is in anyone's hands.
 
 **Still open and independent of Apple:**
 
 4. **Resend** (step 4) — DNS is correctly provisioned and `EMAIL_FROM` is
-   verified correct; confirm Resend flipped the domain to `verified`, and add
-   the missing DMARC record.
+   verified correct; confirm Resend flipped the domain to `verified`~~, and add
+   the missing DMARC record~~. *(DMARC ✅ 2026-10-24, the same day `support@`
+   started receiving mail.)*
 5. ✅ **The `compile-editions` cron is firing** — verified end to end
    2026-09-22; see
    [Verifying the compile-editions cron](#verifying-the-compile-editions-cron).
@@ -80,7 +109,9 @@ actionable before and all of which are now:
    Group Zero is exactly when crash reports start mattering. It goes in the
    **EAS environment, not `.env.local`**, or the TestFlight build ships with
    Sentry silently off. Not set as of 2026-09-24 (`eas env:list` shows only the
-   two Supabase variables in each environment).
+   two Supabase variables in each environment). *(✅ Set later that day, and the
+   source-map variables 2026-10-03 — step 10. Its smoke test, 10.3, is still
+   open. Group Zero was skipped 2026-10-24.)*
 7. **One Auth rate check left** (step 5) — Resend's daily cap, which auth and
    edition email now share. *(The per-address interval (60s) and the minimum
    password length (8) were both read from the dashboard 2026-09-28.)*
@@ -88,7 +119,8 @@ actionable before and all of which are now:
 **Deferred by choice:** store screenshots (step 7), and the illustration rework
 (step 6b) — which is required before submission (owner, 2026-09-25) but not before
 the TestFlight build. Screenshots freeze the final look, and Group Zero produces real
-friend-group sample content for them for free.
+friend-group sample content for them for free. *(Group Zero skipped 2026-10-24:
+the sample content now comes from the demo Group — STORE_LISTING §5.)*
 
 ---
 
@@ -158,6 +190,14 @@ deletion were each verified against production. PRs #28–#32.
 `compile-editions` and `publish-edition-now` downloaded and diffed against
 `main`: two months behind. Redeployed the same morning; the v2 edition email is
 live.
+
+**2026-10-24 — Group Zero skipped; production brought up to `main`.** Owner
+decisions: no Group Zero, so no external TestFlight or Beta App Review; and
+multi-photo posts ship in v1 (#52, #56). `support@` receives mail through
+Cloudflare Email Routing, and DMARC `p=none` was added (step 4). Migration
+`20261003154759_multi_photo_posts` pushed (33 of 33); `compile-editions` v20 and
+`publish-edition-now` v9 deployed, and all four live functions diffed clean.
+#58, #59 and #60 merged.
 
 ---
 
@@ -246,7 +286,7 @@ time.
 linked, an unsigned iOS *simulator* build already works today if you want to smoke-test
 the binary before enrolling (see step 6b).
 
-## 4. Email deliverability — Resend **[owner]** — DNS verified, two checks left
+## 4. Email deliverability — Resend **[owner]** — DNS verified, ~~two checks left~~ DMARC ✅ 2026-10-24, one check left
 
 **DNS is correctly provisioned** (checked 2026-08-22). The records match Resend's
 standard layout for the **root** domain `catchupcolumn.com`:
@@ -261,8 +301,19 @@ standard layout for the **root** domain `catchupcolumn.com`:
 > against the envelope sender (`send.catchupcolumn.com`), which has it. Don't "fix"
 > this by adding an SPF record to the apex. Because DKIM sits on the root, `EMAIL_FROM`
 > must use the root domain (`@catchupcolumn.com`), not `@send.catchupcolumn.com`.
+>
+> *2026-10-24: the root now has an SPF record — Cloudflare Email Routing's
+> `v=spf1 include:_spf.mx.cloudflare.net ~all` (read 2026-10-30), which came
+> with `support@`'s MX records below. It doesn't touch Resend, whose SPF is
+> checked on `send.`; the warning above still holds for Resend's records.*
 
-☐ **Add a DMARC record.** There is none at `_dmarc.catchupcolumn.com`. Resend doesn't
+✅ **`support@catchupcolumn.com` receives mail — 2026-10-24.** Cloudflare Email
+Routing; the apex MX records are Cloudflare's `route1`–`route3.mx.cloudflare.net`
+(read with `dig` 2026-10-30). It is the DMARC `rua` below, the *Report this
+story* address and the published support address.
+
+✅ **DMARC record added 2026-10-24** (`p=none`, as below; read back with `dig`
+2026-10-30). ~~☐ **Add a DMARC record.** There is none at `_dmarc.catchupcolumn.com`.~~ Resend doesn't
 require it to verify, but Gmail's and Yahoo's bulk-sender rules lean on it, and this
 app mails newsletters to family inboxes. `p=none` is monitor-only and cannot break
 delivery:
@@ -543,7 +594,9 @@ is the long pole, it needs a TestFlight build rather than finished art, and it
 produces real friend-group screenshot content as a by-product. So the rework is
 still the last planned product change before *submission* — it just no longer
 blocks the enrollment (step 7) or the first build (step 8), and the four-week
-Group Zero run is the natural window to do it in.
+Group Zero run is the natural window to do it in. *(Group Zero skipped
+2026-10-24: there is no run any more, so the rework gates submission directly,
+alongside the presubmission checks.)*
 
 **What exists today** — 8 components in `components/illustrations/`:
 `paperboy-mark`, `paperboy-mailbox-scene`, `dog-with-paper-scene`,
@@ -585,12 +638,14 @@ doesn't sprawl — this is chrome, not a re-architecture.
 
   This exercises font loading and the splash on a real binary. It won't test push or
   universal links — those need the signed production build.
-- **Then** capture screenshots (step 7) against Group Zero's real content.
+- **Then** capture screenshots (step 7) against ~~Group Zero's real content~~ the
+  demo Group's content (STORE_LISTING §5; Group Zero skipped 2026-10-24).
 
 ## 7. Store account, assets, and metadata **[owner]** — ✅ enrolled 2026-09-22; the rest deferred
 
 iOS only. **Enrollment landed 2026-09-22.** Everything *after* it still waits,
-because screenshots freeze the final look and Group Zero will produce better ones.
+because screenshots freeze the final look ~~and Group Zero will produce better ones~~
+*(Group Zero skipped 2026-10-24)*.
 
 - ✅ **[owner] Apple Developer Program ($99/yr) — enrolled 2026-09-22.** This was
   the multi-day-tail item that gated the APNs key (step 3), the Team ID for
@@ -605,22 +660,29 @@ because screenshots freeze the final look and Group Zero will produce better one
   confirmed by the owner 2026-09-24; keep it. Why it had to be settled before
   the first TestFlight build, not the first submission: it locks when the
   first build is *uploaded*: that binds it to the App Store Connect app record
-  for good, and changing it afterwards means a new app record. The Group Zero
-  TestFlight build (step 8) is that upload. It is also half of the AASA appID
+  for good, and changing it afterwards means a new app record. The ~~Group Zero
+  TestFlight~~ first production build (step 8) is that upload *(Group Zero
+  skipped 2026-10-24)*. It is also half of the AASA appID
   (`<TeamID>.com.catchupcolumn.app`), so decide it with the Team ID paste above.
-- ⏸ Create the app record in App Store Connect (after Group Zero).
-- ⏸ **Screenshots — capture after 6b:** iPhone 6.9" required (Home, an edition front
+- ⏸ Create the app record in App Store Connect (~~after Group Zero~~ — no longer
+  waits on it, skipped 2026-10-24; the New App dialog's values are STORE_LISTING
+  §13.1).
+- ⏸ **Screenshots — capture after 6b:** ~~iPhone 6.9" required~~ Apple's required
+  size is now iPhone with Dynamic Island (medium display); STORE_LISTING §5
+  has the sizes, checked 2026-10-30 (Home, an edition front
   page, the composer, a group). No iPad shots needed (iPad support is off).
   > `/screenshots` in the repo holds design-reference images only (and is untracked as
   > of `bce0de3`) — no store shots exist yet.
 - ⏸ Paste the descriptions, keywords, and the privacy answers from
   [STORE_LISTING.md](./STORE_LISTING.md). Enter the `www` URLs from step 2.
+  (§13 is the field-by-field sheet, 2026-10-30.)
 - ⏸ Age rating questionnaire — **flag user-generated content** (the app has it, and
-  step 9's affordances are what make that answer safe).
+  step 9's affordances are what make that answer safe). Every answer is in
+  STORE_LISTING §9.1 (2026-10-30); the override is the owner's call.
 
 *Play Console enrollment and Android shots move to [Android — deferred](#android--deferred).*
 
-## 8. Build & submit **[owner]** — ⏸ deferred; also the *first ever* release build
+## 8. Build & submit **[owner]** — ⏸ ~~deferred~~ submission waits on step 6b (Group Zero skipped 2026-10-24); also the *first ever* release build
 
 **First EAS build: done 2026-09-24** — `preview` profile (iOS simulator,
 unsigned), build `cf9f70ee`, 9 minutes on EAS's Xcode 26.6 image. SDK 57 runs:
@@ -638,10 +700,13 @@ links, the notification icon. Two things that build taught:
 
 **Production build is still to come.** Budget time for it to not work first try.
 
-iOS only. **The App Store half is deferred** until Group Zero's four editions
+iOS only. **Group Zero was skipped (owner, 2026-10-24)** — no external
+TestFlight, no Beta App Review. ~~**The App Store half is deferred** until Group Zero's four editions
 are in (POSITIONING §8) and 6b lands. **The TestFlight half is the critical path
 now:** since 2026-09-29 Group Zero runs on the app from edition 1 (POSITIONING
-§6), so its first edition waits on this build and its review. It needs only the
+§6), so its first edition waits on this build and its review.~~ The App Store
+submission waits only on 6b and the presubmission checks; its field values,
+review account and Review Notes are STORE_LISTING §13. The build needs only the
 enrollment — but settle two things first, because the build fixes them in
 place: the bundle ID locks on its upload (step 7), and the Sentry DSN is baked
 in, so it must already be in the EAS environment (step 10).
@@ -653,6 +718,12 @@ npx eas-cli submit --platform ios --latest
 
 This is where EAS prompts for the **APNs key** (step 3's deferred item), so have the
 Apple account ready.
+
+> *Not used for v1, kept for later: Group Zero was skipped 2026-10-24, so there
+> is no external group and no Beta App Review. Two bullets below still apply:
+> internal testing, which is how a signed build reaches the owner's phone for
+> PRESUBMISSION Gates 5 and 7, and the review account, which App Store review
+> needs just the same (STORE_LISTING §13.2).*
 
 **TestFlight for Group Zero means *external* testing — and that goes through
 Apple's review.** Group Zero members aren't on the developer team, so they join
@@ -690,11 +761,14 @@ with the #44 auth change — its checks are PRESUBMISSION Gate 5 (the Keychain
 save prompt) and Gate 7 (set a password, forgot password, the common-password
 refusal, sign-out on one device).
 
-**Once Group Zero is on this build:** step 5 items 5 and 7 (code expiry → 600s
-with the updated templates, then the old redirect URL).
+~~**Once Group Zero is on this build:** step 5 items 5 and 7 (code expiry → 600s
+with the updated templates, then the old redirect URL).~~ ✅ **Done 2026-10-30,
+before the build** — with Group Zero skipped, no older build is in anyone's
+hands (step 5 items 5 and 7).
 
 Then complete the App Store Connect review forms (age rating / privacy — **flag
-user-generated content**) and submit for review.
+user-generated content**) and submit for review. Every answer is in
+STORE_LISTING §7, §9.1 and §13 (2026-10-30).
 
 ## 9. UGC moderation — ✅ done (2026-08-05, PR #14)
 
@@ -718,7 +792,7 @@ The report path and the release-build run are tracked in
 [PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md) Gates 6–7; don't keep a
 second copy of the list here.
 
-## 10. Sentry setup **[owner]** — ☐ needed before Group Zero
+## 10. Sentry setup **[owner]** — ☐ needed before ~~Group Zero~~ the App Store build (Group Zero skipped 2026-10-24)
 
 Relocated here from POSITIONING §11 (2026-09-16) — that doc records *why* Sentry
 and not the alternatives; this is how to turn it on.
@@ -889,6 +963,11 @@ and left v18 untouched (`functions list`: same version and `updated_at`); an
 identical retry seconds later succeeded. Verified by download-and-diff (no drift)
 and `verify_jwt` still false. `publish-edition-now` didn't change — nothing it
 imports did.
+
+✅ **`compile-editions` v20 and `publish-edition-now` v9 deployed from `main`,
+2026-10-24**, after migration `20261003154759_multi_photo_posts` was pushed
+(production now has all 33). They carry the multi-photo email (#55). All four
+live functions were then downloaded and diffed clean against `main`.
 
 To deploy after any future change — `config.toml` pins each function's
 `verify_jwt` to what production has, so a plain deploy keeps the cron's
