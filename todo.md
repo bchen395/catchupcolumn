@@ -22,9 +22,12 @@ specified in CLAUDE.md. Git history has the detail if you need it.
 - [x] Crash reporting (Sentry) + OTA updates (expo-updates) + print-resolution fix
       — landed 2026-09-14, [docs/POSITIONING.md](docs/POSITIONING.md) §11
 - [~] Store metadata — drafted in [docs/STORE_LISTING.md](docs/STORE_LISTING.md).
-      Still needs screenshots and the store-console fields; the copy pass rewrites
-      it first.
-- [ ] Onboarding tested with a real non-technical user (folded into Group Zero)
+      ~~Still needs screenshots and the store-console fields; the copy pass rewrites
+      it first.~~ Ready for 1.0 on 2026-10-30: §13 has every App Store Connect
+      field and the Review Notes. Still needs screenshots and the owner's ☐ items
+      (§13.5).
+- [ ] Onboarding tested with a real non-technical user (folded into Group Zero
+      — *skipped 2026-10-24, so this is no longer covered*)
 
 ---
 
@@ -32,20 +35,27 @@ specified in CLAUDE.md. Git history has the detail if you need it.
 
 POSITIONING §8 is the authoritative sequence. The short version:
 
-- [ ] **[owner] Make `support@catchupcolumn.com` receive mail** — found
+- [x] **[owner] Make `support@catchupcolumn.com` receive mail** — found
       2026-10-03: the apex has no MX record, so *Report this story*, the
       privacy policy's deletion route and the TestFlight feedback address all
       bounce. Cloudflare Email Routing; before the external link goes out.
-      [docs/HANDOFF.md](docs/HANDOFF.md) §1
-- [~] **Multi-photo posts** (decided 2026-10-03: one writing area, up to 4
-      photos). Data layer merged (#55) — migration and function deploys not yet
+      **Done 2026-10-24** — Cloudflare Email Routing (MX records), plus a DMARC
+      record (`p=none`). [docs/LAUNCH.md](docs/LAUNCH.md) step 4
+- [x] **Multi-photo posts** (decided 2026-10-03: one writing area, up to 4
+      photos). Data layer merged (#55) — ~~migration and function deploys not yet
       pushed; the composer (#56) and reading surfaces (#52) are gated on the
       owner's **2026-10-08 go/no-go**, tested first through the `staging`
-      channel. Before edition 1, else after edition 4.
-      [design/MULTI_PHOTO_POSTS.md](design/MULTI_PHOTO_POSTS.md)
+      channel. Before edition 1, else after edition 4.~~ **Ships in v1** (owner,
+      2026-10-24): #52 and #56 merged; migration `20261003154759_multi_photo_posts`
+      pushed (production has all 33) and `compile-editions` v20 /
+      `publish-edition-now` v9 deployed, all four functions diffed clean
+      2026-10-24. [design/MULTI_PHOTO_POSTS.md](design/MULTI_PHOTO_POSTS.md)
 - [x] **App fixes for the build** — 2026-10-03, #54: one shared back button
       (the off-center arrow), skeletons for invite-link arrival and the compose
-      sheet, and bugs.md L3's retry screen.
+      sheet, and bugs.md L3's retry screen. Then 2026-10-24: #58 (the photo
+      library is the only iOS permission; Android `RECORD_AUDIO` gone), #59
+      (back-button fallbacks, the invite skeleton), #60 (a tapped edition push
+      opens the edition even from a cold start).
 
 - [x] **Redeployed `compile-editions` and `publish-edition-now`** — 2026-09-24.
       They had been on a 2026-07-11 build sending the retired **v1 edition
@@ -69,11 +79,14 @@ POSITIONING §8 is the authoritative sequence. The short version:
       the first TestFlight upload, not at submission. (`WEB_BASE_URL`, the server
       half of this fix, was moved from the apex to `www` 2026-09-22.)
       [docs/LAUNCH.md](docs/LAUNCH.md) steps 2 and 7
-- [ ] **[owner] Group Zero** — four consecutive editions across Groups A, B and the
+- [x] ~~**[owner] Group Zero** — four consecutive editions across Groups A, B and the
       family Groups, before submitting anything. **On the app from edition 1,
       via a TestFlight public link** (decided 2026-09-29): organizers create
       their Groups in the app and people join by invite code; the script is for
-      holdouts. [docs/POSITIONING.md](docs/POSITIONING.md) §6
+      holdouts.~~ **Skipped** (owner, 2026-10-24): no external TestFlight, no
+      Beta App Review. The app goes straight to App Store review once the
+      illustration rework lands and the presubmission checks pass.
+      [docs/POSITIONING.md](docs/POSITIONING.md) §6
 - [x] **Group Zero tooling** — 2026-09-25. The operator script
       (`scripts/group-zero/`: `create-group`, `add-member`, `post-for`, `list`)
       is on `main` and was verified end to end against production with a
@@ -82,18 +95,23 @@ POSITIONING §8 is the authoritative sequence. The short version:
       (read by asking at week 4; Group B set up by the owner with the organizer
       as moderator — superseded 2026-09-29, the organizer now creates it in the
       app). [docs/POSITIONING.md](docs/POSITIONING.md) §6
-- [ ] **First production build + TestFlight external testing** — now: since
+- [ ] **First production build** ~~**+ TestFlight external testing** — now: since
       2026-09-29 Group Zero's edition 1 waits on it. External testers need
       Apple's TestFlight App Review, which needs a demo account with a password
-      and a Beta App Description. The Sentry source-map variables it needed
+      and a Beta App Description.~~ — no external testing (Group Zero skipped
+      2026-10-24); the build goes to App Store review, whose review account,
+      demo Group and Review Notes are
+      [docs/STORE_LISTING.md](docs/STORE_LISTING.md) §13. The Sentry source-map variables it needed
       are set (2026-10-03). The owner plans the build for 2026-10-04.
       [docs/LAUNCH.md](docs/LAUNCH.md) steps 8 and 10.4. The review
       account is made on that build: code sign-in → Profile → Set a password.
       It's also the first build with the #44 auth change — device checks in
       PRESUBMISSION Gates 5 and 7
-- [ ] **After Group Zero is on that build: two auth dashboard steps** — OTP
+- [x] **~~After Group Zero is on that build:~~ two auth dashboard steps** — OTP
       expiry 3600 → 600 with the updated code templates pasted in the same
-      sitting, then remove the `reset-password` redirect URL.
+      sitting, then remove the `reset-password` redirect URL. **Done
+      2026-10-30**, before the build: with Group Zero skipped, no older build
+      is in anyone's hands.
       [docs/LAUNCH.md](docs/LAUNCH.md) step 5 items 5 and 7
 - [x] **Optional passwords and auth tightened to the standards** — 2026-09-28,
       PR #44: a password is an optional second way in, set from Profile;
@@ -146,20 +164,27 @@ POSITIONING §8 is the authoritative sequence. The short version:
       Two open sub-checks (per-address interval, Resend's daily cap) in
       [docs/LAUNCH.md](docs/LAUNCH.md) step 5.
 - [ ] **Pre-publish nudge** — after Group Zero, and only if the run showed people
-      forgetting rather than declining. [docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md)
+      forgetting rather than declining. *(Group Zero skipped 2026-10-24, so
+      this has no trigger yet — the owner re-keys it.)*
+      [docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md)
 - [ ] **Thin-edition design** — a one-story edition must read as a letter, not a
       failure. [docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md)
-- [ ] **Decide on write-by-web** from the editions 1–2 vs. 3–4 delta.
+- [ ] **Decide on write-by-web** from the editions 1–2 vs. 3–4 delta. *(That
+      delta was Group Zero's, skipped 2026-10-24 — no trigger yet.)*
       [docs/POSITIONING.md](docs/POSITIONING.md) §4
 - [ ] **Illustration rework — required before App Store submission** (owner,
       2026-09-25), by a commissioned illustrator. Not a gate on the TestFlight
       build: the 8 drawings are SVG code and reach testers by OTA; only the app
-      icon and splash (native files) need a new build. Group Zero's four weeks
-      are the window. Scoped and briefed 2026-10-03 (#53): round 1 = the redrawn
+      icon and splash (native files) need a new build. ~~Group Zero's four weeks
+      are the window.~~ With Group Zero skipped (2026-10-24), the rework gates
+      submission directly. Scoped and briefed 2026-10-03 (#53): round 1 = the redrawn
       set + a press pass replacing the invite ticket + the icon; HeyTea is a
       "don't". The owner sends the brief and agrees fee, rights and dates.
       [design/ILLUSTRATION_REWORK.md](design/ILLUSTRATION_REWORK.md)
-- [ ] **App Store submission** — [docs/PRESUBMISSION_CHECKLIST.md](docs/PRESUBMISSION_CHECKLIST.md)
+- [ ] **App Store submission** — [docs/PRESUBMISSION_CHECKLIST.md](docs/PRESUBMISSION_CHECKLIST.md).
+      Straight after the illustration rework and the presubmission checks
+      (Group Zero skipped 2026-10-24). The App Store Connect sheet is
+      [docs/STORE_LISTING.md](docs/STORE_LISTING.md) §13 (2026-10-30).
 
 ---
 
