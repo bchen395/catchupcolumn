@@ -293,7 +293,7 @@ npx supabase secrets set EMAIL_FROM='Catch Up Column <hello@catchupcolumn.com>'
 
 (No function redeploy needed — secrets are read at runtime.)
 
-## 5. Supabase Auth dashboard settings **[owner]** — ☐ two password items wait for the next build (below); the rest ✅ set and verified (2026-09-22, 2026-09-28)
+## 5. Supabase Auth dashboard settings **[owner]** — ✅ set (2026-09-22, 2026-09-28; the last two items 2026-10-30)
 
 These are **not** in `config.toml` (that governs local dev only) — they were set in the
 Supabase dashboard → Authentication. `config.toml` mirrors the production *decisions*
@@ -301,7 +301,7 @@ Supabase dashboard → Authentication. `config.toml` mirrors the production *dec
 as of 2026-09-25), but it is not a record of what production holds — only the
 dashboard is.
 
-### Passwords and code lifetime — items 1–4 ✅ 2026-09-28; 5 and 7 wait for the next build
+### Passwords and code lifetime — items 1–4 ✅ 2026-09-28; 5 and 7 ✅ 2026-10-30
 
 The 2026-09-25 change made a password an optional second way in, set from
 Profile, and turned "Forgot your password?" into a code sign-in followed by
@@ -311,7 +311,8 @@ then. Item 5 waits until the new "expires in 10 minutes" copy is what people
 are running, or the app will tell them a code lasts longer than it does. That
 copy can't arrive by OTA: the same change edits `app.json` (webcredentials),
 which moves the `fingerprint` runtime version, so it ships with the next native
-build.
+build. *(2026-10-30: with Group Zero skipped, no build without that copy was
+ever in anyone's hands, so 5 and 7 were done before the first release build.)*
 
 1. ✅ **Providers → Email → Minimum password length: 8** *(read 2026-09-28: it
    was already 8 — the 2026-08-22 record was right and `bugs.md` D2 was wrong)*.
@@ -333,16 +334,15 @@ build.
    password was changed"*. GoTrue ships every notification off. **Email address
    changed** is on too, on Supabase's default template — it goes to the *old*
    address and covers dashboard-side changes.
-5. ☐ **Providers → Email → Email OTP Expiration: 600 seconds** — only once the
-   next native build is what people run. Then paste the updated
-   `magic-link.html` and `confirm-signup.html` ("expires in 10 minutes") in the
-   same sitting — from `<!doctype html>` down:
+5. ✅ **Providers → Email → Email OTP Expiration: 600 seconds** *(2026-10-30,
+   was 3600)*, with the updated `magic-link.html` and `confirm-signup.html`
+   ("expires in 10 minutes") pasted in the same sitting — from
+   `<!doctype html>` down:
    `sed -n '/<!doctype html>/,$p' supabase/templates/magic-link.html | pbcopy`.
    The setting also governs reauthentication codes. It must equal
-   `CODE_EXPIRY_MINUTES` in `hooks/use-email-code.ts`. **Afterwards, delete the
-   "PENDING" notes** this step left in the headers of those two templates, in
-   `reauthentication.html`, in `hooks/use-email-code.ts`, and in CLAUDE.md's
-   Auth line.
+   `CODE_EXPIRY_MINUTES` in `hooks/use-email-code.ts`. The "PENDING" notes this
+   step left in the templates, the hook and CLAUDE.md were removed the same
+   day.
 6. ✗ **Leaked password protection — not available: the project is on Free**
    (checked 2026-09-28; the toggle needs Pro). The substitute is
    `lib/common-passwords.ts`, the 3,000 most common passwords that pass the
@@ -350,9 +350,9 @@ build.
    6.2.4, L1). App-side only, so it can be skipped by calling the API directly
    — which weakens only the caller's own account. **If the project moves to
    Pro, turn this on** and keep the list.
-7. ☐ **URL Configuration → Redirect URLs:** remove
-   `catchupcolumn://(auth)/reset-password` once the next build is out — older
-   builds still send reset links to it. `catchupcolumn://` stays.
+7. ✅ **URL Configuration → Redirect URLs:** `catchupcolumn://(auth)/reset-password`
+   removed *(2026-10-30)* — only builds older than the 2026-09-25 change sent
+   reset links to it, and none was ever released. `catchupcolumn://` stays.
 
 - ~~**Redirect URLs:** `catchupcolumn://` and `catchupcolumn://(auth)/reset-password`
   allowlisted, so password-reset deep links work in release builds.~~ The reset
