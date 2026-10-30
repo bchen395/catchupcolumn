@@ -1,7 +1,7 @@
 # Privacy Policy — Catch Up Column
 
 **Effective date:** July 3, 2026
-**Last updated:** September 28, 2026
+**Last updated:** October 30, 2026
 
 Catch Up Column ("the app", "we", "us") is a private group newsletter you write
 together with family and friends. This policy explains what we collect, why, and
@@ -48,7 +48,8 @@ We only collect what the app needs to work:
 
 We do **not** collect your location, contacts, advertising identifiers, or browsing
 activity. The app contains no third-party advertising or analytics SDKs, and no
-tracking of any kind across apps or websites. Crash reporting, described above, is
+tracking of any kind across apps or websites. Apart from the SDKs of the providers
+that run the app (Supabase and Expo, below), crash reporting, described above, is
 the only third-party SDK in the app, and it exists so we can fix what breaks.
 
 ## How your content is shared
@@ -72,9 +73,11 @@ only to provide their service to us:
   sent to Resend for delivery. https://resend.com/legal/privacy-policy
 - **Sentry** — receives the crash reports described above, and nothing else.
   https://sentry.io/privacy/
-- **Expo / Expo Application Services** — delivers push notifications. Your push
-  token and the notification text (e.g. your group's name) pass through Expo's push
-  service. https://expo.dev/privacy
+- **Expo / Expo Application Services** — delivers push notifications and app
+  updates. Your push token and the notification text (e.g. your group's name) pass
+  through Expo's push service. When the app checks for an update, it sends Expo a
+  random identifier for your installation of the app, which isn't tied to your
+  account. https://expo.dev/privacy
 - **Apple** and **Google** deliver the notifications to your device through their
   push networks.
 
@@ -97,7 +100,7 @@ If you cannot access the app, you may request deletion by emailing
 ## Your choices
 
 - **Edition emails:** every edition email includes a one-tap unsubscribe link,
-  per group. You can also stop email delivery for a group from its settings.
+  per group.
 - **Push notifications:** turn these off in your device settings at any time.
 - **Profile:** edit your display name, photo, and bio in the app.
 

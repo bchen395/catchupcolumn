@@ -3,7 +3,8 @@
 Draft metadata and the exact answers to the privacy questionnaires, ready to paste
 into App Store Connect and Google Play Console. Anything in `{{curly braces}}` or a
 blockquote is an owner decision/input. **☐ owner to confirm** marks a judgment
-call; each one carries a recommendation.
+call; each one carries a recommendation. The owner settled the first batch on
+2026-10-30, and §13.5 lists what is still open.
 
 **Ready for the App Store 1.0 submission — 2026-10-30.** Group Zero was skipped
 (owner, 2026-10-24), so there is no external TestFlight and no Beta App Review:
@@ -25,7 +26,7 @@ the evidence.
 | Version | 1.0.0. The build number is EAS's, not `app.json`'s: `eas.json` sets `appVersionSource: remote` and `autoIncrement` on `production`, so use whatever number the uploaded build carries |
 | Primary category | Social Networking (iOS) / Social (Android) |
 | Secondary category (iOS) | Lifestyle |
-| Content rating target | 4+ calculated (iOS), **but Terms §1 sets a minimum age of 18 — §9.1's override row** / Everyone, with user-generated content flag (Android) |
+| Content rating target | **18+** (iOS): Apple calculates 4+, overridden to match Terms §1's minimum age of 18 (owner, 2026-10-30; §9.1) / Everyone, with user-generated content flag (Android) |
 | Price | Free |
 
 > ✅ The bundle ID was confirmed final by the owner on 2026-09-24 (`LAUNCH.md`
@@ -184,9 +185,9 @@ Expo's push service (`getExpoPushTokenAsync`; the Device ID row covers it). Each
 update check sends `expo-updates` a random per-install ID
 (`EAS-Client-ID`) that is tied to nothing else. Expo's privacy manifest for that
 module (`expo-eas-client/ios/PrivacyInfo.xcprivacy`) declares no collected
-data. ☐ **owner to confirm** that it needs no row; recommendation: none,
-because the ID identifies an install, not a person, and it is used to deliver
-updates.
+data. **No row for it** (owner, 2026-10-30): the ID identifies an install, not
+a person, and it is used to deliver updates. The privacy policy discloses both
+from 2026-10-30 (Service providers → Expo).
 
 **Not declared, and why:**
 
@@ -250,7 +251,7 @@ Infrequent / Frequent; the rest are Yes or No.
 | Capabilities | User-Generated Content | **Yes** | Members write posts and add photos that the rest of their Group reads. Apple's definition says "broad distribution", and a Group is a handful of invited people, but Yes keeps 4+ and is the Guideline 1.2 position already taken (LAUNCH step 9; PRESUBMISSION Gate 6: "flag user-generated content") |
 | Capabilities | Social Media | No | Apple: "a social feed or similar discovery method that visibly spreads content to many users". There is no feed, discovery, likes, comments, shares or view counts; a post never leaves its Group (CLAUDE.md, Non-features) |
 | Capabilities | Social Media Disabled for Users Under 13 | No | Only applies to apps with social media |
-| Capabilities | Messaging and Chat | ☐ **owner to confirm** — recommend **Yes** | Apple: "Users can directly communicate with one another … May include … direct and/or group messaging". A post is a weekly message to the whole Group, though there is no chat, DM or reply. Yes keeps 4+; Brazil's rating moves from A6 to A12 |
+| Capabilities | Messaging and Chat | **Yes** (owner, 2026-10-30) | Apple: "Users can directly communicate with one another … May include … direct and/or group messaging". A post is a weekly message to the whole Group, though there is no chat, DM or reply. Yes keeps 4+; Brazil's rating moves from A6 to A12 |
 | Capabilities | Advertising | No | No ads in the app. The planned house ad for the printed volume (POSITIONING §5) would run in the edition email, and isn't built |
 | Mature Themes | Profanity or Crude Humor | None | Answers are about the app's own content. What members write is the User-Generated Content answer |
 | Mature Themes | Horror/Fear Themes | None | — |
@@ -269,12 +270,13 @@ Infrequent / Frequent; the rest are Yes or No.
 | Chance-Based Activities | Contests | None | No rankings, streaks or competitions (BRAND §8, no gamification) |
 | Chance-Based Activities | Loot Boxes | No | — |
 | Additional Information | Calculated rating | **4+** | Every Yes above is in Apple's 4+ list: "Capabilities: User-generated content; Messaging and chat; Advertising" |
-| Additional Information | Age Categories and Override | ☐ **owner to confirm** — recommend **Override to Higher Age Rating → 18+** | Terms §1, live at `/terms`: "You must be at least 18 years old to create an account." Apple: "If your app has a EULA with minimum age requirements that exceed the rating that Apple calculated, you must override to a rating that adheres to the requirements." So 4+ can't stand beside Terms §1 as written. The other way out is to lower Terms §1 first and override to match: the privacy policy only says the app is "not directed at children under 13", and family Groups may want teenagers in them. That is a legal-text change, so it is the owner's |
+| Additional Information | Age Categories and Override | **Override to Higher Age Rating → 18+** (owner, 2026-10-30) | Terms §1, live at `/terms`: "You must be at least 18 years old to create an account." Apple: "If your app has a EULA with minimum age requirements that exceed the rating that Apple calculated, you must override to a rating that adheres to the requirements." So 4+ can't stand beside Terms §1 as written. The alternative was to lower Terms §1 and override to match; the owner kept the Terms at 18 |
 | Additional Information | Made for Kids | No | Not a kids' app |
 | Additional Information | Age Suitability URL | Leave blank | Optional |
 
-**Regional ratings**, from the same values page: Brazil self-rates A6 with
-User-Generated Content, or A12 if Messaging and Chat is Yes. Australia's 16+
+**Regional ratings**, from the same values page: with Messaging and Chat
+answered Yes, Brazil's self-rating is A12 (User-Generated Content alone would
+be A6). Australia's 16+
 comes only from Social Media or Loot Boxes, and Korea's extra rating only from
 the Games and Entertainment categories, so neither applies. An override "will
 apply in all regions", and the product page still lists the questionnaire's
@@ -293,21 +295,28 @@ content descriptions.
 The published guideline asks UGC apps for four things
 ([App Review Guidelines
 1.2](https://developer.apple.com/app-store/review/guidelines/#user-generated-content),
-checked 2026-10-30):
+checked 2026-10-30).
+
+**Decided 2026-10-30 (owner): the gaps below are closed in code before the
+final build, the one made after the illustration rework.** A separate session
+is scoping the work. It is planned and pending: until it lands, the "What the
+app has" column and the Review Notes describe only what exists, and §13.3
+carries a `☐ after the 1.2 work lands` marker wherever the notes will need to
+describe it.
 
 | 1.2 asks for | What the app has | Gap |
 | --- | --- | --- |
-| "A method for filtering objectionable material from being posted to the app" | Nothing automatic. Groups are invite-only, and a moderator can remove a member | **No filter.** Needs a code change if App Review insists |
-| "A mechanism to report offensive content and timely responses to concerns" | *Report this story* under every story by someone else (`components/report-story-link.tsx`), drafting an email to `support@` with the story's ids (`lib/report.ts`). `support@` receives mail since 2026-10-24 | ☐ **owner to confirm** a response time for the Review Notes. Also: a moderator can't take down one published post, so acting on a report means deleting the row by hand in Supabase |
-| "The ability to block abusive users from the service" | *Remove* on the Group page, moderator-only (`app/group/[id].tsx` → `remove_group_member`); any member but the moderator can *Leave this Group* | **No block for an ordinary member,** and **removal isn't a ban:** `join_group_by_invite_code` has no ban check and the app has no way to issue a new invite code, so a removed member who still has the code can rejoin. Needs a code change (a ban on removal, or a way to issue a new invite code) |
+| "A method for filtering objectionable material from being posted to the app" | Nothing automatic. Groups are invite-only, and a moderator can remove a member | **No filter.** ☐ Planned, pending — the 1.2 work |
+| "A mechanism to report offensive content and timely responses to concerns" | *Report this story* under every story by someone else (`components/report-story-link.tsx`), drafting an email to `support@` with the story's ids (`lib/report.ts`). `support@` receives mail since 2026-10-24 | Response time: **within 24 hours** (owner, 2026-10-30), stated in the Review Notes. A moderator can't take down one published post, so acting on a report today means deleting the row by hand in Supabase. ☐ Planned, pending — the 1.2 work |
+| "The ability to block abusive users from the service" | *Remove* on the Group page, moderator-only (`app/group/[id].tsx` → `remove_group_member`); any member but the moderator can *Leave this Group* | **No block for an ordinary member,** and **removal isn't a ban:** `join_group_by_invite_code` has no ban check and the app has no way to issue a new invite code, so a removed member who still has the code can rejoin. ☐ Planned, pending — the 1.2 work (the two shapes on the table: a ban on removal, or a way to issue a new invite code) |
 | "Published contact information so users can easily reach you" | `support@catchupcolumn.com`, the Support URL, Terms §4 and §11 | — |
 
 PR #14 (2026-08-05) shipped the report and remove halves, and moderator removal
 was verified against production 2026-09-22 (`LAUNCH.md` step 9). There is also
 no in-app agreement to the Terms at sign-up: they are linked only from Profile.
 App Review's 1.2 rejections often ask for one, though the published guideline
-text doesn't. These gaps are reported to the owner; this doc doesn't change
-code.
+text doesn't; it is on the same list. When the 1.2 work lands, update this
+table and fill the markers in §13.3.
 
 ## 10. Export compliance
 
@@ -581,12 +590,12 @@ Counts were measured with a script on the text as written here; filling in a
 | Name | `Catch Up Column` | 30 chars | 15 |
 | Subtitle | `A newspaper by your people` (§2) | 30 chars | 26 |
 | Category | Primary **Social Networking**, secondary **Lifestyle** | — | — |
-| Content Rights | ☐ **owner to confirm** — recommend **Yes, it contains third-party content, and I have the necessary rights**: members' posts and photos are theirs, licensed to the app by Terms §3; Lora and Jost are SIL Open Font License; the commissioned illustrations need a rights grant in the artist's contract | — | — |
-| Age Rating | §9.1. Calculated **4+**; ☐ override (recommend **18+**, to match Terms §1) | — | — |
+| Content Rights | **Yes, it contains third-party content, and I have the necessary rights** (owner, 2026-10-30): members' posts and photos are theirs, licensed to the app by Terms §3; Lora and Jost are SIL Open Font License; **the artist's contract must grant the rights to the commissioned illustrations** | — | — |
+| Age Rating | §9.1. Calculated **4+**, overridden to **18+** to match Terms §1 (owner, 2026-10-30) | — | — |
 | Made for Kids | No | — | — |
 | Privacy Policy URL | `https://www.catchupcolumn.com/privacy` | — | — |
 | License Agreement | Apple's standard EULA | — | — |
-| Digital Services Act — trader status | ☐ **owner to confirm** — recommend **Trader**, if the app is sold in the EU. Apple's factors include "commercial practices towards consumers … promoting products or services"; the app is free today, but it is the front of a planned print business (POSITIONING §5). A trader's address (a P.O. box is allowed for an individual), phone and email are shown on EU product pages, and Apple verifies them. The other choice is to leave the EU out of Availability for 1.0 ([DSA trader requirements](https://developer.apple.com/help/app-store-connect/manage-compliance-information/manage-european-union-digital-services-act-trader-requirements/)) | — | — |
+| Digital Services Act — trader status | **Trader** (owner, 2026-10-30). Set at the account level (Business → Agreements → Compliance → Digital Services Act), then per app (App Information → App Store Regulations and Permits). Apple shows a trader's address (a P.O. box is allowed for an individual), phone and email on EU product pages: ☐ `{{trader address or P.O. box}}`, `{{trader phone}}`, `{{trader email}}`. It verifies the phone and email by code, asks for a current document showing the name and address (and, for a P.O. box, one linking you to it), and wants payment account details if they aren't already in App Store Connect ([DSA trader requirements](https://developer.apple.com/help/app-store-connect/manage-compliance-information/manage-european-union-digital-services-act-trader-requirements/)) | — | — |
 | Regulated medical device | Not asked: not a Health & Fitness or Medical app, and no "frequent" medical content | — | — |
 
 **App Privacy** — §7, plus the same Privacy Policy URL.
@@ -596,7 +605,7 @@ Counts were measured with a script on the text as written here; filling in a
 | Field | Value |
 | --- | --- |
 | Price | Free (USD 0.00) |
-| Availability | ☐ **owner to confirm** — recommend **every country or region except China mainland**, which needs an ICP Filing Number this app doesn't have. Leave out the EU too if the DSA answer above is "not for 1.0" |
+| Availability | **Every country or region except China mainland** (owner, 2026-10-30), which needs an ICP Filing Number this app doesn't have. The EU stays in, with the trader status above |
 
 **Version 1.0 — iOS App Version page**
 
@@ -615,8 +624,8 @@ Counts were measured with a script on the text as written here; filling in a
 | App Review — Sign-in required | **Ticked** | — | — |
 | App Review — User name / Password | `{{review account address}}` / `{{review account password}}` (§13.2) | — | — |
 | App Review — Contact | `{{first name}}`, `{{last name}}`, `{{phone, international format, e.g. +1 …}}`, `{{an email the owner reads}}` | phone needs `+` and country code | — |
-| App Review — Notes | §13.3 | 4,000 bytes | 3,260 |
-| Version Release | ☐ **owner to confirm** — recommend **Manually release this version**, so the release and `appStoreUrl` in `web/config.js` (LAUNCH step 11) go out together | — | — |
+| App Review — Notes | §13.3 | 4,000 bytes | 3,720 with the ☐ markers |
+| Version Release | **Manually release this version** (owner, 2026-10-30), so the release and `appStoreUrl` in `web/config.js` (LAUNCH step 11) go out together | — | — |
 | Accessibility Nutrition Labels | Leave blank for 1.0. Voluntary for now ([overview](https://developer.apple.com/help/app-store-connect/manage-app-accessibility/overview-of-accessibility-nutrition-labels/)); declare a feature only once it is verified on a device | — | — |
 | In-App Purchases, Game Center, App Clip | None | — | — |
 | Export compliance | Answered by the build: `ITSAppUsesNonExemptEncryption: false` (§10) | — | — |
@@ -659,10 +668,17 @@ case, repeat the steps that were undone, then update the sign-in information.
 
 ### 13.3 Review Notes
 
-Paste into App Review Information → Notes. Fill the three placeholders first:
-`{{DEMO GROUP NAME}}`, `{{SECOND MEMBER NAME}}` (twice), and
-`{{RESPONSE TIME …}}` — a promise the owner can keep, or delete the line.
-Plain ASCII, so characters and bytes match: 3,260 bytes of 4,000.
+Paste into App Review Information → Notes. **Before pasting:**
+
+- Fill `{{DEMO GROUP NAME}}` and `{{SECOND MEMBER NAME}}` (twice).
+- Replace each `{{☐ after the 1.2 work lands: …}}` line with what shipped, or
+  delete it if that piece didn't. **The Guideline 1.2 fixes are planned and
+  pending** (owner, 2026-10-30; §9.3), so the text describes only what exists
+  today and the markers hold the places for the rest.
+
+The response time, within 24 hours, is the owner's (2026-10-30). As written,
+markers included, it is 3,720 bytes of 4,000; each ☐ is 3 bytes, the only
+non-ASCII characters. Re-measure after filling it in.
 
 ```
 Catch Up Column is a private weekly newspaper for a small group of friends or a family. During the week, members of a Group write short posts: text, with up to four photos. On the Group's publish day the app gathers them into one edition, which every member reads in the app and receives by email. Groups are invite-only. There is no public content, feed, search or discovery, no likes or comments, and no way to reach anyone outside your own Groups.
@@ -680,10 +696,15 @@ It is the moderator of a demo Group, "{{DEMO GROUP NAME}}". The Group has a seco
 
 USER-GENERATED CONTENT (Guideline 1.2)
 - Terms: https://www.catchupcolumn.com/terms, section 4 (acceptable use) and section 5 (moderators).
+- {{☐ after the 1.2 work lands: Terms at sign-up - where a new account agrees to them.}}
+- {{☐ after the 1.2 work lands: Filtering - how objectionable material is kept from being posted.}}
 - Report: every story by another member ends with "Report this story". It opens an email to support@catchupcolumn.com with the story's identifiers filled in. It is hidden on your own stories, so open {{SECOND MEMBER NAME}}'s story to see it.
+- {{☐ after the 1.2 work lands: Taking a story down - who can remove one published story, and how.}}
 - Remove: on the Group page, the moderator can tap "Remove" next to any other member. That person loses access to the Group, and anything they wrote for the coming edition is deleted.
+- {{☐ after the 1.2 work lands: Remove - say whether a removed member can rejoin.}}
+- {{☐ after the 1.2 work lands: Block - how any member blocks another, and what changes for them.}}
 - Leave: any member who isn't its moderator can leave a Group from its page ("Leave this Group").
-- Contact: support@catchupcolumn.com and https://www.catchupcolumn.com/support. {{RESPONSE TIME, e.g. We act on every report within 24 hours.}}
+- Contact: support@catchupcolumn.com and https://www.catchupcolumn.com/support. We act on every report within 24 hours.
 Posts are only ever visible to members of the Group they were written in.
 
 ACCOUNT DELETION (Guideline 5.1.1(v))
@@ -747,20 +768,18 @@ Checked against `main` at `e627f38`, 2026-10-30.
 
 ### 13.5 Owner items before submitting
 
-Each is marked ☐ where it appears above.
+**Decided by the owner, 2026-10-30:** the 18+ age-rating override, with Terms
+§1 staying at 18; Messaging and Chat, Yes; Content Rights, Yes; EU trader
+status; every region except China mainland; manual release; reports answered
+within 24 hours; no privacy row for Expo's install ID; and the Guideline 1.2
+gaps closed in code before the final build.
 
-- ☐ **Age rating override** — 18+ to match Terms §1, or change Terms §1 first
-  (§9.1).
-- ☐ **Messaging and Chat** — recommend Yes (§9.1).
-- ☐ **Guideline 1.2 gaps** — no content filter, no member-level block,
-  removal isn't a ban; decide whether to fix in code before submitting
-  (§9.3).
-- ☐ **Report response time** for the Review Notes (§13.3).
-- ☐ **Content Rights** — recommend Yes (§13.1).
-- ☐ **DSA trader status** and **Availability** (§13.1).
-- ☐ **Version Release** — recommend manual (§13.1).
-- ☐ **Copyright holder** and the **review contact** (§13.1).
-- ☐ **Expo install ID** needs no privacy row (§7).
+**Still open** — each is marked ☐ where it appears above:
+
+- ☐ **The Guideline 1.2 work** — being scoped in a separate session. When it
+  lands, update §9.3 and fill or delete the markers in §13.3.
+- ☐ **Copyright holder** and the **App Review contact** (§13.1).
+- ☐ **Trader contact details** for the DSA form (§13.1).
 - ☐ **Screenshot sizes** in Media Manager (§5).
 - The review account, demo Group and its second member (§13.2), and the
   screenshots — after the illustration rework.

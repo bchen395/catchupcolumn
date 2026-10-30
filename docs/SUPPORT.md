@@ -17,8 +17,7 @@ publishes, everyone in the group gets it in the app, by email, and by push
 notification.
 
 **I stopped getting edition emails / I get too many.**
-Every edition email has an unsubscribe link at the bottom for that group. You can
-also manage email delivery from the group's settings.
+Every edition email has an unsubscribe link at the bottom for that group.
 
 **How do I delete a post?**
 Open the compose screen for that group before the edition publishes — you can edit
