@@ -26,18 +26,31 @@ export const Strings = {
 
   // Reporting a story. Groups are private and invite-only, so this is a rare
   // path — the language stays calm and non-accusatory, and the action is a
-  // quiet link rather than a button (BRAND §9).
+  // quiet link rather than a button (BRAND §9). The report sends from inside
+  // the app (the report sheet → lib/report.ts → the report-story function);
+  // the drafted email is only the fallback when sending fails.
   report: {
     link: 'Report this story',
-    confirmTitle: 'Report this story?',
-    confirmBody:
-      'We’ll open an email to our team with this story’s details attached. Someone will read it and get back to you.',
-    confirmCta: 'Write the email',
+    linkHint: 'Opens a short form to tell our team about this story',
+    sheetTitle: 'Report this story',
+    sheetIntro: 'Tell us what’s wrong, if you like. We’ll see the story’s details either way.',
+    noteLabel: 'What’s wrong? (optional)',
+    send: 'Send report',
+    cancel: 'Cancel',
+    // The 24 hours is a promise the owner made (2026-10-30), every day of the
+    // week — don't shorten it, and change it only together with the App
+    // Review notes.
+    sent: 'Thanks. We read every report within 24 hours.',
+    done: 'Done',
+    failed: 'We couldn’t send that just now.',
+    retry: 'Try again',
+    emailInstead: 'Email us instead',
     emailSubject: 'Reporting a story in Catch Up Column',
-    // Sits above the details block in the drafted email.
+    // Sits above the details block in the drafted email when the reporter
+    // hasn't written a note in the sheet.
     emailIntro:
       'Please tell us what’s wrong with this story, and we’ll take a look:',
-    // Shown when the device has no mail app to hand the draft to.
+    // Shown when "Email us instead" finds no mail app to hand the draft to.
     noMailTitle: 'No email app found',
     noMailBody: (address: string) =>
       `Please email us at ${address} and we'll take a look.`,

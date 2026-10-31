@@ -44,6 +44,10 @@ export const FormButton = ({
   return (
     <Pressable
       accessibilityRole="button"
+      // Named explicitly: while loading, the label is swapped for a spinner,
+      // and a screen reader would otherwise find a nameless button.
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: inactive, busy: loading }}
       disabled={inactive}
       onPress={handlePress}
       style={({ pressed }) => [
