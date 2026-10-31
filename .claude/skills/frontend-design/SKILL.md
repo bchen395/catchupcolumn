@@ -82,6 +82,8 @@ You're working on the UI of a private group-newsletter app. **Audience (set 2026
 | `code-field` | The 6-digit emailed-code input (digits only, OS autofill, wide tracking). Every screen that takes a code uses it — sign-in, sign-up, set-password. |
 | `password-setting` | Profile's one sign-in setting: "Set a password" / "Change your password" plus the note that it's optional. A password is never offered anywhere else — not in onboarding, never prompted. |
 | `group-card` | A Group row/card in lists. |
+| `member-row` | One person on the Group page: `Avatar`, name (+ " (you)"), §9 outlined chips (`tags`; `roleTag(role)` for the role), and quiet text actions at the right edge (`actions`; `destructive` for `error`). Add a new member state as another tag and a new moderation verb as another action — don't fork the row. |
+| `removed-members` | The moderator-only "Removed · {n}" section on the Group page, one `member-row` per ban with "Let back in" (confirmed with an Alert). Renders nothing when there are no bans. |
 | `avatar-picker` | Profile avatar selection. |
 | `day-selector` | The 7-day publish-day picker (create-group and settings share it). |
 | `time-picker-modal` / `snap-column` | Scroll-wheel time picker (`snap-column` is its internal wheel). |

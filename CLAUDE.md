@@ -92,6 +92,14 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - `joined_at` (timestamptz)
 - PK: (group_id, user_id)
 
+### group_bans (people removed from a Group)
+- `group_id` (uuid, FK → groups.id, cascade delete)
+- `user_id` (uuid, FK → users.id, cascade delete) — the removed person; `join_group_by_invite_code` refuses them
+- `banned_by` (uuid, nullable, FK → users.id, set null on delete) — the moderator who removed them; null when an operator did
+- `created_at` (timestamptz)
+- PK: (group_id, user_id)
+- RLS: SELECT for the Group's moderators only. No direct writes — `remove_group_member` / `operator_remove_group_member` add a row, `unban_group_member` deletes it
+
 ### posts
 - `id` (uuid, PK)
 - `group_id` (uuid, FK → groups.id)
@@ -120,7 +128,7 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - PK: (user_id, token)
 
 ### Notable RPCs
-`compile_due_editions` (cron compilation, slot-scoped duplicate guard; skips and reports a Group with an invalid timezone), `due_publish_slot` (service-role helper: the slot a tick falls in, matched on timestamps so late slots don't wrap at midnight), `publish_edition_now` (moderator-only immediate publish, shares the compile lock), `join_group_by_invite_code`, `get_invite_preview` (anon-callable minimal invite preview: name/description/cover/member count), `get_invite_preview_details` (authenticated: adds cadence, is_member, member sample), `delete_group_as_moderator`, `remove_group_member` (moderator-only eject; also deletes the removed member's uncompiled posts), `prepare_account_deletion`, `get_edition_email_payload` (service-role; feeds the email renderer, each post with its `blocks` and `author_id`). Full definitions in `supabase/migrations/`.
+`compile_due_editions` (cron compilation, slot-scoped duplicate guard; skips and reports a Group with an invalid timezone), `due_publish_slot` (service-role helper: the slot a tick falls in, matched on timestamps so late slots don't wrap at midnight), `publish_edition_now` (moderator-only immediate publish, shares the compile lock), `join_group_by_invite_code` (refuses a removed person with `removed_from_group` — P0002 on purpose, so builds from before 2026-10-30 read it as an inactive invitation and drop the pending invite), `get_invite_preview` (anon-callable minimal invite preview: name/description/cover/member count), `get_invite_preview_details` (authenticated: adds cadence, is_member, is_removed, member sample — empty for a removed caller), `delete_group_as_moderator`, `remove_group_member` (moderator-only eject; also deletes the removed member's uncompiled posts and their photos, and bans them — delegates to `operator_remove_group_member`), `operator_remove_group_member` (service-role: the removal plus the ban, without the moderator checks — the operator's tool for acting on a report; also bans someone who already left), `unban_group_member` (moderator-only "Let back in": deletes the ban, re-adds no one), `prepare_account_deletion`, `get_edition_email_payload` (service-role; feeds the email renderer, each post with its `blocks` and `author_id`). Full definitions in `supabase/migrations/`.
 
 ## Key Terminology
 
