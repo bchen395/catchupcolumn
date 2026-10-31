@@ -53,6 +53,26 @@ export type GroupMemberUpdate = {
   role?: 'moderator' | 'contributor';
 };
 
+// Someone a moderator removed from a Group (20261030172102). The join refuses
+// them until a moderator lets them back in. Only the Group's moderators can
+// read these rows, and nobody writes them directly: remove_group_member adds
+// one, unban_group_member deletes it.
+export type GroupBanRow = {
+  group_id: string;
+  user_id: string;
+  // The moderator who removed them. Null when an operator removed them, or
+  // once that moderator's account is deleted.
+  banned_by: string | null;
+  created_at: string;
+};
+
+export type GroupBanInsert = Omit<GroupBanRow, 'banned_by' | 'created_at'> & {
+  banned_by?: string | null;
+  created_at?: string;
+};
+
+export type GroupBanUpdate = Record<string, never>;
+
 // A post is one flow of plain text with up to four photos set into it
 // (design/MULTI_PHOTO_POSTS.md). `blocks` holds the pieces in reading order.
 export type PostTextBlock = { type: 'text'; text: string };
@@ -147,6 +167,12 @@ export type GroupWithMembers = GroupRow & {
   members: (GroupMemberRow & { user: UserRow })[];
 };
 
+// A removal with the removed person's face and name, for the moderator's
+// "Removed" list on the Group page (fetchGroupBans).
+export type GroupBanWithUser = GroupBanRow & {
+  user: Pick<UserRow, 'id' | 'display_name' | 'avatar_url'>;
+};
+
 // Invite-link previews (get_invite_preview / get_invite_preview_details).
 // The anon tier deliberately carries no invite_code, created_by, or member
 // identities — see 20260710000000_invite_preview_rpcs.sql.
@@ -168,6 +194,9 @@ export type InvitePreviewDetails = InvitePreview & {
   publish_time: string;
   timezone: string;
   is_member: boolean;
+  // The caller was removed from this Group, so the join would refuse them.
+  // Their member_sample comes back empty.
+  is_removed: boolean;
   member_sample: InvitePreviewMember[];
 };
 
@@ -188,6 +217,12 @@ export type Database = {
         Row: GroupMemberRow;
         Insert: GroupMemberInsert;
         Update: GroupMemberUpdate;
+        Relationships: [];
+      };
+      group_bans: {
+        Row: GroupBanRow;
+        Insert: GroupBanInsert;
+        Update: GroupBanUpdate;
         Relationships: [];
       };
       posts: { Row: PostRow; Insert: PostInsert; Update: PostUpdate; Relationships: [] };
@@ -223,6 +258,16 @@ export type Database = {
       };
       remove_group_member: {
         Args: { p_group_id: string; p_user_id: string };
+        Returns: void;
+      };
+      unban_group_member: {
+        Args: { p_group_id: string; p_user_id: string };
+        Returns: void;
+      };
+      // service_role only — the removal behind remove_group_member, and the
+      // operator's tool for acting on a report. Never called from the app.
+      operator_remove_group_member: {
+        Args: { p_group_id: string; p_user_id: string; p_banned_by?: string | null };
         Returns: void;
       };
       prepare_account_deletion: {
