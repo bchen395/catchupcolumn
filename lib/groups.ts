@@ -1,6 +1,7 @@
 import { resizeImageForUpload } from '@/lib/image';
 import { supabase } from '@/lib/supabase';
 import type {
+    GroupBanWithUser,
     GroupInsert,
     GroupMemberRow,
     GroupRow,
@@ -414,9 +415,20 @@ export const joinGroupByInviteCode = async (
   });
 
   if (error) {
+    // Read the message before the code. removed_from_group shares P0002 with
+    // invalid_invite_code on purpose: builds that predate it map any P0002 to
+    // "That invitation isn't active anymore" and drop the pending invite,
+    // where another code would have them retry the join on every cold start
+    // (see 20261030172102_removal_bans.sql).
+    if (error.message.includes('removed_from_group')) {
+      throw new Error('removed_from_group');
+    }
     if (error.code === 'P0002') {
       throw new Error('invalid_invite_code');
     }
+    // Anything else — 'not_authenticated' (P0001) included — is thrown as
+    // is. Callers treat it as a passing failure: the join screen offers a
+    // retry, and the auto-join keeps the pending invite for the next start.
     throw error;
   }
 
@@ -473,9 +485,11 @@ const parseRemoveMemberError = (message: string): RemoveMemberErrorCode => {
 };
 
 /**
- * Eject a member from a Group. Moderator-only, and it also deletes the removed
+ * Eject a member from a Group. Moderator-only. It also deletes the removed
  * member's *uncompiled* posts so nothing they wrote is still queued for the
- * next edition — published editions are left untouched (see the migration).
+ * next edition — published editions are left untouched — and records a ban,
+ * so the invite code won't let them back in until a moderator does
+ * (unbanGroupMember). See 20261030172102_removal_bans.sql.
  */
 export const removeGroupMember = async (
   groupId: string,
@@ -488,6 +502,54 @@ export const removeGroupMember = async (
 
   if (error) {
     throw new RemoveMemberError(parseRemoveMemberError(error.message), error.message);
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Removed members (moderator only)
+// ---------------------------------------------------------------------------
+
+/**
+ * The people removed from a Group, newest first, with their names and faces
+ * for the Group page's "Removed" list. RLS shows group_bans only to the
+ * Group's moderators, so anyone else gets an empty list.
+ *
+ * A plain embed is enough for the names: users' SELECT policy is open to
+ * every signed-in person (display_name and avatar_url only — the column
+ * grants in 20260703000000), so a moderator can still read someone who is no
+ * longer a co-member. Two keys point at users (user_id, banned_by), so the
+ * embed names the one it means.
+ */
+export const fetchGroupBans = async (groupId: string): Promise<GroupBanWithUser[]> => {
+  const { data, error } = await supabase
+    .from('group_bans')
+    .select(
+      'group_id, user_id, banned_by, created_at, user:users!group_bans_user_id_fkey(id, display_name, avatar_url)',
+    )
+    .eq('group_id', groupId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as unknown as GroupBanWithUser[];
+};
+
+/**
+ * "Let back in": lift a removal so the person can join again with the invite
+ * code. It doesn't add them back — they choose whether to rejoin.
+ * Moderator-only, and safe to repeat. Throws Error('not_moderator') or
+ * Error('unban_failed').
+ */
+export const unbanGroupMember = async (groupId: string, userId: string): Promise<void> => {
+  const { error } = await supabase.rpc('unban_group_member', {
+    p_group_id: groupId,
+    p_user_id: userId,
+  });
+
+  if (error) {
+    throw new Error(error.message.includes('not_moderator') ? 'not_moderator' : 'unban_failed');
   }
 };
 

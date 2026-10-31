@@ -42,9 +42,11 @@ export const useAutoJoinInvite = (
         try {
           const details = await fetchInvitePreviewDetails(invite.code);
 
-          if (!details) {
-            // Revoked or mistyped — hand the code back to the join screen so
-            // its friendly "couldn't find that Group" state explains it.
+          if (!details || details.is_removed) {
+            // Revoked, mistyped, or a moderator removed them — hand the code
+            // back to the join screen, whose lookup explains which ("couldn't
+            // find that Group" / "you were removed"). Clearing the invite
+            // first means a cold restart never tries again.
             await clearPendingInvite();
             router.replace({ pathname: '/group/join', params: { code: invite.code } });
             return;
@@ -69,7 +71,12 @@ export const useAutoJoinInvite = (
             },
           });
         } catch (err) {
-          if (err instanceof Error && err.message === 'invalid_invite_code') {
+          if (
+            err instanceof Error &&
+            (err.message === 'invalid_invite_code' || err.message === 'removed_from_group')
+          ) {
+            // Both are final answers, not blips: drop the invite and let the
+            // join screen say why.
             await clearPendingInvite();
             router.replace({ pathname: '/group/join', params: { code: invite.code } });
           }
