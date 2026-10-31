@@ -286,7 +286,12 @@ export const Strings = {
     errorNotFound: 'We couldn’t find a Group with that code. Double-check it with whoever invited you.',
     errorEmptyCode: 'Enter an invite code to find a Group.',
     errorRevoked: 'That invitation isn’t active anymore. Ask whoever invited you for a fresh code.',
-    errorJoin: 'We couldn’t get you in just now. Please try again.',
+    // A moderator removed this person, and the join refuses them until a
+    // moderator lets them back in. Plain about what happened, and points at a
+    // person rather than at us — it's the Group's call, not the app's.
+    errorRemoved:
+      'You were removed from this Group, so this code won’t let you back in. If you think that’s a mistake, talk to the person who runs it.',
+    errorJoin:'We couldn’t get you in just now. Please try again.',
     errorNetwork: 'Can’t reach the press — check your connection and try again.',
     a11yFound: (name: string) => `Invitation found. ${name}.`,
     a11yBackToEntry: 'Back to code entry.',
@@ -343,6 +348,37 @@ export const Strings = {
     // places that do linkify it.
     shareMessage: (name: string, code: string, link: string) =>
       `You’re invited to “${name}” on Catch Up Column! Open the app and enter code ${code}. Or tap this link: ${link}`,
+  },
+
+  // The Group page's member list, and the moderator's removal tools (BRAND §9
+  // → Moderation affordances). Removing someone also stops the invite code
+  // from letting them back in; "Let back in" lifts that, and never re-adds
+  // anyone on their own. Rare, sober actions: say exactly what happens.
+  members: {
+    title: (count: number) => `Members · ${count} ${count === 1 ? 'member' : 'members'}`,
+    you: ' (you)',
+    moderator: 'Moderator',
+    contributor: 'Contributor',
+    cancel: 'Cancel',
+    remove: 'Remove',
+    a11yRemove: (name: string) => `Remove ${name} from this Group`,
+    removeTitle: (name: string) => `Remove ${name}?`,
+    removeBody: (name: string, group: string) =>
+      `${name} will no longer be able to read or write for ${group}, and the invite code won’t let them back in. Anything they’ve written for this week’s edition will be removed too — past editions stay as they were. You can let them back in later from this page.`,
+    removeLastModerator: (name: string) =>
+      `${name} is the only moderator, so they can’t be removed. Make someone else a moderator first.`,
+    removeNotModerator: 'Only moderators can remove members.',
+    removeNotMember: (name: string) => `${name} is no longer in this Group.`,
+    removeFailed: (name: string) => `Could not remove ${name} right now. Please try again.`,
+    // The moderator-only list of people removed from this Group.
+    removedTitle: (count: number) => `Removed · ${count}`,
+    letBackIn: 'Let back in',
+    a11yLetBackIn: (name: string) => `Let ${name} back in`,
+    letBackInTitle: (name: string) => `Let ${name} back in?`,
+    letBackInBody: (name: string) =>
+      `${name} will be able to join again with the invite code. They won’t be added back on their own.`,
+    letBackInNotModerator: 'Only moderators can let people back in.',
+    letBackInFailed: (name: string) => `Could not let ${name} back in right now. Please try again.`,
   },
 };
 
