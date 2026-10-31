@@ -49,7 +49,7 @@ This is the app-side data layer: the `supabase-js` client, the `lib/` functions 
 | `groups.ts` | Group CRUD, membership, invite-code join/lookup (RPCs), moderator member-removal, cover upload. |
 | `common-passwords.ts` | Generated blocklist of the 3,000 most common 8+ character passwords, checked by `validateNewPassword`. Not Supabase — it stands in for leaked-password protection, which needs Pro. Regenerate from its header rule; never hand-edit. |
 | `names.ts` | Display-name formatting (`getInitials`). Not Supabase — it exists because three components had drifting copies. |
-| `report.ts` | Content reporting — drafts the support mailto for a post. Not Supabase; the seam to swap if reports ever get a real endpoint. |
+| `report.ts` | Content reporting: `sendStoryReport` invokes the `report-story` edge function, which emails support@ (throws `StoryReportError` carrying the function's code); `openPostReport` drafts the support mailto, now only the "Email us instead" fallback. No reports table — the support inbox is the record. |
 | `posts.ts` | Post CRUD, photo upload (`uploadPostPhoto`: master + display copy) and deletion (`deletePostPhotoFiles`), signed display URLs, current-post lookup. `uploadPostImage` is the single-photo upload, kept until the block composer replaces its last caller. |
 | `post-blocks.ts` | Not Supabase — the one place a post's blocks are shaped and read: `MAX_POST_PHOTOS`, `postBlocksOf`, `photoBlocksOf`, `photoDisplayPath`, `normalizeBlocks`, `toPostFields`, `postPhotoPaths`, `newPhotoId`. Mirrored for Deno in `supabase/functions/_shared/post-blocks.ts` (read side) and `scripts/group-zero/blocks.ts`; change them together. |
 | `editions.ts` | Edition list/detail queries, publish-now invoke, edition error parsing. |

@@ -262,7 +262,7 @@ Reusable Claude Code skills live in `.claude/skills/`. Each auto-loads when a se
 | `frontend-design` | Any UI: `components/`, `constants/`, screens in `app/`, styling, copy, icons, animation. |
 | `data-layer` | App-side Supabase access: `lib/` data functions, queries, mutations, storage uploads, `types/database.ts`. |
 | `db-migrations` | `supabase/migrations/` — tables, RLS, SECURITY DEFINER functions/RPCs, triggers, storage policies, cron. |
-| `edge-functions` | `supabase/functions/` — the Deno cron compiler, manual publish, unsubscribe, delete-account, shared email/push dispatch. |
+| `edge-functions` | `supabase/functions/` — the Deno cron compiler, manual publish, unsubscribe, delete-account, report-story (in-app story reports to support@), shared email/push dispatch. |
 | `verify-changes` | Before declaring a change done — the typecheck + manual-QA checklist (there is no automated test suite yet). |
 
 Skills are self-maintaining: when a convention changes, update the relevant `SKILL.md` and its source of truth (`design/BRAND.md`, `types/database.ts`, or this file) in the same change.
