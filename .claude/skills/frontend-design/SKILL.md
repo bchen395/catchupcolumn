@@ -79,6 +79,7 @@ You're working on the UI of a private group-newsletter app. **Audience (set 2026
 | `skeletons/*` | One per screen, mirroring its real geometry: `editions-list`, `groups-list`, `edition-page`, `story`, `group-detail`, `invite` (deep-link arrival), plus the partial `home-hero`, `profile-hero`, `composer`, and `compose-sheet` (the "Write for…" rows). Match the screen's own style values when you touch either side. |
 | `form-field` / `form-button` | Inputs and buttons in auth, group, and settings forms. |
 | `auth-screen-shell` | Shared chrome for auth/onboarding screens. |
+| `terms-agreement` | Sign-up's Terms note and "Read the Terms of Service" link (BRAND §9), set between the email field and the Agree button. The button is the agreement, so sign-up's return key only closes the keyboard. |
 | `code-field` | The 6-digit emailed-code input (digits only, OS autofill, wide tracking). Every screen that takes a code uses it — sign-in, sign-up, set-password. |
 | `password-setting` | Profile's one sign-in setting: "Set a password" / "Change your password" plus the note that it's optional. A password is never offered anywhere else — not in onboarding, never prompted. |
 | `group-card` | A Group row/card in lists. |

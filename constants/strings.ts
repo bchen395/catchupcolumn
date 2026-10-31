@@ -21,6 +21,8 @@ export const Strings = {
     privacyUrl: 'https://www.catchupcolumn.com/privacy',
     termsUrl: 'https://www.catchupcolumn.com/terms',
     supportUrl: 'https://www.catchupcolumn.com/support',
+    // Profile's link to the support page, so contact details are inside the app.
+    supportLink: 'Help & support',
     supportEmail: 'support@catchupcolumn.com',
   },
 
@@ -78,6 +80,17 @@ export const Strings = {
       `We couldn’t finish setting it up just now. Check your connection and try again. If it keeps happening, email us at ${supportEmail}.`,
     retry: 'Try again',
     signOut: 'Sign out',
+  },
+
+  // Agreeing to the Terms at sign-up (App Review Guideline 1.2). Apple asks that
+  // people affirmatively agree to terms that rule out objectionable content and
+  // abusive users, so the agreement is the button itself: the note names it
+  // ("tapping Agree"), and `agreeCta` must keep saying "Agree" to match.
+  terms: {
+    note: 'By tapping Agree, you accept our Terms of Service. The short version: we have zero tolerance for abusive or objectionable posts — we take them down, and remove whoever wrote them.',
+    readLink: 'Read the Terms of Service',
+    readLinkHint: 'Opens the Terms in a browser inside the app.',
+    agreeCta: 'Agree and email me a code',
   },
 
   // StatusBanner kicker lead-ins (BRAND §9) — warm small-caps voices, never
