@@ -403,6 +403,15 @@ const ProfileScreen = () => {
             </Pressable>
           </View>
 
+          {/* Its own line: three links don't fit one row on a phone. */}
+          <Pressable
+            onPress={() => WebBrowser.openBrowserAsync(Strings.legal.supportUrl)}
+            accessibilityRole="link"
+            style={styles.helpLink}
+          >
+            <ThemedText style={styles.legalLink}>{Strings.legal.supportLink}</ThemedText>
+          </Pressable>
+
           <View style={styles.legalRow}>
             <Pressable
               onPress={() => WebBrowser.openBrowserAsync(Strings.legal.privacyUrl)}
@@ -563,12 +572,20 @@ const styles = StyleSheet.create({
     color: Colors.error,
     textDecorationLine: 'underline',
   },
+  helpLink: {
+    alignSelf: 'center',
+    minHeight: Layout.touchTargetMin,
+    justifyContent: 'center',
+    paddingHorizontal: Layout.padding.md,
+    marginTop: Layout.padding.md,
+  },
+  // Wraps rather than overflowing at larger text sizes.
   legalRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
     gap: Layout.padding.sm,
-    marginTop: Layout.padding.md,
   },
   legalLink: {
     fontFamily: Typography.families.sansMedium,
