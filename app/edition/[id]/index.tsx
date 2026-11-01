@@ -101,8 +101,9 @@ const EditionFrontPage = () => {
   }, [load]);
 
   // Coming back from the reader route (the Reduce Motion path, or a story a
-  // link opened) may follow a take-down there, so revalidate quietly on every
-  // return. The first focus is the mount, which the effect above loads.
+  // link opened) may follow a take-down or a block there, so revalidate
+  // quietly on every return. The first focus is the mount, which the effect
+  // above loads.
   const focusedBefore = useRef(false);
   useFocusEffect(
     useCallback(() => {
@@ -111,20 +112,27 @@ const EditionFrontPage = () => {
     }, [load]),
   );
 
-  // A moderator took a story down in the reader (the overlay, or the inline
-  // story of a one-story edition). Its story is gone, so the overlay closes
-  // at once rather than shrinking back into a section that no longer exists;
-  // the page drops the story straight away and then revalidates.
-  const handleStoryRemoved = useCallback(
-    (postId: string) => {
+  // A story left the page from the reader (the overlay, or the inline story
+  // of a one-story edition): a moderator took it down, or the reader blocked
+  // its writer, which takes every story of theirs. The overlay closes at once
+  // rather than shrinking back into a section that no longer exists; the page
+  // drops the stories straight away and then revalidates.
+  const dropStories = useCallback(
+    (gone: (post: EditionWithPosts['posts'][number]) => boolean) => {
       overlayOpenRef.current = false;
       setOverlay(null);
-      setEdition((prev) =>
-        prev ? { ...prev, posts: prev.posts.filter((p) => p.id !== postId) } : prev,
-      );
+      setEdition((prev) => (prev ? { ...prev, posts: prev.posts.filter((p) => !gone(p)) } : prev));
       void load();
     },
     [load],
+  );
+  const handleStoryRemoved = useCallback(
+    (postId: string) => dropStories((p) => p.id === postId),
+    [dropStories],
+  );
+  const handleAuthorBlocked = useCallback(
+    (authorId: string) => dropStories((p) => p.author_id === authorId),
+    [dropStories],
   );
 
   // Reaching the front page counts as "opened" — clears Home's NEW flag. Here
@@ -232,6 +240,7 @@ const EditionFrontPage = () => {
       groupId={group.id}
       groupName={group.name}
       onStoryRemoved={handleStoryRemoved}
+      onAuthorBlocked={handleAuthorBlocked}
     >
       <View style={styles.flex}>
         <ScrollView

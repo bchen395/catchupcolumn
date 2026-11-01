@@ -16,8 +16,8 @@ import { DeliverySettings } from '@/components/delivery-settings';
 import { ErrorState } from '@/components/error-state';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
+import { GroupMembers } from '@/components/group-members';
 import { InviteCard } from '@/components/invite-card';
-import { MemberRow, roleTag } from '@/components/member-row';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
 import { RemovedMembers } from '@/components/removed-members';
 import { GroupDetailSkeleton } from '@/components/skeletons/group-detail-skeleton';
@@ -31,6 +31,7 @@ import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
 import { useDeliverySettings } from '@/hooks/use-delivery-settings';
+import { useMyBlocks } from '@/hooks/use-my-blocks';
 import { PublishNowError, publishEditionNow } from '@/lib/editions';
 import {
     deleteGroup,
@@ -99,6 +100,8 @@ const GroupDetailScreen = () => {
   // "Your delivery". Loads on its own once the signed-in user is known, so it
   // never holds up the page; pull to refresh reloads it with the rest.
   const delivery = useDeliverySettings(id, currentUserId);
+  // The people you've blocked, for their rows' "Blocked" chip and "Unblock".
+  const blocks = useMyBlocks(currentUserId);
 
   // Never throws: the Removed list is secondary, so failing to load it keeps
   // whatever was shown rather than failing the whole page.
@@ -134,7 +137,7 @@ const GroupDetailScreen = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([load(), delivery.reload()]);
+    await Promise.all([load(), delivery.reload(), blocks.reload()]);
     setRefreshing(false);
   };
 
@@ -481,34 +484,15 @@ const GroupDetailScreen = () => {
         <InviteCard groupName={group.name} inviteCode={group.invite_code} />
       </View>
 
-      {/* Members section */}
-      <View style={styles.section}>
-        <ThemedText variant="label" style={styles.sectionTitle}>
-          {Strings.members.title(group.members.length)}
-        </ThemedText>
-        {group.members.map((m) => (
-          <MemberRow
-            key={m.user_id}
-            name={m.user.display_name}
-            avatarUrl={m.user.avatar_url}
-            isCurrentUser={m.user_id === currentUserId}
-            tags={[roleTag(m.role)]}
-            // Moderators, on somebody else's row, one removal at a time.
-            actions={
-              isModerator && m.user_id !== currentUserId && !removingUserId
-                ? [
-                    {
-                      label: Strings.members.remove,
-                      accessibilityLabel: Strings.members.a11yRemove(m.user.display_name),
-                      onPress: () => handleRemoveMember(m.user_id, m.user.display_name),
-                      destructive: true,
-                    },
-                  ]
-                : []
-            }
-          />
-        ))}
-      </View>
+      <GroupMembers
+        members={group.members}
+        currentUserId={currentUserId}
+        canRemove={isModerator && !removingUserId}
+        onRemove={handleRemoveMember}
+        blockedIds={blocks.blockedIds}
+        onUnblock={blocks.unblock}
+        onError={setScreenError}
+      />
 
       {isModerator ? (
         <RemovedMembers
