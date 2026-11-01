@@ -134,7 +134,7 @@ Deno.serve(async (req: Request) => {
     heading,
     `
       <h1 style="margin: 0 0 16px 0; font-size: 28px;">${escape(heading)}</h1>
-      <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">You will no longer receive weekly editions from <strong>${escape(groupName)}</strong>.</p>
+      <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">You won’t get edition emails from <strong>${escape(groupName)}</strong> anymore.</p>
       <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #6b5d49;">You're still a member of the group, and every edition is still in the app. To get these emails again, open the group in the app and turn on “Email me each edition”.</p>
     `,
   );
