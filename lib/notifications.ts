@@ -110,6 +110,29 @@ export const registerForPushAsync = async (userId: string): Promise<string | nul
   }
 };
 
+export type PushPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'unavailable';
+
+/**
+ * Whether this phone lets the app show notifications. Never asks — the ask
+ * happens once, at sign-in (registerForPushAsync). 'unavailable' where push
+ * can't work at all (simulator, web), so nobody is sent to fix a setting that
+ * doesn't exist.
+ */
+export const getPushPermissionStatus = async (): Promise<PushPermissionStatus> => {
+  if (!Device.isDevice || Platform.OS === 'web') {
+    return 'unavailable';
+  }
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status === 'granted') return 'granted';
+    if (status === 'denied') return 'denied';
+    return 'undetermined';
+  } catch (err) {
+    console.warn('getPushPermissionStatus failed', err);
+    return 'unavailable';
+  }
+};
+
 /**
  * Removes the current device's token for this user. Call on sign-out so the
  * user stops getting pushes for an account they're no longer signed into.

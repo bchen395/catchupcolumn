@@ -14,7 +14,7 @@ These are Deno functions that run server-side, most with elevated privileges: ed
 3. **A function that matches your trigger model:**
    - `compile-editions/index.ts` — cron + manual, `CRON_SECRET` auth, sweeps all pending editions.
    - `publish-edition-now/index.ts` — caller-JWT auth, single edition, then service-role dispatch.
-   - `unsubscribe/index.ts` — public GET (human click → HTML page) **and** POST (RFC 8058 one-click from the `List-Unsubscribe` header → plain text), token-based.
+   - `unsubscribe/index.ts` — public GET (human click → HTML page) **and** POST (RFC 8058 one-click from the `List-Unsubscribe` header → plain text), token-based. It only ever turns email off (`unsubscribe_by_token`); the page tells people the way back is the Group page's "Email me each edition" switch (`set_delivery_preferences`), so keep the two names in step.
    - `delete-account/index.ts` — caller-verified then service-role cleanup + auth deletion.
    - `report-story/index.ts` — caller-JWT auth and **caller-scoped only** (no service role): RLS on `posts` is the membership check, so a post the caller can't see is a 404 `post_not_found`. Sends one plain-text Resend email to `SUPPORT_EMAIL` (default `support@catchupcolumn.com`) with `reply_to` = the reporter. Every report spends one send of Resend's daily cap, shared with auth codes and edition email. No reports table — the inbox is the record (`lib/report.ts`). Never log the note.
 4. **`supabase/functions/deno.json`** and **`supabase/config.toml`** (`[edge_runtime]`, per-function `verify_jwt`).
