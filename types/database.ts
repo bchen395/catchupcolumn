@@ -38,20 +38,41 @@ export type GroupInsert = Omit<GroupRow, 'id' | 'created_at' | 'invite_code' | '
 
 export type GroupUpdate = Partial<Omit<GroupRow, 'id' | 'created_by'>>;
 
+// unsubscribe_token is left out: clients can't read it (the column grants in
+// 20260703000000), only the email worker and the unsubscribe function can.
 export type GroupMemberRow = {
   group_id: string;
   user_id: string;
   role: 'moderator' | 'contributor';
+  // This member's per-Group delivery choices ("Your delivery" on the Group
+  // page). Change them through set_delivery_preferences, never a direct write.
+  email_subscribed: boolean;
+  push_subscribed: boolean;
   joined_at: string;
 };
 
-export type GroupMemberInsert = Omit<GroupMemberRow, 'joined_at'> & {
+export type GroupMemberInsert = Omit<
+  GroupMemberRow,
+  'joined_at' | 'email_subscribed' | 'push_subscribed'
+> & {
   joined_at?: string;
+  email_subscribed?: boolean;
+  push_subscribed?: boolean;
 };
 
+// Role is the only column a client may UPDATE (20261101195502), and RLS lets
+// only a moderator do it.
 export type GroupMemberUpdate = {
   role?: 'moderator' | 'contributor';
 };
+
+// A membership as the roster carries it. The delivery choices are left out
+// on purpose: they're each member's own, read with fetchMyDelivery.
+export type GroupMembership = Omit<GroupMemberRow, 'email_subscribed' | 'push_subscribed'>;
+
+// One member's delivery choices for one Group (fetchMyDelivery,
+// set_delivery_preferences).
+export type DeliveryPreferences = Pick<GroupMemberRow, 'email_subscribed' | 'push_subscribed'>;
 
 // Someone a moderator removed from a Group (20261030172102). The join refuses
 // them until a moderator lets them back in. Only the Group's moderators can
@@ -164,7 +185,7 @@ export type PushTokenUpdate = Partial<Omit<PushTokenRow, 'user_id' | 'token'>>;
 
 // Derived types for common query patterns
 export type GroupWithMembers = GroupRow & {
-  members: (GroupMemberRow & { user: UserRow })[];
+  members: (GroupMembership & { user: UserRow })[];
 };
 
 // A removal with the removed person's face and name, for the moderator's
@@ -263,6 +284,16 @@ export type Database = {
       unban_group_member: {
         Args: { p_group_id: string; p_user_id: string };
         Returns: void;
+      };
+      // The caller's own row only. A null (or missing) flag keeps its value.
+      // Raises not_authenticated / not_a_member (P0001).
+      set_delivery_preferences: {
+        Args: {
+          p_group_id: string;
+          p_email_subscribed?: boolean | null;
+          p_push_subscribed?: boolean | null;
+        };
+        Returns: DeliveryPreferences[];
       };
       // service_role only — the removal behind remove_group_member, and the
       // operator's tool for acting on a report. Never called from the app.

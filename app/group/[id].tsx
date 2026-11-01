@@ -12,6 +12,7 @@ import {
 import { AppImage } from '@/components/app-image';
 import { BackButton } from '@/components/back-button';
 import { DaySelector } from '@/components/day-selector';
+import { DeliverySettings } from '@/components/delivery-settings';
 import { ErrorState } from '@/components/error-state';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
@@ -29,6 +30,7 @@ import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
+import { useDeliverySettings } from '@/hooks/use-delivery-settings';
 import { PublishNowError, publishEditionNow } from '@/lib/editions';
 import {
     deleteGroup,
@@ -94,6 +96,10 @@ const GroupDetailScreen = () => {
     (m) => m.user_id === currentUserId && m.role === 'moderator'
   ) ?? false;
 
+  // "Your delivery". Loads on its own once the signed-in user is known, so it
+  // never holds up the page; pull to refresh reloads it with the rest.
+  const delivery = useDeliverySettings(id, currentUserId);
+
   // Never throws: the Removed list is secondary, so failing to load it keeps
   // whatever was shown rather than failing the whole page.
   const loadBans = useCallback(async () => {
@@ -128,7 +134,7 @@ const GroupDetailScreen = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await load();
+    await Promise.all([load(), delivery.reload()]);
     setRefreshing(false);
   };
 
@@ -512,6 +518,17 @@ const GroupDetailScreen = () => {
             setBans((prev) => prev.filter((ban) => ban.user_id !== userId))
           }
           onError={setScreenError}
+        />
+      ) : null}
+
+      {/* Every member's own email and notification switches */}
+      {delivery.delivery ? (
+        <DeliverySettings
+          delivery={delivery.delivery}
+          onChange={(change) => void delivery.save(change)}
+          saving={delivery.saving}
+          error={delivery.error}
+          pushBlocked={delivery.pushBlocked}
         />
       ) : null}
 

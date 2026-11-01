@@ -1,9 +1,10 @@
 import { resizeImageForUpload } from '@/lib/image';
 import { supabase } from '@/lib/supabase';
 import type {
+    DeliveryPreferences,
     GroupBanWithUser,
     GroupInsert,
-    GroupMemberRow,
+    GroupMembership,
     GroupRow,
     GroupUpdate,
     GroupWithMembers,
@@ -22,7 +23,7 @@ const normalizeInviteCode = (code: string) => code.trim();
 // hand-written because supabase-js infers `Relationships: []` until
 // `types/database.ts` is regenerated via `supabase gen types` (bug #29).
 type GroupRowWithMembers = GroupRow & {
-  group_members: (GroupMemberRow & { users: UserRow })[];
+  group_members: (GroupMembership & { users: UserRow })[];
 };
 
 const toGroupWithMembers = (col: GroupRowWithMembers): GroupWithMembers => ({
@@ -470,6 +471,59 @@ export const leaveGroup = async (groupId: string, userId: string): Promise<void>
   if (error) {
     throw error;
   }
+};
+
+// ---------------------------------------------------------------------------
+// Your delivery (each member's own email and push choices for a Group)
+// ---------------------------------------------------------------------------
+
+/**
+ * The signed-in member's delivery choices for one Group, or null if they
+ * aren't in it. The unsubscribe link in an edition email turns email off
+ * server-side, so read this fresh each time the Group page loads.
+ */
+export const fetchMyDelivery = async (
+  groupId: string,
+  userId: string,
+): Promise<DeliveryPreferences | null> => {
+  const { data, error } = await supabase
+    .from('group_members')
+    .select('email_subscribed, push_subscribed')
+    .eq('group_id', groupId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
+/**
+ * Turn this Group's edition email and/or notification on or off for the
+ * signed-in member. Leave a key out to keep it as it is. Returns the row as
+ * saved. Goes through set_delivery_preferences: a direct UPDATE of these
+ * columns is refused (20261101195502). Throws Error('not_a_member') or
+ * Error('save_failed').
+ */
+export const setDeliveryPreferences = async (
+  groupId: string,
+  changes: { email?: boolean; push?: boolean },
+): Promise<DeliveryPreferences> => {
+  const { data, error } = await supabase
+    .rpc('set_delivery_preferences', {
+      p_group_id: groupId,
+      p_email_subscribed: changes.email ?? null,
+      p_push_subscribed: changes.push ?? null,
+    })
+    .single();
+
+  if (error) {
+    throw new Error(error.message.includes('not_a_member') ? 'not_a_member' : 'save_failed');
+  }
+
+  return data;
 };
 
 // ---------------------------------------------------------------------------

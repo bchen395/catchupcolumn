@@ -5,7 +5,7 @@
 
 import type { User } from 'https://esm.sh/@supabase/supabase-js@2';
 
-import type { GroupMemberRow, GroupRow, PostRow, UserRow } from '../../types/database.ts';
+import type { GroupMembership, GroupRow, PostRow, UserRow } from '../../types/database.ts';
 import { Refusal, UsageError } from './args.ts';
 import type { Db } from './client.ts';
 
@@ -89,7 +89,7 @@ export const fetchMembership = async (
   db: Db,
   groupId: string,
   userId: string,
-): Promise<GroupMemberRow | null> => {
+): Promise<GroupMembership | null> => {
   const { data, error } = await db
     .from('group_members')
     .select('group_id, user_id, role, joined_at')
@@ -97,7 +97,7 @@ export const fetchMembership = async (
     .eq('user_id', userId)
     .maybeSingle();
   if (error) throw error;
-  return data as GroupMemberRow | null;
+  return data as GroupMembership | null;
 };
 
 /**

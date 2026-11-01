@@ -426,6 +426,25 @@ export const Strings = {
     letBackInNotModerator: 'Only moderators can let people back in.',
     letBackInFailed: (name: string) => `Could not let ${name} back in right now. Please try again.`,
   },
+
+  // "Your delivery" on the Group page (BRAND §9 → Switches): each member's
+  // own switches for this Group's edition email and notification (owner,
+  // 2026-10-30). Each line says what the switch does and nothing more — no
+  // nudge to keep anything on; the footnote is the reassurance either way.
+  delivery: {
+    title: 'Your delivery',
+    emailLabel: 'Email me each edition',
+    emailHelp: 'The whole edition, photos and all, in your inbox.',
+    pushLabel: 'Notify me when it’s out',
+    pushHelp: 'One notification when the edition comes off the press.',
+    footnote: 'Whatever you choose, every edition waits for you in the Editions tab.',
+    // Under the notification switch when it's on but the phone blocks the
+    // app's notifications, so nothing would arrive.
+    pushBlocked: 'Notifications are off for Catch Up Column on this phone.',
+    openSettings: 'Open Settings',
+    openSettingsHint: 'Opens this app in your phone’s Settings.',
+    saveFailed: 'We couldn’t save that just now. Please try again.',
+  },
 };
 
 export type StringsType = typeof Strings;
