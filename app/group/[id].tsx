@@ -3,7 +3,6 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
     Alert,
-    Pressable,
     RefreshControl,
     ScrollView,
     StyleSheet,
@@ -17,7 +16,9 @@ import { ErrorState } from '@/components/error-state';
 import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
 import { InviteCard } from '@/components/invite-card';
+import { MemberRow, roleTag } from '@/components/member-row';
 import { PrintingPressLoading } from '@/components/printing-press-loading';
+import { RemovedMembers } from '@/components/removed-members';
 import { GroupDetailSkeleton } from '@/components/skeletons/group-detail-skeleton';
 import { StatusBanner } from '@/components/status-banner';
 import { TimeField } from '@/components/time-picker-modal';
@@ -31,6 +32,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { PublishNowError, publishEditionNow } from '@/lib/editions';
 import {
     deleteGroup,
+    fetchGroupBans,
     fetchGroupDetails,
     leaveGroup,
     RemoveMemberError,
@@ -40,7 +42,7 @@ import {
     uploadGroupCover,
 } from '@/lib/groups';
 import { goBackOr } from '@/lib/navigation';
-import type { GroupWithMembers } from '@/types';
+import type { GroupBanWithUser, GroupWithMembers } from '@/types';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -55,135 +57,6 @@ const formatPublishSchedule = (publishDay: number, publishTime: string) => {
 };
 
 // ---------------------------------------------------------------------------
-// Member row sub-component
-// ---------------------------------------------------------------------------
-
-type MemberRowProps = {
-  displayName: string;
-  avatarUrl: string | null;
-  role: 'moderator' | 'contributor';
-  isCurrentUser: boolean;
-  // Present only for a moderator looking at somebody else — the row is
-  // read-only for everyone else.
-  onRemove?: () => void;
-};
-
-const MemberRow = ({ displayName, avatarUrl, role, isCurrentUser, onRemove }: MemberRowProps) => {
-  const initials = displayName
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('');
-
-  return (
-    <View style={memberStyles.row}>
-      {avatarUrl ? (
-        <AppImage source={{ uri: avatarUrl }} style={memberStyles.avatar} />
-      ) : (
-        <View style={[memberStyles.avatar, memberStyles.fallback]}>
-          <ThemedText variant="caption" style={memberStyles.initials}>
-            {initials}
-          </ThemedText>
-        </View>
-      )}
-      <View style={memberStyles.info}>
-        <ThemedText variant="body" style={memberStyles.name}>
-          {displayName}
-          {isCurrentUser ? ' (you)' : ''}
-        </ThemedText>
-        <View style={[memberStyles.badge, role === 'moderator' ? memberStyles.badgeMod : null]}>
-          <ThemedText variant="caption" style={role === 'moderator' ? memberStyles.badgeModText : memberStyles.badgeContribText}>
-            {role === 'moderator' ? 'Moderator' : 'Contributor'}
-          </ThemedText>
-        </View>
-      </View>
-      {onRemove ? (
-        <Pressable
-          onPress={onRemove}
-          accessibilityRole="button"
-          accessibilityLabel={`Remove ${displayName} from this Group`}
-          hitSlop={8}
-          style={({ pressed }) => [memberStyles.remove, pressed && memberStyles.removePressed]}
-        >
-          <ThemedText variant="caption" style={memberStyles.removeLabel}>
-            Remove
-          </ThemedText>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-};
-
-const memberStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Layout.padding.md,
-    paddingVertical: Layout.padding.sm,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  fallback: {
-    backgroundColor: Colors.hairline,
-    borderWidth: 1,
-    borderColor: Colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initials: {
-    color: Colors.ink,
-    fontFamily: Typography.families.sansBold,
-  },
-  info: {
-    flex: 1,
-    gap: 4,
-  },
-  name: {
-    fontFamily: Typography.families.sansMedium,
-  },
-  // Role tags as §9 chips: outlined hairline pills, no fills. The moderator
-  // tag speaks with an ink outline + SemiBold; contributors stay quiet.
-  badge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: Layout.padding.sm,
-    paddingVertical: 2,
-    borderRadius: Layout.borderRadius.full,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: Colors.hairline,
-  },
-  badgeMod: {
-    borderColor: Colors.ink,
-  },
-  badgeModText: {
-    color: Colors.ink,
-    fontFamily: Typography.families.sansSemiBold,
-  },
-  badgeContribText: {
-    color: Colors.inkSoft,
-  },
-  // A quiet text action, not a button: ejecting someone is rare and shouldn't
-  // compete with the invite card for attention. Error red (never vermilion —
-  // that's the editorial accent, §2) marks it destructive.
-  remove: {
-    minHeight: Layout.touchTargetMin,
-    justifyContent: 'center',
-    paddingLeft: Layout.padding.md,
-  },
-  removePressed: {
-    opacity: 0.6,
-  },
-  removeLabel: {
-    color: Colors.error,
-    fontFamily: Typography.families.sansSemiBold,
-  },
-});
-
-// ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
 
@@ -193,6 +66,9 @@ const GroupDetailScreen = () => {
   const { user } = useAuth();
 
   const [group, setGroup] = useState<GroupWithMembers | null>(null);
+  // People removed from this Group. Moderators only — RLS hands everyone
+  // else an empty list.
+  const [bans, setBans] = useState<GroupBanWithUser[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [screenError, setScreenError] = useState('');
@@ -218,15 +94,26 @@ const GroupDetailScreen = () => {
     (m) => m.user_id === currentUserId && m.role === 'moderator'
   ) ?? false;
 
+  // Never throws: the Removed list is secondary, so failing to load it keeps
+  // whatever was shown rather than failing the whole page.
+  const loadBans = useCallback(async () => {
+    if (!id) return;
+    try {
+      setBans(await fetchGroupBans(id));
+    } catch (_err) {
+      // Pull to refresh tries again.
+    }
+  }, [id]);
+
   const load = useCallback(async () => {
     if (!id) return;
     try {
-      const data = await fetchGroupDetails(id);
+      const [data] = await Promise.all([fetchGroupDetails(id), loadBans()]);
       setGroup(data);
     } catch (_err) {
       setScreenError('We could not load this Group right now. Pull down to try again.');
     }
-  }, [id]);
+  }, [id, loadBans]);
 
   useEffect(() => {
     let cancelled = false;
@@ -374,12 +261,12 @@ const GroupDetailScreen = () => {
   const handleRemoveMember = (memberId: string, memberName: string) => {
     if (!group) return;
     Alert.alert(
-      `Remove ${memberName}?`,
-      `${memberName} will no longer be able to read or write for ${group.name}. Anything they've written for this week's edition will be removed too — past editions stay as they were. You can always invite them back.`,
+      Strings.members.removeTitle(memberName),
+      Strings.members.removeBody(memberName, group.name),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: Strings.members.cancel, style: 'cancel' },
         {
-          text: 'Remove',
+          text: Strings.members.remove,
           style: 'destructive',
           onPress: async () => {
             setScreenError('');
@@ -391,16 +278,18 @@ const GroupDetailScreen = () => {
                   ? { ...prev, members: prev.members.filter((m) => m.user_id !== memberId) }
                   : prev,
               );
+              // The removal is also a ban; show it under Removed.
+              void loadBans();
             } catch (err) {
               const code = err instanceof RemoveMemberError ? err.code : 'remove_failed';
               setScreenError(
                 code === 'last_moderator'
-                  ? `${memberName} is the only moderator, so they can't be removed. Make someone else a moderator first.`
+                  ? Strings.members.removeLastModerator(memberName)
                   : code === 'not_moderator'
-                    ? 'Only moderators can remove members.'
+                    ? Strings.members.removeNotModerator
                     : code === 'not_a_member'
-                      ? `${memberName} is no longer in this Group.`
-                      : `Could not remove ${memberName} right now. Please try again.`,
+                      ? Strings.members.removeNotMember(memberName)
+                      : Strings.members.removeFailed(memberName),
               );
               // A stale "not a member" means somebody else already left or was
               // removed — refresh so the list stops disagreeing with the server.
@@ -486,9 +375,6 @@ const GroupDetailScreen = () => {
       />
     );
   }
-
-  const memberCount = group.members.length;
-  const memberCountLabel = `${memberCount} ${memberCount === 1 ? 'member' : 'members'}`;
 
   return (
     <>
@@ -592,23 +478,42 @@ const GroupDetailScreen = () => {
       {/* Members section */}
       <View style={styles.section}>
         <ThemedText variant="label" style={styles.sectionTitle}>
-          Members · {memberCountLabel}
+          {Strings.members.title(group.members.length)}
         </ThemedText>
         {group.members.map((m) => (
           <MemberRow
             key={m.user_id}
-            displayName={m.user.display_name}
+            name={m.user.display_name}
             avatarUrl={m.user.avatar_url}
-            role={m.role}
             isCurrentUser={m.user_id === currentUserId}
-            onRemove={
+            tags={[roleTag(m.role)]}
+            // Moderators, on somebody else's row, one removal at a time.
+            actions={
               isModerator && m.user_id !== currentUserId && !removingUserId
-                ? () => handleRemoveMember(m.user_id, m.user.display_name)
-                : undefined
+                ? [
+                    {
+                      label: Strings.members.remove,
+                      accessibilityLabel: Strings.members.a11yRemove(m.user.display_name),
+                      onPress: () => handleRemoveMember(m.user_id, m.user.display_name),
+                      destructive: true,
+                    },
+                  ]
+                : []
             }
           />
         ))}
       </View>
+
+      {isModerator ? (
+        <RemovedMembers
+          groupId={group.id}
+          bans={bans}
+          onLetBackIn={(userId) =>
+            setBans((prev) => prev.filter((ban) => ban.user_id !== userId))
+          }
+          onError={setScreenError}
+        />
+      ) : null}
 
       {/* Moderator: publish this week's edition immediately */}
       {isModerator && !editing ? (

@@ -63,7 +63,9 @@ You're working on the UI of a private group-newsletter app. **Audience (set 2026
 | `story-article` | One full post in the reader: headline, avatar byline, then its pieces via `story-blocks`. |
 | `story-blocks` | A post's text and photos in reading order (BRAND §5): text in the `read` voice with the lettrine on the first piece, photos flat in their orientation buckets, "Photo by" once under the first. Always fed `postBlocksOf(post)`. |
 | `story-reader` | Host-agnostic reader body + Next/Previous paging; rendered by both the `[postId]` route and the enlarge overlay. |
-| `report-story-link` | The BRAND §9 report affordance at the foot of a story. Renders nothing on your own post; drafts a support mailto via `lib/report.ts`. |
+| `report-story-link` | The BRAND §9 report affordance at the foot of a story. Renders nothing on your own post; opens `report-story-sheet`. Public props are just `{ post }` — keep them stable. |
+| `report-story-sheet` | The report form on a `form-sheet`: optional note, "Send report" (sends in-app through `lib/report.ts`), thanks / failure states, "Email us instead" (the mailto fallback) on failure. |
+| `form-sheet` | A short form on a bottom sheet (BRAND §9): `paper`, top-rounded, hairline header rule, scrolling body, footer pinned above the keyboard (`use-keyboard-inset`), footer labels capped at `SHEET_ACTION_TEXT_CAP` (1.6×). Fades in; no grab handle (it doesn't drag); `dismissible={false}` while work is in flight. |
 | `story-reader-overlay` | The enlarge transition: tapped cover section grows into the full-screen reader (Modal + reanimated); reverse-shrinks on close. |
 | `edition-row` | One row of the Editions list: headline, folio line, and the lead story's first photo as its display copy (which it signs itself — a storage path, never a URL). Memoised. |
 | `custom-tab-bar` | The 5-slot bar with the raised ink-black "+". |
@@ -83,6 +85,8 @@ You're working on the UI of a private group-newsletter app. **Audience (set 2026
 | `code-field` | The 6-digit emailed-code input (digits only, OS autofill, wide tracking). Every screen that takes a code uses it — sign-in, sign-up, set-password. |
 | `password-setting` | Profile's one sign-in setting: "Set a password" / "Change your password" plus the note that it's optional. A password is never offered anywhere else — not in onboarding, never prompted. |
 | `group-card` | A Group row/card in lists. |
+| `member-row` | One person on the Group page: `Avatar`, name (+ " (you)"), §9 outlined chips (`tags`; `roleTag(role)` for the role), and quiet text actions at the right edge (`actions`; `destructive` for `error`). Add a new member state as another tag and a new moderation verb as another action — don't fork the row. |
+| `removed-members` | The moderator-only "Removed · {n}" section on the Group page, one `member-row` per ban with "Let back in" (confirmed with an Alert). Renders nothing when there are no bans. |
 | `avatar-picker` | Profile avatar selection. |
 | `day-selector` | The 7-day publish-day picker (create-group and settings share it). |
 | `time-picker-modal` / `snap-column` | Scroll-wheel time picker (`snap-column` is its internal wheel). |

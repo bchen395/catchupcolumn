@@ -397,6 +397,13 @@ verify_jwt = false
 [functions.unsubscribe]
 verify_jwt = false
 
+# report-story is a signed-in user action, like publish-edition-now and
+# delete-account (which rely on the default): the platform verifies the JWT,
+# then the function reads as the caller so RLS proves they can see the story.
+# Spelled out so nobody flips it while copying the two entries above.
+[functions.report-story]
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327

@@ -1,13 +1,14 @@
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { useAuth } from '@/hooks/use-auth';
 import { Haptics } from '@/lib/haptics';
-import { openPostReport } from '@/lib/report';
 import type { PostWithAuthor } from '@/types';
 
+import { ReportStorySheet } from './report-story-sheet';
 import { ThemedText } from './themed-text';
 
 type Props = {
@@ -18,9 +19,11 @@ type Props = {
 // correction notice. Kept quiet by color and placement rather than by size —
 // at 16px it still clears the reading floor for the older-adult audience
 // (BRAND §3), and it never spends the vermilion accent (§2): reporting is a
-// rare, sober action, not a live moment.
+// rare, sober action, not a live moment. It opens the report sheet, which
+// sends from inside the app.
 export const ReportStoryLink = ({ post }: Props) => {
   const { user } = useAuth();
+  const [open, setOpen] = useState(false);
 
   // Nothing to report on your own writing — offering it there reads as an
   // invitation to flag yourself.
@@ -28,21 +31,7 @@ export const ReportStoryLink = ({ post }: Props) => {
 
   const handlePress = () => {
     Haptics.tap();
-    Alert.alert(Strings.report.confirmTitle, Strings.report.confirmBody, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: Strings.report.confirmCta,
-        onPress: async () => {
-          const opened = await openPostReport(post, user?.id ?? null);
-          if (!opened) {
-            Alert.alert(
-              Strings.report.noMailTitle,
-              Strings.report.noMailBody(Strings.legal.supportEmail),
-            );
-          }
-        },
-      },
-    ]);
+    setOpen(true);
   };
 
   return (
@@ -51,7 +40,7 @@ export const ReportStoryLink = ({ post }: Props) => {
         onPress={handlePress}
         accessibilityRole="button"
         accessibilityLabel={Strings.report.link}
-        accessibilityHint="Opens an email to our team about this story"
+        accessibilityHint={Strings.report.linkHint}
         hitSlop={8}
         style={({ pressed }) => [styles.button, pressed && styles.pressed]}
       >
@@ -59,6 +48,7 @@ export const ReportStoryLink = ({ post }: Props) => {
           {Strings.report.link}
         </ThemedText>
       </Pressable>
+      <ReportStorySheet post={post} visible={open} onClose={() => setOpen(false)} />
     </View>
   );
 };
