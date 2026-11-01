@@ -359,10 +359,7 @@ export const Strings = {
   // The sender side: the group screen's "Invite your people" card.
   inviteCard: {
     title: 'Invite your people',
-    // Not "anyone with this code can join": since 2026-10-30 the code won't
-    // let back in someone a moderator removed (BRAND §9). Every member sees
-    // this card, so it says what the code is for and leaves removal out.
-    body: 'Share this code with the people you’d like in the Group — it’s how they join. Read it out over the phone, text it, or show the code below to scan.',
+    body: 'Anyone with this code can join. Read it out over the phone, text it, or show the code below to scan.',
     // Small-caps label inside the §11 ticket, above the code.
     ticketLabel: 'Invite code',
     copyHint: 'Tap the ticket to copy the code',
