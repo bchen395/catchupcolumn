@@ -94,6 +94,24 @@ export type GroupBanInsert = Omit<GroupBanRow, 'banned_by' | 'created_at'> & {
 
 export type GroupBanUpdate = Record<string, never>;
 
+// Someone the signed-in person has blocked (20261101204252). One-way: the
+// blocker stops seeing the blocked person's posts (the posts SELECT policy
+// hides them on every read) and their stories leave the blocker's edition
+// emails. Each person reads, adds and deletes only their own rows, so the
+// blocked person can never see one. Not tied to a Group.
+export type UserBlockRow = {
+  blocker_id: string;
+  blocked_id: string;
+  created_at: string;
+};
+
+export type UserBlockInsert = Omit<UserBlockRow, 'created_at'> & {
+  created_at?: string;
+};
+
+// Added or deleted, never edited: there is no UPDATE grant.
+export type UserBlockUpdate = Record<string, never>;
+
 // A post is one flow of plain text with up to four photos set into it
 // (design/MULTI_PHOTO_POSTS.md). `blocks` holds the pieces in reading order.
 export type PostTextBlock = { type: 'text'; text: string };
@@ -246,6 +264,12 @@ export type Database = {
         Update: GroupBanUpdate;
         Relationships: [];
       };
+      user_blocks: {
+        Row: UserBlockRow;
+        Insert: UserBlockInsert;
+        Update: UserBlockUpdate;
+        Relationships: [];
+      };
       posts: { Row: PostRow; Insert: PostInsert; Update: PostUpdate; Relationships: [] };
       editions: { Row: EditionRow; Insert: EditionInsert; Update: EditionUpdate; Relationships: [] };
       push_tokens: {
@@ -324,6 +348,12 @@ export type Database = {
       // get_invite_preview_details' is_removed instead.
       is_caller_banned: {
         Args: { p_group_id: string };
+        Returns: boolean;
+      };
+      // Whether the caller has blocked this person. Exists for the posts
+      // SELECT policy; the app reads its blocks with fetchMyBlockedIds.
+      is_blocked_by_caller: {
+        Args: { p_user_id: string };
         Returns: boolean;
       };
       prepare_account_deletion: {
