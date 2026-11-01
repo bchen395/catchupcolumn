@@ -78,7 +78,7 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - `publish_day` (int, 0=Sunday..6=Saturday, default 0)
 - `publish_time` (time, default '09:00')
 - `timezone` (text, not null, default 'UTC') — IANA name; publish_day/time are evaluated in this zone. The `check_group_timezone` trigger rejects a name `pg_timezone_names` doesn't list (`invalid_timezone`); `createGroup` retries once on UTC
-- `created_by` (uuid, FK → users.id)
+- `created_by` (uuid, FK → users.id, never cascades) — when its creator's account is deleted, passes to a remaining member: a moderator first, else the earliest to join (`hand_over_groups`)
 - `invite_code` (text, unique) — short code for invite links
 - `created_at` (timestamptz)
 
@@ -128,7 +128,7 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - PK: (user_id, token)
 
 ### Notable RPCs
-`compile_due_editions` (cron compilation, slot-scoped duplicate guard; skips and reports a Group with an invalid timezone), `due_publish_slot` (service-role helper: the slot a tick falls in, matched on timestamps so late slots don't wrap at midnight), `publish_edition_now` (moderator-only immediate publish, shares the compile lock), `join_group_by_invite_code` (refuses a removed person with `removed_from_group` — P0002 on purpose, so builds from before 2026-10-30 read it as an inactive invitation and drop the pending invite), `get_invite_preview` (anon-callable minimal invite preview: name/description/cover/member count), `get_invite_preview_details` (authenticated: adds cadence, is_member, is_removed, member sample — empty for a removed caller), `delete_group_as_moderator`, `remove_group_member` (moderator-only eject; also deletes the removed member's uncompiled posts and their photos, and bans them — delegates to `operator_remove_group_member`), `operator_remove_group_member` (service-role: the removal plus the ban, without the moderator checks — the operator's tool for acting on a report; also bans someone who already left), `unban_group_member` (moderator-only "Let back in": deletes the ban, re-adds no one), `prepare_account_deletion`, `get_edition_email_payload` (service-role; feeds the email renderer, each post with its `blocks` and `author_id`). Full definitions in `supabase/migrations/`.
+`compile_due_editions` (cron compilation, slot-scoped duplicate guard; skips and reports a Group with an invalid timezone), `due_publish_slot` (service-role helper: the slot a tick falls in, matched on timestamps so late slots don't wrap at midnight), `publish_edition_now` (moderator-only immediate publish, shares the compile lock), `join_group_by_invite_code` (refuses a removed person with `removed_from_group` — P0002 on purpose, so builds from before 2026-10-30 read it as an inactive invitation and drop the pending invite), `get_invite_preview` (anon-callable minimal invite preview: name/description/cover/member count), `get_invite_preview_details` (authenticated: adds cadence, is_member, is_removed, member sample — empty for a removed caller), `delete_group_as_moderator`, `remove_group_member` (moderator-only eject; also deletes the removed member's uncompiled posts and their photos, and bans them — delegates to `operator_remove_group_member`), `operator_remove_group_member` (service-role: the removal plus the ban, without the moderator checks — the operator's tool for acting on a report; also bans someone who already left), `unban_group_member` (moderator-only "Let back in": deletes the ban, re-adds no one), `prepare_account_deletion` (service-role, called by `delete-account`; hands the leaver's Groups over through `hand_over_groups`, which the `on_user_deletion` trigger also runs on every `public.users` delete, dashboard included — so no deletion path takes a Group that still has members), `get_edition_email_payload` (service-role; feeds the email renderer, each post with its `blocks` and `author_id`). Full definitions in `supabase/migrations/`.
 
 ## Key Terminology
 
@@ -270,7 +270,7 @@ Reusable Claude Code skills live in `.claude/skills/`. Each auto-loads when a se
 | `frontend-design` | Any UI: `components/`, `constants/`, screens in `app/`, styling, copy, icons, animation. |
 | `data-layer` | App-side Supabase access: `lib/` data functions, queries, mutations, storage uploads, `types/database.ts`. |
 | `db-migrations` | `supabase/migrations/` — tables, RLS, SECURITY DEFINER functions/RPCs, triggers, storage policies, cron. |
-| `edge-functions` | `supabase/functions/` — the Deno cron compiler, manual publish, unsubscribe, delete-account, shared email/push dispatch. |
+| `edge-functions` | `supabase/functions/` — the Deno cron compiler, manual publish, unsubscribe, delete-account, report-story (in-app story reports to support@), shared email/push dispatch. |
 | `verify-changes` | Before declaring a change done — the typecheck + manual-QA checklist (there is no automated test suite yet). |
 
 Skills are self-maintaining: when a convention changes, update the relevant `SKILL.md` and its source of truth (`design/BRAND.md`, `types/database.ts`, or this file) in the same change.

@@ -63,7 +63,9 @@ You're working on the UI of a private group-newsletter app. **Audience (set 2026
 | `story-article` | One full post in the reader: headline, avatar byline, then its pieces via `story-blocks`. |
 | `story-blocks` | A post's text and photos in reading order (BRAND §5): text in the `read` voice with the lettrine on the first piece, photos flat in their orientation buckets, "Photo by" once under the first. Always fed `postBlocksOf(post)`. |
 | `story-reader` | Host-agnostic reader body + Next/Previous paging; rendered by both the `[postId]` route and the enlarge overlay. |
-| `report-story-link` | The BRAND §9 report affordance at the foot of a story. Renders nothing on your own post; drafts a support mailto via `lib/report.ts`. |
+| `report-story-link` | The BRAND §9 report affordance at the foot of a story. Renders nothing on your own post; opens `report-story-sheet`. Public props are just `{ post }` — keep them stable. |
+| `report-story-sheet` | The report form on a `form-sheet`: optional note, "Send report" (sends in-app through `lib/report.ts`), thanks / failure states, "Email us instead" (the mailto fallback) on failure. |
+| `form-sheet` | A short form on a bottom sheet (BRAND §9): `paper`, top-rounded, hairline header rule, scrolling body, footer pinned above the keyboard (`use-keyboard-inset`), footer labels capped at `SHEET_ACTION_TEXT_CAP` (1.6×). Fades in; no grab handle (it doesn't drag); `dismissible={false}` while work is in flight. |
 | `story-reader-overlay` | The enlarge transition: tapped cover section grows into the full-screen reader (Modal + reanimated); reverse-shrinks on close. |
 | `edition-row` | One row of the Editions list: headline, folio line, and the lead story's first photo as its display copy (which it signs itself — a storage path, never a URL). Memoised. |
 | `custom-tab-bar` | The 5-slot bar with the raised ink-black "+". |

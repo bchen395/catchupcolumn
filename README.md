@@ -74,6 +74,7 @@ supabase/
     publish-edition-now/   Moderator-only immediate publish
     delete-account/        Auth-aware account deletion
     unsubscribe/           Token-based per-group unsubscribe endpoint
+    report-story/          In-app "Report this story" → email to support@
     _shared/               Shared HTML email rendering + email/push dispatch
 design/                    BRAND.md, implementation plan, logo assets
 assets/                    Brand logo, app icons, splash, fonts
@@ -124,6 +125,7 @@ npx supabase functions deploy compile-editions --use-api   # --use-api: no Docke
 npx supabase functions deploy publish-edition-now --use-api
 npx supabase functions deploy delete-account --use-api
 npx supabase functions deploy unsubscribe --use-api
+npx supabase functions deploy report-story --use-api
 ```
 
 **Merging does not deploy these.** CI type-checks the functions but nothing ships

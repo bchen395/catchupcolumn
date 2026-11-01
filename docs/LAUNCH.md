@@ -952,7 +952,8 @@ thing that ships on merge. Every change under `supabase/functions/` has to be
 deployed by hand, and a change to `_shared/` has to be deployed to **every
 function that imports it** — today that is `compile-editions` and
 `publish-edition-now` (`_shared/edition-dispatch.ts`, which pulls in the email
-renderer). `unsubscribe` and `delete-account` import nothing shared.
+renderer). `unsubscribe`, `delete-account` and `report-story` import nothing
+shared.
 
 ✅ **`compile-editions` and `publish-edition-now` redeployed from `main`,
 2026-09-24 15:46 UTC** (v17 → v18 and v7 → v8). Found that morning: both had
@@ -995,7 +996,7 @@ production, and it never touches your checkout:
 
 ```bash
 git worktree add --detach /tmp/fn-audit main && cd /tmp/fn-audit
-for fn in compile-editions publish-edition-now unsubscribe delete-account; do
+for fn in compile-editions publish-edition-now unsubscribe delete-account report-story; do
   npx supabase functions download "$fn" --use-api --project-ref wvaxfyhihcfilewygtzp --workdir .
 done
 git status --short supabase/functions    # empty = production matches main
