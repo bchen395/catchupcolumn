@@ -87,6 +87,12 @@ const JoinGroupScreen = () => {
         setCodeError(Strings.invite.errorNotFound);
         return;
       }
+      // A moderator removed them. Say so here, rather than show an
+      // invitation whose Join would only refuse them.
+      if ('is_removed' in found && found.is_removed) {
+        setCodeError(Strings.invite.errorRemoved);
+        return;
+      }
       setPreview(found);
       setOverSkeleton(fromSkeleton);
       AccessibilityInfo.announceForAccessibility(Strings.invite.a11yFound(found.name));
@@ -136,7 +142,10 @@ const JoinGroupScreen = () => {
         },
       });
     } catch (err: unknown) {
-      if (err instanceof Error && err.message === 'invalid_invite_code') {
+      if (err instanceof Error && err.message === 'removed_from_group') {
+        // Removed between lookup and join.
+        backToEntry(Strings.invite.errorRemoved);
+      } else if (err instanceof Error && err.message === 'invalid_invite_code') {
         // The code stopped working between lookup and join.
         backToEntry(Strings.invite.errorRevoked);
       } else {
