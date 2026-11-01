@@ -87,6 +87,8 @@ You're working on the UI of a private group-newsletter app. **Audience (set 2026
 | `group-card` | A Group row/card in lists. |
 | `member-row` | One person on the Group page: `Avatar`, name (+ " (you)"), §9 outlined chips (`tags`; `roleTag(role)` for the role), and quiet text actions at the right edge (`actions`; `destructive` for `error`). Add a new member state as another tag and a new moderation verb as another action — don't fork the row. |
 | `removed-members` | The moderator-only "Removed · {n}" section on the Group page, one `member-row` per ban with "Let back in" (confirmed with an Alert). Renders nothing when there are no bans. |
+| `switch-row` | Any on/off setting (BRAND §9 → Switches): `ui` label, `ui` `inkSoft` helper, RN `Switch` in ink / hairline / paper. The whole ≥56px row is the target and the one accessible switch; `select()` on change; no confirm. `busy` ignores taps while a change saves, without dimming. Never a bare `Switch`, never vermilion or the platform green. |
+| `delivery-settings` | "Your delivery" on the Group page, for every member: email and notification `switch-row`s, the "notifications are off on this phone" note with Open Settings, the failed-save banner (inline, where the tap was), and the footnote that every edition is still in the app. Data and saving live in `hooks/use-delivery-settings` (optimistic; flips back on failure; re-reads on return to the app). |
 | `avatar-picker` | Profile avatar selection. |
 | `day-selector` | The 7-day publish-day picker (create-group and settings share it). |
 | `time-picker-modal` / `snap-column` | Scroll-wheel time picker (`snap-column` is its internal wheel). |
@@ -95,7 +97,7 @@ You're working on the UI of a private group-newsletter app. **Audience (set 2026
 | `invite-hero` | The invitation as a one-page special edition (vermilion kicker, `display` masthead, flat cover photo, member byline, cadence dateline). |
 | `avatar-stack` | Overlapping member faces for the invitation byline; decorative (hidden from screen readers). |
 | `pending-invite-banner` | The hairline-band "Joining {name}" strip on auth screens while an invite is pending. |
-| `invite-card` | The group screen's sender-side invite card: tap-to-copy code, code-first share, QR on a hard-white paper card. |
+| `invite-card` | The group screen's sender-side invite card: tap-to-copy code, code-first share, QR on a hard-white paper card. Its copy says what the code is for, never that "anyone" can join with it — a removed person can't. |
 
 ## Decisions newer than BRAND.md (drift notes)
 
