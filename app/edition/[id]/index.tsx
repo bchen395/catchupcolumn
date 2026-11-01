@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -8,6 +8,7 @@ import { EditionBriefsGrid } from '@/components/edition-briefs-grid';
 import { EditionColophon } from '@/components/edition-colophon';
 import { EditionLead } from '@/components/edition-lead';
 import { EditionSecondary } from '@/components/edition-secondary';
+import { EditionViewerProvider } from '@/components/edition-viewer-context';
 import { ErrorState } from '@/components/error-state';
 import { EditionPageSkeleton } from '@/components/skeletons/edition-page-skeleton';
 import { StatusBanner } from '@/components/status-banner';
@@ -98,6 +99,33 @@ const EditionFrontPage = () => {
       cancelled = true;
     };
   }, [load]);
+
+  // Coming back from the reader route (the Reduce Motion path, or a story a
+  // link opened) may follow a take-down there, so revalidate quietly on every
+  // return. The first focus is the mount, which the effect above loads.
+  const focusedBefore = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (focusedBefore.current) void load();
+      focusedBefore.current = true;
+    }, [load]),
+  );
+
+  // A moderator took a story down in the reader (the overlay, or the inline
+  // story of a one-story edition). Its story is gone, so the overlay closes
+  // at once rather than shrinking back into a section that no longer exists;
+  // the page drops the story straight away and then revalidates.
+  const handleStoryRemoved = useCallback(
+    (postId: string) => {
+      overlayOpenRef.current = false;
+      setOverlay(null);
+      setEdition((prev) =>
+        prev ? { ...prev, posts: prev.posts.filter((p) => p.id !== postId) } : prev,
+      );
+      void load();
+    },
+    [load],
+  );
 
   // Reaching the front page counts as "opened" — clears Home's NEW flag. Here
   // rather than on Home's tap so deep links and the inbox path count too.
@@ -200,104 +228,110 @@ const EditionFrontPage = () => {
   };
 
   return (
-    <View style={styles.flex}>
-      <ScrollView
-        style={styles.scrollFlex}
-        contentContainerStyle={styles.scroll}
-        scrollEnabled={!overlay}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.ink} />
-        }
-      >
-        {header}
+    <EditionViewerProvider
+      groupId={group.id}
+      groupName={group.name}
+      onStoryRemoved={handleStoryRemoved}
+    >
+      <View style={styles.flex}>
+        <ScrollView
+          style={styles.scrollFlex}
+          contentContainerStyle={styles.scroll}
+          scrollEnabled={!overlay}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.ink} />
+          }
+        >
+          {header}
 
-        {screenError ? (
-          <StatusBanner variant="error" message={screenError} style={styles.banner} />
-        ) : null}
+          {screenError ? (
+            <StatusBanner variant="error" message={screenError} style={styles.banner} />
+          ) : null}
 
-        <View style={styles.masthead}>
-          {/* Title case, not caps — uppercasing long Group names hurts
-              warmth (BRAND §6); the masthead is Lora Bold `display`. */}
-          <ThemedText style={styles.mastheadTitle} numberOfLines={2}>
-            {group.name}
-          </ThemedText>
-          {/* The dateline sits in a folio band — flanked by hairline rules. */}
-          <View style={styles.datelineRow}>
-            <View style={styles.datelineRule} />
-            <ThemedText style={styles.mastheadDate}>{weekOf}</ThemedText>
-            <View style={styles.datelineRule} />
-          </View>
-          <ThemedText style={styles.mastheadMeta}>
-            Edition No. {edition.edition_number}
-            {edition.posts.length > 0
-              ? `  ·  ${plural(edition.posts.length, 'story', 'stories')}  ·  ${plural(
-                  countContributors(edition),
-                  'writer',
-                  'writers',
-                )}`
-              : ''}
-          </ThemedText>
-        </View>
-
-        {!lead ? (
-          // Rare: an already-published edition whose posts were all deleted.
-          // Keep the masthead + colophon around a warm line so it still reads
-          // as a page, not a broken screen.
-          <View style={styles.emptyEdition}>
-            <ThemedText variant="body" style={styles.emptyEditionText}>
-              {Strings.empty.edition.body}
+          <View style={styles.masthead}>
+            {/* Title case, not caps — uppercasing long Group names hurts
+                warmth (BRAND §6); the masthead is Lora Bold `display`. */}
+            <ThemedText style={styles.mastheadTitle} numberOfLines={2}>
+              {group.name}
+            </ThemedText>
+            {/* The dateline sits in a folio band — flanked by hairline rules. */}
+            <View style={styles.datelineRow}>
+              <View style={styles.datelineRule} />
+              <ThemedText style={styles.mastheadDate}>{weekOf}</ThemedText>
+              <View style={styles.datelineRule} />
+            </View>
+            <ThemedText style={styles.mastheadMeta}>
+              Edition No. {edition.edition_number}
+              {edition.posts.length > 0
+                ? `  ·  ${plural(edition.posts.length, 'story', 'stories')}  ·  ${plural(
+                    countContributors(edition),
+                    'writer',
+                    'writers',
+                  )}`
+                : ''}
             </ThemedText>
           </View>
-        ) : isSingle ? (
-          // One-post edition: the cover is the whole story. Reuse the reader's
-          // article so it reads exactly as enlarging it would have. No enlarge.
-          <StoryArticle post={lead} />
-        ) : (
-          <>
-            {/* Measurable wrappers give the enlarge overlay its launch frame. */}
-            <View ref={leadRef} collapsable={false}>
-              <EditionLead post={lead} onPress={() => openMeasured(lead.id, leadRef)} />
+
+          {!lead ? (
+            // Rare: an already-published edition whose posts were all deleted.
+            // Keep the masthead + colophon around a warm line so it still reads
+            // as a page, not a broken screen.
+            <View style={styles.emptyEdition}>
+              <ThemedText variant="body" style={styles.emptyEditionText}>
+                {Strings.empty.edition.body}
+              </ThemedText>
             </View>
+          ) : isSingle ? (
+            // One-post edition: the cover is the whole story. Reuse the reader's
+            // article so it reads exactly as enlarging it would have. No enlarge.
+            <StoryArticle post={lead} />
+          ) : (
+            <>
+              {/* Measurable wrappers give the enlarge overlay its launch frame. */}
+              <View ref={leadRef} collapsable={false}>
+                <EditionLead post={lead} onPress={() => openMeasured(lead.id, leadRef)} />
+              </View>
 
-            {secondary ? (
-              <>
-                <View style={styles.sectionRule} />
-                <View ref={secondaryRef} collapsable={false}>
-                  <EditionSecondary
-                    post={secondary}
-                    onPress={() => openMeasured(secondary.id, secondaryRef)}
-                  />
-                </View>
-              </>
-            ) : null}
+              {secondary ? (
+                <>
+                  <View style={styles.sectionRule} />
+                  <View ref={secondaryRef} collapsable={false}>
+                    <EditionSecondary
+                      post={secondary}
+                      onPress={() => openMeasured(secondary.id, secondaryRef)}
+                    />
+                  </View>
+                </>
+              ) : null}
 
-            {/* A lone tertiary brief (3-post edition) drops the "IN BRIEF"
-                label, so add a rule to separate it from the secondary. */}
-            {briefs.length === 1 ? <View style={styles.sectionRule} /> : null}
-            <EditionBriefsGrid briefs={briefs} onOpen={openStory} />
-          </>
-        )}
-
-        <EditionColophon editionNumber={edition.edition_number} nextEditionLine={nextEditionLine} />
-      </ScrollView>
-
-      {overlay ? (
-        <StoryReaderOverlay
-          posts={ordered}
-          initialIndex={Math.max(
-            0,
-            ordered.findIndex((p) => p.id === overlay.postId),
+              {/* A lone tertiary brief (3-post edition) drops the "IN BRIEF"
+                  label, so add a rule to separate it from the secondary. */}
+              {briefs.length === 1 ? <View style={styles.sectionRule} /> : null}
+              <EditionBriefsGrid briefs={briefs} onOpen={openStory} />
+            </>
           )}
-          originFrame={overlay.frame}
-          renderSnapshot={snapshotFor(overlay.postId)}
-          reduceMotion={reduceMotion}
-          onClosed={() => {
-            overlayOpenRef.current = false;
-            setOverlay(null);
-          }}
-        />
-      ) : null}
-    </View>
+
+          <EditionColophon editionNumber={edition.edition_number} nextEditionLine={nextEditionLine} />
+        </ScrollView>
+
+        {overlay ? (
+          <StoryReaderOverlay
+            posts={ordered}
+            initialIndex={Math.max(
+              0,
+              ordered.findIndex((p) => p.id === overlay.postId),
+            )}
+            originFrame={overlay.frame}
+            renderSnapshot={snapshotFor(overlay.postId)}
+            reduceMotion={reduceMotion}
+            onClosed={() => {
+              overlayOpenRef.current = false;
+              setOverlay(null);
+            }}
+          />
+        ) : null}
+      </View>
+    </EditionViewerProvider>
   );
 };
 

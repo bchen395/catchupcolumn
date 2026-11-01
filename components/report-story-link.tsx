@@ -1,26 +1,20 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Colors } from '@/constants/colors';
-import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
 import { useAuth } from '@/hooks/use-auth';
 import { Haptics } from '@/lib/haptics';
 import type { PostWithAuthor } from '@/types';
 
 import { ReportStorySheet } from './report-story-sheet';
-import { ThemedText } from './themed-text';
+import { StoryFootLink } from './story-foot-link';
 
 type Props = {
   post: PostWithAuthor;
 };
 
-// The report affordance, sitting at the foot of a story like a paper's
-// correction notice. Kept quiet by color and placement rather than by size —
-// at 16px it still clears the reading floor for the older-adult audience
-// (BRAND §3), and it never spends the vermilion accent (§2): reporting is a
-// rare, sober action, not a live moment. It opens the report sheet, which
-// sends from inside the app.
+// The report affordance, one of the lines at the foot of a story
+// (story-foot-actions draws the rule above them), like a paper's correction
+// notice. It opens the report sheet, which sends from inside the app.
 export const ReportStoryLink = ({ post }: Props) => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -35,39 +29,13 @@ export const ReportStoryLink = ({ post }: Props) => {
   };
 
   return (
-    <View style={styles.wrap}>
-      <Pressable
-        onPress={handlePress}
-        accessibilityRole="button"
-        accessibilityLabel={Strings.report.link}
+    <>
+      <StoryFootLink
+        label={Strings.report.link}
         accessibilityHint={Strings.report.linkHint}
-        hitSlop={8}
-        style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-      >
-        <ThemedText variant="ui" style={styles.label}>
-          {Strings.report.link}
-        </ThemedText>
-      </Pressable>
+        onPress={handlePress}
+      />
       <ReportStorySheet post={post} visible={open} onClose={() => setOpen(false)} />
-    </View>
+    </>
   );
 };
-
-const styles = StyleSheet.create({
-  wrap: {
-    marginTop: Layout.padding.lg,
-    borderTopWidth: Layout.rule.hairline,
-    borderTopColor: Colors.hairline,
-  },
-  button: {
-    minHeight: Layout.touchTargetMin,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pressed: {
-    opacity: 0.6,
-  },
-  label: {
-    color: Colors.inkSoft,
-  },
-});

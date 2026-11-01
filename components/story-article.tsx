@@ -8,8 +8,8 @@ import { postBlocksOf } from '@/lib/post-blocks';
 import type { PostWithAuthor } from '@/types';
 
 import { Avatar } from './avatar';
-import { ReportStoryLink } from './report-story-link';
 import { StoryBlocks } from './story-blocks';
+import { StoryFootActions } from './story-foot-actions';
 import { ThemedText } from './themed-text';
 
 type Props = {
@@ -21,7 +21,8 @@ type Props = {
 // its writing and up to four photos in the order they were set, the first
 // photo credited and the first text piece opening on a raised initial
 // (StoryBlocks). Posts from before multi-photo read as they always did —
-// their one photo above the text.
+// their one photo above the text. Report and Take down sit at the foot
+// (StoryFootActions).
 export const StoryArticle = ({ post }: Props) => {
   const { author } = post;
 
@@ -44,7 +45,7 @@ export const StoryArticle = ({ post }: Props) => {
         credit={`Photo by ${firstName(author.display_name)}`}
       />
 
-      <ReportStoryLink post={post} />
+      <StoryFootActions post={post} />
     </View>
   );
 };

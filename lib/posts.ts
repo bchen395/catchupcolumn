@@ -130,6 +130,33 @@ export const deletePost = async (postId: string): Promise<void> => {
 };
 
 // ---------------------------------------------------------------------------
+// Take down (moderator only)
+// ---------------------------------------------------------------------------
+
+export type TakeDownErrorCode =
+  | 'not_authenticated'
+  | 'post_not_found'
+  | 'not_moderator'
+  | 'take_down_failed';
+
+/**
+ * "Take down this story": delete one post, published or not, and its photo
+ * files, for everyone in the Group. Moderator-only, and it can't be undone.
+ * Emails already sent keep the words, but their photos stop loading.
+ * Throws Error(code) with a TakeDownErrorCode. `post_not_found` means it is
+ * already gone (another moderator, or the author, got there first).
+ * See 20261101195755_take_down_post.sql.
+ */
+export const takeDownPost = async (postId: string): Promise<void> => {
+  const { error } = await supabase.rpc('take_down_post', { p_post_id: postId });
+
+  if (error) {
+    const codes: TakeDownErrorCode[] = ['not_authenticated', 'post_not_found', 'not_moderator'];
+    throw new Error(codes.find((code) => error.message.includes(code)) ?? 'take_down_failed');
+  }
+};
+
+// ---------------------------------------------------------------------------
 // Image upload + signing
 // ---------------------------------------------------------------------------
 
