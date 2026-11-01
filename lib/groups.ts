@@ -376,7 +376,7 @@ export const isGroupMember = async (
 export const fetchMyRole = async (
   groupId: string,
   userId: string,
-): Promise<GroupMemberRow['role'] | null> => {
+): Promise<GroupMembership['role'] | null> => {
   const { data, error } = await supabase
     .from('group_members')
     .select('role')
