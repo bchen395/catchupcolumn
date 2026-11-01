@@ -58,6 +58,26 @@ export const Strings = {
       `Please email us at ${address} and we'll take a look.`,
   },
 
+  // "Take down this story" — the moderator's other quiet line at the foot of a
+  // story (BRAND §9 → Moderation affordances). The confirmation says plainly
+  // what can't be undone: the story is gone for everyone, emails already sent
+  // stay sent, and only their photos stop showing.
+  takeDown: {
+    link: 'Take down this story',
+    linkHint: 'Asks you first, then removes it for everyone in the Group',
+    title: 'Take down this story?',
+    body: (group: string) =>
+      `It comes out of the edition for everyone in ${group}, and its photos are deleted. Emails that already went out can’t be unsent, though the story’s photos will stop showing in them. This can’t be undone.`,
+    // Stands in for the Group's name if it hasn't loaded.
+    groupFallback: 'this Group',
+    confirm: 'Take it down',
+    keep: 'Keep it',
+    failed: 'We couldn’t take this story down just now. Please try again.',
+    notModerator: 'Only the Group’s moderator can take down a story.',
+    // Heard by screen readers as the reader closes on the front page.
+    done: 'The story was taken down.',
+  },
+
   loading: {
     default: 'Setting the type…',
     inbox: 'Pulling this week’s edition…',

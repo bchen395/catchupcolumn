@@ -17,6 +17,7 @@ It deliberately does **not** copy the lists — each has one home:
 | Sequence and why; open questions | `docs/POSITIONING.md` §8, §9 (§6 = Group Zero, §5 = revenue) |
 | Runbook narrative, commands, live-ops checks | `docs/LAUNCH.md` |
 | Submission-day gates (authoritative over LAUNCH) | `docs/PRESUBMISSION_CHECKLIST.md` |
+| Acting on a report: take down, remove, ban (internal) | `docs/MODERATION.md` |
 | Code-side residue | `bugs.md` |
 | What the Group B organizer gets | `docs/ORGANIZER_PLAYBOOK.md` |
 | Group Zero tooling | `scripts/group-zero/` (README), `scripts/group-zero/readout.sql` |

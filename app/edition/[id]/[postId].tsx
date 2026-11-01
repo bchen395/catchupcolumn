@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BackButton } from '@/components/back-button';
+import { EditionViewerProvider } from '@/components/edition-viewer-context';
 import { ErrorState } from '@/components/error-state';
 import { StorySkeleton } from '@/components/skeletons/story-skeleton';
 import { StoryReader } from '@/components/story-reader';
@@ -12,7 +13,7 @@ import { Strings } from '@/constants/strings';
 import { Typography } from '@/constants/typography';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { orderEdition } from '@/lib/edition-layout';
-import { fetchEditionWithPosts } from '@/lib/editions';
+import { fetchEditionWithPosts, fetchGroupForEdition } from '@/lib/editions';
 import { goBackOr } from '@/lib/navigation';
 import type { PostWithAuthor } from '@/types';
 
@@ -26,6 +27,9 @@ const StoryReaderScreen = () => {
   const reduceMotion = useReduceMotion();
 
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
+  const [groupId, setGroupId] = useState('');
+  // Only the take-down confirmation needs it, so it never holds up the story.
+  const [groupName, setGroupName] = useState('');
   const [start, setStart] = useState(0);
   const [headerIndex, setHeaderIndex] = useState(0);
   const [hydrated, setHydrated] = useState(false);
@@ -37,6 +41,10 @@ const StoryReaderScreen = () => {
       const edition = await fetchEditionWithPosts(id);
       const ordered = orderEdition(edition.posts).ordered;
       setPosts(ordered);
+      setGroupId(edition.group_id);
+      fetchGroupForEdition(edition.group_id)
+        .then((group) => setGroupName(group.name))
+        .catch(() => {});
       const found = ordered.findIndex((p) => p.id === postId);
       const initial = found >= 0 ? found : 0;
       setStart(initial);
@@ -112,14 +120,22 @@ const StoryReaderScreen = () => {
         }}
       />
 
-      <StoryReader
-        key={`${start}-${posts.length}`}
-        posts={posts}
-        initialIndex={start}
-        onExit={backToFrontPage}
-        reduceMotion={reduceMotion}
-        onIndexChange={setHeaderIndex}
-      />
+      {/* A story taken down here closes the reader onto its front page,
+          which revalidates when it regains focus. */}
+      <EditionViewerProvider
+        groupId={groupId}
+        groupName={groupName}
+        onStoryRemoved={backToFrontPage}
+      >
+        <StoryReader
+          key={`${start}-${posts.length}`}
+          posts={posts}
+          initialIndex={start}
+          onExit={backToFrontPage}
+          reduceMotion={reduceMotion}
+          onIndexChange={setHeaderIndex}
+        />
+      </EditionViewerProvider>
     </View>
   );
 };

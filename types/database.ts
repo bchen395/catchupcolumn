@@ -301,6 +301,31 @@ export type Database = {
         Args: { p_group_id: string; p_user_id: string; p_banned_by?: string | null };
         Returns: void;
       };
+      // "Take down this story": moderator-only, any story in their Group,
+      // published or not. Deletes the post and its photo files.
+      take_down_post: {
+        Args: { p_post_id: string };
+        Returns: void;
+      };
+      // service_role only — the take-down behind take_down_post, and the
+      // operator's tool for acting on a report. Never called from the app.
+      operator_take_down_post: {
+        Args: { p_post_id: string };
+        Returns: {
+          post_id: string;
+          group_id: string;
+          edition_id: string | null;
+          author_id: string;
+          photo_files_deleted: number;
+        };
+      };
+      // Whether the caller was removed from this Group. Exists for the
+      // groups SELECT policy; the app learns this through
+      // get_invite_preview_details' is_removed instead.
+      is_caller_banned: {
+        Args: { p_group_id: string };
+        Returns: boolean;
+      };
       prepare_account_deletion: {
         Args: { p_user_id: string };
         Returns: {

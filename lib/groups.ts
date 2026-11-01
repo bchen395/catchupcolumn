@@ -370,6 +370,27 @@ export const isGroupMember = async (
   return data !== null;
 };
 
+// The caller's role in a Group, or null when they aren't in it. The edition
+// reader asks, to offer a moderator "Take down this story". RLS only lets
+// members read group_members, so null also covers a Group they can't see.
+export const fetchMyRole = async (
+  groupId: string,
+  userId: string,
+): Promise<GroupMembership['role'] | null> => {
+  const { data, error } = await supabase
+    .from('group_members')
+    .select('role')
+    .eq('group_id', groupId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.role ?? null;
+};
+
 // Minimal preview — works without a session so an invite link can show a
 // logged-out invitee what they're joining before asking them to sign up.
 export const fetchInvitePreview = async (
