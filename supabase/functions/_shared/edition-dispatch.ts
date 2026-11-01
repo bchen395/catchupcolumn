@@ -37,6 +37,11 @@ type EmailRecipient = {
   email: string;
   display_name: string;
   unsubscribe_token: string;
+  // Authors in this edition whose stories this recipient has blocked
+  // (user_blocks, 20261101204252); their stories are left out of this
+  // recipient's email. Absent from a payload built before that migration,
+  // which means nothing is hidden.
+  hidden_author_ids?: string[];
 };
 
 type EmailPayloadRow = {
@@ -238,13 +243,25 @@ export async function sendEditionEmail(
     return { recipientsSent: 0, recipientsFailed: 0, allSucceeded: true };
   }
 
+  // Every story in it has gone since it published — taken down
+  // (take_down_post), or deleted with its writer's account — before this
+  // send. A retry after a failed attempt can come that late. An email with no
+  // stories is no use to anyone, so the edition is recorded as emailed, which
+  // also stops the sweep picking it up again.
+  if (payload.posts.length === 0) {
+    console.log(`Edition ${editionId} has no stories left; marking it emailed without sending.`);
+    await client.rpc('mark_edition_emailed', { p_edition_id: editionId });
+    return { recipientsSent: 0, recipientsFailed: 0, allSucceeded: true };
+  }
+
   if (payload.recipients.length === 0) {
     await client.rpc('mark_edition_emailed', { p_edition_id: editionId });
     return { recipientsSent: 0, recipientsFailed: 0, allSucceeded: true };
   }
 
-  const subject = renderEditionEmailSubject(payload);
-  const posts = await attachSignedPhotoUrls(client, payload.posts);
+  // Signed once for the whole edition; each recipient's email uses the posts
+  // they haven't hidden.
+  const allPosts = await attachSignedPhotoUrls(client, payload.posts);
   const editionWebUrl = `${WEB_BASE_URL}/edition/${payload.edition_id}`;
   const startYourOwnUrl = `${WEB_BASE_URL}/start`;
 
@@ -252,6 +269,17 @@ export async function sendEditionEmail(
   let failed = 0;
 
   for (const recipient of payload.recipients) {
+    // One-way block: this recipient blocked these authors, so their stories
+    // stay out of this email — the subject, masthead counts and names too,
+    // which all come from `posts`. Nobody else's email changes.
+    const hidden = new Set(recipient.hidden_author_ids ?? []);
+    const posts = hidden.size === 0 ? allPosts : allPosts.filter((p) => !hidden.has(p.author_id));
+    if (posts.length === 0) {
+      console.log(`Edition ${editionId}: nothing left to send recipient=${recipient.user_id}; skipped.`);
+      continue;
+    }
+
+    const subject = renderEditionEmailSubject({ group_name: payload.group_name, posts });
     const unsubscribeUrl = `${functionsBaseUrl}/unsubscribe?token=${recipient.unsubscribe_token}`;
     const emailPayload: EditionEmailPayload = {
       edition_id: payload.edition_id,
