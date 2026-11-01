@@ -8,6 +8,7 @@ import { FormButton } from '@/components/form-button';
 import { FormField } from '@/components/form-field';
 import { PendingInviteBanner } from '@/components/pending-invite-banner';
 import { StatusBanner } from '@/components/status-banner';
+import { TermsAgreement } from '@/components/terms-agreement';
 import { ThemedText } from '@/components/themed-text';
 import { Layout } from '@/constants/layout';
 import { Strings } from '@/constants/strings';
@@ -17,7 +18,8 @@ import { usePendingInvite } from '@/hooks/use-pending-invite';
 // Signing up is the same two steps as signing in — email, then the code. There
 // is no password field: one fewer thing to invent, and nothing to lose later.
 // `sendEmailCode` with allowNewUser creates the account, so the code both
-// registers and signs in.
+// registers and signs in. That's why the button that sends it is also the
+// agreement to the Terms (`TermsAgreement`, App Review Guideline 1.2).
 const SignupScreen = () => {
   const router = useRouter();
   const { invite } = usePendingInvite();
@@ -62,6 +64,9 @@ const SignupScreen = () => {
       <View style={styles.form}>
         {flow.formError ? <StatusBanner variant="error" message={flow.formError} /> : null}
 
+        {/* Unlike sign-in, the return key only closes the keyboard. Sending
+            the code creates the account, so Agree is the only way to send it,
+            and closing the keyboard puts the note in view. */}
         <FormField
           label="Email address"
           value={flow.email}
@@ -72,11 +77,16 @@ const SignupScreen = () => {
           textContentType="emailAddress"
           error={flow.fieldError}
           placeholder="you@example.com"
-          onSubmitEditing={() => flow.requestCode()}
-          returnKeyType="go"
+          returnKeyType="done"
         />
 
-        <FormButton title="Email me a code" loading={flow.sending} onPress={() => flow.requestCode()} />
+        <TermsAgreement />
+
+        <FormButton
+          title={Strings.terms.agreeCta}
+          loading={flow.sending}
+          onPress={() => flow.requestCode()}
+        />
       </View>
     </AuthScreenShell>
   );

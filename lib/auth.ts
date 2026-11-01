@@ -39,6 +39,13 @@ const AVATAR_MAX_EDGE = 512;
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 72;
 
+/**
+ * The Terms of Service a new account agrees to, named by their effective date
+ * (the top of docs/TERMS.md). Bump this in the same change as the Terms
+ * themselves: every account created afterwards records it as `terms_version`.
+ */
+export const TERMS_VERSION = '2026-07-03';
+
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
 /**
@@ -72,18 +79,32 @@ export const signInWithEmail = async ({ email, password }: Credentials) => {
  *
  * `allowNewUser` is what separates the two entry points: the login screen passes
  * false so an unknown email is an error we can explain, and the signup screen
- * passes true so the code both creates and signs in.
+ * passes true so the code both creates and signs in. The signup screen calls
+ * it only from its Agree button, so `allowNewUser: true` means the person has
+ * just agreed to the Terms. Sending is what creates the account.
  */
 export const sendEmailCode = async (email: string, { allowNewUser }: { allowNewUser: boolean }) => {
   const { error } = await supabase.auth.signInWithOtp({
     email: normalizeEmail(email),
     options: {
       shouldCreateUser: allowNewUser,
-      // Applied by GoTrue when a user is actually created, which is the only
-      // case we need it for. If it were ever applied to an existing account the
-      // cost is one extra pass through onboarding — which pre-fills from the
-      // saved profile and clears the flag on save, so the outcome is benign.
-      ...(allowNewUser ? { data: { needs_onboarding: true } } : {}),
+      // Applied by GoTrue only when this call creates the user, which is the
+      // only case we need it for. An existing account signing in through the
+      // signup screen keeps its metadata as it was. If `needs_onboarding` were
+      // ever applied to one, the cost is one extra pass through onboarding,
+      // which pre-fills from the saved profile and clears the flag on save.
+      //
+      // The terms fields are a record of the Agree tap, not proof:
+      // user_metadata is writable by its own user.
+      ...(allowNewUser
+        ? {
+            data: {
+              needs_onboarding: true,
+              terms_accepted_at: new Date().toISOString(),
+              terms_version: TERMS_VERSION,
+            },
+          }
+        : {}),
     },
   });
 
