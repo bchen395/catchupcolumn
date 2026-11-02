@@ -30,6 +30,38 @@ Project ref: `wvaxfyhihcfilewygtzp` · Bundle ID: `com.catchupcolumn.app`
 
 ## Current state (2026-09-24)
 
+**Update 2026-11-02 — the Guideline 1.2 work is live on the server.** #64–#70
+merged 2026-10-31 to 2026-11-02. The server half is in production; the app half
+ships with the final build (step 6b, then step 8). Step 9 has the detail.
+
+- **#64** — *Report this story* sends from inside the app, through the
+  `report-story` function, with a drafted email only as the fallback.
+- **#65** — deleting a creator's account hands their Groups to a remaining
+  member. The `on_user_deletion` trigger covers every deletion path. Before
+  this, deleting any creator whose Group still had members failed with a 500.
+- **#66** — removal is a ban, with "Let back in".
+- **#67** — "Agree and email me a code" at sign-up; "Help & support" in
+  Profile.
+- **#68** — "Your delivery": an email switch and a notification switch on each
+  Group's page. The unsubscribe page's new wording is merged but **deploys only
+  on release day** ([Deploying edge functions](#deploying-edge-functions)).
+- **#69** — a moderator's "Take down this story", and `docs/MODERATION.md`, the
+  operator runbook.
+- **#70** — one-way block at the foot of a story, Unblock on the Group page. It
+  hides that person's stories in the app and in your emails.
+- **Production:** all 38 migrations pushed, through `20261101204252_user_blocks`.
+  `compile-editions` v21, `publish-edition-now` v10 and `report-story` v1 are
+  deployed, and all three were downloaded and diffed clean against `main`.
+  `unsubscribe` stays behind `main` on purpose until release day.
+- **Public pages:** Terms effective 2026-11-02 (zero tolerance; report, block,
+  take down), with `TERMS_VERSION` to match; Support and Privacy updated.
+- **No word filter, by decision** (owner, 2026-10-30). The Review Notes argue
+  from structure instead (STORE_LISTING §9.3), and the Terms don't claim one.
+- **Still to do:** the phone checks, in PRESUBMISSION Gate 7.
+- ⚠️ **Supabase CLI 3.0.0 came out 2026-11-02**, and nothing pins the CLI.
+  Pin `supabase@2.122.1` and pass `--linked` for production work until that's
+  decided ([Deploying edge functions](#deploying-edge-functions)).
+
 **Update 2026-10-24** — two owner decisions and a production pass. The
 2026-09-24 snapshot below is kept as written, with struck or annotated lines
 where it changed.
@@ -200,6 +232,13 @@ Cloudflare Email Routing, and DMARC `p=none` was added (step 4). Migration
 `20261003154759_multi_photo_posts` pushed (33 of 33); `compile-editions` v20 and
 `publish-edition-now` v9 deployed, and all four live functions diffed clean.
 #58, #59 and #60 merged.
+
+**2026-10-31 to 2026-11-02 — the Guideline 1.2 work (step 9).** #64–#70 merged.
+Five migrations pushed (38 of 38, through `20261101204252_user_blocks`).
+`report-story` v1 (new), `compile-editions` v21 and `publish-edition-now` v10
+deployed, and all three diffed clean against `main`. `unsubscribe` waits for
+release day. The Terms, Support and Privacy pages followed in the docs PR, with
+the Terms effective 2026-11-02.
 
 ---
 
@@ -558,6 +597,8 @@ says nothing about production — same caveat as the rest of this step.
 
 ✅ **Resend plan's caps: 100/day and 3,000/month** — read from the Resend
 dashboard by the owner, 2026-10-30: the free-tier numbers below, now confirmed.
+Since 2026-10-31 story reports draw on the same cap, one send each, and a run
+of reports could use up a day's sends (bugs.md G1, accepted for 1.0).
 ~~☐ **Check the Resend plan's daily cap.**~~ On the free tier (100/day, 3,000/month —
 verify in the Resend dashboard) a 100/hour Auth ceiling is notional, because Auth
 email now shares that daily budget with edition email. Note the collision:
@@ -776,26 +817,49 @@ Then complete the App Store Connect review forms (age rating / privacy — **fla
 user-generated content**) and submit for review. Every answer is in
 STORE_LISTING §7, §9.1 and §13 (2026-10-30).
 
-## 9. UGC moderation — ✅ done (2026-08-05, PR #14)
+## 9. UGC moderation — ✅ built and live on the server (2026-11-02, #64–#70); ☐ phone checks on the final build
 
 Apple Guideline 1.2 expects three things from an app where users publish content
 others see. **Decided 2026-08-05: build all three** rather than argue the
 invite-only model — a rejection costs a review cycle and all three were cheap.
-This was previously flagged as the likeliest rejection cause; it is now closed.
 
-Shipped: acceptable-use terms (`docs/TERMS.md §4` / `web/terms.html`), a report
-path (`components/report-story-link.tsx`, drafting a mailto with the
-story/group/edition ids; `lib/report.ts` is the seam to swap for a real endpoint),
-and moderator eject (`app/group/[id].tsx` → the `remove_group_member` RPC, which
-also deletes the removed member's *uncompiled* posts so they can't land in
-tomorrow's edition; `prevent_last_moderator_removal` guards the sole-moderator
-case).
+**First pass, 2026-08-05 (PR #14):** acceptable-use terms, a report link that
+drafted an email to `support@`, and moderator eject (`remove_group_member`,
+which also deletes the removed member's *uncompiled* posts;
+`prevent_last_moderator_removal` guards the sole-moderator case). Eject was
+verified against production on 2026-09-22 (from a dev build).
 
-☐ **Still to do:** smoke-test both affordances on device. The Gate 1 re-run this
-used to ask for is moot — CI has run Gate 1 on every PR since 2026-09-10 — and
-moderator eject was verified against production on 2026-09-22 (from a dev build).
-The report path and the release-build run are tracked in
-[PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md) Gates 6–7; don't keep a
+**Second pass, 2026-10-31 to 2026-11-02 (#64–#70).** A 2026-10-30 review found
+gaps against the guideline's text (no block, removal wasn't a ban, nothing
+could take down one published story), and the owner decided to close them in
+code before the final build. STORE_LISTING §9.3 maps each of Apple's asks to
+what answers it. What shipped:
+
+- **Report** sends from inside the app (#64): the `report-story` function
+  emails `support@` one message per report, and a drafted email is only the
+  fallback. Every report is read and acted on within 24 hours, every day;
+  `docs/MODERATION.md` is how.
+- **Terms at sign-up** (#67): "Agree and email me a code". The Terms themselves
+  (effective 2026-11-02) state zero tolerance and describe report, block,
+  remove and take down.
+- **Remove is a ban**, lifted by "Let back in" (#66).
+- **Take down** (#69): a moderator removes any one story, published or not, with
+  its photos.
+- **Block** (#70): one-way, at the foot of a story. It hides that person's
+  stories in the app and in your emails, and Unblock is on the Group page.
+- **No word filter** (owner, 2026-10-30): the Review Notes make the structural
+  case instead.
+- In the same wave, not 1.2: each Group's email and notification switches (#68),
+  and account deletion handing a creator's Groups on (#65, Guideline 5.1.1(v)).
+
+The decided trade-offs (report spam against Resend's cap, push not filtered by
+blocks, a moderator's own block, deleting an account deletes its stories) are
+bugs.md G1–G4.
+
+☐ **Still to do:** the phone checks: #65's creator deletion with throwaway
+accounts, #69's production take-down with photos (T1/T2), and the device
+scripts of #64, #66, #67, #68 and #70. They're all in
+[PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md) Gate 7; don't keep a
 second copy of the list here.
 
 ## 10. Sentry setup **[owner]** — ☐ needed before ~~Group Zero~~ the App Store build (Group Zero skipped 2026-10-24)
@@ -936,8 +1000,9 @@ of scope. **Already in place** (no need to redo it):
 ## On-device smoke test
 
 Owned by [PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md) **Gate 7** —
-two accounts, a TestFlight build, and eleven checks from signup through account
-deletion. It used to be duplicated here; it isn't any more.
+test accounts, a TestFlight build, and the checks from signup through account
+deletion, plus the Guideline 1.2 device scripts (#64–#70). It used to be
+duplicated here; it isn't any more.
 
 Two things in it are *also* live ops concerns rather than submission gates,
 because both fail silently and Group Zero depends on both: what code the edge
@@ -975,6 +1040,36 @@ imports did.
 2026-10-24**, after migration `20261003154759_multi_photo_posts` was pushed
 (production now has all 33). They carry the multi-photo email (#55). All four
 live functions were then downloaded and diffed clean against `main`.
+
+✅ **`report-story` v1 deployed 2026-10-31** (#64), a new function, with
+`verify_jwt` true (spelled out in `config.toml`).
+
+✅ **`compile-editions` v21 and `publish-edition-now` v10 deployed 2026-11-02**
+(#70), after migration `20261101204252_user_blocks` was pushed. That order
+matters: a worker deployed first would treat every recipient as having blocked
+no one. They leave a blocked writer's stories out of each recipient's email,
+and skip an edition with no stories left. These two and `report-story` were
+then downloaded and diffed clean against `main`.
+
+☐ **Release day: deploy `unsubscribe`.** #68 changed the unsubscribe page's last
+line to point at the new "Email me each edition" switch, which exists only in
+the new build. Deploy it when the App Store version is released, not before
+(PRESUBMISSION → After approval):
+
+```bash
+npx supabase functions deploy unsubscribe --use-api
+```
+
+Run it with the CLI pinned (below), then download-and-diff all five functions.
+Until then, `unsubscribe` differing from `main` is expected.
+
+⚠️ **Supabase CLI 3.0.0 (released 2026-11-02): pin 2.122.1 until the CLI
+decision is made.** Nothing in the repo pins the CLI, so `npx supabase` now
+fetches v3. Under v3, `supabase/config.toml`'s `[inbucket]` section is a hard
+error, and `db push` targets the **local** database unless you pass `--linked`.
+The 2026-11-02 production work ran as `npx -y supabase@2.122.1 … --linked`. Do
+the same for every command on this page (deploys, downloads, `db push
+--linked`, `db query --linked`) until the repo settles it.
 
 To deploy after any future change — `config.toml` pins each function's
 `verify_jwt` to what production has, so a plain deploy keeps the cron's

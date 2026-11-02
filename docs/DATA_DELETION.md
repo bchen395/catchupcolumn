@@ -11,8 +11,9 @@ This permanently deletes:
 - your profile (display name, photo, bio, email);
 - all posts and photos you created;
 - your uploaded images in storage;
-- your memberships in every group (with moderator handoff or group removal where you
-  are the sole moderator).
+- your memberships in every group. Each group carries on for its other members: if
+  you're its only moderator, the member who joined it earliest becomes its
+  moderator, and a group with no one else in it is deleted.
 
 ## Request deletion by email
 

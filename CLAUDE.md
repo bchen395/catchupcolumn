@@ -229,6 +229,12 @@ npx expo run:ios
 # Run on Android emulator
 npx expo run:android
 
+# ⚠ Supabase CLI 3.0.0 (out 2026-11-02) — nothing here pins the CLI, so `npx
+# supabase` now fetches v3. Under v3, config.toml's [inbucket] section is a hard
+# error, and `db push` targets the LOCAL database unless you pass --linked. Until
+# the CLI decision is made, pin 2.122.1 for production work and pass --linked to
+# push: npx -y supabase@2.122.1 db push --linked (and the same pin for deploys).
+
 # Create a new Supabase migration
 npx supabase migration new <name>
 

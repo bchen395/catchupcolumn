@@ -1,7 +1,7 @@
 # Privacy Policy — Catch Up Column
 
 **Effective date:** July 3, 2026
-**Last updated:** October 30, 2026
+**Last updated:** November 2, 2026
 
 Catch Up Column ("the app", "we", "us") is a private group newsletter you write
 together with family and friends. This policy explains what we collect, why, and
@@ -27,6 +27,9 @@ We only collect what the app needs to work:
   can sign in with an emailed code, and a password is never required.
 - Display name — shown as your byline to other members of your groups.
 - Profile photo (optional) and short bio (optional).
+- Safety records — the people you've blocked (only you can see them), people
+  removed from a group you moderate (only its moderators can see them), when you
+  agreed to our Terms, and reports you send us (your note and email address).
 
 **Content you create**
 - Posts (title and body text) and any photos you attach.
@@ -57,7 +60,7 @@ the only third-party SDK in the app, and it exists so we can fix what breaks.
 Catch Up Column is private by design. Your posts and photos are visible only to
 members of the specific group you post them in. Editions are delivered only to the
 members of that group. There is no public feed and no discovery of your content by
-strangers.
+strangers. If someone reports a story, we read it to act on the report.
 
 ## Service providers (data processors)
 
@@ -67,10 +70,12 @@ only to provide their service to us:
 - **Supabase** — database, authentication, and file storage (your account,
   content, and photos are stored here). https://supabase.com/privacy
 - **Resend** — sends your sign-in and confirmation codes, account security
-  notices, and the weekly edition emails. When we email you a code or a notice,
-  your email address is sent to Resend to deliver it; when an
-  edition publishes, the recipient email addresses and the edition content are
-  sent to Resend for delivery. https://resend.com/legal/privacy-policy
+  notices, and the weekly edition emails, and delivers the reports you send us
+  from the app. When we email you a code or a notice, your email address is sent
+  to Resend to deliver it; when an edition publishes, the recipient email
+  addresses and the edition content are sent to Resend for delivery; when you
+  report a story, your note and email address are sent through Resend to reach
+  us. https://resend.com/legal/privacy-policy
 - **Sentry** — receives the crash reports described above, and nothing else.
   https://sentry.io/privacy/
 - **Expo / Expo Application Services** — delivers push notifications and app
@@ -90,8 +95,9 @@ Deleting your account removes your profile and content as described below.
 
 You can permanently delete your account at any time from the app: **Profile →
 Delete my account**. This removes your profile, your posts and photos, your uploaded
-images, and your group memberships. If you are the sole moderator of a group,
-moderation is handed off or the group is removed as part of deletion.
+images, and your group memberships. Your groups carry on for their other members:
+if you're a group's only moderator, the member who joined it earliest becomes its
+moderator, and a group with no one else in it is deleted.
 
 If you cannot access the app, you may request deletion by emailing
 `support@catchupcolumn.com` from the email address on your account. See
@@ -99,9 +105,11 @@ If you cannot access the app, you may request deletion by emailing
 
 ## Your choices
 
-- **Edition emails:** every edition email includes a one-tap unsubscribe link,
-  per group.
-- **Push notifications:** turn these off in your device settings at any time.
+- **Edition emails:** turn a group's edition emails off or back on from that
+  group's page in the app. Every edition email also includes a one-tap
+  unsubscribe link, per group.
+- **Push notifications:** turn them off for one group from that group's page in
+  the app, or for the whole app in your device settings.
 - **Profile:** edit your display name, photo, and bio in the app.
 
 ## Security

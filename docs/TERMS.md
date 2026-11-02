@@ -1,9 +1,10 @@
 # Terms of Service — Catch Up Column
 
-**Effective date:** July 3, 2026
+**Effective date:** November 2, 2026
 
 By creating an account or using Catch Up Column ("the app"), you agree to these
-terms. If you do not agree, do not use the app.
+terms. The app asks you to agree to them before it creates your account. If you
+do not agree, do not use the app.
 
 ## 1. Who can use the app
 
@@ -26,28 +27,55 @@ right to share what you post, including photos of other people.
 
 ## 4. Acceptable use
 
-Don't use the app to post content that is unlawful, harassing, hateful, or that
-infringes someone else's rights, and don't attempt to access other users' data,
-disrupt the service, or misuse invite links. Groups are private spaces among people
-who invite each other; treat other members with the warmth the app is built for.
+Catch Up Column has zero tolerance for objectionable content and abusive users.
+You may not use the app to post or share anything that:
 
-If you see a story that breaks these rules, tap **Report this story** at the bottom
-of it, or email `support@catchupcolumn.com`. We read every report and may remove
-content or accounts that violate these terms.
+- harasses, bullies, threatens, or intimidates anyone;
+- is hateful toward people because of their race, ethnicity, national origin,
+  religion, caste, sex, gender identity, sexual orientation, disability, age, or
+  serious illness;
+- is sexually explicit, or shows anyone in an intimate image without their consent;
+- shows or encourages violence, self-harm, or cruelty;
+- shares someone's private information, or a photo of them you don't have the
+  right to share;
+- is unlawful or infringes someone else's rights; or
+- is otherwise objectionable.
+
+Don't attempt to access other users' data, disrupt the service, or misuse invite
+codes or links. Groups are private spaces among people who invite each other; treat
+other members with the warmth the app is built for.
+
+If you see a story that breaks these rules, tap **Report this story** at the foot
+of it, or email `support@catchupcolumn.com`. We review every report within 24
+hours. When something breaks these terms, we take it down, remove the person who
+posted it from the group, and may suspend or close their account, without notice.
+
+You can block another member by tapping **Block** at the foot of any story they
+wrote. You then won't see their stories in the app, and they're left out of your
+edition emails. They aren't told. You can unblock them from the group's page.
 
 ## 5. Moderators
 
-A group's creator is its moderator and can manage group settings and membership.
-A moderator can remove any member of their group at any time; removing someone also
-deletes anything they have written for the upcoming edition, and already-published
-editions are left unchanged. Moderators are responsible for the groups they run and
-the members they invite.
+A group's creator is its moderator and can manage the group's settings and
+membership. A moderator can:
+
+- remove any member at any time. Removing someone also deletes anything they've
+  written for the upcoming edition, and the group's invite code won't let them
+  rejoin unless the moderator lets them back in; and
+- take down any story in the group, including one in an edition that has already
+  been published. It is removed from the app for every member and its photos are
+  deleted. Edition emails already sent can't be recalled, though the photos in
+  them stop loading.
+
+Moderators are responsible for the groups they run and the members they invite. We
+may also take down content or remove members from any group ourselves.
 
 ## 6. Deleting content and accounts
 
-You can delete your posts before an edition is published and delete your account at
-any time from **Profile → Delete my account**. Deleting your account removes your
-profile and content as described in the [Privacy Policy](./PRIVACY.md).
+You can delete your posts before an edition is published; after that, ask your
+group's moderator to take one down. You can delete your account at any time from
+**Profile → Delete my account**. Deleting your account removes your profile and
+content as described in the [Privacy Policy](./PRIVACY.md).
 
 ## 7. Service availability
 

@@ -8,18 +8,30 @@ This is what to do when someone reports a story, or when something in a Group
 has to go and the Group's own moderator can't or won't act.
 
 **The promise:** every report is read and acted on **within 24 hours, every
-day of the week**. The app says so after a report is sent, and so do the App
-Review notes. Don't shorten it, and change it only together with both.
+day of the week**. The app says so after a report is sent, and so do the Terms
+(§4), the Support page and the App Review notes. Don't shorten it, and change
+it only together with all four.
+
+**Take-downs are silent** (owner, 2026-11-01). Nothing tells the writer that
+their story came down, whether the Group's moderator took it down or we did.
+For a serious case you may email them yourself (step 7).
 
 ## What people can already do themselves
 
 | Who | In the app | What it does | Undo |
 | --- | --- | --- | --- |
-| Any member | **Report this story**, at the foot of any story but their own | Emails us (below) | — |
-| The Group's moderator | **Take down this story**, at the foot of any story in their Group | Deletes the story and its photos, in any edition, for everyone | None. The writer can write it again |
+| Any member | **Report this story**, at the foot of any story but their own | Sends us a report from inside the app (below) | — |
+| Any member | **Block {name}**, at the foot of any story but their own | Hides all that person's stories from them, past editions included, and leaves them out of their edition emails from then on. One-way, and the blocked person isn't told | **Unblock**, on that person's row of the Group page |
+| The Group's moderator | **Take down this story**, at the foot of any story in their Group | Deletes the story and its photos, in any edition, for everyone. The writer isn't told | None. The writer can write it again |
 | The Group's moderator | **Remove**, on the Group page | Takes them out of the Group, deletes what they've written for the coming edition, and bans them: the invite code won't let them back in | **Let back in**, under "Removed" on the Group page |
 
 Everything below is the same set of tools, run by us with the service role.
+
+A moderator who blocks someone also stops seeing that person's stories in
+their own Group, so they can't take those down from the app. That is by design
+(bugs.md G3): they can **Unblock** first, or **Remove** the person. If a
+moderator writes that they can't find a story to take down, ask whether they
+blocked its writer.
 
 ## Where to run things
 
@@ -41,7 +53,8 @@ Everything below is the same set of tools, run by us with the service role.
 ## 1. A report arrives
 
 Reports come to `support@catchupcolumn.com`, sent by the `report-story` edge
-function, one email per report:
+function (`supabase/functions/report-story`, live since 2026-10-31) through
+Resend, one email per report:
 
 - **Subject:** `Story report — {Group name}`.
 - **Reply-To:** the reporter's address, so replying answers them.
@@ -63,6 +76,11 @@ will simply write to support@ in their own words. Ask them which story, or
 find it from the Group and the name.
 
 The 24 hours start when the email arrives.
+
+Each report is one send against Resend's 100-a-day cap, which sign-in codes and
+edition email share. A run of reports from one account can use it up (bugs.md
+G1, accepted for 1.0). If sign-in codes stop arriving on a day with a pile of
+reports, that is why. The reporter's id is in each email.
 
 ## 2. Read the story
 
@@ -122,7 +140,8 @@ What it can't undo:
 - **Edition emails already sent.** The words stay in people's inboxes. Their
   photos are signed links to the files just deleted, so they stop loading.
 - The edition stays even if this was its only story. The app shows it as an
-  empty page, and its number stays in the Group's run.
+  empty page, and its number stays in the Group's run. If its email hadn't gone
+  out yet, the next attempt sends nothing and marks it sent (#70).
 
 ## 4. Remove the writer from the Group
 
@@ -284,7 +303,15 @@ other person's account beyond what they can see in the app:
 > Group.} If anything else comes up, just reply to this email.
 
 If you decided to leave it, say that you read it and why it doesn't break the
-rules, and that the Group's moderator can still take a story down.
+rules, and that the Group's moderator can still take a story down. If they'd
+rather not see that person's stories, **Block** at the foot of the story hides
+them, and only they will know.
+
+**The writer isn't told** that their story came down (owner, 2026-11-01). For a
+serious case, the kind in step 5, you may email them from `support@` to say
+which story came down and which part of the Terms it broke. Keep it to that:
+don't name the person who reported it, and don't argue the decision. For
+anything in step 6, ask counsel before you write to them at all.
 
 If you acted in someone else's Group, write to its moderator too: a story has
 vanished from their edition, and someone may have appeared under "Removed".

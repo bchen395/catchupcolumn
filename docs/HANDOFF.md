@@ -18,6 +18,7 @@ It deliberately does **not** copy the lists — each has one home:
 | Runbook narrative, commands, live-ops checks | `docs/LAUNCH.md` |
 | Submission-day gates (authoritative over LAUNCH) | `docs/PRESUBMISSION_CHECKLIST.md` |
 | Acting on a report: take down, remove, ban (internal) | `docs/MODERATION.md` |
+| Guideline 1.2: what Apple asks, what ships | `docs/STORE_LISTING.md` §9.3; `docs/LAUNCH.md` step 9 |
 | Code-side residue | `bugs.md` |
 | What the Group B organizer gets | `docs/ORGANIZER_PLAYBOOK.md` |
 | Group Zero tooling | `scripts/group-zero/` (README), `scripts/group-zero/readout.sql` |
@@ -40,6 +41,30 @@ time, with exact clicks/commands**; verify every claim against production
 (read-only) before recording it. The owner merges PRs — or tells you to, per PR.
 
 ## Live state — re-check before relying on it
+
+**Update 2026-11-02 — the Guideline 1.2 work.** The rest of this section is the
+2026-10-03 snapshot and is stale in places (Group Zero was skipped 2026-10-24,
+and `support@` has received mail since then); `docs/LAUNCH.md` → Current state
+is newer.
+
+- **Merged 2026-10-31 to 2026-11-02:** #64 *Report this story* sends from
+  inside the app (`report-story`; a drafted email only as fallback); #65 a
+  creator's Groups are handed over on account deletion (the `on_user_deletion`
+  trigger, every deletion path); #66 removal is a ban, with "Let back in"; #67
+  "Agree and email me a code" at sign-up, Help & support in Profile; #68 each
+  Group's email and notification switches; #69 a moderator's take-down and
+  `docs/MODERATION.md`; #70 one-way block. No word filter, by decision.
+- **Production, 2026-11-02:** all 38 migrations pushed; `compile-editions` v21,
+  `publish-edition-now` v10 and `report-story` v1 deployed, downloaded and
+  diffed clean against `main`.
+- **Release day:** `npx supabase functions deploy unsubscribe --use-api` (#68's
+  new wording points at a switch only the new build has). Not before.
+- **Phone checks owed:** PRESUBMISSION Gate 7 — #65's creator deletion with
+  throwaway accounts, #69's production take-down with photos (T1/T2), and the
+  device scripts of #64, #66, #67, #68 and #70 (`gh pr view <n>`).
+- **Supabase CLI 3.0.0 is out (2026-11-02) and unpinned here:** run
+  production commands as `npx -y supabase@2.122.1 … --linked` until the CLI
+  decision is made (Traps, below).
 
 Server rows verified 2026-09-25/28; EAS, CI and the merges verified 2026-10-03.
 
@@ -87,12 +112,15 @@ Server rows verified 2026-09-25/28; EAS, CI and the merges verified 2026-10-03.
   Dashboard items 1–4 done 2026-09-28 (LAUNCH step 5).
 
 **Wrong or open right now:**
-- **`support@catchupcolumn.com` can't receive mail — no MX record** on the apex
+- ~~**`support@catchupcolumn.com` can't receive mail — no MX record** on the apex
   (verified with `dig`, 2026-10-03). It's where *Report this story* sends
   (`lib/report.ts`, the Guideline 1.2 report path), the privacy policy's
   deletion route, the support page, the TestFlight feedback address and the
   DMARC `rua`. Owner fix: Cloudflare Email Routing (§1, first item). No apex
-  TXT exists, so Cloudflare's SPF won't clash with Resend (`send.` subdomain).
+  TXT exists, so Cloudflare's SPF won't clash with Resend (`send.` subdomain).~~
+  **Fixed 2026-10-24** (Cloudflare Email Routing). Since #64 (2026-10-31) a
+  report reaches `support@` through the `report-story` function, not the
+  reporter's mail app.
 - **No production build yet.** Nothing has run on a phone as a signed binary.
 - **#44's app half is on no build yet** (fingerprint moved). Checks:
   PRESUBMISSION Gates 5 and 7.
@@ -400,6 +428,11 @@ friend-group volumes sell (POSITIONING §9).
 - **Merging deploys nothing to Supabase**; a `_shared/` change needs every
   importer redeployed. CI never runs auth, email, or storage against the real
   project.
+- **Supabase CLI 3.0.0 (2026-11-02) isn't pinned here.** Under v3
+  `config.toml`'s `[inbucket]` section is a hard error and `db push` targets
+  the **local** database unless you pass `--linked`. Pin
+  `npx -y supabase@2.122.1 …` and pass `--linked` for production until the
+  CLI decision is made.
 - `.env.local` never reaches an EAS build; `EXPO_PUBLIC_*` is inlined at build
   time. A custom profile needs `"environment"` set — `staging` sets
   `production` explicitly (Expo's docs don't state the default).
@@ -407,7 +440,7 @@ friend-group volumes sell (POSITIONING §9).
 - The bundle ID locks on the first TestFlight upload, not at submission.
 - External TestFlight needs Apple's review and a demo account the reviewer can
   sign in to — an emailed code won't reach them — **plus a second member**, or
-  the reviewer sees neither *Report* nor *Remove*.
+  the reviewer sees none of *Report*, *Block* or *Remove*.
 - `supabase functions download` writes every function into one `_shared/`
   folder — re-download the one you care about alone before diffing.
 - Profile photo: the app shows the preview before **Save** uploads it. Weak
