@@ -120,12 +120,13 @@ const StoryReaderScreen = () => {
         }}
       />
 
-      {/* A story taken down here closes the reader onto its front page,
-          which revalidates when it regains focus. */}
+      {/* A story taken down here, or its writer blocked, closes the reader
+          onto its front page, which revalidates when it regains focus. */}
       <EditionViewerProvider
         groupId={groupId}
         groupName={groupName}
         onStoryRemoved={backToFrontPage}
+        onAuthorBlocked={backToFrontPage}
       >
         <StoryReader
           key={`${start}-${posts.length}`}

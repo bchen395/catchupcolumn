@@ -77,6 +77,27 @@ export const Strings = {
     // Heard by screen readers as the reader closes on the front page.
     done: 'The story was taken down.',
   },
+  // One-way block (BRAND §9 → Moderation affordances). "Block {first}" sits
+  // at the foot of anyone else's story; "Blocked" and "Unblock" on their row
+  // of the Group page. `name` is always a first name.
+  block: {
+    link: (name: string) => `Block ${name}`,
+    linkHint: 'Hides their stories from you',
+    title: (name: string) => `Block ${name}?`,
+    body: (name: string) =>
+      `You won’t see ${name}’s stories in the app anymore, even in past editions, and they’ll be left out of your edition emails from now on. ${name} won’t be told. You can unblock them from the Group’s page.`,
+    confirm: 'Block',
+    cancel: 'Cancel',
+    // Heard by screen readers as the reader closes on the front page.
+    done: (name: string) => `You’ve blocked ${name}. Their stories are hidden from you.`,
+    tag: 'Blocked',
+    unblock: 'Unblock',
+    a11yUnblock: (name: string) => `Unblock ${name}`,
+    unblockTitle: (name: string) => `Unblock ${name}?`,
+    unblockBody: (name: string) =>
+      `${name}’s stories will show up for you again, past editions included.`,
+    failed: 'We couldn’t do that just now. Please try again.',
+  },
 
   loading: {
     default: 'Setting the type…',
