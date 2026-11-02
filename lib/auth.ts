@@ -44,7 +44,7 @@ export const PASSWORD_MAX_LENGTH = 72;
  * (the top of docs/TERMS.md). Bump this in the same change as the Terms
  * themselves: every account created afterwards records it as `terms_version`.
  */
-export const TERMS_VERSION = '2026-07-03';
+export const TERMS_VERSION = '2026-11-02';
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 

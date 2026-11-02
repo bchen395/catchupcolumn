@@ -18,9 +18,17 @@ to bottom: each gate assumes the ones above it passed.
 
 Statuses below carry their own dates; the last pass against production was
 **2026-09-24** (Gates 2–4), with Gate 2's migrations and functions re-done
-**2026-10-24**. Re-verify anything older than your last deploy — and
+**2026-10-24** and again **2026-11-02**, after the Guideline 1.2 work
+(#64–#70). Re-verify anything older than your last deploy — and
 remember that **merging deploys nothing** to Supabase: migrations and edge
 functions ship by hand (Gate 2).
+
+⚠️ **Supabase CLI 3.0.0 came out 2026-11-02, and the repo doesn't pin the
+CLI.** Under v3 `config.toml`'s `[inbucket]` section is a hard error and
+`db push` targets the local database unless you pass `--linked`. Until the CLI
+decision is made, run the `npx supabase …` commands below as
+`npx -y supabase@2.122.1 … --linked` ([LAUNCH.md → Deploying edge
+functions](./LAUNCH.md#deploying-edge-functions)).
 
 ---
 
@@ -50,7 +58,9 @@ migration apply plus `supabase db lint`.
 - [ ] Bundle size sanity-checked from the CI run summary — it prints JS and asset
       totals per platform
 - [ ] No `console.log` or `TODO` left in `app/`, `components/`, `lib/`, `hooks/`
-- [ ] **UGC moderation decision made** — see Gate 6; it can change what you ship
+- [x] **UGC moderation decision made** — see Gate 6; it can change what you ship
+      *(owner, 2026-10-30: close the gaps in code; shipped as #64–#70,
+      2026-10-31 to 2026-11-02)*
 
 **What CI cannot do — still on you.** It never renders a screen, sends a push, or
 touches a device:
@@ -64,12 +74,17 @@ touches a device:
 
 - [x] `npx supabase migration list --linked` — every local migration shows a `remote`
       counterpart *(2026-09-24: all 30 applied ✅, through `20260923003208`;
-      2026-10-24: all 33 ✅, through `20261003154759_multi_photo_posts`)*
-- [x] `npx supabase functions list` — all 4 functions `ACTIVE` **and the deployed
+      2026-10-24: all 33 ✅, through `20261003154759_multi_photo_posts`;
+      2026-11-02: all 38 ✅, through `20261101204252_user_blocks`)*
+- [x] `npx supabase functions list` — all ~~4~~ 5 functions `ACTIVE` **and the deployed
       source matches `main`** *(2026-09-24 ✅ — after redeploying `compile-editions`
       and `publish-edition-now`, which had been on a 2026-07-11 build sending the v1
       email; 2026-10-24 ✅ — `compile-editions` v20 and `publish-edition-now` v9
-      deployed, then all four downloaded and diffed clean)*. Re-check before submission with the download-and-diff in
+      deployed, then all four downloaded and diffed clean; 2026-11-02 ✅ —
+      `report-story` v1 (new, #64), `compile-editions` v21 and
+      `publish-edition-now` v10 (#70) deployed, and those three downloaded and
+      diffed clean. **`unsubscribe` is behind `main` on purpose** until release
+      day — After approval, below)*. Re-check before submission with the download-and-diff in
       [LAUNCH.md → Deploying edge functions](./LAUNCH.md#deploying-edge-functions).
       > Compare source, not timestamps. `updated_at` is accurate, but it only says
       > *when*; `delete-account`'s once looked older than its last commit because
@@ -218,30 +233,39 @@ Authentication:
 ## Gate 6 — App Review risk: user-generated content
 
 Apple Guideline 1.2 expects three things from an app where users publish content
-others see. All three shipped 2026-08-05 (PR #14); the decision and the code
-pointers are [LAUNCH.md](./LAUNCH.md) step 9. What's left is verification.
+others see. The first pass shipped 2026-08-05 (PR #14); the gaps found
+2026-10-30 were closed in code by #64–#70 (2026-10-31 to 2026-11-02, server
+half live in production). The decisions and the code pointers are
+[LAUNCH.md](./LAUNCH.md) step 9 and `STORE_LISTING.md` §9.3. What's left is
+verification on a phone.
 
 - [x] Published acceptable-use terms — `docs/TERMS.md §4` / `web/terms.html`
-- [x] A way to **report** objectionable content
-- [x] A way to **block or eject** an abusive user — *eject only (found
-      2026-10-30): a member can't block anyone, and a removed member who still
-      has the invite code can rejoin. `STORE_LISTING.md` §9.3. To be closed in
-      code before the final build (owner, 2026-10-30)*
+      *(rewritten for zero tolerance, effective 2026-11-02)*, **agreed to at
+      sign-up** ("Agree and email me a code", #67)
+- [x] A way to **report** objectionable content — *sends from inside the app
+      since #64; answered within 24 hours (`docs/MODERATION.md`)*
+- [x] A way to **block or eject** an abusive user — *one-way block (#70);
+      removal is a ban, with "Let back in" (#66); a moderator can take down any
+      one story (#69)*
+- [x] Filtering — *no word filter, by decision (owner, 2026-10-30): the Review
+      Notes' "Filtering:" line makes the structural case (`STORE_LISTING.md`
+      §13.3)*
 
 - [x] Re-run the Gate 1 automated checks — *moot since 2026-09-10: CI runs Gate 1
-      on every PR, and this code landed before that*
-- [ ] Smoke-test both affordances on device (folded into Gate 7 below). Eject is
-      already proven against production (2026-09-22); **report** has not been
-      exercised at all
+      on every PR, #64–#70 included*
+- [ ] Smoke-test every affordance on device (folded into Gate 7 below). Eject is
+      already proven against production (2026-09-22); report, block, take down,
+      the ban and the Terms agreement haven't been run on a phone
 - [ ] Age rating questionnaire answer prepared: **flag user-generated content**
       (Gate 8 ticks it; getting this wrong is the rejection this gate exists to
       prevent) — *drafted 2026-10-30 in `STORE_LISTING.md` §9.1; the owner
-      chose the 18+ override and Messaging and Chat: Yes the same day. §9.3 lists what Guideline
-      1.2 asks for that the app doesn't have yet.*
+      chose the 18+ override and Messaging and Chat: Yes the same day. §9.3 maps what Guideline
+      1.2 asks for to what ships (2026-11-02).*
 
 ## Gate 7 — On-device smoke test
 
-Using the TestFlight / internal-testing build, with two accounts:
+Using the TestFlight / internal-testing build, with two accounts (three for the
+#66, #69 and #70 scripts below, which use a moderator and two contributors):
 
 > **The production side of three of these is already proven** (2026-09-22,
 > from a dev build against the live project, checked with before/after
@@ -261,12 +285,38 @@ Using the TestFlight / internal-testing build, with two accounts:
 - [ ] The email's "read the edition" link lands on the bouncer and hands off to the
       app — **not a 404**
 - [ ] Push notification fires
-- [ ] Unsubscribe link → styled confirmation page
-- [ ] **Report this story** → drafts an email to support with the ids attached, and
-      is absent on your own post
+- [ ] Unsubscribe link → styled confirmation page *(its new last line, pointing
+      at "Email me each edition", shows only after the release-day deploy)*
+- [ ] **Report this story** → the report sheet sends from inside the app, the
+      email arrives at `support@` with the note and the ids, and the link is
+      absent on your own post *(the full script is #64's)*
 - [ ] **Moderator removes the second account** → they lose access, their unpublished
-      post disappears from the next edition, and the published edition is unchanged
+      post disappears from the next edition, the published edition is unchanged,
+      and the invite code no longer lets them back in *(the full script is #66's)*
 - [ ] Profile → Delete my account → completes and signs out
+- [ ] **Guideline 1.2 work (#64–#70), first on this build.** Each PR body holds
+      its script: `gh pr view <n>`.
+  - [ ] **#65, on production with throwaway accounts:** delete a *creator's*
+        account while their Group still has a member → the deletion completes,
+        and the Group passes to that member as moderator. The steps and the
+        read-only checks are in the PR's "QA on production"
+  - [ ] **#69, one production take-down with photos, using T1/T2** — the storage
+        guard isn't proven by CI or a local stack. Steps in the PR's "After
+        merging" item 3: a 2-photo story taken down from the phone leaves 0
+        files, its email photos stop loading, then the operator path
+  - [ ] **#64's device script** — report with and without a note, the failure
+        and "Email us instead", keyboard, largest text, VoiceOver, the reader
+        overlay
+  - [ ] **#66's device script** — remove, the removed person's join refused,
+        "Let back in", contributors can't remove
+  - [ ] **#67's device script** — "Agree and email me a code", the Terms link
+        round trip, an invite pending, the new account's `terms_version`
+        (`2026-11-02` on a build carrying this Terms change), Help & support
+  - [ ] **#68's device script** — the email and notification switches on two
+        Groups, the unsubscribe link flipping the switch, notifications blocked
+        on the phone, a failed save, a moderator refused another member's flags
+  - [ ] **#70's device script** — block, what disappears where, the email
+        without the blocked writer, the deep link, Unblock
 - [ ] **Auth (#44, first on this build):**
   - [ ] Sign-in and sign-up code screens say the code expires in 10 minutes
   - [ ] Profile → Set a password, on a fresh sign-in → saves without asking for a
@@ -320,5 +370,14 @@ Using the TestFlight / internal-testing build, with two accounts:
 
 ## After approval
 
+- [ ] **On release day, when you release the version:** deploy `unsubscribe`
+      (#68's new last line points at the "Email me each edition" switch, which
+      only the new build has), with the CLI pinned as above:
+      ```bash
+      npx supabase functions deploy unsubscribe --use-api
+      ```
+      Then download-and-diff all five functions
+      ([LAUNCH.md → Deploying edge functions](./LAUNCH.md#deploying-edge-functions)):
+      production should match `main` again
 - [ ] Fill `appStoreUrl` / `playStoreUrl` in `web/config.js` and redeploy, so the
       site's download buttons replace the "coming soon" line

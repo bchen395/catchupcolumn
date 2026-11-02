@@ -168,6 +168,72 @@ Two corrections to *this document*, which had drifted:
 
 ---
 
+## Guideline 1.2 work — decided trade-offs, 2026-10-31 to 2026-11-02
+
+Found while building report, block, take-down and the creator hand-over
+(#64–#70). Each one is a conscious decision by the owner, recorded here so it
+isn't mistaken for an oversight. The operator's side of them is in
+`docs/MODERATION.md`.
+
+### ~~G1. Report spam can use up Resend's shared 100/day cap~~ — ACCEPTED for 1.0 2026-10-31
+- **Decision (owner, 2026-10-31): accept for 1.0.**
+- **Where:** `supabase/functions/report-story/index.ts` (#64), which sends one
+  Resend email per report and has no rate limit of its own.
+- Resend's free tier allows 100 sends a day and 3,000 a month, and sign-in
+  codes, edition email and reports all draw on it (`docs/LAUNCH.md` step 5).
+  Any signed-in member can send reports about the stories they can read, as
+  fast as they can tap *Send report*. One account could use up the day's sends,
+  and then sign-in codes fail for everyone until the next day.
+- What limits it today: only a member of the story's Group can report it
+  (`verify_jwt`, then the read runs under RLS), and every report names its
+  sender, so the operator can see who did it and remove or ban them.
+- **Fix (if it happens):** a per-reporter limit in the function (a few an
+  hour), or reports on a separate sender or plan.
+
+### ~~G2. Push isn't filtered by blocks, or by an edition that's empty for one person~~ — ACCEPTED for 1.0 2026-11-02
+- **Decision (owner, 2026-11-02): accept for 1.0.**
+- **Where:** `pushEdition` in `supabase/functions/_shared/edition-dispatch.ts`
+  and `get_edition_push_targets` (`20260505000040`).
+- Email is filtered for each recipient since #70: someone who blocked every
+  writer in an edition gets no email, and an edition whose stories were all
+  taken down before its email went out sends none. Push does neither. If B
+  wrote an edition alone, C, who blocked B, still gets "Your Group is ready!",
+  and so does everyone for an edition emptied by take-downs before the push
+  went out. Tapping it opens an edition that reads as empty to them.
+- The push carries only the Group's name, so nothing of the blocked person
+  reaches C. The cost is one notification that leads nowhere.
+- **Fix:** give the push targets the same per-recipient check as the email
+  payload (skip a member who can see no story in the edition), and skip the
+  push for an edition with no posts.
+
+### ~~G3. A moderator's block also hides stories in a Group they run~~ — BY DESIGN 2026-11-02
+- **Decision (owner, 2026-11-02): by design.** *Remove* or *Unblock* covers it.
+- **Where:** the posts SELECT policy
+  (`supabase/migrations/20261101204252_user_blocks.sql:127`) hides a blocked
+  writer's stories from the blocker everywhere, the blocker's own Groups
+  included. So a moderator who blocks someone can't see that person's stories
+  to take them down from the app. `take_down_post` itself still works.
+- The moderator can unblock, take the story down and block again, or remove
+  the person, which bans them and deletes their unpublished posts. Their
+  published stories stay until someone takes them down, as with any removal.
+
+### ~~G4. Deleting an account removes that person's published stories~~ — KEPT 2026-10-31
+- **Decision (owner, 2026-10-31): kept as is.** Found by #65.
+- **Where:** `posts.author_id` references `users` with `on delete cascade`
+  (`supabase/migrations/001_initial_schema.sql:48`).
+- Deleting an account deletes every story its owner wrote, in every Group,
+  including stories in published editions. Those editions lose that person's
+  sections, and an edition they wrote alone is left with no posts.
+  `prepare_account_deletion` deletes their photos too, so the photos in edition
+  emails already sent stop loading. The Privacy Policy and Terms promise this:
+  deleting your account removes your posts and photos.
+- **For moderation:** never use the dashboard's "Delete user" to act on a
+  report. It destroys the stories you may need as evidence and frees the email
+  address to sign up again. Ban the account in Auth instead
+  (`docs/MODERATION.md` step 5).
+
+---
+
 ## Medium
 
 ### ~~M1. Per-recipient email failures are never retried~~ — ACCEPTED for launch 2026-10-30

@@ -35,6 +35,34 @@ specified in CLAUDE.md. Git history has the detail if you need it.
 
 POSITIONING §8 is the authoritative sequence. The short version:
 
+- [x] **Guideline 1.2 work** (owner's decisions, 2026-10-30) — #64–#70 merged
+      2026-10-31 to 2026-11-02: *Report this story* sends from inside the app
+      (#64), a creator's Groups are handed over on account deletion (#65),
+      removal is a ban with "Let back in" (#66), "Agree and email me a code" at
+      sign-up and Help & support in Profile (#67), email and push switches for
+      each Group (#68), a moderator's take-down plus `docs/MODERATION.md` (#69),
+      and one-way block (#70). **Server half live 2026-11-02:** all 38
+      migrations, `compile-editions` v21, `publish-edition-now` v10 and
+      `report-story` v1, downloaded and diffed clean. Terms (effective
+      2026-11-02), Support and Privacy updated; `TERMS_VERSION` matches. No word
+      filter, by decision. Trade-offs: bugs.md G1–G4.
+      [docs/LAUNCH.md](docs/LAUNCH.md) step 9
+- [ ] **Phone checks for #64–#70** — on the final build:
+      creator-account deletion with throwaway accounts (#65), one production
+      take-down with photos using T1/T2 (#69), and the device scripts of #64,
+      #66, #67, #68 and #70 (`gh pr view <n>`).
+      [docs/PRESUBMISSION_CHECKLIST.md](docs/PRESUBMISSION_CHECKLIST.md) Gate 7
+- [ ] **Release day: deploy `unsubscribe`** —
+      `npx supabase functions deploy unsubscribe --use-api` (CLI pinned, below),
+      when the App Store version is released and not before: #68's new
+      unsubscribe page points at a switch only the new build has.
+      [docs/PRESUBMISSION_CHECKLIST.md](docs/PRESUBMISSION_CHECKLIST.md) → After approval
+- [ ] **Supabase CLI 3.0.0** (2026-11-02) — the repo doesn't pin it, and under
+      v3 `config.toml`'s `[inbucket]` section is a hard error and `db push`
+      targets the local database without `--linked`. Decide pin or migrate;
+      until then run production commands as `npx -y supabase@2.122.1 … --linked`.
+      [docs/LAUNCH.md](docs/LAUNCH.md) → Deploying edge functions
+
 - [x] **[owner] Make `support@catchupcolumn.com` receive mail** — found
       2026-10-03: the apex has no MX record, so *Report this story*, the
       privacy policy's deletion route and the TestFlight feedback address all

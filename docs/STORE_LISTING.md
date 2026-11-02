@@ -14,6 +14,11 @@ the review account, the Review Notes). §12, written for TestFlight, is kept for
 later. Every claim here was re-checked against `main` on 2026-10-30; §13.4 has
 the evidence.
 
+**Updated 2026-11-02 for the Guideline 1.2 work** (#64–#70, live in production
+that day): §7's Customer Support row, §9.3, and §13.2–§13.5, with the Review
+Notes' 1.2 block filled in from what shipped. The new claims' evidence is in
+§13.4.
+
 ---
 
 ## 1. Identity
@@ -157,6 +162,7 @@ tracking" on every row.
 | Crash Data (Diagnostics) | Yes | App Functionality | **No** — not linked |
 | Performance Data (Diagnostics) | Yes — added 2026-10-30 | App Functionality | **No** — not linked |
 | Other Diagnostic Data | Yes | App Functionality | **No** — not linked |
+| Customer Support (the note in a story report) | Yes — added 2026-11-02 (owner) | App Functionality | Yes |
 
 "Account management" used to sit beside Email Address. That is a Google Play
 purpose; Apple's list has no such entry, and sign-in counts as App
@@ -191,9 +197,16 @@ from 2026-10-30 (Service providers → Expo).
 
 **Not declared, and why:**
 
-- *Customer Support* — *Report this story* and support mail go through the
+- ~~*Customer Support* — *Report this story* and support mail go through the
   person's own mail app (`lib/report.ts`, a `mailto:`). Nothing leaves through
-  the app.
+  the app.~~ **No longer true from 2026-10-31 (#64):** *Report this story* sends
+  from inside the app. The `report-story` function emails `support@` the
+  reporter's note, email address and user id with the story's ids, and the
+  support inbox keeps it. That is data the app collects, so the table above now
+  declares Customer Support: linked to the user, not used for tracking
+  (owner, 2026-11-02). Mail someone writes
+  to `support@` from their own mail app, including the report sheet's "Email
+  us instead" fallback, still doesn't go through the app.
 - *Product Interaction, Usage Data, Analytics* — there is no analytics SDK.
 - Location, contacts, browsing or search history, purchases, financial info,
   health, audio (there is no microphone permission), advertising data.
@@ -247,7 +260,7 @@ Infrequent / Frequent; the rest are Yes or No.
 | --- | --- | --- | --- |
 | In-App Controls | Parental Controls | No | No settings that restrict content or features for a child |
 | In-App Controls | Age Assurance | No | No age check of any kind, and no call to the Declared Age Range API |
-| Capabilities | Unrestricted Web Access | No | The only web pages it opens are our own privacy policy and terms, in an in-app browser sheet (`app/(tabs)/profile.tsx`). Post text isn't turned into links |
+| Capabilities | Unrestricted Web Access | No | The only web pages it opens are our own support, privacy and terms pages, in an in-app browser sheet (`app/(tabs)/profile.tsx`; the Terms link at sign-up, `components/terms-agreement.tsx`, since 2026-11-01). Post text isn't turned into links |
 | Capabilities | User-Generated Content | **Yes** | Members write posts and add photos that the rest of their Group reads. Apple's definition says "broad distribution", and a Group is a handful of invited people, but Yes keeps 4+ and is the Guideline 1.2 position already taken (LAUNCH step 9; PRESUBMISSION Gate 6: "flag user-generated content") |
 | Capabilities | Social Media | No | Apple: "a social feed or similar discovery method that visibly spreads content to many users". There is no feed, discovery, likes, comments, shares or view counts; a post never leaves its Group (CLAUDE.md, Non-features) |
 | Capabilities | Social Media Disabled for Users Under 13 | No | Only applies to apps with social media |
@@ -290,33 +303,39 @@ content descriptions.
 - Expected outcome: **Everyone (Google)**, with the UGC disclosure. Android is
   deferred (`LAUNCH.md`).
 
-### 9.3 Guideline 1.2 — what ships, and what it doesn't cover
+### 9.3 Guideline 1.2 — what ships
 
 The published guideline asks UGC apps for four things
 ([App Review Guidelines
 1.2](https://developer.apple.com/app-store/review/guidelines/#user-generated-content),
 checked 2026-10-30).
 
-**Decided 2026-10-30 (owner): the gaps below are closed in code before the
-final build, the one made after the illustration rework.** A separate session
-is scoping the work. It is planned and pending: until it lands, the "What the
-app has" column and the Review Notes describe only what exists, and §13.3
-carries a `☐ after the 1.2 work lands` marker wherever the notes will need to
-describe it.
+**Closed in code, 2026-10-31 to 2026-11-02 (#64–#70)**, as the owner decided on
+2026-10-30. The server half is live: every migration is pushed, and
+`report-story` v1, `compile-editions` v21 and `publish-edition-now` v10 are
+deployed (2026-11-02). `unsubscribe`'s new last line waits for release day
+(`LAUNCH.md` → Deploying edge functions). The app half reaches phones with the
+final build, the one made after the illustration rework. The Review Notes (§13.3) describe it, and
+`docs/MODERATION.md` is how we act on a report. Until 2026-11-02 this table
+listed the gaps; the 2026-10-30 version of this file has them.
 
-| 1.2 asks for | What the app has | Gap |
+| 1.2 asks for | What the app has | Note |
 | --- | --- | --- |
-| "A method for filtering objectionable material from being posted to the app" | Nothing automatic. Groups are invite-only, and a moderator can remove a member | **No filter.** ☐ Planned, pending — the 1.2 work |
-| "A mechanism to report offensive content and timely responses to concerns" | *Report this story* under every story by someone else (`components/report-story-link.tsx`), drafting an email to `support@` with the story's ids (`lib/report.ts`). `support@` receives mail since 2026-10-24 | Response time: **within 24 hours** (owner, 2026-10-30), stated in the Review Notes. A moderator can't take down one published post, so acting on a report today means deleting the row by hand in Supabase. ☐ Planned, pending — the 1.2 work |
-| "The ability to block abusive users from the service" | *Remove* on the Group page, moderator-only (`app/group/[id].tsx` → `remove_group_member`); any member but the moderator can *Leave this Group* | **No block for an ordinary member,** and **removal isn't a ban:** `join_group_by_invite_code` has no ban check and the app has no way to issue a new invite code, so a removed member who still has the code can rejoin. ☐ Planned, pending — the 1.2 work (the two shapes on the table: a ban on removal, or a way to issue a new invite code) |
-| "Published contact information so users can easily reach you" | `support@catchupcolumn.com`, the Support URL, Terms §4 and §11 | — |
+| "A method for filtering objectionable material from being posted to the app" | No public posting: only people a Group's moderator invited can post, a removed member can't rejoin (#66), and a post reaches only its Group's few members. People do the filtering: the moderator takes a story down (#69), any member blocks its author (#70), and we act on reports within 24 hours | **No word filter, by decision** (owner, 2026-10-30). The Review Notes make the structural case on their "Filtering:" line, and the Terms don't claim a filter |
+| "A mechanism to report offensive content and timely responses to concerns" | *Report this story* at the foot of every story by someone else opens a sheet with an optional note and sends the report from inside the app (#64): the `report-story` edge function emails `support@` the note and the story's ids, with Reply-To set to the reporter. A drafted email is only the fallback if sending fails. A moderator can take down any one story, published or not, with its photos (#69) | Response: **within 24 hours, every day** (owner, 2026-10-30), stated in the Terms, the Support page, the app's thank-you line and the Review Notes |
+| "The ability to block abusive users from the service" | **Block** at the foot of anyone else's story (#70): one-way, it hides all their stories from you, in the app and in your edition emails, and they aren't told; **Unblock** is on the Group page. A moderator's **Remove** is a ban: the invite code won't let them back in until **Let back in** (#66). We can also ban an account in Auth (`docs/MODERATION.md` step 5) | — |
+| "Published contact information so users can easily reach you" | `support@catchupcolumn.com`, the Support URL, Profile → **Help & support** (#67), Terms §4 and §11 | — |
 
-PR #14 (2026-08-05) shipped the report and remove halves, and moderator removal
-was verified against production 2026-09-22 (`LAUNCH.md` step 9). There is also
-no in-app agreement to the Terms at sign-up: they are linked only from Profile.
-App Review's 1.2 rejections often ask for one, though the published guideline
-text doesn't; it is on the same list. When the 1.2 work lands, update this
-table and fill the markers in §13.3.
+**Also shipped: agreement to the Terms at sign-up** (#67). App Review's 1.2
+rejections often ask for it, though the published guideline text doesn't. The
+sign-up screen's button is "Agree and email me a code", and the new account's
+metadata records `terms_accepted_at` and `terms_version` (`TERMS_VERSION` in
+`lib/auth.ts`, `2026-11-02` since the Terms of that date). Accounts made before
+that build aren't asked to agree again (owner, 2026-10-30).
+
+PR #14 (2026-08-05) shipped the first report link (a drafted email) and
+moderator removal, which was verified against production 2026-09-22
+(`LAUNCH.md` step 9).
 
 ## 10. Export compliance
 
@@ -341,7 +360,11 @@ questionnaire answers*, the checklist owns *what to run and in what order*.
 > the Review Notes are §13.2–§13.3. If an external beta ever runs, re-check the
 > dated facts below first. Updated 2026-10-30 for multi-photo posts, the
 > `support@` fix, and two stale claims in §12.5 (the photo permission, and
-> Sentry as the only SDK); nothing else was revised.
+> Sentry as the only SDK); nothing else was revised. **Updated 2026-11-02** only
+> where it described reporting as a drafted email (§12.3, and §12.5's Report
+> line): reports send from inside the app since #64. §12.5 doesn't describe the
+> rest of the Guideline 1.2 work (block, take down, removal bans, Terms at
+> sign-up). If an external beta runs, take that from §13.3's 1.2 block.
 
 **Drafted 2026-10-03** for the first external build (`LAUNCH.md` step 8;
 `HANDOFF.md` §2 item 5). Group Zero's testers are the owner's real friend
@@ -378,7 +401,7 @@ can't bite. If the form shows a different limit, the form wins.
 | Beta App Review contact: first name, last name, phone, email | one value each | `{{owner's name, phone, and an address that receives mail}}` |
 | Sign-in required | checkbox | **Ticked** |
 | User name / Password | one value each | `{{review account address}}` / `{{review account password}}` — §12.4 |
-| Review Notes | 4,000 chars (assumed) | §12.5 — 2,141 chars |
+| Review Notes | 4,000 chars (assumed) | §12.5 — 2,137 chars |
 | License Agreement | — | Leave Apple's standard EULA |
 
 The character counts are for the text as written. Filling in the
@@ -432,8 +455,10 @@ with the device details attached (POSITIONING §6), and it doesn't depend on
 ### 12.3 Feedback Email and URLs
 
 - **Feedback Email:** `support@catchupcolumn.com`. This is the address
-  `docs/SUPPORT.md` and `docs/PRIVACY.md` already publish, and the address the
-  in-app **Report this story** link writes to (`Strings.legal.supportEmail`).
+  `docs/SUPPORT.md` and `docs/PRIVACY.md` already publish, and the address
+  in-app reports reach: **Report this story** sends through the `report-story`
+  function since #64 (2026-10-31), and its "Email us instead" fallback drafts
+  to `Strings.legal.supportEmail`.
   Apple shows it to testers in TestFlight and uses it as the reply-to on
   emailed invitations.
 
@@ -522,7 +547,7 @@ It moderates a demo Group, "{{demo Group name}}", which has one published editio
 
 USER-GENERATED CONTENT (Guideline 1.2)
 - Acceptable-use terms: https://www.catchupcolumn.com/terms, section 4.
-- Report: every story by another member ends with "Report this story", which drafts an email to us with the story's identifiers. It is hidden on your own stories.
+- Report: every story by another member ends with "Report this story", which sends a report to our team from inside the app. It is hidden on your own stories.
 - Remove: on the Group page, a moderator can tap "Remove" next to a member. Their unpublished posts are deleted with them.
 Posts are only ever visible to members of the Group they were written in.
 
@@ -624,7 +649,7 @@ Counts were measured with a script on the text as written here; filling in a
 | App Review — Sign-in required | **Ticked** | — | — |
 | App Review — User name / Password | `{{review account address}}` / `{{review account password}}` (§13.2) | — | — |
 | App Review — Contact | `{{first name}}`, `{{last name}}`, `{{phone, international format, e.g. +1 …}}`, `{{an email the owner reads}}` | phone needs `+` and country code | — |
-| App Review — Notes | §13.3 | 4,000 bytes | 3,720 with the ☐ markers |
+| App Review — Notes | §13.3 | 4,000 bytes | 3,717 before the two names are filled in (2026-11-02) |
 | Version Release | **Manually release this version** (owner, 2026-10-30), so the release and `appStoreUrl` in `web/config.js` (LAUNCH step 11) go out together | — | — |
 | Accessibility Nutrition Labels | Leave blank for 1.0. Voluntary for now ([overview](https://developer.apple.com/help/app-store-connect/manage-app-accessibility/overview-of-accessibility-nutrition-labels/)); declare a feature only once it is verified on a device | — | — |
 | In-App Purchases, Game Center, App Clip | None | — | — |
@@ -648,10 +673,12 @@ step is a production write.
    the moderator. Write one post with two or three photos, to show multi-photo.
 4. **A second member — this step matters.** Make a second `+alias` account
    (e.g. `+appreview2`) named `{{SECOND MEMBER NAME}}`, join the demo Group by
-   invite code, and write a post with a photo. *Report this story* is hidden on
-   your own stories (`components/report-story-link.tsx`), and *Remove* only
-   appears next to other members, so without a second member the reviewer sees
-   neither of Guideline 1.2's in-app affordances.
+   invite code, and write a post with a photo. *Report this story* and *Block*
+   show only at the foot of someone else's story
+   (`components/story-foot-actions.tsx`), and *Remove* only appears next to
+   other members, so without a second member the reviewer sees none of them.
+   (*Take down this story* shows on every story for the moderator, the review
+   account's own included.)
 5. **Publish:** as the review account, open the Group page and tap **Publish
    now**. Edition 1 now exists with both posts. Both aliases get the edition
    email, which also checks that it arrives.
@@ -661,24 +688,35 @@ step is a production write.
 All the writing and photos are the owner's own — never a real friend's words or
 face. The same Group can supply the screenshots (§5).
 
-**If the reviewer changes things.** *Remove* takes the second member out of the
-Group; rejoin as them with the invite code. *Delete my account* on the review
-account deletes it, and the demo Group passes to the second member. In either
-case, repeat the steps that were undone, then update the sign-in information.
+**If the reviewer changes things.** Each of these is a production write, as
+above:
+
+- **Remove** takes the second member out of the Group and bans them. As the
+  review account, tap **Let back in** on them under "Removed" on the Group page,
+  then rejoin as them with the invite code. Rejoining alone is refused until
+  then.
+- **Block** is undone with **Unblock**, on the second member's row of the Group
+  page, as the review account.
+- **Take down** can't be undone. Write the story again as its author, then tap
+  **Publish now** as the review account; it lands in a new edition.
+- **Delete my account** on the review account deletes it, and the demo Group
+  passes to the second member, who becomes its moderator (#65). Start again from
+  step 1 with a new review account and demo Group.
+
+Then update the sign-in information if the account changed.
 
 ### 13.3 Review Notes
 
-Paste into App Review Information → Notes. **Before pasting:**
+Paste into App Review Information → Notes. **Before pasting,** fill
+`{{DEMO GROUP NAME}}` and `{{SECOND MEMBER NAME}}` (twice).
 
-- Fill `{{DEMO GROUP NAME}}` and `{{SECOND MEMBER NAME}}` (twice).
-- Replace each `{{☐ after the 1.2 work lands: …}}` line with what shipped, or
-  delete it if that piece didn't. **The Guideline 1.2 fixes are planned and
-  pending** (owner, 2026-10-30; §9.3), so the text describes only what exists
-  today and the markers hold the places for the rest.
-
-The response time, within 24 hours, is the owner's (2026-10-30). As written,
-markers included, it is 3,720 bytes of 4,000; each ☐ is 3 bytes, the only
-non-ASCII characters. Re-measure after filling it in.
+**The Guideline 1.2 block was filled in 2026-11-02** from what shipped
+(#64–#70; §9.3), in the owner's approved wording: the version without a word
+filter, whose "Filtering:" line makes the structural case and whose Report line
+says it "sends to our team from inside the app". The response time, within 24
+hours, is the owner's (2026-10-30). As written, placeholders included, it is
+3,717 bytes of 4,000, measured with a script on the text between the fences,
+and all ASCII. Re-measure after filling in the names.
 
 ```
 Catch Up Column is a private weekly newspaper for a small group of friends or a family. During the week, members of a Group write short posts: text, with up to four photos. On the Group's publish day the app gathers them into one edition, which every member reads in the app and receives by email. Groups are invite-only. There is no public content, feed, search or discovery, no likes or comments, and no way to reach anyone outside your own Groups.
@@ -695,23 +733,18 @@ It is the moderator of a demo Group, "{{DEMO GROUP NAME}}". The Group has a seco
 - Groups tab, then the demo Group: its invite code, its members, and "Publish now", which turns this week's posts into an edition right away.
 
 USER-GENERATED CONTENT (Guideline 1.2)
-- Terms: https://www.catchupcolumn.com/terms, section 4 (acceptable use) and section 5 (moderators).
-- {{☐ after the 1.2 work lands: Terms at sign-up - where a new account agrees to them.}}
-- {{☐ after the 1.2 work lands: Filtering - how objectionable material is kept from being posted.}}
-- Report: every story by another member ends with "Report this story". It opens an email to support@catchupcolumn.com with the story's identifiers filled in. It is hidden on your own stories, so open {{SECOND MEMBER NAME}}'s story to see it.
-- {{☐ after the 1.2 work lands: Taking a story down - who can remove one published story, and how.}}
-- Remove: on the Group page, the moderator can tap "Remove" next to any other member. That person loses access to the Group, and anything they wrote for the coming edition is deleted.
-- {{☐ after the 1.2 work lands: Remove - say whether a removed member can rejoin.}}
-- {{☐ after the 1.2 work lands: Block - how any member blocks another, and what changes for them.}}
-- Leave: any member who isn't its moderator can leave a Group from its page ("Leave this Group").
-- Contact: support@catchupcolumn.com and https://www.catchupcolumn.com/support. We act on every report within 24 hours.
-Posts are only ever visible to members of the Group they were written in.
+- Terms: sign-up ("Create one" on the first screen) asks people to tap "Agree and email me a code". Our Terms (https://www.catchupcolumn.com/terms, sections 4-5) have zero tolerance for objectionable content and abusive users.
+- Filtering: there is no public posting. Only people a Group's moderator invited can post, a removed member can't rejoin, and each post reaches only that Group's few members, so objectionable material is filtered by people: the moderator can take any story down, any member can block its author, and we act on reports within 24 hours.
+- Report, Block, Take down: under {{SECOND MEMBER NAME}}'s story. Report sends to our team from inside the app. Block hides all their stories from you, in the app and in emails; Unblock is on the Group page. Take down (moderators) deletes a story and its photos, even after publishing.
+- Remove: on the Group page. They lose access, their unpublished posts are deleted, and the invite code no longer lets them back in ("Let back in" undoes it).
+- Leave: on the Group page, for members who aren't the moderator.
+- Contact: support@catchupcolumn.com, https://www.catchupcolumn.com/support, and Profile > Help & support. We act on every report within 24 hours.
 
 ACCOUNT DELETION (Guideline 5.1.1(v))
 Profile tab, then "Delete my account", below "Sign out". It permanently deletes the account, its posts and photos, and its Group memberships.
 
 NOTIFICATIONS
-After sign-in the app asks to send notifications. Saying no changes nothing else. The only notification is "Your Group is ready!", sent when a Group the person belongs to publishes an edition; tapping it opens that edition. Nothing is sent for marketing.
+After sign-in the app asks to send notifications. Saying no changes nothing else. The only notification is "Your Group is ready!", sent when a Group the person belongs to publishes an edition; tapping it opens that edition. Nothing is sent for marketing. Each Group's page has switches for that Group's edition email and notification.
 
 PERMISSIONS
 Photo library access is requested when choosing a profile photo or a Group cover. Photos for a post are chosen in the system photo picker. The app has no camera, microphone, location or contacts access.
@@ -735,15 +768,17 @@ setup and sign-in systems."
 
 ### 13.4 What the listing claims, and the evidence
 
-Checked against `main` at `e627f38`, 2026-10-30.
+Checked against `main` at `e627f38`, 2026-10-30. The Guideline 1.2 rows (and
+the rows they replaced) were checked against `main` at `afff6b8`, 2026-11-02,
+when the `edition-dispatch.ts` line numbers, moved by #70, were re-pointed too.
 
 | Claim | Evidence |
 | --- | --- |
 | Posts hold up to four photos | `lib/post-blocks.ts:12` (`MAX_POST_PHOTOS = 4`); `app/(tabs)/post.tsx:95-96` (multi-select, `selectionLimit`) |
-| Delivered in the app, by email, and by notification | `supabase/functions/_shared/edition-dispatch.ts` (Resend send; `pushEdition`, `:451`) |
-| The only push is the edition notification, and a tap opens the edition | `_shared/edition-dispatch.ts:470-471` is the only push payload; `app/_layout.tsx:119-124` routes the tap (PR #60) |
+| Delivered in the app, by email, and by notification | `supabase/functions/_shared/edition-dispatch.ts` (Resend send; `pushEdition`, `:479`) |
+| The only push is the edition notification, and a tap opens the edition | `_shared/edition-dispatch.ts:498-499` is the only push payload; `app/_layout.tsx:119-124` routes the tap (PR #60) |
 | Push permission is asked after sign-in | `hooks/use-auth.ts:65,104` → `lib/notifications.ts:69-72` |
-| One-tap unsubscribe | `_shared/edition-dispatch.ts:205-206` (`List-Unsubscribe`, one-click POST); `supabase/functions/unsubscribe/index.ts:5-8` (a GET unsubscribes) |
+| One-tap unsubscribe | `_shared/edition-dispatch.ts:210-211` (`List-Unsubscribe`, one-click POST); `supabase/functions/unsubscribe/index.ts:5-8` (a GET unsubscribes) |
 | Each Group has its own publish day and time | `groups.publish_day`/`publish_time`/`timezone` (CLAUDE.md schema); `lib/groups.ts:83` |
 | Invite by code | `join_group_by_invite_code`, `supabase/migrations/20260505000000_critical_security_fixes.sql:64` |
 | Posts are only seen by the Group's members | RLS (CLAUDE.md, Supabase Setup Notes); `web/edition/index.html:41` is a deep-link bouncer that shows no content |
@@ -753,13 +788,21 @@ Checked against `main` at `e627f38`, 2026-10-30.
 | Only the photo library permission | `app.json` plugins: `photosPermission`, `cameraPermission: false`, `microphonePermission: false`, `faceIDPermission: false` (PR #58) |
 | Library access asked for profile photo and Group cover; posts use the system picker | `app/(tabs)/profile.tsx:119`, `app/group/[id].tsx:292`, `app/group/create.tsx:69`, `app/(auth)/onboarding.tsx:105` request it; `app/(tabs)/post.tsx:93` doesn't |
 | "Use a password instead" on "Welcome back" | `app/index.tsx` redirects to `/(auth)/login`; `app/(auth)/login.tsx:91,119`; `components/password-sign-in.tsx:72,108` |
-| Report this story, hidden on your own | `components/report-story-link.tsx:27` (`return null` for the author); `lib/report.ts` (mailto to `Strings.legal.supportEmail`) |
-| Remove (moderator) and Leave (any other member) | `app/group/[id].tsx:604-608` (Remove, moderator-only, not your own row), `:654-660` (Leave, non-moderators) |
-| Removal deletes unpublished posts | `supabase/migrations/20260806003026_member_moderation.sql` (`edition_id is null`) |
-| Account deletion in Profile | `app/(tabs)/profile.tsx:230-245,392-402`; `supabase/functions/delete-account/index.ts:69`; posts cascade (`001_initial_schema.sql:48`) |
+| Terms at sign-up: "Agree and email me a code" | `app/(auth)/signup.tsx:83-86` (`TermsAgreement`, then `Strings.terms.agreeCta`); `lib/auth.ts:103-104` (`terms_accepted_at`, `terms_version`, sent only on the sign-up call that creates the account) |
+| Terms §4–5: zero tolerance, report, block, remove, take down | `docs/TERMS.md`, `web/terms.html` (effective 2026-11-02) |
+| Report, Block (anyone else's story), Take down (moderators, every story) at a story's foot | `components/story-foot-actions.tsx:24-31` |
+| Report sends from inside the app | `lib/report.ts:51-52` (`sendStoryReport` → `functions.invoke('report-story')`); `supabase/functions/report-story/index.ts` (one Resend email to `support@`, Reply-To the reporter); the drafted email is only the failure fallback (`components/report-story-sheet.tsx:64-65`) |
+| Block hides their stories in the app and in emails; Unblock on the Group page | `supabase/migrations/20261101204252_user_blocks.sql:127-132` (the posts SELECT policy adds `not is_blocked_by_caller(author_id)`); `_shared/edition-dispatch.ts:275` (each recipient's `hidden_author_ids`); `components/group-members.tsx:63-80` (Blocked chip, Unblock) |
+| Take down deletes a story and its photos, even after publishing | `supabase/migrations/20261101195755_take_down_post.sql:48,115` (`operator_take_down_post`, `take_down_post`); `components/take-down-story-link.tsx` |
+| Remove (moderator) and Leave (any other member) | `components/group-members.tsx:90` (Remove, moderator-only, not your own row); `app/group/[id].tsx:561-566` (Leave, non-moderators) |
+| Removal deletes unpublished posts, and the code no longer lets them back in | `supabase/migrations/20261030172102_removal_bans.sql:96-116` (`operator_remove_group_member`, `edition_id is null`), `:267` (the join raises `removed_from_group`), `:202` (`unban_group_member`, "Let back in" in `components/removed-members.tsx:32-36`) |
+| Each Group's page has an email switch and a notification switch | `components/delivery-settings.tsx:44,51`; `supabase/migrations/20261101195502_delivery_settings.sql:29` (`set_delivery_preferences`) |
+| Profile → Help & support | `app/(tabs)/profile.tsx:408-412` |
+| Reports acted on within 24 hours | Owner, 2026-10-30; the app's thank-you line (`constants/strings.ts:45`); `docs/MODERATION.md` |
+| Account deletion in Profile | `app/(tabs)/profile.tsx:230-245,392-402`; `supabase/functions/delete-account/index.ts:69`; posts cascade (`001_initial_schema.sql:48`); a Group passes to another member, or is deleted if no one else is in it (`20261030172045_creator_account_deletion.sql`, `hand_over_groups` and the `on_user_deletion` trigger) |
 | No third-party login | `lib/auth.ts:50-154` |
 | Groups tab label | `components/custom-tab-bar.tsx:21` |
-| No web browsing beyond our own pages | `app/(tabs)/profile.tsx:408,417` are the only in-app browser opens |
+| No web browsing beyond our own pages | `app/(tabs)/profile.tsx:408,417,426` and `components/terms-agreement.tsx:14` are the only in-app browser opens (support, privacy, terms) |
 | Terms minimum age is 18 | `docs/TERMS.md:10`, `web/terms.html:23` (live) |
 | support@ receives mail; DMARC set | `dig +short MX catchupcolumn.com` → Cloudflare `route1-3.mx.cloudflare.net`; `_dmarc` TXT `v=DMARC1; p=none; rua=mailto:support@catchupcolumn.com` (both read 2026-10-30) |
 | URLs live | `curl` 2026-10-30: `/`, `/privacy`, `/terms`, `/support`, `/delete-account` → 200; apex → 308 to `www` |
@@ -772,12 +815,20 @@ Checked against `main` at `e627f38`, 2026-10-30.
 §1 staying at 18; Messaging and Chat, Yes; Content Rights, Yes; EU trader
 status; every region except China mainland; manual release; reports answered
 within 24 hours; no privacy row for Expo's install ID; and the Guideline 1.2
-gaps closed in code before the final build.
+gaps closed in code before the final build. **Then, for that work:** one-way
+block, "Let back in", no word filter, reports sent from inside the app, email
+and push switches for each Group, existing accounts not asked to re-agree to the
+Terms (2026-10-30); take-downs are silent, so the author isn't told
+(2026-11-01); Customer Support declared on the privacy label, and the support
+inbox disclosed in the privacy policy and on the delete-account page
+(2026-11-02).
+
+**Done 2026-11-02:** ~~☐ **The Guideline 1.2 work** — being scoped in a
+separate session. When it lands, update §9.3 and fill or delete the markers in
+§13.3.~~ It shipped as #64–#70; §9.3 and §13.3 are updated.
 
 **Still open** — each is marked ☐ where it appears above:
 
-- ☐ **The Guideline 1.2 work** — being scoped in a separate session. When it
-  lands, update §9.3 and fill or delete the markers in §13.3.
 - ☐ **Copyright holder** and the **App Review contact** (§13.1).
 - ☐ **Trader contact details** for the DSA form (§13.1).
 - ☐ **Screenshot sizes** in Media Manager (§5).

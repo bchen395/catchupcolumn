@@ -116,6 +116,12 @@ npx supabase link --project-ref <project-ref>
 npx supabase db push
 ```
 
+> **Supabase CLI 3.0.0 (2026-11-02):** the repo doesn't pin the CLI, and under
+> v3 `supabase/config.toml`'s `[inbucket]` section is a hard error and
+> `db push` targets the **local** database unless you pass `--linked`. Until
+> that's settled, pin `npx -y supabase@2.122.1 …` and push to a real project
+> with `db push --linked`; use the same pin for the deploys below.
+
 This creates all tables, RLS policies, storage buckets (`avatars`, `post-images`, `group-covers`), and the cron job that invokes the compile function every 15 minutes.
 
 ### 4. Deploy edge functions
