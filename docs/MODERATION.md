@@ -42,7 +42,7 @@ blocked its writer.
 - **Auth admin API** (step 5 only) needs the service-role key:
 
   ```sh
-  SERVICE_ROLE_KEY="$(npx supabase projects api-keys --project-ref wvaxfyhihcfilewygtzp -o json | jq -r '.[] | select(.name=="service_role") | .api_key')"
+  SERVICE_ROLE_KEY="$(npx supabase projects api-keys -o json --remote=wvaxfyhihcfilewygtzp | jq -r '.[] | select(.name=="service_role") | .api_key')"
   ```
 
   Keep it in your shell. Never paste it into a ticket, an email or a chat.

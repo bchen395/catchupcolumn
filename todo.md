@@ -53,15 +53,14 @@ POSITIONING §8 is the authoritative sequence. The short version:
       #66, #67, #68 and #70 (`gh pr view <n>`).
       [docs/PRESUBMISSION_CHECKLIST.md](docs/PRESUBMISSION_CHECKLIST.md) Gate 7
 - [ ] **Release day: deploy `unsubscribe`** —
-      `npx supabase functions deploy unsubscribe --use-api` (CLI pinned, below),
-      when the App Store version is released and not before: #68's new
+      `npx supabase functions deploy unsubscribe --use-api --remote` (asks
+      first), when the App Store version is released and not before: #68's new
       unsubscribe page points at a switch only the new build has.
       [docs/PRESUBMISSION_CHECKLIST.md](docs/PRESUBMISSION_CHECKLIST.md) → After approval
-- [ ] **Supabase CLI 3.0.0** (2026-11-02) — the repo doesn't pin it, and under
-      v3 `config.toml`'s `[inbucket]` section is a hard error and `db push`
-      targets the local database without `--linked`. Decide pin or migrate;
-      until then run production commands as `npx -y supabase@2.122.1 … --linked`.
-      [docs/LAUNCH.md](docs/LAUNCH.md) → Deploying edge functions
+- [x] **Supabase CLI 3.0.0** (2026-11-02) — **moved to v3 2026-11-02**
+      (owner's call over pinning 2.x): pinned 3.0.0 in `package.json` and CI,
+      `config.toml` updated. Production commands take `--remote` and ask before
+      changing anything. [docs/LAUNCH.md](docs/LAUNCH.md) → Deploying edge functions
 
 - [x] **[owner] Make `support@catchupcolumn.com` receive mail** — found
       2026-10-03: the apex has no MX record, so *Report this story*, the

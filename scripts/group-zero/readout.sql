@@ -25,15 +25,17 @@
 --   readout() {
 --     sed -n -e '/^-- \[setup\]/,/^-- \[\/setup\]/p' \
 --            -e "/^-- \[$1\]/,/^-- \[\/$1\]/p" scripts/group-zero/readout.sql \
---       | npx supabase db query --linked -f /dev/stdin
+--       | npx supabase db query -f /dev/stdin --read-only --remote
 --   }
 --   readout q0    # cohort check: run this first, every time you edit
 --   readout q1    # the pass sheet: one row per Group
 --
--- A worktree that was never linked can add `--project-ref <ref>` after
--- `--linked`. The CLI prints a table in a terminal but JSON when it detects
--- an agent; add `--agent no` for the table. In the dashboard SQL editor: paste
--- the setup block plus one query block and run it.
+-- A worktree that was never linked can use `--remote=<ref>` instead.
+-- `--read-only` means the CLI runs it without asking (Supabase CLI v3, since
+-- 2026-11-02; without `--remote` v3 queries the local stack). The CLI prints a
+-- table in a terminal but JSON when it detects an agent; add `--agent no` for
+-- the table. In the dashboard SQL editor: paste the setup block plus one query
+-- block and run it.
 --
 --   q0  Cohort check — every key resolves; schedule; next slot
 --   q1  Pass sheet — §6 conditions per Group, PASS / FAIL / IN PROGRESS
