@@ -85,11 +85,16 @@ only to provide their service to us:
   account. https://expo.dev/privacy
 - **Apple** and **Google** deliver the notifications to your device through their
   push networks.
+- **Cloudflare** — forwards email sent to `support@catchupcolumn.com`, including
+  the reports you send from the app, to our support inbox.
+  https://www.cloudflare.com/privacypolicy/
 
 ## How long we keep your data
 
 We keep your account and content until you delete them. Deleting a post removes it.
-Deleting your account removes your profile and content as described below.
+Deleting your account removes your profile and content as described below. When
+you write to us or report a story, we keep that email in our support inbox for as
+long as we need it to help you.
 
 ## Deleting your account and data
 

@@ -162,7 +162,7 @@ tracking" on every row.
 | Crash Data (Diagnostics) | Yes | App Functionality | **No** — not linked |
 | Performance Data (Diagnostics) | Yes — added 2026-10-30 | App Functionality | **No** — not linked |
 | Other Diagnostic Data | Yes | App Functionality | **No** — not linked |
-| Customer Support (the note in a story report) | **Yes — added 2026-11-02** ☐ owner to confirm | App Functionality | Yes |
+| Customer Support (the note in a story report) | Yes — added 2026-11-02 (owner) | App Functionality | Yes |
 
 "Account management" used to sit beside Email Address. That is a Google Play
 purpose; Apple's list has no such entry, and sign-in counts as App
@@ -203,9 +203,8 @@ from 2026-10-30 (Service providers → Expo).
   from inside the app. The `report-story` function emails `support@` the
   reporter's note, email address and user id with the story's ids, and the
   support inbox keeps it. That is data the app collects, so the table above now
-  declares Customer Support. ☐ **owner to confirm** — recommended Yes: the
-  reporter's email and user id are already declared rows, and a label a little
-  wider than the app is safer than one that is narrower. Mail someone writes
+  declares Customer Support: linked to the user, not used for tracking
+  (owner, 2026-11-02). Mail someone writes
   to `support@` from their own mail app, including the report sheet's "Email
   us instead" fallback, still doesn't go through the app.
 - *Product Interaction, Usage Data, Analytics* — there is no analytics SDK.
@@ -820,7 +819,9 @@ gaps closed in code before the final build. **Then, for that work:** one-way
 block, "Let back in", no word filter, reports sent from inside the app, email
 and push switches for each Group, existing accounts not asked to re-agree to the
 Terms (2026-10-30); take-downs are silent, so the author isn't told
-(2026-11-01).
+(2026-11-01); Customer Support declared on the privacy label, and the support
+inbox disclosed in the privacy policy and on the delete-account page
+(2026-11-02).
 
 **Done 2026-11-02:** ~~☐ **The Guideline 1.2 work** — being scoped in a
 separate session. When it lands, update §9.3 and fill or delete the markers in
@@ -828,8 +829,6 @@ separate session. When it lands, update §9.3 and fill or delete the markers in
 
 **Still open** — each is marked ☐ where it appears above:
 
-- ☐ **Customer Support on the privacy label** (§7) — recommended Yes, now that
-  reports send from inside the app.
 - ☐ **Copyright holder** and the **App Review contact** (§13.1).
 - ☐ **Trader contact details** for the DSA form (§13.1).
 - ☐ **Screenshot sizes** in Media Manager (§5).

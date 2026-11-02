@@ -25,4 +25,5 @@ you own the address and delete your account and associated data within 30 days.
 
 Once deletion completes we do not retain your profile or content. Transient
 operational logs that may contain your email are rotated automatically and are not
-used to reconstruct your account.
+used to reconstruct your account. If you wrote to us or reported a story, we keep
+that email in our support inbox for as long as we need it to help you.
