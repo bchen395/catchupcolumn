@@ -128,7 +128,7 @@ POSITIONING §8 is the authoritative sequence. The short version:
       (read by asking at week 4; Group B set up by the owner with the organizer
       as moderator — superseded 2026-09-29, the organizer now creates it in the
       app). [docs/POSITIONING.md](docs/POSITIONING.md) §6
-- [ ] **First production build** ~~**+ TestFlight external testing** — now: since
+- [x] **First production build** ~~**+ TestFlight external testing** — now: since
       2026-09-29 Group Zero's edition 1 waits on it. External testers need
       Apple's TestFlight App Review, which needs a demo account with a password
       and a Beta App Description.~~ — no external testing (Group Zero skipped
@@ -136,6 +136,9 @@ POSITIONING §8 is the authoritative sequence. The short version:
       demo Group and Review Notes are
       [docs/STORE_LISTING.md](docs/STORE_LISTING.md) §13. The Sentry source-map variables it needed
       are set (2026-10-03). The owner plans the build for 2026-10-04.
+      **Done 2026-11-03:** build 10 (1.0.0, `7ba2ae35`, from `4392385`)
+      built and submitted; App Store Connect app `6830424103` created
+      (`eas.json` → `submit.production.ios.ascAppId`).
       [docs/LAUNCH.md](docs/LAUNCH.md) steps 8 and 10.4. The review
       account is made on that build: code sign-in → Profile → Set a password.
       It's also the first build with the #44 auth change — device checks in
