@@ -137,8 +137,10 @@ POSITIONING §8 is the authoritative sequence. The short version:
       [docs/STORE_LISTING.md](docs/STORE_LISTING.md) §13. The Sentry source-map variables it needed
       are set (2026-10-03). The owner plans the build for 2026-10-04.
       **Done 2026-11-03:** build 10 (1.0.0, `7ba2ae35`, from `4392385`)
-      built and submitted; App Store Connect app `6830424103` created
-      (`eas.json` → `submit.production.ios.ascAppId`).
+      built and submitted; App Store Connect app `6830424103` created.
+      Runtime fingerprint `dd742296…`. **Not** recorded in `eas.json`: any
+      edit to that file moves the fingerprint and cuts this build off from
+      OTA updates (LAUNCH step 8).
       [docs/LAUNCH.md](docs/LAUNCH.md) steps 8 and 10.4. The review
       account is made on that build: code sign-in → Profile → Set a password.
       It's also the first build with the #44 auth change — device checks in
