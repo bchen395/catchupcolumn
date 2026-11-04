@@ -18,7 +18,7 @@ For *launching* the app, defer to the built-in **`run`** / **`verify`** skills a
 | `app` | `npm run typecheck`, `npm run lint`, `npx expo-doctor`, `npx expo install --check` |
 | `bundle` | a real `expo export` Metro bundle for **iOS and Android** — catches bad imports, missing native modules, and config-plugin errors that typecheck can't see. Prints bundle size to the run summary. |
 | `edge-functions` | `deno check` on every function file, plus the edition-email fixture render, which **fails if a fixture would hit Gmail's ~102KB clip limit**. Uploads the rendered emails as an artifact so you can eyeball them from the PR. |
-| `migrations` | *Only when `supabase/migrations/` or `config.toml` changed.* Refuses any edit to an already-merged migration, then applies the whole history from scratch against a real Postgres and runs `supabase db lint`. |
+| `migrations` | *Only when `supabase/migrations/` or `config.toml` changed.* Refuses any edit to an already-merged migration, then applies the whole history from scratch against a real Postgres and runs `supabase db lint`. The lint only *reports*: without `--fail-on error` it can't fail the job, and it currently shows two known `PGRST301` errors (todo.md). Read its output rather than trusting the green tick. |
 
 So you don't have to run the baseline locally to be safe — but running it locally is still faster than waiting for a red build. **CI cannot replace the manual QA below**: it never renders a screen, never sends a push, and never touches a device.
 

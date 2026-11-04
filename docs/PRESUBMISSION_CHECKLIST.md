@@ -98,6 +98,12 @@ touches a device:
       2026-09-22: `Catch Up Column <hello@catchupcolumn.com>`)*; ~~the domain
       status is still unconfirmed~~ the domain ✅ *(`verified` in the Resend
       dashboard, read by the owner 2026-10-30)*
+- [x] Resend **open and click tracking can't apply** *(owner, 2026-11-03)*: the
+      domain's Configuration tab shows only **Configure** under "Enable tracking
+      metrics" — no tracking subdomain — and Resend tracks only through a
+      verified one. Never set one up: the privacy policy promises no
+      per-recipient tracking. (The tracking switches won't save without a
+      subdomain; that's expected, not a fault.)
 - [x] `compile-editions` cron is actually firing *(verified end to end
       2026-09-22 — `200`s in `net._http_response` on every tick)*. **A `succeeded` row in
       `cron.job_run_details` does not prove this** — pg_net is async, so the job

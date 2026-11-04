@@ -731,6 +731,24 @@ because screenshots freeze the final look ~~and Group Zero will produce better o
 
 ## 8. Build & submit **[owner]** — ⏸ ~~deferred~~ submission waits on step 6b (Group Zero skipped 2026-10-24); also the *first ever* release build
 
+**First production build: done 2026-11-03** — build 10 (1.0.0, `7ba2ae35`,
+from `4392385`), submitted the same day. App Store Connect created app
+`6830424103`, and the build is on the owner's phone through internal TestFlight.
+Its runtime (fingerprint) is `dd742296d0f188b486a1af3dee8fe6f7ef7e662b`.
+
+> **An OTA update reaches a build only while the fingerprint matches.** It
+> covers more than you'd guess, `eas.json` included: adding
+> `submit.production.ios.ascAppId` moved it (found 2026-11-03, so that change
+> was dropped; `eas submit` finds the app by bundle ID). Before merging
+> anything that touches `app.json`, `eas.json`, config plugins or native
+> dependencies while a build is in testers' hands, compare
+> `npx expo-updates runtimeversion:resolve --platform ios` with the build's
+> runtime on its EAS page. A mismatch means the change waits for the next build.
+> Run it in a checkout with its own installed `node_modules`: a worktree that
+> symlinks them resolves autolinking paths differently and gets a different
+> value for identical code (compare two such worktrees with each other, never
+> with a build).
+
 **First EAS build: done 2026-09-24** — `preview` profile (iOS simulator,
 unsigned), build `cf9f70ee`, 9 minutes on EAS's Xcode 26.6 image. SDK 57 runs:
 the splash hides, Lora and Jost load, the sign-in screen renders, launch logs are

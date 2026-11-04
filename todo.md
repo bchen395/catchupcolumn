@@ -61,6 +61,12 @@ POSITIONING §8 is the authoritative sequence. The short version:
       (owner's call over pinning 2.x): pinned 3.0.0 in `package.json` and CI,
       `config.toml` updated. Production commands take `--remote` and ask before
       changing anything. [docs/LAUNCH.md](docs/LAUNCH.md) → Deploying edge functions
+- [ ] **Make CI's schema lint able to fail** (found 2026-11-02) — the
+      Migrations job runs `supabase db lint --level error` without
+      `--fail-on error`, so it reports and passes. Turning that on fails today
+      on the two known `PGRST301` raises (an 8-character SQLSTATE in old
+      migrations), so fix those first with a migration that recreates the two
+      functions with a valid code. Not blocking launch.
 
 - [x] **[owner] Make `support@catchupcolumn.com` receive mail** — found
       2026-10-03: the apex has no MX record, so *Report this story*, the
@@ -122,7 +128,7 @@ POSITIONING §8 is the authoritative sequence. The short version:
       (read by asking at week 4; Group B set up by the owner with the organizer
       as moderator — superseded 2026-09-29, the organizer now creates it in the
       app). [docs/POSITIONING.md](docs/POSITIONING.md) §6
-- [ ] **First production build** ~~**+ TestFlight external testing** — now: since
+- [x] **First production build** ~~**+ TestFlight external testing** — now: since
       2026-09-29 Group Zero's edition 1 waits on it. External testers need
       Apple's TestFlight App Review, which needs a demo account with a password
       and a Beta App Description.~~ — no external testing (Group Zero skipped
@@ -130,6 +136,11 @@ POSITIONING §8 is the authoritative sequence. The short version:
       demo Group and Review Notes are
       [docs/STORE_LISTING.md](docs/STORE_LISTING.md) §13. The Sentry source-map variables it needed
       are set (2026-10-03). The owner plans the build for 2026-10-04.
+      **Done 2026-11-03:** build 10 (1.0.0, `7ba2ae35`, from `4392385`)
+      built and submitted; App Store Connect app `6830424103` created.
+      Runtime fingerprint `dd742296…`. **Not** recorded in `eas.json`: any
+      edit to that file moves the fingerprint and cuts this build off from
+      OTA updates (LAUNCH step 8).
       [docs/LAUNCH.md](docs/LAUNCH.md) steps 8 and 10.4. The review
       account is made on that build: code sign-in → Profile → Set a password.
       It's also the first build with the #44 auth change — device checks in
