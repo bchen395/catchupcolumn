@@ -8,8 +8,8 @@
 // POST — RFC 8058 one-click unsubscribe: mail providers POST to the same
 //        URL from the List-Unsubscribe header; only the status code matters.
 //
-// Deploy with:
-//   npx supabase functions deploy unsubscribe --no-verify-jwt
+// Deploy with (verify_jwt = false comes from config.toml; it asks first):
+//   npx supabase functions deploy unsubscribe --use-api --remote
 //
 // Required env vars:
 //   SUPABASE_URL              — injected automatically by Supabase

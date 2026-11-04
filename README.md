@@ -113,25 +113,25 @@ The Supabase client throws at load if either var is missing — fail loud beats 
 
 ```bash
 npx supabase link --project-ref <project-ref>
-npx supabase db push
+npx supabase db push --remote
 ```
 
-> **Supabase CLI 3.0.0 (2026-11-02):** the repo doesn't pin the CLI, and under
-> v3 `supabase/config.toml`'s `[inbucket]` section is a hard error and
-> `db push` targets the **local** database unless you pass `--linked`. Until
-> that's settled, pin `npx -y supabase@2.122.1 …` and push to a real project
-> with `db push --linked`; use the same pin for the deploys below.
+> **Supabase CLI v3 (since 2026-11-02):** `npm install` brings the pinned CLI
+> (3.0.0), so `npx supabase` runs it. v3 targets the **local** stack unless you
+> pass `--remote` (keep it last). The push, the deploys and `secrets set` below
+> change your hosted project, so each asks first, default No; in a script,
+> pass `--yes`.
 
 This creates all tables, RLS policies, storage buckets (`avatars`, `post-images`, `group-covers`), and the cron job that invokes the compile function every 15 minutes.
 
 ### 4. Deploy edge functions
 
 ```bash
-npx supabase functions deploy compile-editions --use-api   # --use-api: no Docker
-npx supabase functions deploy publish-edition-now --use-api
-npx supabase functions deploy delete-account --use-api
-npx supabase functions deploy unsubscribe --use-api
-npx supabase functions deploy report-story --use-api
+npx supabase functions deploy compile-editions --use-api --remote   # --use-api: no Docker
+npx supabase functions deploy publish-edition-now --use-api --remote
+npx supabase functions deploy delete-account --use-api --remote
+npx supabase functions deploy unsubscribe --use-api --remote
+npx supabase functions deploy report-story --use-api --remote
 ```
 
 **Merging does not deploy these.** CI type-checks the functions but nothing ships
@@ -148,7 +148,8 @@ npx supabase secrets set \
   RESEND_API_KEY=<resend-api-key> \
   FUNCTIONS_PUBLIC_URL=https://<project-ref>.supabase.co/functions/v1 \
   WEB_BASE_URL=https://www.catchupcolumn.com \
-  EMAIL_FROM='Catch Up Column <hello@your-verified-domain>'
+  EMAIL_FROM='Catch Up Column <hello@your-verified-domain>' \
+  --remote
 ```
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically. `EMAIL_FROM` defaults to the Resend sandbox sender, which is fine for dev but tanks deliverability in production — point it at a verified domain before shipping.

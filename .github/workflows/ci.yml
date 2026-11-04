@@ -233,8 +233,9 @@ jobs:
         if: steps.changed.outputs.sql == 'true'
         with:
           # Pinned: a CLI release shouldn't be able to break the gate. Bump
-          # deliberately, alongside the version you run locally.
-          version: 2.117.0
+          # deliberately, alongside the version you run locally (the exact
+          # `supabase` devDependency in package.json).
+          version: 3.0.0
 
       # Brings up Postgres and applies every migration in order, from nothing.
       # A syntax error, a bad dependency order, or a policy that references a

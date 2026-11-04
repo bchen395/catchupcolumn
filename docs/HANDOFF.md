@@ -57,14 +57,14 @@ is newer.
 - **Production, 2026-11-02:** all 38 migrations pushed; `compile-editions` v21,
   `publish-edition-now` v10 and `report-story` v1 deployed, downloaded and
   diffed clean against `main`.
-- **Release day:** `npx supabase functions deploy unsubscribe --use-api` (#68's
-  new wording points at a switch only the new build has). Not before.
+- **Release day:** `npx supabase functions deploy unsubscribe --use-api --remote`
+  (#68's new wording points at a switch only the new build has). Not before.
+  It asks first, default No.
 - **Phone checks owed:** PRESUBMISSION Gate 7 — #65's creator deletion with
   throwaway accounts, #69's production take-down with photos (T1/T2), and the
   device scripts of #64, #66, #67, #68 and #70 (`gh pr view <n>`).
-- **Supabase CLI 3.0.0 is out (2026-11-02) and unpinned here:** run
-  production commands as `npx -y supabase@2.122.1 … --linked` until the CLI
-  decision is made (Traps, below).
+- **Supabase CLI v3 since 2026-11-02:** pinned to 3.0.0; production commands
+  take `--remote`, last (Traps, below).
 
 Server rows verified 2026-09-25/28; EAS, CI and the merges verified 2026-10-03.
 
@@ -283,7 +283,7 @@ production change; show the exact command; one approval each)
 **§5. Keep production honest**
 
 19. **[agent → owner] Re-count cron timeouts:**
-    `! npx supabase db query --linked "select status_code, timed_out, count(*) from net._http_response group by 1, 2 order by 3 desc"`.
+    `! npx supabase db query --read-only "select status_code, timed_out, count(*) from net._http_response group by 1, 2 order by 3 desc" --remote`.
     Expect no `timed_out = true`.
 
 **§6. Once Group Zero is on the production build**
@@ -354,14 +354,15 @@ friend-group volumes sell (POSITIONING §9).
 
 ## How to verify without Docker
 
-- **DB, read-only:** `npx supabase db query --linked "<SQL>"` — auto mode
-  blocks it against production, so hand the owner the `!` command. Its stdout
-  starts with `Initialising login role...`, so don't pipe it into `jq`. Never
-  run LAUNCH's Vault query 2 unless the cron's HTTP responses fail — it prints
-  secrets.
+- **DB, read-only:** `npx supabase db query --read-only "<SQL>" --remote` —
+  auto mode blocks it against production, so hand the owner the `!` command.
+  Under v2 its stdout began with `Initialising login role...`, which broke
+  `jq`; v3 sends that line to stderr (seen on `migration list`), but check
+  before relying on clean JSON. Never run LAUNCH's Vault query 2 unless the
+  cron's HTTP responses fail — it prints secrets.
 - **Operator script / service-role calls:** derive the key inline so it's never
   printed or written:
-  `SUPABASE_SERVICE_ROLE_KEY="$(npx supabase projects api-keys --project-ref wvaxfyhihcfilewygtzp -o json | jq -r '.[] | select(.name=="service_role") | .api_key')"`.
+  `SUPABASE_SERVICE_ROLE_KEY="$(npx supabase projects api-keys -o json --remote=wvaxfyhihcfilewygtzp | jq -r '.[] | select(.name=="service_role") | .api_key')"`.
   Dry runs are free; every `--apply` is a production write — ask first.
 - **Hashed secrets:** `supabase secrets list` digests are SHA-256 of the value;
   compare with `printf '%s' '<expected>' | shasum -a 256`.
@@ -428,11 +429,10 @@ friend-group volumes sell (POSITIONING §9).
 - **Merging deploys nothing to Supabase**; a `_shared/` change needs every
   importer redeployed. CI never runs auth, email, or storage against the real
   project.
-- **Supabase CLI 3.0.0 (2026-11-02) isn't pinned here.** Under v3
-  `config.toml`'s `[inbucket]` section is a hard error and `db push` targets
-  the **local** database unless you pass `--linked`. Pin
-  `npx -y supabase@2.122.1 …` and pass `--linked` for production until the
-  CLI decision is made.
+- **Supabase CLI v3 (since 2026-11-02) targets the local stack by default.**
+  Production commands need `--remote`, last; `--linked` is deprecated. Every
+  production change asks first, default No — `--yes` in a script, never
+  `echo y |`. `package.json` and CI both pin 3.0.0; bump them together.
 - `.env.local` never reaches an EAS build; `EXPO_PUBLIC_*` is inlined at build
   time. A custom profile needs `"environment"` set — `staging` sets
   `production` explicitly (Expo's docs don't state the default).

@@ -61,20 +61,21 @@ These are Deno functions that run server-side, most with elevated privileges: ed
 ## Deploy & local test
 
 ```bash
-# Local: brings up the API + a hot-reloading functions runtime; inbucket captures email.
+# Local: brings up the API + a hot-reloading functions runtime; Mailpit ([local_smtp], :54324) captures email.
 npx supabase start
 curl -X POST http://localhost:54321/functions/v1/compile-editions \
   -H "Authorization: Bearer $CRON_SECRET" -H "Content-Type: application/json"
 
 # Deploy — by hand, after merge. --use-api bundles server-side (no Docker).
-npx supabase functions deploy <name> --use-api
+# CLI v3: --remote last; it asks first (default No), --yes in a script.
+npx supabase functions deploy <name> --use-api --remote
 ```
 
 - **Merging deploys nothing.** CI only type-checks and renders fixtures. Every change under `supabase/functions/` must be deployed by hand, and a `_shared/` change must go to **every importer** — today `compile-editions` and `publish-edition-now` (via `edition-dispatch.ts`); `unsubscribe`, `delete-account` and `report-story` import nothing shared. `report-story` keeps its own copy of the Resend call and the `EMAIL_FROM` default on purpose, so edition-delivery changes never put it on the redeploy list. Production sat on a 2026-07-11 build, sending the retired v1 email, until 2026-09-24 because nobody did this.
 - **Verify what's live by source, not timestamp.** Download into a scratch worktree and let git diff it — recipe in `docs/LAUNCH.md` → Deploying edge functions. Empty `git status` means production matches `main`.
 
 - **`config.toml` gotcha:** any function not verifying a Supabase JWT needs `[functions.<name>] verify_jwt = false` (set for `compile-editions` and `unsubscribe`). Forgetting it makes cron/public calls 401. `report-story` spells out `verify_jwt = true`; `publish-edition-now` and `delete-account` get the same from the default.
-- **Secrets:** set `RESEND_API_KEY` and `CRON_SECRET` (and `EMAIL_FROM`/`FUNCTIONS_PUBLIC_URL`/`WEB_BASE_URL`/`SUPPORT_EMAIL` if overriding) in the Supabase dashboard / `supabase secrets set`. They are *not* in `.env`.
+- **Secrets:** set `RESEND_API_KEY` and `CRON_SECRET` (and `EMAIL_FROM`/`FUNCTIONS_PUBLIC_URL`/`WEB_BASE_URL`/`SUPPORT_EMAIL` if overriding) in the Supabase dashboard / `supabase secrets set NAME=value --remote`. They are *not* in `.env`.
 - **Email preview:** `deno run --allow-write=preview-out supabase/functions/_shared/preview/render-email-fixtures.ts preview-out` renders fixture editions (thin/full/untitled/long, and `8-posts-4-photos`: eight posts at the four-photo limit plus a legacy post, with signed-URL-length sources — ~45KB in October 2026) to HTML+text with byte sizes (Gmail clips at ~102KB). Eyeball in a browser at 600px and ~375px before shipping renderer changes.
 - **Typecheck:** `npm run typecheck` does **not** cover these (`tsconfig.json` excludes `supabase/functions/**`). Use `find supabase/functions -name '*.ts' -print0 | xargs -0 deno check` — not `deno check supabase/functions/**/*.ts`, whose `**` doesn't recurse in non-globstar shells and silently skips `_shared/`.
 

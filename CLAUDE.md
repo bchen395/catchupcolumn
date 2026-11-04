@@ -229,21 +229,25 @@ npx expo run:ios
 # Run on Android emulator
 npx expo run:android
 
-# ⚠ Supabase CLI 3.0.0 (out 2026-11-02) — nothing here pins the CLI, so `npx
-# supabase` now fetches v3. Under v3, config.toml's [inbucket] section is a hard
-# error, and `db push` targets the LOCAL database unless you pass --linked. Until
-# the CLI decision is made, pin 2.122.1 for production work and pass --linked to
-# push: npx -y supabase@2.122.1 db push --linked (and the same pin for deploys).
+# Supabase CLI v3 (since 2026-11-02): package.json pins supabase 3.0.0, so
+# `npx supabase` runs it; bump it together with CI's setup-cli version. v3
+# targets the LOCAL stack unless you pass --remote (keep it last). Anything that
+# changes production asks first, default No: answer y, or pass --yes in a
+# script (piping `echo y` no longer works).
 
 # Create a new Supabase migration
 npx supabase migration new <name>
 
-# Apply migrations
-npx supabase db push
+# Apply migrations to production (asks first; add --dry-run to preview)
+npx supabase db push --remote
 
 # Deploy edge functions — by hand; merging deploys nothing. A change to _shared/
 # must be deployed to every function that imports it. --use-api needs no Docker.
-npx supabase functions deploy <function-name> --use-api
+# Asks before deploying, like the push.
+npx supabase functions deploy <function-name> --use-api --remote
+
+# Read-only SQL against production (no prompt)
+npx supabase db query --read-only "<SQL>" --remote
 
 # Type-check the app (strict, no emit; does not cover supabase/functions)
 npm run typecheck

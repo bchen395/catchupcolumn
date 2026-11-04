@@ -75,7 +75,7 @@ A migration is not done until its mirrors match:
 1. Read the 2–3 most recent migrations and the closest existing analogue (an RLS policy or RPC like the one you're writing).
 2. `npx supabase migration new <name>`.
 3. Write it: enable RLS, explicit policies, `set search_path = public` on every definer function, stable error codes, deliberate grants, advisory-lock/claim patterns where relevant.
-4. Apply locally: `npx supabase db push` (or against a local `supabase start` stack first).
+4. Apply locally: `npx supabase db push` — since CLI v3 (2026-11-02) it targets the local `supabase start` stack unless you pass `--remote`. Production is `npx supabase db push --remote`, by hand after merge; it asks first (default No).
 5. Sync `types/database.ts` and CLAUDE.md.
 6. Sanity-check authorization mentally: "Could a non-member / non-moderator call this and succeed? Could a client write this table directly?" If yes and it shouldn't, you're missing a policy or a check.
 

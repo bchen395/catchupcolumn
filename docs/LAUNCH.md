@@ -58,9 +58,9 @@ ships with the final build (step 6b, then step 8). Step 9 has the detail.
 - **No word filter, by decision** (owner, 2026-10-30). The Review Notes argue
   from structure instead (STORE_LISTING §9.3), and the Terms don't claim one.
 - **Still to do:** the phone checks, in PRESUBMISSION Gate 7.
-- ⚠️ **Supabase CLI 3.0.0 came out 2026-11-02**, and nothing pins the CLI.
-  Pin `supabase@2.122.1` and pass `--linked` for production work until that's
-  decided ([Deploying edge functions](#deploying-edge-functions)).
+- **Supabase CLI v3** (moved 2026-11-02): the repo pins 3.0.0. Production
+  commands take `--remote`, and ask before changing anything
+  ([Deploying edge functions](#deploying-edge-functions)).
 
 **Update 2026-10-24** — two owner decisions and a production pass. The
 2026-09-24 snapshot below is kept as written, with struck or annotated lines
@@ -277,9 +277,9 @@ the digest it prints is the SHA-256 of the raw string, so compare instead of
 re-setting blind:
 
 ```bash
-npx supabase secrets list                                  # note WEB_BASE_URL's digest
+npx supabase secrets list --remote                         # note WEB_BASE_URL's digest
 printf '%s' 'https://www.catchupcolumn.com' | shasum -a 256  # → 2539b7ec69c3…
-# To re-set: npx supabase secrets set WEB_BASE_URL='https://www.catchupcolumn.com'
+# To re-set (asks first): npx supabase secrets set WEB_BASE_URL='https://www.catchupcolumn.com' --remote
 ```
 
 ◐ **Universal links — iOS half in place 2026-09-24, dormant until the first native
@@ -381,10 +381,10 @@ since 2026-07-17. If it were ever unset, `_shared/edition-dispatch.ts` would
 silently fall back to `onboarding@resend.dev`. To re-set:
 
 ```bash
-npx supabase secrets set EMAIL_FROM='Catch Up Column <hello@catchupcolumn.com>'
+npx supabase secrets set EMAIL_FROM='Catch Up Column <hello@catchupcolumn.com>' --remote
 ```
 
-(No function redeploy needed — secrets are read at runtime.)
+(It asks first. No function redeploy needed — secrets are read at runtime.)
 
 ## 5. Supabase Auth dashboard settings **[owner]** — ✅ set (2026-09-22, 2026-09-28; the last two items 2026-10-30)
 
@@ -1057,26 +1057,32 @@ the new build. Deploy it when the App Store version is released, not before
 (PRESUBMISSION → After approval):
 
 ```bash
-npx supabase functions deploy unsubscribe --use-api
+npx supabase functions deploy unsubscribe --use-api --remote
 ```
 
-Run it with the CLI pinned (below), then download-and-diff all five functions.
-Until then, `unsubscribe` differing from `main` is expected.
+Then download-and-diff all five functions. Until then, `unsubscribe` differing
+from `main` is expected.
 
-⚠️ **Supabase CLI 3.0.0 (released 2026-11-02): pin 2.122.1 until the CLI
-decision is made.** Nothing in the repo pins the CLI, so `npx supabase` now
-fetches v3. Under v3, `supabase/config.toml`'s `[inbucket]` section is a hard
-error, and `db push` targets the **local** database unless you pass `--linked`.
-The 2026-11-02 production work ran as `npx -y supabase@2.122.1 … --linked`. Do
-the same for every command on this page (deploys, downloads, `db push
---linked`, `db query --linked`) until the repo settles it.
+**Supabase CLI v3 (since 2026-11-02).** `package.json` pins `supabase` 3.0.0,
+so `npx supabase` in a checkout with `npm install` done runs it; CI's
+`setup-cli` is pinned to match, so bump both together. (The 2026-11-02
+production work above ran on 2.122.1 with `--linked`.) On this page:
+
+- **`--remote`, last**, on every production command. Without it, `db push`,
+  `db query`, `migration list`/`repair` and the rest target the local stack.
+  `--linked` and `--project-ref` still work but are deprecated.
+- **Changes ask first, default No:** `db push`, `functions deploy`,
+  `secrets set`, `migration repair`. Answer `y`; in a script pass `--yes` (or
+  export `SUPABASE_YES=1`). Piping `echo y |` no longer confirms.
+- **Read-only SQL:** `db query --read-only "<SQL>" --remote` runs without a
+  prompt. Without `--read-only`, a hosted `db query` asks too.
 
 To deploy after any future change — `config.toml` pins each function's
 `verify_jwt` to what production has, so a plain deploy keeps the cron's
 secret-based auth working:
 
 ```bash
-npx supabase functions deploy compile-editions publish-edition-now --use-api   # --use-api: no Docker
+npx supabase functions deploy compile-editions publish-edition-now --use-api --remote   # --use-api: no Docker
 ```
 
 Do it when no Group is inside its publish window and no edition has a live
@@ -1087,15 +1093,17 @@ deploy mid-dispatch is the one moment to avoid. Just after a cron tick
 **How to check what production is running.** `functions list`'s `updated_at` is
 accurate, but it can't tell you *what* changed. Download the deployed source into
 a scratch worktree and let git diff it against `main` — read-only for
-production, and it never touches your checkout:
+production, and it never touches your checkout. Run it from your checkout, so
+`npx` finds the pinned CLI (the scratch worktree has no `node_modules`); the
+scratch worktree was never linked, hence `--remote=<ref>`:
 
 ```bash
-git worktree add --detach /tmp/fn-audit main && cd /tmp/fn-audit
+git worktree add --detach /tmp/fn-audit main
 for fn in compile-editions publish-edition-now unsubscribe delete-account report-story; do
-  npx supabase functions download "$fn" --use-api --project-ref wvaxfyhihcfilewygtzp --workdir .
+  npx supabase functions download "$fn" --use-api --workdir /tmp/fn-audit --remote=wvaxfyhihcfilewygtzp
 done
-git status --short supabase/functions    # empty = production matches main
-cd - && git worktree remove --force /tmp/fn-audit
+git -C /tmp/fn-audit status --short supabase/functions    # empty = production matches main
+git worktree remove --force /tmp/fn-audit
 ```
 
 The downloads share one `_shared/` folder, so if the status isn't empty,
@@ -1110,7 +1118,7 @@ proven too: the 2026-08-16 edition was compiled at exactly its Group's Sunday
 09:00 ET slot (13:00:03 UTC) and emailed six seconds later. Re-run after any
 change to Vault, `CRON_SECRET`, or the project URL.
 
-Queries 1, 3 and 4 run without Docker via `npx supabase db query --linked "<SQL>"`.
+Queries 1, 3 and 4 run without Docker via `npx supabase db query --read-only "<SQL>" --remote`.
 Skip query 2 unless 4 fails — it prints the secrets in cleartext.
 
 ⚠️ **`cron.job_run_details` showing `succeeded` does NOT mean the cron worked.** The

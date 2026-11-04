@@ -23,12 +23,10 @@ Statuses below carry their own dates; the last pass against production was
 remember that **merging deploys nothing** to Supabase: migrations and edge
 functions ship by hand (Gate 2).
 
-⚠️ **Supabase CLI 3.0.0 came out 2026-11-02, and the repo doesn't pin the
-CLI.** Under v3 `config.toml`'s `[inbucket]` section is a hard error and
-`db push` targets the local database unless you pass `--linked`. Until the CLI
-decision is made, run the `npx supabase …` commands below as
-`npx -y supabase@2.122.1 … --linked` ([LAUNCH.md → Deploying edge
-functions](./LAUNCH.md#deploying-edge-functions)).
+**Supabase CLI v3 (since 2026-11-02).** The repo pins 3.0.0, so `npx supabase`
+runs it. The production commands below carry `--remote` (without it v3 targets
+the local stack), and a deploy asks before it runs, default No ([LAUNCH.md →
+Deploying edge functions](./LAUNCH.md#deploying-edge-functions)).
 
 ---
 
@@ -72,11 +70,11 @@ touches a device:
 
 ## Gate 2 — Backend parity with production
 
-- [x] `npx supabase migration list --linked` — every local migration shows a `remote`
+- [x] `npx supabase migration list --remote` — every local migration shows a `remote`
       counterpart *(2026-09-24: all 30 applied ✅, through `20260923003208`;
       2026-10-24: all 33 ✅, through `20261003154759_multi_photo_posts`;
       2026-11-02: all 38 ✅, through `20261101204252_user_blocks`)*
-- [x] `npx supabase functions list` — all ~~4~~ 5 functions `ACTIVE` **and the deployed
+- [x] `npx supabase functions list --remote` — all ~~4~~ 5 functions `ACTIVE` **and the deployed
       source matches `main`** *(2026-09-24 ✅ — after redeploying `compile-editions`
       and `publish-edition-now`, which had been on a 2026-07-11 build sending the v1
       email; 2026-10-24 ✅ — `compile-editions` v20 and `publish-edition-now` v9
@@ -372,9 +370,9 @@ Using the TestFlight / internal-testing build, with two accounts (three for the
 
 - [ ] **On release day, when you release the version:** deploy `unsubscribe`
       (#68's new last line points at the "Email me each edition" switch, which
-      only the new build has), with the CLI pinned as above:
+      only the new build has). It asks first; answer `y`:
       ```bash
-      npx supabase functions deploy unsubscribe --use-api
+      npx supabase functions deploy unsubscribe --use-api --remote
       ```
       Then download-and-diff all five functions
       ([LAUNCH.md → Deploying edge functions](./LAUNCH.md#deploying-edge-functions)):
