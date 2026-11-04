@@ -1,449 +1,391 @@
 # Launch handoff — orchestration brief
 
-**Rewritten 2026-10-03, evening** (first written 2026-09-24). A living brief for
-whichever session is orchestrating the launch. It holds what the lists don't:
-current live state, the dependency order, who does what, and how to verify.
-**Rewrite it at the end of every orchestration session** (state, dates, first
-moves). Delete it at launch.
+**Rewritten 2026-11-03** (first written 2026-09-24). This is a living brief for
+whichever session is running the launch. It holds what the lists don't: current
+live state, the order things must happen in, who does what, and how to verify.
+**Rewrite it at the end of every orchestration session** (state, decisions,
+first moves). Delete it at launch.
 
-**Start at "Next steps"** (after Workstreams) — every open item, in the order
-it binds. The rest of this file is the context those steps need.
+**To resume:** open Claude Code in the repo and say *"Read docs/HANDOFF.md and
+walk me through the next steps one at a time."* Skim **Live state**, then start
+at **Next steps**.
 
-It deliberately does **not** copy the lists — each has one home:
+It deliberately does **not** copy the lists. Each has one home:
 
 | What | Where |
 | --- | --- |
 | What's left, short form | `todo.md` |
-| Sequence and why; open questions | `docs/POSITIONING.md` §8, §9 (§6 = Group Zero, §5 = revenue) |
+| Sequence and why; open questions | `docs/POSITIONING.md` §8, §9 (Group Zero, §6, was skipped 2026-10-24) |
 | Runbook narrative, commands, live-ops checks | `docs/LAUNCH.md` |
 | Submission-day gates (authoritative over LAUNCH) | `docs/PRESUBMISSION_CHECKLIST.md` |
+| Every App Store Connect value, the review account, the Review Notes | `docs/STORE_LISTING.md` §13 (§9.1 age rating, §7 privacy labels, §5 screenshots) |
 | Acting on a report: take down, remove, ban (internal) | `docs/MODERATION.md` |
 | Guideline 1.2: what Apple asks, what ships | `docs/STORE_LISTING.md` §9.3; `docs/LAUNCH.md` step 9 |
-| Code-side residue | `bugs.md` |
-| What the Group B organizer gets | `docs/ORGANIZER_PLAYBOOK.md` |
-| Group Zero tooling | `scripts/group-zero/` (README), `scripts/group-zero/readout.sql` |
-| Multi-photo posts: decisions, contract, shipping order, test lane | `design/MULTI_PHOTO_POSTS.md` |
-| Illustration commission: spec, contracts, round 1/2 | `design/ILLUSTRATION_REWORK.md` |
+| Code-side residue and accepted trade-offs | `bugs.md` (M1, G1–G4) |
+| Illustration commission: spec, contracts, integration | `design/ILLUSTRATION_REWORK.md` |
 | The artist-facing brief (a shareable doc) | <https://claude.ai/code/artifact/c729acda-f9d2-4fd5-a929-04382415acaa> |
-| TestFlight Test Information, ready to paste | `docs/STORE_LISTING.md` §12 |
 | How to work on each surface | `.claude/skills/*` (auto-load) |
+| Dormant since Group Zero was skipped | `scripts/group-zero/`, `docs/ORGANIZER_PLAYBOOK.md`, STORE_LISTING §12 (TestFlight external) |
 
-When something gets done, record it **there**, dated — then update this file.
+When something gets done, record it **there**, dated, then update this file.
 
 ---
 
 ## Your role
 
-Run the rest of the launch with the owner. Keep the critical path moving; do the
-dev work in parallel worktree subagents that open PRs (decided 2026-10-03) and
-review each against the plan; hand the owner the owner-only steps **one at a
-time, with exact clicks/commands**; verify every claim against production
-(read-only) before recording it. The owner merges PRs — or tells you to, per PR.
+Run the rest of the launch with the owner.
+- **Owner-only steps go one at a time**, with exact clicks or commands, and
+  wait for the result before the next one.
+- **Decisions go through AskUserQuestion**, recommended option first, every
+  option viable. The owner does pick the other ones: skip Group Zero, no word
+  filter, CLI v3 now, batch the OTA. Restate what they chose, then follow it.
+- **Dev work** goes to worktree subagents that open PRs. Review each PR against
+  the plan before asking to merge.
+- **Verify every claim** against production (read-only) before recording it.
+- **The owner merges PRs**, or tells you to, one PR at a time. Ask before every
+  production change (Guardrails).
 
-## Live state — re-check before relying on it
+## Live state — 2026-11-03, re-check before relying on it
 
-**Update 2026-11-02 — the Guideline 1.2 work.** The rest of this section is the
-2026-10-03 snapshot and is stale in places (Group Zero was skipped 2026-10-24,
-and `support@` has received mail since then); `docs/LAUNCH.md` → Current state
-is newer.
+**Code:** `main` at `a881c2b` (#74). CI is green.
 
-- **Merged 2026-10-31 to 2026-11-02:** #64 *Report this story* sends from
-  inside the app (`report-story`; a drafted email only as fallback); #65 a
-  creator's Groups are handed over on account deletion (the `on_user_deletion`
-  trigger, every deletion path); #66 removal is a ban, with "Let back in"; #67
-  "Agree and email me a code" at sign-up, Help & support in Profile; #68 each
-  Group's email and notification switches; #69 a moderator's take-down and
-  `docs/MODERATION.md`; #70 one-way block. No word filter, by decision.
-- **Production, 2026-11-02:** all 38 migrations pushed; `compile-editions` v21,
-  `publish-edition-now` v10 and `report-story` v1 deployed, downloaded and
-  diffed clean against `main`.
-- **Release day:** `npx supabase functions deploy unsubscribe --use-api --remote`
-  (#68's new wording points at a switch only the new build has). Not before.
-  It asks first, default No.
-- **Phone checks owed:** PRESUBMISSION Gate 7 — #65's creator deletion with
-  throwaway accounts, #69's production take-down with photos (T1/T2), and the
-  device scripts of #64, #66, #67, #68 and #70 (`gh pr view <n>`).
-- **Supabase CLI v3 since 2026-11-02:** pinned to 3.0.0; production commands
-  take `--remote`, last (Traps, below).
+**Production:**
+- **Database:** all 38 migrations applied (CLI v3: `migration list --remote` matches).
+- **Functions:**
 
-Server rows verified 2026-09-25/28; EAS, CI and the merges verified 2026-10-03.
+  | Function | Version | Notes |
+  | --- | --- | --- |
+  | `compile-editions` | v21 | downloaded and diffed clean against `main`, 2026-11-02 |
+  | `publish-edition-now` | v10 | same |
+  | `report-story` | v1 | same |
+  | `delete-account` | v11 | unchanged |
+  | `unsubscribe` | v7 | old on purpose: its new wording deploys on release day |
 
-**Working:**
-- **Server:** v2 edition email live; cron every 15 min; **32 of the repo's 33
-  migrations applied** — `20261003154759_multi_photo_posts.sql` (merged in #55)
-  is **not pushed**. `compile-editions` **v19** (2026-09-28) is live, but
-  `main`'s `_shared/` has moved on (#55: emails render `blocks`, photo-folder
-  re-check before signing) — **not deployed**. Both are §2 below.
-  `WEB_BASE_URL` = `www`; `EMAIL_FROM` correct; Vercel in sync with `main`.
-- **Merged 2026-10-03 (owner-approved), all in tomorrow's build:**
-  - **#54** — one shared `BackButton` (48pt, centered — on iOS 26 the system's
-    glass circle centers on the header view's frame, so the old margins showed
-    as an off-center arrow); skeletons for invite-link arrival and the compose
-    sheet; bugs.md **L3 fixed** (retry screen when a new account's profile
-    can't be created).
-  - **#55** — the multi-photo **data layer**: `posts.blocks`, the block
-    helpers (`lib/post-blocks.ts`), photo upload with a ~1280px display copy
-    beside each 2600px print master, the email rendering blocks, `AppImage`
-    cache keys by storage path, repeatable `post-for --photo`. Backward
-    compatible: the current composer never writes `blocks`.
-  - **#53** — the illustration commission decisions (BRAND §1/§4/§11,
-    `design/ILLUSTRATION_REWORK.md`). **#51** — TestFlight Test Information.
-- **Open and gated — do not merge before the 2026-10-08 go:** **#52**
-  (reading surfaces) and **#56** (the block composer + the July redesign).
-  Merge order on go: #52, then #56 (rebase first — a docs-only conflict in
-  `.claude/skills/frontend-design/SKILL.md`). Both CI-green.
-- **CI green** on `main` after the merges (2026-10-03).
-- **EAS env** (`production` + `preview`, read back 2026-10-03): the Supabase
-  vars, `EXPO_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN` (Secret),
-  `SENTRY_ORG=catch-up-column`, `SENTRY_PROJECT=catchupcolumn`. The first
-  production build proves them (LAUNCH 10.4).
-- **EAS profiles:** `production` (channel `production`) and — new, in the PR
-  with this rewrite — `staging`: extends production, channel `staging`,
-  production env vars (resolved with `eas-cli config`, 2026-10-03). It exists
-  so gated JS reaches **only the owner's phone** (§1, §3).
-- **Pre-flight for the production build:** `app.json` bundle ID
-  `com.catchupcolumn.app` (final), `ITSAppUsesNonExemptEncryption: false`,
-  `applinks:` + `webcredentials:` for `www`; remote build numbers +
-  `autoIncrement`; EAS login `bchen395`. The app icon is fully opaque (checked
-  2026-10-03; Expo flattens iOS icons anyway).
-- **Universal links, server half:** AASA serves
-  `6RDS3S724Z.com.catchupcolumn.app` (`applinks` + `webcredentials`).
-- **Auth on `main`** (#44): code sign-in, optional password, 8+ chars.
-  Dashboard items 1–4 done 2026-09-28 (LAUNCH step 5).
+- **Cron:** healthy. Checked 2026-10-30: the last tick returned 200, and 0 of
+  24 kept responses timed out.
+- **Auth dashboard (LAUNCH step 5): all done.** Codes expire after 600 s, the
+  templates were pasted 2026-10-30, and the `reset-password` redirect is
+  removed.
+- **Email:**
+  - Resend domain verified. Free plan: 100/day and 3,000/month, shared by
+    sign-in codes, edition email and reports.
+  - **No tracking subdomain, so no open or click tracking.** Never set one up;
+    the tracking switches can't save without one, and that's expected.
+  - `support@` receives mail through Cloudflare Email Routing; DMARC is `p=none`.
+- **Public pages:**
+  - Terms effective 2026-11-02 (zero tolerance, blocking, moderators).
+    `TERMS_VERSION` in `lib/auth.ts` matches.
+  - Privacy policy has the safety-records line and the support inbox
+    (Cloudflare); the support page and delete-account page are updated.
+  - All live on Vercel.
 
-**Wrong or open right now:**
-- ~~**`support@catchupcolumn.com` can't receive mail — no MX record** on the apex
-  (verified with `dig`, 2026-10-03). It's where *Report this story* sends
-  (`lib/report.ts`, the Guideline 1.2 report path), the privacy policy's
-  deletion route, the support page, the TestFlight feedback address and the
-  DMARC `rua`. Owner fix: Cloudflare Email Routing (§1, first item). No apex
-  TXT exists, so Cloudflare's SPF won't clash with Resend (`send.` subdomain).~~
-  **Fixed 2026-10-24** (Cloudflare Email Routing). Since #64 (2026-10-31) a
-  report reaches `support@` through the `report-story` function, not the
-  reporter's mail app.
-- **No production build yet.** Nothing has run on a phone as a signed binary.
-- **#44's app half is on no build yet** (fingerprint moved). Checks:
-  PRESUBMISSION Gates 5 and 7.
-- **Two auth dashboard steps wait** until Group Zero runs that build (§6).
-  Until then codes last an hour while the copy says 10 minutes — harmless.
-- **Cron timeout re-count never done** (§5).
-- No DMARC record. Resend domain status unconfirmed. Both before edition 1.
-- **The first-ever OTA hasn't run.** The first `staging` update is the
-  rehearsal; the first `production` one is the go.
-- Local Xcode 26.3 can't build SDK 57 (needs ≥ 26.4). EAS is unaffected.
+**Guideline 1.2: done in code, live on the server.** It's #64–#70: report
+from the app, a creator's Groups handed over on account deletion, removal as
+a ban with "Let back in", agreeing at sign-up, the email and push switches,
+take-down, and one-way block. There's **no word filter**, by decision. The
+Review Notes make the structural case instead.
 
-**Group Zero: not started.** Production has 2 test Groups, 3 users. Runs on the
-app from edition 1 via a TestFlight public link (2026-09-29). **Edition 1 is
-the week of 2026-10-11** (owner, 2026-10-03), so Group A's publish day falls
-that week. Still owed: Group A's settings, the Group B organizer, the family
-Group, Android (§4).
+**The build on the owner's phone:**
 
-## What the 2026-10-03 session decided
-
-The owner's asks: replace the illustrations with a commissioned artist's work;
-a UI pass; loaders; multi-photo posts with a sensible limit; less HeyTea. All
-decided by the owner, recommended options unless noted:
-
-| Area | Decision |
+| | |
 | --- | --- |
-| Timing | Build 10-04 as planned. Multi-photo ships **before edition 1, else after edition 4 — never mid-run** (the write-by-web call compares editions 1–2 with 3–4). **Go/no-go Wed 10-08**, verified on the owner's phone |
-| Post shape | **One writing area**, photos inserted at the cursor, no text tied to a photo — like Substack/Docs (owner's own words). Plain text only |
-| Editor | Native blocks (pure JS, OTA-able) — not a WebView editor |
-| Photo limit | **4 per post**, enforced in the DB; display copies + path-keyed cache for egress (Free plan: 1 GB storage, 5 GB egress) |
-| Composer | Rewritten once with the July redesign folded in (`COMPOSER_REDESIGN.md` → BRAND §9 in #56) |
-| Loaders | Invite-link arrival and compose sheet → skeletons; rider stays for cold boot + auto-join; press stays for publish-now |
-| UI pass | The owner walks the **phone build**, reports in a `/qa` session that files issues; agents fix; ship by OTA |
-| Illustrations | A commissioned artist; style in our own terms, **HeyTea only as a "don't"**; vector SVG + sources; **line weight is the artist's call** (sketch round); round 1 = redraw the set + the **press pass** (replaces the invite ticket) + icon; round 2 after Group Zero. Rights, fee and dates **out of the brief** — the owner negotiates |
-| HeyTea elsewhere | Nothing else changes (stamps, small caps, raised "+" stay) |
-| Test lane | A `staging` build for the owner only; gated JS by `eas update --channel staging` |
-| Edition 1 | Week of 10-11 (the owner chose this over the recommended 10-18) |
-| Orchestration | Worktree subagents → PRs → orchestrator review → owner merges |
+| Build | 10 (1.0.0) |
+| EAS build id | `7ba2ae35-d86a-43e4-afbb-f053d6c98406` |
+| Built from | `4392385` |
+| Channel | `production` |
+| Runtime (fingerprint) | `dd742296d0f188b486a1af3dee8fe6f7ef7e662b` |
+| Status | submitted 2026-11-03; App Store Connect app **`6830424103`** created; installed through internal TestFlight |
 
-## Dates that bind
+It has every PR up to #72. **#74 (the keyboard fix) is merged but not
+published as an OTA:** the owner chose to send it together with the fixes from
+the phone checks. `main`'s fingerprint still equals the build's (checked after
+#74 merged).
 
-| When | What | Why it's fixed |
-| --- | --- | --- |
-| **2026-10-04** | Production build + **staging build**, both submitted; owner's phone via internal testing; external TestFlight submitted for review | Edition 1 needs installs; Apple's beta review is the wait |
-| **2026-10-05/06** | `db push` + function deploys (§2); first `staging` OTA with #52 + #56 (§3) | The composer test needs the migration; the go needs test days |
-| **Wed 2026-10-08** | **Multi-photo go/no-go** on the owner's phone | Edition 1's week starts 10-11 |
-| **Week of 2026-10-11** | Group Zero edition 1 | Owner's call, 2026-10-03 |
-| **Before the external link goes out** | `support@` receives mail (Cloudflare Email Routing) | The report path and the review contact must work |
-| Overdue | A family Group publishing | Each week later is one fewer edition in a December volume (POSITIONING §5) |
-| ~2026-10-17 / ~11-07 | Artist sketches / finals (proposed in the brief; owner confirms with the artist) | Art must land before App Store submission |
-| Late November | The December test (hand-made volumes, Lulu by hand, Stripe link) | Q4 is 40–60% of gift revenue |
+**The owner's local checkout:**
+- `package.json` has an **uncommitted** change: the `ios`/`android` scripts say
+  `expo run:*`, from running `npx expo run:ios`. It doesn't affect the
+  fingerprint.
+- There's a gitignored `ios/` folder from the same command.
+- **Never `git commit -a`/`-am` in that checkout.** Stage files by name. When
+  switching branches, stash and pop.
 
-## Workstreams
+**Test accounts:** T1 = `bchen395+t1@gmail.com` (moderator of a test Group).
+T2 and T3 will be `bchen395+t2@`/`+t3@gmail.com`, not created yet.
 
-- **A. Group Zero — owner-led** (§4; POSITIONING §6). `readout.sql` for results.
-- **B. Production correctness — agent, the owner approves each prod change**
-  (§2, §5). Redeploy functions after **every** function change; verify by
-  download-and-diff.
-- **C. Build, multi-photo, UI pass** (§1, §3, §7).
-- **D. Illustration commission — owner + artist**; agents integrate the art
-  when it lands (§8).
-- **E. Gated — do not start** (POSITIONING §8): the nudge, thin-edition design,
-  write-by-web, store screenshots, App Store submission (after Group Zero
-  **and** the illustration rework), the house ad, the print renderer / Lulu API.
+**Phone check batch 1: done 2026-11-03.** Sign-up with the Terms agreement,
+the 10-minute code, onboarding, the photo permission wording, notifications
+allowed, creating a Group, the switches, Profile, and Help & support. It
+passed apart from the keyboard (fixed in #74). **Still owed from it:** the T1
+read-only query (Next steps §1).
 
-## Next steps — rewritten 2026-10-03 evening
+## Decisions since 2026-10-24 (all the owner's)
 
-**[owner]** = only the owner can do it — one at a time, exact clicks or
-commands. **[agent]** = the session does it.
+| Date | Decision |
+| --- | --- |
+| 10-24 | **Skip Group Zero.** No external TestFlight, no beta review; submit once the art lands and the checks pass. Multi-photo ships in v1 |
+| 10-30 | Age rating **18+** override; Terms §1 stays at 18. Messaging & Chat: Yes. Content rights: Yes (the art contract must grant the rights). EU **trader**. Every region except mainland China. **Manual** release. Reports answered **within 24 hours, every day** |
+| 10-30 | Guideline 1.2 closed in code before the final build: one-way block, "Let back in", **no word filter**, report sent from the app, email and push switches for each Group. Existing accounts aren't asked to re-agree to the Terms. bugs.md M1 accepted |
+| 10-31 – 11-02 | Accepted for 1.0: report spam can use up the shared Resend cap (G1); push isn't filtered by blocks (G2); a moderator's block hides stories in their own Group too (G3); deleting an account removes that person's stories (G4) |
+| 11-01 | Take-downs are silent: the author isn't told. The invite card keeps "Anyone with this code can join" (standard, short) |
+| 11-02 | Privacy label declares Customer Support; support inbox disclosed; **Supabase CLI v3 now** (rather than pinning 2.x) |
+| 11-03 | Short multi-line fields (Group description, bio): Return reads **Done** and closes the keyboard. **Batch the OTA:** #74 waits for the phone-check fixes |
 
-**§1. Build day (2026-10-04)** (LAUNCH step 8)
+## Next steps
 
-0. **[owner] First, if not done tonight: Cloudflare Email Routing** for
-   `support@`. dash.cloudflare.com → catchupcolumn.com → **Email** → **Email
-   Routing** → Get started/Enable → **Add records and enable** → **Routing
-   rules** → Create address `support` → Send to an email → the inbox the owner
-   reads → click Cloudflare's verification email → send a test from another
-   account. **[agent]** then `dig +short MX catchupcolumn.com` (expect
-   `route1/2/3.mx.cloudflare.net`). Same sitting, optional: the DMARC TXT
-   (`_dmarc` = `v=DMARC1; p=none; rua=mailto:support@catchupcolumn.com`).
-1. **[owner, own Terminal]** — interactive, not via `!`, from an up-to-date
-   `main`: `npx eas-cli build --platform ios --profile production --no-wait`.
-   Yes to Apple login (Apple ID, password, 2FA), distribution certificate,
-   provisioning profile, **push key (APNs)**. Team ID `6RDS3S724Z`. Agreement
-   prompt → accept at developer.apple.com → Account, re-run.
-2. **[owner, own Terminal]** right after:
-   `npx eas-cli build --platform ios --profile staging --no-wait` (credentials
-   are reused; the build number auto-increments).
-3. **[agent] Watch both:** `npx eas-cli build:list --platform ios --limit 2`,
-   then `build:view <id> --json`. First Sentry upload — read the log before
-   any retry.
-4. **[owner]** `npx eas-cli submit --platform ios --id <production build id>`
-   (App Store Connect API key → Yes; create the app → "Catch Up Column",
-   English (U.S.); **the bundle ID locks here**), then the same with the
-   staging build's id.
-5. **[owner] Own phone:** App Store Connect → TestFlight → Internal Testing →
-   new group, add yourself → add **both** builds → install the **staging**
-   one (the higher build number, so TestFlight's default). It gets `staging`
-   OTAs, not `production` ones. TestFlight → the app → *Previous Builds*
-   switches the phone to the production build and back whenever a check needs
-   what Group Zero runs. The production build also goes to the external group
-   (item 7).
-   Device checks: PRESUBMISSION Gate 5 (incl. the Keychain prompt) and Gate 7
-   (incl. the eight #44 auth checks). Create Group A here once its settings
-   are known (§4).
-6. **[agent + owner]** The review account (code sign-in → Profile → Set a
-   password) **and a second member** who joins the demo Group and writes —
-   *Report* and *Remove* only show on other people's stories (STORE_LISTING
-   §12.4). Production writes — ask first.
-7. **[owner] External testing:** new group → the **production** build → Test
-   Information from STORE_LISTING §12 (fill its placeholders: review contact,
-   account, demo Group name) → public link → submit for review.
-8. Apple's beta review → public link → each Group Zero yes gets the link and
-   the invite code (ORGANIZER_PLAYBOOK step 4). Supabase's auth email limit is
-   100/hour; Resend's daily cap is unknown (§4 item 13).
+**[owner]** means only the owner can do it: one step at a time, with exact
+clicks or commands. **[agent]** means the session does it.
 
-**§2. Monday 2026-10-05 — ship the data layer's server half** (each a
-production change; show the exact command; one approval each)
+**§1. Finish batch 1**
 
-9. **[agent → owner]** `npx supabase db push --dry-run` — expect only
-   `20261003154759_multi_photo_posts.sql` — then `npx supabase db push`, then
-   confirm `posts_blocks_valid` exists (hand the owner the `!` query; auto mode
-   blocks `db query --linked`).
-10. **[agent → owner]** Just after a cron tick:
-    `npx supabase functions deploy compile-editions --use-api` and
-    `... publish-edition-now --use-api`; verify each by download-and-diff
-    (LAUNCH → Deploying edge functions). #55's PR body has the detail.
+1. **[owner]** The T1 check, which should show `terms_version = 2026-11-02`,
+   `agreed = true`, and `push_tokens` and `groups` of 1 or more:
+   `! npx supabase db query --read-only "select u.raw_user_meta_data->>'terms_version' as terms_version, (u.raw_user_meta_data ? 'terms_accepted_at') as agreed, (select count(*) from public.push_tokens p where p.user_id = u.id) as push_tokens, (select count(*) from public.group_members m where m.user_id = u.id) as groups from auth.users u where u.email = 'bchen395+t1@gmail.com'" --remote`
 
-**§3. Multi-photo test lane and the go** (`design/MULTI_PHOTO_POSTS.md`)
+**§2. Phone check batch 2: one account, can start any time** (PRESUBMISSION Gate 5 and Gate 7 → Auth)
 
-11. **[agent]** After §2: a throwaway branch = `main` + #52 + #56 (rebase #56;
-    resolve the skill-doc conflict), typecheck, then **ask** and run
-    `npx eas-cli update --channel staging --message "multi-photo test"`.
-    Only the owner's staging build receives it (two cold launches to apply).
-12. **[owner]** Test on the phone with #56's device script and #52's checklist
-    — the biggest risk is iOS backspace at the start of an empty field
-    (tap → *Remove photo* is the fallback). Fixes go into the PRs, then
-    another `staging` update.
-13. **[owner] Go/no-go by Wed 10-08.** Go → **[agent]** merge #52 then #56,
-    CI green, then ask and run
-    `npx eas-cli update --channel production --message "…"` (the first
-    production OTA — confirm it by switching the owner's phone to the
-    production build via *Previous Builds*). No-go → both wait
-    until after edition 4; nothing multi-photo goes to `production`.
+2. **[owner] Gate 5 leftovers:**
+   - Type `catchupcolumn://` in Safari; it should open the app.
+   - Profile → Set a password: iCloud Keychain should offer a strong password
+     and offer to save it. That needs the `webcredentials` entitlement, which
+     only a signed build has.
+3. **[owner] Gate 7 → Auth:**
+   - After setting a password, Profile says "Change your password", and the
+     password-changed email arrives.
+   - Sign out → *Use a password instead* → sign in with it.
+   - A wrong password shows "If you usually sign in with a code, use that instead."
+   - `password1` is refused as one of the most common passwords.
+   - *Forgot your password?* → the code arrives → "Choose a new password" →
+     sign in with the new one.
+4. **[owner] #68, phone side only:** turn notifications off for the app in
+   iOS Settings. On a Group page, the "Notifications are off…" note and
+   **Open Settings** appear; turn notifications back on and the note goes.
 
-**§4. Group Zero — settle before the link goes out**
+**§3. Phone check batch 3: needs two or three accounts at once**
 
-14. **[owner] Answers still owed:** Group A's name, publish day (in the week
-    of 10-11), time and zone; who organizes Group B (not the owner); the
-    family Group (start by email with `create-group` now, or wait for the
-    app?); anyone on Android? (the build is iPhone-only).
-15. **[owner] Recruit now, 1:1** (playbook step 1).
-16. **[agent] Holdouts:** `add-member` anyone not in by edition 1;
-    `post-for` their texted entries in editions 1–2 (`--photo` now repeats, up
-    to 4). Dry run first; ask before every `--apply`.
-17. **[owner] Decide bugs.md M1** (recommended: accept, check each publish for
-    failed recipients and forward by hand).
-18. ~~**[owner] Before edition 1:** DMARC (if not done in §1), Resend — domain
-    `verified`? daily cap? open/click tracking **off**?~~ ✅ DMARC 2026-10-24;
-    domain `verified` and 100/day · 3,000/month 2026-10-30; no tracking
-    subdomain, so no tracking, 2026-11-03.
+This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
+(`gh pr view <n>`), plus join, publish, email, push and unsubscribe.
 
-**§5. Keep production honest**
+5. **[owner] Choose the second device.** Options:
+   - Another iPhone or iPad on the same Apple ID, installed from TestFlight.
+   - Someone added to App Store Connect as a user, then as an internal tester.
+     External testers would need Apple's beta review.
+   - **Fallback:** switch accounts on one phone (sign out and in). That covers
+     everything except push arriving while another account is active, since
+     push goes to whoever is signed in on the phone.
+   - **Not the simulator:** local Xcode 26.3 can't build SDK 57.
+6. **[owner + agent] Run the batch in this order.** Setup is T1 moderator, T2
+   and T3 contributors.
+   - T2 joins by code.
+   - A post with 2 photos → Publish now. The email arrives from the verified
+     domain, its "read the edition" link opens the app (not a 404), and push
+     fires.
+   - Report (#64). The email reaches `support@`.
+   - Block and Unblock (#70).
+   - Delivery switches, and the unsubscribe link flipping the switch (#68).
+   - Take down a published 2-photo story (#69). This is **the production
+     take-down test**: see #69's "After merging" item 3 for the before/after
+     file counts. The **[agent]** hands the owner the read-only queries.
+   - Remove, the removed member refused at the join screen, then Let back in
+     (#66).
+   - Delete a *creator's* account while their Group has a member (#65): the
+     deletion completes and the Group passes on. Read-only checks are in #65.
+   - Profile → Delete my account.
+   - Clean up the test Groups afterwards.
 
-19. **[agent → owner] Re-count cron timeouts:**
-    `! npx supabase db query --read-only "select status_code, timed_out, count(*) from net._http_response group by 1, 2 order by 3 desc" --remote`.
-    Expect no `timed_out = true`.
+**§4. Sentry smoke test** (LAUNCH step 10; its 10.3 is owed)
 
-**§6. Once Group Zero is on the production build**
+7. **[owner + agent]** Follow LAUNCH 10.3/10.5 on the TestFlight build.
 
-20. **[owner] Code expiry → 600 s** + paste the updated `magic-link.html` and
-    `confirm-signup.html` (LAUNCH step 5 item 5); **[agent]** then deletes the
-    PENDING notes (both templates, `reauthentication.html`,
-    `hooks/use-email-code.ts`, CLAUDE.md's Auth line).
-21. **[owner] Remove `catchupcolumn://(auth)/reset-password`** from Redirect
-    URLs (LAUNCH step 5 item 7).
+**§5. The owner's UI pass, then one OTA**
 
-**§7. The owner's UI pass (from 10-05, on the phone)**
+8. **[owner + agent]** The owner walks the app and reports in a `/qa` session
+   (it files GitHub issues). Agents fix them in PRs.
+9. **[agent → owner] Publish the batch as one OTA:**
+   - **Ask first.**
+   - Before publishing, confirm `npx expo-updates runtimeversion:resolve
+     --platform ios` in the owner's checkout prints `dd742296…`.
+   - Then `npx eas-cli update --channel production --environment production
+     --message "…"`.
+   - The owner cold-launches twice to apply it.
+   - It includes #74 and every other JS fix since `4392385`.
 
-22. **[owner + agent]** Walk the app; report in a `/qa` session (it files
-    GitHub issues); agents fix in batches; ship via `staging` first, then
-    `production`. Already known, check these first:
-    - The Group page's back button after auto-join lands there directly — it
-      uses `router.back()` with no fallback (may have nothing to go back to).
-    - The invite skeleton assumes a cover photo; a Group without one shifts up
-      when the page lands.
-    - The invite code on the ticket ignores Dynamic Type — a 12-character code
-      can clip at large sizes (fix with the press pass, or sooner).
-    - Week one, Home shows two paperboys (mailbox hero + the strip's rider).
-    - #56: the composer's action-bar labels stop scaling at 1.6× Dynamic Type
-      (BRAND §3/§13 exception) — confirm it reads right.
+**§6. App Store Connect (items 19–22): no second device needed**
 
-**§8. Illustration commission**
+10. **[owner, agent dictates]** Fill in from STORE_LISTING §13.1, field by
+    field:
+    - App Information (subtitle, categories, content rights, age rating as in
+      §9.1, privacy policy URL)
+    - App Privacy (§7)
+    - Pricing and Availability, plus the EU DSA trader declaration
+    - the 1.0 version page (description, keywords, promo text, URLs,
+      copyright, review contact, release: manual)
 
-23. **[owner]** Send the brief (link above) to the artist; agree fee, rights
-    and dates (proposed: sketches ~10-17, finals ~11-07 — the brief carries a
-    comment asking to confirm).
-24. **[agent], when the art lands:** integrate per `ILLUSTRATION_REWORK.md` →
-    Integration (convert SVGs keeping the export contracts, re-measure the
-    animated groups, build the all-assets review screen, regenerate icon,
-    splash and derived assets — the icon/splash need one more build).
+    Screenshots and the build wait for §8. Owner inputs still open: copyright
+    holder, App Review contact, trader contact details (§13.5).
+11. **[agent + owner] Review account and demo Group** (STORE_LISTING §13.2;
+    production writes, so ask first):
+    - A review account with a password.
+    - A demo Group with a second member who has written a story, because
+      Report, Block and Take down only appear on other people's stories.
+    - One published edition.
+    - Then fill the Review Notes placeholders `{{DEMO GROUP NAME}}` and the two
+      `{{SECOND MEMBER NAME}}` (§13.3) and re-measure them under 4,000 bytes.
 
-**§9. Owner, any time**
+**§7. Illustration commission** (`design/ILLUSTRATION_REWORK.md`)
 
-- Publish-day default: the app says Sunday 09:00, the playbook Monday (minor).
-- Lulu pricing calculator at a real trim size and page count.
-- From the 2026-09-22 sign-up test: the email's subject, sender, and
-  inbox-vs-spam placement. Ask once.
+12. **[owner]** The artist's timeline: sketches were proposed for about 10-17
+    and finals for about 11-07. Confirm where it stands.
+13. **[agent], when the art lands:**
+    - Integrate it per ILLUSTRATION_REWORK → Integration.
+    - Regenerate the icon, splash and derived assets. That moves the
+      fingerprint, so it needs a new build.
 
-**First move for the next session (build day):** §1 item 0 if the MX record
-isn't there yet (`dig +short MX catchupcolumn.com`), then the two builds. Skim
-Live state first.
+**§8. Final build and submit**
+
+14. **[owner]**
+    - A new production build, the same command as before. Its runtime is new,
+      so older builds stop getting OTAs.
+    - Submit it with `npx eas-cli submit --platform ios --id <id>`.
+    - Add it to the version page.
+15. **[owner]** Screenshots:
+    - Check the required size slots in Media Manager first (STORE_LISTING §5;
+      Apple's page named the 6.3-inch class, 2026-11-02).
+    - Use the demo Group's invented content.
+16. **[owner + agent]** The final PRESUBMISSION pass (all gates), then **Submit
+    for Review**. Release is manual.
+
+**§9. Release day and after**
+
+17. **[agent → owner]** `npx supabase functions deploy unsubscribe --use-api
+    --remote`. It asks first; default is No.
+18. **[agent]** After approval, set `appStoreUrl` in `web/config.js` (PR; this
+    publishes the site).
+
+**Not blocking:**
+- Make CI's schema lint able to fail (todo.md).
+- Authors can delete their own *published* post through the API without its
+  photos (`001_initial_schema.sql:201`).
+- Members can read each other's delivery flags through the API.
+
+**First move for the next session:** §1 (one paste), then ask the owner which
+comes next: §2 (phone, alone), §6 (App Store Connect), or §3 if a second
+device is ready.
 
 ## Decisions the owner owes
 
 | Decision | Needed by | Where |
 | --- | --- | --- |
-| Group A's name, publish day (week of 10-11), time and zone | Before creating it in the app (§1 item 5) | Workstream A |
-| Who organizes Group B | Before recruiting it | POSITIONING §6 |
-| The family Group: start by email now, or wait for the app? | Overdue | POSITIONING §5, §6 |
-| Anyone in Group A or B on Android? | Before the link goes out | POSITIONING §6 |
-| Multi-photo go/no-go | Wed 10-08 | §3 |
-| M1: accept no per-recipient email retry? | Before edition 1 | bugs.md M1 |
-| Artist: fee, rights, dates | Before the artist starts | §8 |
-| Publish-day default (minor) | Any time | `app/group/create.tsx`, playbook |
-
-Decided: 2026-10-03 — the table under "What the 2026-10-03 session decided";
-merge #51/#53/#54/#55 (owner told the session to); Sentry slugs as set; skip the
-simulator pass; build 2026-10-04. 2026-09-29 (#49) — the Group Zero re-plan.
-2026-09-24/25 — reading measured by asking; bundle ID final; "shipping" means
-the App Store, after the illustration rework; #44's password rules. Left until
-after Group Zero: weekly vs biweekly, classifieds, volume size, whether
-friend-group volumes sell (POSITIONING §9).
+| Second device or tester for batch 3 | §3 | above |
+| Copyright holder; App Review contact; DSA trader contact details | §6 | STORE_LISTING §13.5 |
+| Screenshot size slots (Media Manager) | §8 | STORE_LISTING §5 |
+| Artist: fee, rights (they must cover content rights), dates | §7 | ILLUSTRATION_REWORK |
+| Publish-day default (minor): the app says Sunday 09:00 | Any time | `app/group/create.tsx` |
 
 ## How to verify without Docker
 
-- **DB, read-only:** `npx supabase db query --read-only "<SQL>" --remote` —
-  auto mode blocks it against production, so hand the owner the `!` command.
-  Under v2 its stdout began with `Initialising login role...`, which broke
-  `jq`; v3 sends that line to stderr (seen on `migration list`), but check
-  before relying on clean JSON. Never run LAUNCH's Vault query 2 unless the
-  cron's HTTP responses fail — it prints secrets.
-- **Operator script / service-role calls:** derive the key inline so it's never
-  printed or written:
+- **DB, read-only:** `npx supabase db query --read-only "<SQL>" --remote`.
+  Auto mode blocks it against production, so hand the owner the `!` command.
+  Under v3 it prints `Target: …` and then JSON with a `rows` array (confirmed
+  2026-11-03). Never run LAUNCH's Vault query 2 unless the cron's HTTP responses
+  fail, because it prints secrets.
+- **Non-DB remote reads aren't blocked:** `migration list --remote`,
+  `db push --dry-run --remote`, `functions list`, `functions download`.
+- **Service-role calls:** derive the key inline so it's never printed:
   `SUPABASE_SERVICE_ROLE_KEY="$(npx supabase projects api-keys -o json --remote=wvaxfyhihcfilewygtzp | jq -r '.[] | select(.name=="service_role") | .api_key')"`.
-  Dry runs are free; every `--apply` is a production write — ask first.
-- **Hashed secrets:** `supabase secrets list` digests are SHA-256 of the value;
-  compare with `printf '%s' '<expected>' | shasum -a 256`.
-- **What code production runs:** download-and-diff (LAUNCH → Deploying edge functions).
-- **Cron:** `net._http_response` status codes, not `cron.job_run_details`.
-- **EAS env / profiles:** `npx eas-cli env:list --environment production | sed -E 's/=.*/=<redacted>/'`;
-  `npx eas-cli config --platform ios --profile <name> --non-interactive`
-  prints the resolved profile and which environment it loads.
-- **EAS builds:** `npx eas-cli build:list --platform ios --limit 3`,
-  `build:view <id> --json`; simulator builds install with
-  `npx eas-cli build:run -p ios --id <id>`.
-- **EAS updates:** `npx eas-cli update:list --branch <channel>`; an update
-  applies on the second cold launch after it's published.
+  v3 still returns an array (checked 2026-11-03).
+- **Hashed secrets:** `supabase secrets list` digests are the SHA-256 of the
+  value. Compare with `printf '%s' '<expected>' | shasum -a 256`.
+- **What code production runs:** download and diff (LAUNCH → Deploying edge
+  functions).
+- **Cron:** read the status codes in `net._http_response`, not
+  `cron.job_run_details`.
+- **EAS:**
+  - `npx eas-cli build:view <id> --json` gives the status, `updateChannel` and
+    `runtime.version`.
+  - `npx eas-cli update:list --branch production` lists updates.
+  - `npx expo-updates runtimeversion:resolve --platform ios` gives the local
+    fingerprint.
 - **Site / DNS / AASA:** the curls in LAUNCH step 2 and PRESUBMISSION Gate 4;
   `dig +short MX catchupcolumn.com`; `dig +short TXT _dmarc.catchupcolumn.com`.
-- **Merging several PRs:** test-merge them in order in a scratch worktree off
-  `origin/main` and typecheck the result before merging any.
-- **Flows that touch auth/storage:** a throwaway account and before/after
-  snapshots of the rows and storage objects involved. Clean up afterwards.
-- Edge function logs: dashboard only.
+- **Merging several PRs:**
+  - Test-merge them in order in a scratch worktree off `origin/main`, and
+    **typecheck the merged result before pushing**. A conflict-resolution
+    push once broke typecheck on a type a sibling PR had renamed.
+  - Parallel PRs routinely conflict in CLAUDE.md, BRAND §9 and the skills.
+    Resolve by keeping both sides.
+- **Flows that touch auth or storage:** use a throwaway account and take
+  before/after snapshots. Clean up afterwards.
+- **Edge function logs:** dashboard only.
 
 ## Guardrails
 
 - No Docker (owner preference). Everything above is Docker-free.
-- **Subagents: no system installs without asking** — say so in every prompt
-  that might need a toolchain.
+- **Subagents: no system installs without asking.** A subagent that installs
+  npm packages does it in its own worktree's `node_modules`, never the main
+  checkout's.
 - Branch → PR → CI green → the owner merges (or says to). Commit and PR
-  attribution per the session's instructions.
-- **Ask before any production change** — `secrets set`, `env:set`,
-  `functions deploy`, `db push`, `eas update` (either channel), `--apply`,
-  writes via SQL — and show the exact command. Read-only checks need no ask.
-- Merging anything under `web/` publishes it. Treat it as outward-facing.
-- Record outcomes as they are: a simulator build doesn't tick PRESUBMISSION
-  Gate 7 (device release build); say what wasn't checked.
-- CLAUDE.md's Non-features are permanent — no engagement mechanics, ever.
+  attribution follow the session's instructions.
+- **Ask before any production change, and show the exact command:**
+  `secrets set`, `env:set`, `functions deploy`, `db push`, `eas update`,
+  `--apply`, and any write via SQL. Read-only checks need no ask.
+- Merging anything under `web/` publishes it, so treat it as outward-facing.
+- Record outcomes as they are, and say what wasn't checked.
+- CLAUDE.md's Non-features are permanent: no engagement mechanics, ever.
 
 ## Traps already paid for
 
-- **`posts.blocks` must exist before any JS that touches it ships.** #52's
-  queries select it and #56's saves write it; without the migration, Home,
-  the Editions list and every edition stop loading. `db push` first, always.
-- **An OTA goes to every build on its channel.** `production` = Group Zero;
-  `staging` = the owner's phone only. Never test gated code on `production`.
-- **Expo patch drift fails CI on any PR** ("Expo config and native-module
-  checks"). Fix in its own commit with `npx expo install --fix`. Native
-  packages move the `fingerprint` runtime.
-- **The Sentry slugs can't be checked from outside** — only the owner's
-  Settings page, or the build, proves them.
-- **Read long docs in full, never as a summary.** The `shunt` plugin's limit is
-  raised to 5000 lines here (`.claude/settings.local.json`); if a read is still
-  blocked, read in chunks — never delegate it.
-- Three code templates: Magic Link (sign-in, "Forgot your password?"), Confirm
-  signup (sign-up), Reauthentication. A failed sign-up **creates the user**, so
-  a re-test needs a fresh address. OTP length 6 (`CODE_LENGTH`), expiry =
-  `CODE_EXPIRY_MINUTES`.
-- **Every account stores a password hash** (a random one for code sign-ups) —
-  never build a "current password" check (`setPassword` in `lib/auth.ts`).
-- `storage.protect_delete` is statement-level; direct deletes from
-  `storage.objects` need `set_config('storage.allow_delete_query','true',true)`
-  — and remove only the row; delete files through the Storage API. Deleting a
-  Group by SQL also needs `app.deleting_group`.
+- **An OTA reaches a build only while their fingerprints match.**
+  - The fingerprint covers `app.json`, **all of `eas.json`** (adding
+    `submit.production.ios.ascAppId` moved it, so that change was dropped on
+    2026-11-03), config plugins and native deps.
+  - Check with `runtimeversion:resolve` in a checkout with its **own**
+    `node_modules`. A worktree that symlinks them computes a different value
+    for identical code, so only compare such worktrees with each other.
+- **The `production` channel is the owner's TestFlight build now,** and after
+  release it's everyone's. There is no `staging` build: the profile exists,
+  but none was built.
+- **Apple ID lockout (error -20209):** a wrong password locks the account;
+  unlock it at iforgot.apple.com. EAS caches the password in the Keychain
+  before auth succeeds, so delete the wrong one with
+  `security delete-internet-password -s "deliver.<apple id>"`.
+- **Supabase CLI v3 (pinned 3.0.0 in `package.json` and CI, since 2026-11-02)
+  targets the local stack by default.**
+  - Production commands need `--remote`, placed last; `--linked` is deprecated.
+  - Every production change asks first, and the default is No. In a script
+    use `--yes`, never `echo y |`.
+  - Bump `package.json` and CI together.
+  - An unpinned `npx supabase` broke on 3.0.0's release day.
+- **Expo patch drift fails CI on any PR** (expo-doctor). Fix it in its own
+  commit with `npx expo install --fix`. Native packages move the fingerprint.
+- **Merging deploys nothing to Supabase.** A `_shared/` change needs every
+  importer redeployed. CI never runs auth, email or storage against the real
+  project, and its schema lint can't fail (todo.md).
+- **Read long docs in full, never as a summary.** The `shunt` plugin's limit
+  is raised to 5,000 lines here; if a read is still blocked, read in chunks.
+- **Sign-in templates:**
+  - There are three code templates: Magic Link (sign-in), Confirm signup and
+    Reauthentication.
+  - A failed sign-up **creates the user**, so a re-test needs a fresh address.
+    Plus-aliases work.
+  - The code is 6 digits and expires in 10 minutes, the same numbers in the
+    app and the dashboard.
+- **Every account stores a password hash** (a random one for code sign-ups).
+  Never build a "current password" check.
+- **Deleting storage files by SQL:** `storage.protect_delete` needs
+  `set_config('storage.allow_delete_query','true',true)` for a direct delete.
+  Remove files through the Storage API. Deleting a Group by SQL also needs
+  `app.deleting_group`.
+- **A policy subquery runs under the other table's RLS.** Put hidden lookups in
+  a SECURITY DEFINER helper scoped to `auth.uid()` (`is_caller_banned`,
+  `is_blocked_by_caller`). A two-argument helper would leak who blocked or
+  removed whom.
 - `errcode = 'PGRST301'` is invalid in old migrations; use `P0001`.
-- `time + interval` wraps at midnight — use timestamps.
-- **Merging deploys nothing to Supabase**; a `_shared/` change needs every
-  importer redeployed. CI never runs auth, email, or storage against the real
-  project.
-- **Supabase CLI v3 (since 2026-11-02) targets the local stack by default.**
-  Production commands need `--remote`, last; `--linked` is deprecated. Every
-  production change asks first, default No — `--yes` in a script, never
-  `echo y |`. `package.json` and CI both pin 3.0.0; bump them together.
-- `.env.local` never reaches an EAS build; `EXPO_PUBLIC_*` is inlined at build
-  time. A custom profile needs `"environment"` set — `staging` sets
-  `production` explicitly (Expo's docs don't state the default).
-- **SDK 57 needs Xcode ≥ 26.4** locally; EAS's image is fine.
-- The bundle ID locks on the first TestFlight upload, not at submission.
-- External TestFlight needs Apple's review and a demo account the reviewer can
-  sign in to — an emailed code won't reach them — **plus a second member**, or
-  the reviewer sees none of *Report*, *Block* or *Remove*.
+  `time + interval` wraps at midnight, so use timestamps.
+- `.env.local` never reaches an EAS build; `EXPO_PUBLIC_*` values are inlined
+  at build time from EAS's `production` environment.
+- **SDK 57 needs Xcode ≥ 26.4 locally** (this Mac has 26.3); EAS's build
+  image is fine.
 - `supabase functions download` writes every function into one `_shared/`
-  folder — re-download the one you care about alone before diffing.
-- Profile photo: the app shows the preview before **Save** uploads it. Weak
-  evidence it confused anyone — watch it in Group Zero rather than fix it.
+  folder, so re-download the one you care about on its own before diffing.
+- `gh pr merge --delete-branch` can't delete a local branch that a worktree
+  still uses. The merge itself succeeds.
