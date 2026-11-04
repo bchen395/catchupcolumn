@@ -257,6 +257,7 @@ const ProfileScreen = () => {
       style={styles.flex}
       contentContainerStyle={styles.scroll}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
     >
       {editing ? (
         <View style={styles.editBlock}>
@@ -295,6 +296,8 @@ const ProfileScreen = () => {
             onChangeText={setEditBio}
             boxed
             multiline
+            returnKeyType="done"
+            submitBehavior="blurAndSubmit"
             numberOfLines={3}
             maxLength={BIO_MAX}
             helperText={`Optional — up to ${BIO_MAX} characters.`}

@@ -390,6 +390,8 @@ const GroupDetailScreen = () => {
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.ink} />}
       >
       <Stack.Screen
@@ -427,6 +429,8 @@ const GroupDetailScreen = () => {
               value={editDescription}
               onChangeText={setEditDescription}
               multiline
+              returnKeyType="done"
+              submitBehavior="blurAndSubmit"
               numberOfLines={3}
               style={styles.multilineInput}
             />
