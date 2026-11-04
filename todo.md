@@ -61,6 +61,12 @@ POSITIONING §8 is the authoritative sequence. The short version:
       (owner's call over pinning 2.x): pinned 3.0.0 in `package.json` and CI,
       `config.toml` updated. Production commands take `--remote` and ask before
       changing anything. [docs/LAUNCH.md](docs/LAUNCH.md) → Deploying edge functions
+- [ ] **Make CI's schema lint able to fail** (found 2026-11-02) — the
+      Migrations job runs `supabase db lint --level error` without
+      `--fail-on error`, so it reports and passes. Turning that on fails today
+      on the two known `PGRST301` raises (an 8-character SQLSTATE in old
+      migrations), so fix those first with a migration that recreates the two
+      functions with a valid code. Not blocking launch.
 
 - [x] **[owner] Make `support@catchupcolumn.com` receive mail** — found
       2026-10-03: the apex has no MX record, so *Report this story*, the

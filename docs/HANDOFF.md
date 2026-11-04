@@ -277,8 +277,10 @@ production change; show the exact command; one approval each)
     to 4). Dry run first; ask before every `--apply`.
 17. **[owner] Decide bugs.md M1** (recommended: accept, check each publish for
     failed recipients and forward by hand).
-18. **[owner] Before edition 1:** DMARC (if not done in §1), Resend — domain
-    `verified`? daily cap? open/click tracking **off**?
+18. ~~**[owner] Before edition 1:** DMARC (if not done in §1), Resend — domain
+    `verified`? daily cap? open/click tracking **off**?~~ ✅ DMARC 2026-10-24;
+    domain `verified` and 100/day · 3,000/month 2026-10-30; no tracking
+    subdomain, so no tracking, 2026-11-03.
 
 **§5. Keep production honest**
 
