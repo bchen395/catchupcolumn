@@ -252,6 +252,8 @@ const OnboardingScreen = () => {
           value={bio}
           onChangeText={setBio}
           multiline
+          returnKeyType="done"
+          submitBehavior="blurAndSubmit"
           numberOfLines={3}
           maxLength={BIO_MAX}
           helperText={`Optional — up to ${BIO_MAX} characters.`}

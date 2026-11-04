@@ -160,6 +160,7 @@ const CreateGroupScreen = () => {
           style={styles.flex}
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {screenError ? (
             <StatusBanner variant="error" message={screenError} />
@@ -210,6 +211,8 @@ const CreateGroupScreen = () => {
               onChangeText={setDescription}
               placeholder="What's this Group about?"
               multiline
+              returnKeyType="done"
+              submitBehavior="blurAndSubmit"
               numberOfLines={3}
               style={styles.multilineInput}
             />
