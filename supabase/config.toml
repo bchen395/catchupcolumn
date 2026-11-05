@@ -254,11 +254,20 @@ otp_expiry = 600
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
-# Uncomment to customize notification email template
-# [auth.email.notification.password_changed]
-# enabled = true
-# subject = "Your password has been changed"
-# content_path = "./templates/password_changed_notification.html"
+# Security notifications, declared so `npx supabase config diff --remote` flags
+# drift: both were found switched off in production on 2026-11-04 though they
+# were turned on 2026-09-28, cause unknown (docs/LAUNCH.md step 5, item 4).
+# Like the rest of this file, this sets only the local stack; production is the
+# dashboard.
+[auth.email.notification.password_changed]
+enabled = true
+subject = "Your Catch Up Column password was changed"
+content_path = "./supabase/templates/password-changed.html"
+
+[auth.email.notification.email_changed]
+enabled = true
+# Supabase's default template, as in production.
+subject = "Your email address has been changed"
 
 [auth.sms]
 # Allow/disallow the phone provider. When false, users can't sign up or sign in with SMS.

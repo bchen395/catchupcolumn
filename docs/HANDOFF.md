@@ -1,6 +1,6 @@
 # Launch handoff — orchestration brief
 
-**Rewritten 2026-11-03** (first written 2026-09-24). This is a living brief for
+**Rewritten 2026-11-03, updated 2026-11-04** (first written 2026-09-24). This is a living brief for
 whichever session is running the launch. It holds what the lists don't: current
 live state, the order things must happen in, who does what, and how to verify.
 **Rewrite it at the end of every orchestration session** (state, decisions,
@@ -21,7 +21,7 @@ It deliberately does **not** copy the lists. Each has one home:
 | Every App Store Connect value, the review account, the Review Notes | `docs/STORE_LISTING.md` §13 (§9.1 age rating, §7 privacy labels, §5 screenshots) |
 | Acting on a report: take down, remove, ban (internal) | `docs/MODERATION.md` |
 | Guideline 1.2: what Apple asks, what ships | `docs/STORE_LISTING.md` §9.3; `docs/LAUNCH.md` step 9 |
-| Code-side residue and accepted trade-offs | `bugs.md` (M1, G1–G4) |
+| Code-side residue and accepted trade-offs | `bugs.md` (M1, G1–G4, L6) |
 | Illustration commission: spec, contracts, integration | `design/ILLUSTRATION_REWORK.md` |
 | The artist-facing brief (a shareable doc) | <https://claude.ai/code/artifact/c729acda-f9d2-4fd5-a929-04382415acaa> |
 | How to work on each surface | `.claude/skills/*` (auto-load) |
@@ -45,9 +45,12 @@ Run the rest of the launch with the owner.
 - **The owner merges PRs**, or tells you to, one PR at a time. Ask before every
   production change (Guardrails).
 
-## Live state — 2026-11-03, re-check before relying on it
+## Live state — 2026-11-04, re-check before relying on it
 
-**Code:** `main` at `a881c2b` (#74). CI is green.
+**Code:** `main` at `ccf48d8` (#75), plus the 2026-11-04 records PR. CI is
+green. The only code change since #74 is `supabase/config.toml`, which now
+declares the two security notifications. It's local-stack config and doesn't
+touch the fingerprint.
 
 **Production:**
 - **Database:** all 38 migrations applied (CLI v3: `migration list --remote` matches).
@@ -65,7 +68,14 @@ Run the rest of the launch with the owner.
   24 kept responses timed out.
 - **Auth dashboard (LAUNCH step 5): all done.** Codes expire after 600 s, the
   templates were pasted 2026-10-30, and the `reset-password` redirect is
-  removed.
+  removed. **The Password changed and Email address changed notifications
+  were found off on 2026-11-04** and turned back on (cause unknown; the
+  template had survived). `npx supabase config diff --remote` (read-only, no
+  prompt) now checks them: it should list no `notification` paths. On
+  2026-11-04 it also confirmed OTP expiry 600, code length 6, Secure password
+  change on and minimum password length 8. The 15 other differences it lists
+  are expected: local-only values such as `site_url`, SMTP, pooler sizes and
+  MFA.
 - **Email:**
   - Resend domain verified. Free plan: 100/day and 3,000/month, shared by
     sign-in codes, edition email and reports.
@@ -115,8 +125,34 @@ T2 and T3 will be `bchen395+t2@`/`+t3@gmail.com`, not created yet.
 **Phone check batch 1: done 2026-11-03.** Sign-up with the Terms agreement,
 the 10-minute code, onboarding, the photo permission wording, notifications
 allowed, creating a Group, the switches, Profile, and Help & support. It
-passed apart from the keyboard (fixed in #74). **Still owed from it:** the T1
-read-only query (Next steps §1).
+passed apart from the keyboard (fixed in #74). T1's query passed 2026-11-04:
+`terms_version` `2026-11-02`, agreed, 1 push token, 1 Group.
+
+**Phone check batch 2: done 2026-11-04.** Everything passed:
+- `catchupcolumn://`, and a tapped `/edition/…` universal link
+- every Gate 7 Auth item (set and change a password and the email, password
+  sign-in, the wrong-password hint, `password1` refused, *Forgot your
+  password?*)
+- #68's notifications-blocked note
+
+The exceptions:
+- Set a password gets no strong-password suggestion or Keychain save. That's
+  accepted for 1.0 (bugs.md L6); the sign-in screen does save.
+- The password-changed email only came once the notification was switched
+  back on.
+
+**App Store Connect: mostly filled 2026-11-04** (STORE_LISTING §13.5). Done:
+- App Information: subtitle, categories, content rights, age rating 4+ → 18+,
+  and the privacy URL
+- the privacy label, published
+- Free, in 174 of 175 regions
+- the version page's text and URLs, manual release, copyright, and the review
+  contact
+
+Open:
+- the DSA trader declaration (deferred by the owner)
+- the review sign-in and Notes (§6 step 11)
+- screenshots and the build
 
 ## Decisions since 2026-10-24 (all the owner's)
 
@@ -129,36 +165,18 @@ read-only query (Next steps §1).
 | 11-01 | Take-downs are silent: the author isn't told. The invite card keeps "Anyone with this code can join" (standard, short) |
 | 11-02 | Privacy label declares Customer Support; support inbox disclosed; **Supabase CLI v3 now** (rather than pinning 2.x) |
 | 11-03 | Short multi-line fields (Group description, bio): Return reads **Done** and closes the keyboard. **Batch the OTA:** #74 waits for the phone-check fixes |
+| 11-04 | **Accept** the missing strong-password suggestion on Set a password for 1.0 (bugs.md L6). **Copyright** names the owner's legal name; the App Review contact is the owner's personal phone and email. **DSA trader declaration deferred**: which address to publish is still open |
 
 ## Next steps
 
 **[owner]** means only the owner can do it: one step at a time, with exact
 clicks or commands. **[agent]** means the session does it.
 
-**§1. Finish batch 1**
+**§1. Finish batch 1: done 2026-11-04.** Steps 1 to 4 are done.
 
-1. **[owner]** The T1 check, which should show `terms_version = 2026-11-02`,
-   `agreed = true`, and `push_tokens` and `groups` of 1 or more:
-   `! npx supabase db query --read-only "select u.raw_user_meta_data->>'terms_version' as terms_version, (u.raw_user_meta_data ? 'terms_accepted_at') as agreed, (select count(*) from public.push_tokens p where p.user_id = u.id) as push_tokens, (select count(*) from public.group_members m where m.user_id = u.id) as groups from auth.users u where u.email = 'bchen395+t1@gmail.com'" --remote`
-
-**§2. Phone check batch 2: one account, can start any time** (PRESUBMISSION Gate 5 and Gate 7 → Auth)
-
-2. **[owner] Gate 5 leftovers:**
-   - Type `catchupcolumn://` in Safari; it should open the app.
-   - Profile → Set a password: iCloud Keychain should offer a strong password
-     and offer to save it. That needs the `webcredentials` entitlement, which
-     only a signed build has.
-3. **[owner] Gate 7 → Auth:**
-   - After setting a password, Profile says "Change your password", and the
-     password-changed email arrives.
-   - Sign out → *Use a password instead* → sign in with it.
-   - A wrong password shows "If you usually sign in with a code, use that instead."
-   - `password1` is refused as one of the most common passwords.
-   - *Forgot your password?* → the code arrives → "Choose a new password" →
-     sign in with the new one.
-4. **[owner] #68, phone side only:** turn notifications off for the app in
-   iOS Settings. On a Group page, the "Notifications are off…" note and
-   **Open Settings** appear; turn notifications back on and the note goes.
+**§2. Phone check batch 2: done 2026-11-04.** See Live state. Two Gate 7
+Auth items are still open and fold into §3: signed in on two devices, and a
+session over a day old asking for a code.
 
 **§3. Phone check batch 3: needs two or three accounts at once**
 
@@ -211,17 +229,13 @@ This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
 
 **§6. App Store Connect (items 19–22): no second device needed**
 
-10. **[owner, agent dictates]** Fill in from STORE_LISTING §13.1, field by
-    field:
-    - App Information (subtitle, categories, content rights, age rating as in
-      §9.1, privacy policy URL)
-    - App Privacy (§7)
-    - Pricing and Availability, plus the EU DSA trader declaration
-    - the 1.0 version page (description, keywords, promo text, URLs,
-      copyright, review contact, release: manual)
-
-    Screenshots and the build wait for §8. Owner inputs still open: copyright
-    holder, App Review contact, trader contact details (§13.5).
+10. **[owner, agent dictates] Mostly done 2026-11-04** (Live state). Only the
+    **EU DSA trader declaration** is left. First the owner chooses which
+    address Apple publishes: a P.O. box (individual accounts only), a
+    business address, or home. Then: Business → Agreements → Compliance →
+    Digital Services Act, and App Information → App Store Regulations and
+    Permits (§13.1 has the requirements). Pricing and Availability didn't
+    prompt for it.
 11. **[agent + owner] Review account and demo Group** (STORE_LISTING §13.2;
     production writes, so ask first):
     - A review account with a password.
@@ -267,16 +281,18 @@ This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
   photos (`001_initial_schema.sql:201`).
 - Members can read each other's delivery flags through the API.
 
-**First move for the next session:** §1 (one paste), then ask the owner which
-comes next: §2 (phone, alone), §6 (App Store Connect), or §3 if a second
-device is ready.
+**First move for the next session:** ask the owner which comes next:
+- §3, once the second device is chosen (step 5)
+- §6 step 11, the review account and demo Group (production writes, so ask
+  first). It also gives §3 a ready second account.
+- §6 step 10, the DSA declaration, once they've picked an address
 
 ## Decisions the owner owes
 
 | Decision | Needed by | Where |
 | --- | --- | --- |
 | Second device or tester for batch 3 | §3 | above |
-| Copyright holder; App Review contact; DSA trader contact details | §6 | STORE_LISTING §13.5 |
+| DSA trader address (P.O. box, business or home) and contact details. Copyright and the review contact were done 2026-11-04 | §6 | STORE_LISTING §13.5 |
 | Screenshot size slots (Media Manager) | §8 | STORE_LISTING §5 |
 | Artist: fee, rights (they must cover content rights), dates | §7 | ILLUSTRATION_REWORK |
 | Publish-day default (minor): the app says Sunday 09:00 | Any time | `app/group/create.tsx` |
@@ -369,6 +385,11 @@ device is ready.
     Plus-aliases work.
   - The code is 6 digits and expires in 10 minutes, the same numbers in the
     app and the dashboard.
+- **Dashboard auth settings can drift with no record.** Both security
+  notifications were found off on 2026-11-04 after being set on 2026-09-28.
+  Run `npx supabase config diff --remote` before trusting LAUNCH step 5. The
+  local `config.toml` declares the notifications; the other step 5 values
+  matched.
 - **Every account stores a password hash** (a random one for code sign-ups).
   Never build a "current password" check.
 - **Deleting storage files by SQL:** `storage.protect_delete` needs

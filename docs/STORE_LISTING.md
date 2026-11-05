@@ -827,10 +827,24 @@ inbox disclosed in the privacy policy and on the delete-account page
 separate session. When it lands, update §9.3 and fill or delete the markers in
 §13.3.~~ It shipped as #64–#70; §9.3 and §13.3 are updated.
 
+**Entered in App Store Connect 2026-11-04** (owner, with this sheet):
+everything in App Information except the DSA trader declaration; the App
+Privacy label (published); Pricing and Availability (Free, 174 of 175
+regions); and the 1.0 version page's text, URLs, version, manual release,
+**copyright** (the owner's legal name) and **App Review contact** (the owner's
+own phone and email, which Apple doesn't publish). The values themselves are
+only in App Store Connect.
+
 **Still open** — each is marked ☐ where it appears above:
 
-- ☐ **Copyright holder** and the **App Review contact** (§13.1).
-- ☐ **Trader contact details** for the DSA form (§13.1).
+- ~~☐ **Copyright holder** and the **App Review contact** (§13.1).~~ Done
+  2026-11-04.
+- ☐ **Trader contact details** for the DSA form (§13.1). The owner deferred it
+  on 2026-11-04. Still to decide: a P.O. box, a business address, or home,
+  since Apple shows it on EU product pages. Needed before submission while the
+  EU is in availability.
+- ☐ **App Review sign-in and Notes** (§13.1): wait for the review account
+  (§13.2).
 - ☐ **Screenshot sizes** in Media Manager (§5).
 - The review account, demo Group and its second member (§13.2), and the
   screenshots — after the illustration rework.

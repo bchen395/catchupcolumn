@@ -426,7 +426,12 @@ ever in anyone's hands, so 5 and 7 were done before the first release build.)*
    `supabase/templates/password-changed.html`, subject *"Your Catch Up Column
    password was changed"*. GoTrue ships every notification off. **Email address
    changed** is on too, on Supabase's default template — it goes to the *old*
-   address and covers dashboard-side changes.
+   address and covers dashboard-side changes. **Both were found off on
+   2026-11-04** (the Gate 7 phone check got no password-changed email) and
+   turned back on that day; the template had survived. Cause unknown. Both are
+   now declared in `supabase/config.toml`, so `npx supabase config diff
+   --remote` (read-only) shows it if they drift again. Run it before
+   submitting.
 5. ✅ **Providers → Email → Email OTP Expiration: 600 seconds** *(2026-10-30,
    was 3600)*, with the updated `magic-link.html` and `confirm-signup.html`
    ("expires in 10 minutes") pasted in the same sitting — from
