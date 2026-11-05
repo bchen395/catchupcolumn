@@ -148,7 +148,9 @@ Authentication:
 - [x] **Reauthentication template** *(2026-09-28)* pasted from
       `supabase/templates/reauthentication.html`, with a plain subject (item 3)
 - [x] **Password-changed and email-changed notifications on** *(2026-09-28)*, with
-      `supabase/templates/password-changed.html` (item 4)
+      `supabase/templates/password-changed.html` (item 4). *Found off and turned
+      back on 2026-11-04. Re-check before submitting: `npx supabase config diff
+      --remote` should list no `notification` paths.*
 - [x] **Email OTP expiry is 600s**, matching `CODE_EXPIRY_MINUTES` — set only
       after the "10 minutes" app copy and both code templates are live (item 5)
       *(set 2026-10-30, with both code templates pasted in the same sitting —
@@ -227,12 +229,16 @@ Authentication:
   - [ ] Lora + Jost fonts load (no system-font fallback)
   - [ ] Splash screen hides (doesn't hang)
   - [ ] Push token registers
-  - [ ] `catchupcolumn://` deep link opens the app
+  - [x] `catchupcolumn://` deep link opens the app *(build 10, 2026-11-04; a
+        tapped `https://www.catchupcolumn.com/edition/…` link opens it too)*
   - [ ] Photo picker prompts with the expected permission copy
   - [ ] Notification icon renders correctly (monochrome, Android)
-  - [ ] Setting a password (Profile → Set a password) offers to save it to iCloud
+  - [ ] ~~Setting a password (Profile → Set a password) offers to save it to iCloud
         Keychain, and the password field suggests a strong one — needs the
-        `webcredentials` entitlement, which only a signed build has
+        `webcredentials` entitlement, which only a signed build has~~
+        **Accepted for 1.0 (owner, 2026-11-04):** build 10 neither suggests
+        nor saves on Set a password, though the password sign-in screen does
+        offer to save, so the entitlement works. See `bugs.md` L6
 
 ## Gate 6 — App Review risk: user-generated content
 
@@ -318,19 +324,24 @@ Using the TestFlight / internal-testing build, with two accounts (three for the
         (`2026-11-02` on a build carrying this Terms change), Help & support
   - [ ] **#68's device script** — the email and notification switches on two
         Groups, the unsubscribe link flipping the switch, notifications blocked
-        on the phone, a failed save, a moderator refused another member's flags
+        on the phone, a failed save, a moderator refused another member's flags.
+        *Notifications blocked on the phone passed 2026-11-04 (build 10): the
+        note and Open Settings show, and the note clears on return without
+        reopening the page*
   - [ ] **#70's device script** — block, what disappears where, the email
         without the blocked writer, the deep link, Unblock
 - [ ] **Auth (#44, first on this build):**
   - [ ] Sign-in and sign-up code screens say the code expires in 10 minutes
-  - [ ] Profile → Set a password, on a fresh sign-in → saves without asking for a
+  - [x] Profile → Set a password, on a fresh sign-in → saves without asking for a
         code; Profile then says "Change your password"; the password-changed email
-        arrives
-  - [ ] Sign out → *Use a password instead* → sign in with it
-  - [ ] A wrong password → "If you usually sign in with a code, use that instead."
-  - [ ] `password1` is refused as one of the most common passwords
-  - [ ] *Forgot your password?* → code arrives → lands on "Choose a new password"
-        → sign in with the new one
+        arrives *(build 10, 2026-11-04; the email only after the notification
+        was switched back on, Gate 3)*
+  - [x] Sign out → *Use a password instead* → sign in with it *(2026-11-04)*
+  - [x] A wrong password → "If you usually sign in with a code, use that
+        instead." *(2026-11-04)*
+  - [x] `password1` is refused as one of the most common passwords *(2026-11-04)*
+  - [x] *Forgot your password?* → code arrives → lands on "Choose a new password"
+        → sign in with the new one *(2026-11-04)*
   - [ ] Signed in on two devices → sign out on one → the other stays signed in
   - [ ] *If a session over a day old is at hand:* Set a password → a confirmation
         code is emailed, a wrong code is refused, the right one saves
@@ -345,7 +356,8 @@ Using the TestFlight / internal-testing build, with two accounts (three for the
       first build upload**, which is the ~~Group Zero TestFlight~~ first
       production build (Group Zero skipped 2026-10-24), not
       submission. Decide it before that build ([LAUNCH.md](./LAUNCH.md) step 7)
-- [ ] App records created in both consoles
+- [ ] App records created in both consoles *(App Store Connect: app
+      `6830424103`, 2026-11-03; Play deferred)*
 - [ ] Screenshots captured: ~~iPhone 6.9" required~~ iPhone with Dynamic Island
       (medium display) required, large display too — sizes in `STORE_LISTING.md`
       §5, checked 2026-10-30 (Home, edition front page, composer,
@@ -353,9 +365,17 @@ Using the TestFlight / internal-testing build, with two accounts (three for the
       > `/screenshots` in the repo holds design-reference images only — no store
       > shots exist yet.
 - [ ] Descriptions, subtitle, keywords, promo text pasted from `STORE_LISTING.md`
-- [ ] URLs entered (the `www` ones from `STORE_LISTING.md §6`)
+      *(iOS done 2026-11-04, with the categories, content rights, Free in 174
+      of 175 regions, manual release, copyright and the App Review contact.
+      Still open on iOS: the DSA trader declaration, sign-in details and Review
+      Notes, screenshots, the build. `STORE_LISTING.md` §13.5)*
+- [ ] URLs entered (the `www` ones from `STORE_LISTING.md §6`) *(iOS: privacy,
+      support and marketing, 2026-11-04)*
 - [ ] Apple privacy labels + Play data safety completed from `STORE_LISTING.md §7–8`
-- [ ] Age rating questionnaire — **flag user-generated content**
+      *(Apple label published 2026-11-04: 7 types linked, 3 Diagnostics not
+      linked, none for tracking)*
+- [ ] Age rating questionnaire — **flag user-generated content** *(iOS done
+      2026-11-04: calculated 4+, overridden to 18+)*
 - [ ] Microphone/audio does *not* appear in Play's permission list (the bogus
       `RECORD_AUDIO` declaration was removed 2026-08-04; verify it didn't come back)
       > **It had come back** — `expo-image-picker`'s config plugin adds

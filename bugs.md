@@ -288,6 +288,23 @@ isn't mistaken for an oversight. The operator's side of them is in
   Passing it is required. The pre-insert `created_by === auth.uid()` assertion
   plus the RLS `with check` are the correct belt-and-braces. **No change.**
 
+### ~~L6. Set a password gets no strong-password suggestion or Keychain save~~ — ACCEPTED for 1.0 2026-11-04
+- **Decision (owner, 2026-11-04): accept for 1.0.** People type their own
+  password; nothing else is affected.
+- **Where:** `app/(auth)/set-password.tsx`. The screen has only the
+  `newPassword` field, with no `username` field.
+- Found on build 10 (PRESUBMISSION Gate 5): iOS neither offered "Use Strong
+  Password" nor offered to save the password. The setup is fine. The AASA file
+  lists `webcredentials` (live, and in Apple's CDN), `app.json` declares it, a
+  universal link opens the app, and the password sign-in screen
+  (`components/password-sign-in.tsx`, which has an email field marked
+  `emailAddress`) does offer to save. iOS's password AutoFill wants a username
+  on the same form to know which account the password belongs to, and that is
+  the likely cause. It wasn't confirmed by a fix.
+- **Fix (JS only, ships by OTA):** add a read-only field showing the account's
+  email, with `textContentType="username"` / `autoComplete="username"`, above
+  New password. Re-test on a device.
+
 ---
 
 ## Minor / hygiene
