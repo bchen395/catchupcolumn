@@ -288,7 +288,13 @@ isn't mistaken for an oversight. The operator's side of them is in
   Passing it is required. The pre-insert `created_by === auth.uid()` assertion
   plus the RLS `with check` are the correct belt-and-braces. **No change.**
 
-### ~~L6. Set a password gets no strong-password suggestion or Keychain save~~ — ACCEPTED for 1.0 2026-11-04
+### ~~L6. Set a password gets no strong-password suggestion or Keychain save~~ — FIXED 2026-11-05 (#77), device re-check pending
+- **Update (owner, 2026-11-05): fixed after all,** since the fix rides the
+  batched OTA at no extra cost. #77 adds the read-only Email field below.
+  Re-check after the OTA. If iOS ignores a non-editable username field, the
+  fallback is an editable one, or accepting it again. The 11-05 re-run also
+  found no "update saved password" prompt after *Forgot your password?*, from
+  the same screen.
 - **Decision (owner, 2026-11-04): accept for 1.0.** People type their own
   password; nothing else is affected.
 - **Where:** `app/(auth)/set-password.tsx`. The screen has only the
