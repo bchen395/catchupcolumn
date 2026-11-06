@@ -96,6 +96,21 @@ const SetPasswordScreen = () => {
       <View style={styles.form}>
         {flow.formError ? <StatusBanner variant="error" message={flow.formError} /> : null}
 
+        {/* The account's email, shown read-only ahead of the password. iOS only
+            offers a Strong Password (and a save to iCloud Keychain) when a
+            username field sits next to the new-password field; it must be
+            visible, since a hidden one is unreliable. */}
+        <FormField
+          label="Email"
+          value={user.email ?? ''}
+          editable={false}
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="username"
+          textContentType="username"
+          keyboardType="email-address"
+        />
+
         {/* One field and a show toggle, no "confirm password": a typo costs
             nothing here, because an emailed code still gets them in to set
             it again. */}
