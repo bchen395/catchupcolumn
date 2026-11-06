@@ -257,6 +257,8 @@ This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
 **§8. Final build and submit**
 
 14. **[owner]**
+    - First remove `expo.install.exclude` from `package.json` and run
+      `npx expo install --fix` (Traps → Expo patch drift).
     - A new production build, the same command as before. Its runtime is new,
       so older builds stop getting OTAs.
     - Submit it with `npx eas-cli submit --platform ios --id <id>`.
@@ -373,6 +375,10 @@ This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
   - An unpinned `npx supabase` broke on 3.0.0's release day.
 - **Expo patch drift fails CI on any PR** (expo-doctor). Fix it in its own
   commit with `npx expo install --fix`. Native packages move the fingerprint.
+  **Until the final build, don't:** since 2026-11-05 the drifted packages are
+  listed in `package.json` → `expo.install.exclude`, which silences the check
+  without moving the fingerprint (checked), so OTAs still reach build 10. Add
+  any new drift there too.
 - **Merging deploys nothing to Supabase.** A `_shared/` change needs every
   importer redeployed. CI never runs auth, email or storage against the real
   project, and its schema lint can't fail (todo.md).

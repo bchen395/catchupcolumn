@@ -58,5 +58,19 @@
     "supabase": "3.0.0",
     "typescript": "~6.0.3"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "install": {
+      "exclude": [
+        "expo",
+        "expo-constants",
+        "expo-image-manipulator",
+        "expo-image-picker",
+        "expo-notifications",
+        "expo-router",
+        "expo-splash-screen",
+        "expo-updates"
+      ]
+    }
+  }
 }
