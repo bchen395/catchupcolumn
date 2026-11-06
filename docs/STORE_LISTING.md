@@ -620,7 +620,7 @@ Counts were measured with a script on the text as written here; filling in a
 | Made for Kids | No | — | — |
 | Privacy Policy URL | `https://www.catchupcolumn.com/privacy` | — | — |
 | License Agreement | Apple's standard EULA | — | — |
-| Digital Services Act — trader status | **Trader** (owner, 2026-10-30). Set at the account level (Business → Agreements → Compliance → Digital Services Act), then per app (App Information → App Store Regulations and Permits). Apple shows a trader's address (a P.O. box is allowed for an individual), phone and email on EU product pages: ☐ `{{trader address or P.O. box}}`, `{{trader phone}}`, `{{trader email}}`. It verifies the phone and email by code, asks for a current document showing the name and address (and, for a P.O. box, one linking you to it), and wants payment account details if they aren't already in App Store Connect ([DSA trader requirements](https://developer.apple.com/help/app-store-connect/manage-compliance-information/manage-european-union-digital-services-act-trader-requirements/)) | — | — |
+| Digital Services Act — trader status | **Not declared for 1.0: the EU is out of availability** (owner, 2026-11-05). When the EU comes back: **Trader** (owner, 2026-10-30), email `support@catchupcolumn.com`; address and phone still to choose. Set at the account level (Business → Agreements → Compliance → Digital Services Act), then per app (App Information → App Store Regulations and Permits). Apple shows a trader's address (a P.O. box is allowed for an individual), phone and email on EU product pages: ☐ `{{trader address or P.O. box}}`, `{{trader phone}}`, `{{trader email}}`. It verifies the phone and email by code, asks for a current document showing the name and address (and, for a P.O. box, one linking you to it), and wants payment account details if they aren't already in App Store Connect ([DSA trader requirements](https://developer.apple.com/help/app-store-connect/manage-compliance-information/manage-european-union-digital-services-act-trader-requirements/)) | — | — |
 | Regulated medical device | Not asked: not a Health & Fitness or Medical app, and no "frequent" medical content | — | — |
 
 **App Privacy** — §7, plus the same Privacy Policy URL.
@@ -630,7 +630,7 @@ Counts were measured with a script on the text as written here; filling in a
 | Field | Value |
 | --- | --- |
 | Price | Free (USD 0.00) |
-| Availability | **Every country or region except China mainland** (owner, 2026-10-30), which needs an ICP Filing Number this app doesn't have. The EU stays in, with the trader status above |
+| Availability | **Every country or region except China mainland and the 27 EU member states** — 147 of 175, entered 2026-11-05. China mainland needs an ICP Filing Number this app doesn't have (owner, 2026-10-30). The EU was dropped for 1.0 rather than publish a trader address, phone and email on EU product pages (owner, 2026-11-05); the UK, Norway, Iceland, Liechtenstein and Switzerland stay in. Bringing it back needs the trader declaration above |
 
 **Version 1.0 — iOS App Version page**
 
@@ -839,10 +839,10 @@ only in App Store Connect.
 
 - ~~☐ **Copyright holder** and the **App Review contact** (§13.1).~~ Done
   2026-11-04.
-- ☐ **Trader contact details** for the DSA form (§13.1). The owner deferred it
-  on 2026-11-04. Still to decide: a P.O. box, a business address, or home,
-  since Apple shows it on EU product pages. Needed before submission while the
-  EU is in availability.
+- ~~☐ **Trader contact details** for the DSA form (§13.1).~~ Not needed for
+  1.0: the owner dropped the EU from availability on 2026-11-05 (147 of 175;
+  App Store Connect shows no DSA flag). For bringing the EU back: email
+  `support@catchupcolumn.com`; address and phone still to choose.
 - ☐ **App Review sign-in and Notes** (§13.1): wait for the review account
   (§13.2).
 - ☐ **Screenshot sizes** in Media Manager (§5).

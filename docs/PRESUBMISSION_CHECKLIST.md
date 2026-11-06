@@ -238,7 +238,10 @@ Authentication:
         `webcredentials` entitlement, which only a signed build has~~
         **Accepted for 1.0 (owner, 2026-11-04):** build 10 neither suggests
         nor saves on Set a password, though the password sign-in screen does
-        offer to save, so the entitlement works. See `bugs.md` L6
+        offer to save, so the entitlement works. See `bugs.md` L6.
+        **Fix merged 2026-11-05 (#77), not yet on a device:** re-check after
+        the batched OTA: the suggestion, the save, and the update-saved-password
+        prompt after *Forgot your password?*
 
 ## Gate 6 — App Review risk: user-generated content
 
@@ -343,8 +346,10 @@ Using the TestFlight / internal-testing build, with two accounts (three for the
   - [x] *Forgot your password?* → code arrives → lands on "Choose a new password"
         → sign in with the new one *(2026-11-04)*
   - [ ] Signed in on two devices → sign out on one → the other stays signed in
-  - [ ] *If a session over a day old is at hand:* Set a password → a confirmation
+  - [~] *If a session over a day old is at hand:* Set a password → a confirmation
         code is emailed, a wrong code is refused, the right one saves
+        *(2026-11-05, T1 signed in since 11-03: the code was asked for and the
+        right one saved. A wrong code wasn't tried)*
 
 ## Gate 8 — Store consoles
 
@@ -367,8 +372,9 @@ Using the TestFlight / internal-testing build, with two accounts (three for the
 - [ ] Descriptions, subtitle, keywords, promo text pasted from `STORE_LISTING.md`
       *(iOS done 2026-11-04, with the categories, content rights, Free in 174
       of 175 regions, manual release, copyright and the App Review contact.
-      Still open on iOS: the DSA trader declaration, sign-in details and Review
-      Notes, screenshots, the build. `STORE_LISTING.md` §13.5)*
+      2026-11-05: the EU was dropped for 1.0, so 147 of 175 regions and no DSA
+      declaration. Still open on iOS: sign-in details and Review Notes,
+      screenshots, the build. `STORE_LISTING.md` §13.5)*
 - [ ] URLs entered (the `www` ones from `STORE_LISTING.md §6`) *(iOS: privacy,
       support and marketing, 2026-11-04)*
 - [ ] Apple privacy labels + Play data safety completed from `STORE_LISTING.md §7–8`

@@ -1,6 +1,6 @@
 # Launch handoff — orchestration brief
 
-**Rewritten 2026-11-03, updated 2026-11-04** (first written 2026-09-24). This is a living brief for
+**Rewritten 2026-11-03, updated 2026-11-04 and 2026-11-05** (first written 2026-09-24). This is a living brief for
 whichever session is running the launch. It holds what the lists don't: current
 live state, the order things must happen in, who does what, and how to verify.
 **Rewrite it at the end of every orchestration session** (state, decisions,
@@ -8,7 +8,9 @@ first moves). Delete it at launch.
 
 **To resume:** open Claude Code in the repo and say *"Read docs/HANDOFF.md and
 walk me through the next steps one at a time."* Skim **Live state**, then start
-at **Next steps**.
+at **Next steps**. **Run `git fetch` and read this file from `origin/main`
+first:** the owner's checkout can be behind, and on 2026-11-05 a stale copy
+re-ran a whole batch of checks that had already passed.
 
 It deliberately does **not** copy the lists. Each has one home:
 
@@ -45,12 +47,20 @@ Run the rest of the launch with the owner.
 - **The owner merges PRs**, or tells you to, one PR at a time. Ask before every
   production change (Guardrails).
 
-## Live state — 2026-11-04, re-check before relying on it
+## Live state — 2026-11-05, re-check before relying on it
 
-**Code:** `main` at `ccf48d8` (#75), plus the 2026-11-04 records PR. CI is
-green. The only code change since #74 is `supabase/config.toml`, which now
-declares the two security notifications. It's local-stack config and doesn't
-touch the fingerprint.
+**Code:** `main` at `343eca7` (#77), plus the 2026-11-05 records PR. CI is
+green. Since build 10, the merged changes are JS or config only:
+- #74, the keyboard fix
+- #76, which records the checks; it also adds the security notifications to
+  `supabase/config.toml` (local-stack config)
+- #78, Expo patch drift: 8 packages listed in `expo.install.exclude`, so
+  expo-doctor stops failing every PR without moving the fingerprint (Traps)
+- #77, a read-only Email field on Set a password, as a username so iOS
+  offers Strong Password (bugs.md L6)
+
+None of them should move the fingerprint. The worktree comparison was done
+for #78; re-check `dd742296…` in the owner's checkout before the OTA anyway.
 
 **Production:**
 - **Database:** all 38 migrations applied (CLI v3: `migration list --remote` matches).
@@ -106,9 +116,9 @@ Review Notes make the structural case instead.
 | Runtime (fingerprint) | `dd742296d0f188b486a1af3dee8fe6f7ef7e662b` |
 | Status | submitted 2026-11-03; App Store Connect app **`6830424103`** created; installed through internal TestFlight |
 
-It has every PR up to #72. **#74 (the keyboard fix) is merged but not
-published as an OTA:** the owner chose to send it together with the fixes from
-the phone checks. `main`'s fingerprint still equals the build's (checked after
+It has every PR up to #72. **#74 and #77 are merged but not published as an
+OTA:** the owner chose to send them together with the fixes from the phone
+checks and the UI pass (§5). `main`'s fingerprint still equals the build's (checked after
 #74 merged).
 
 **The owner's local checkout:**
@@ -136,8 +146,14 @@ passed apart from the keyboard (fixed in #74). T1's query passed 2026-11-04:
 - #68's notifications-blocked note
 
 The exceptions:
-- Set a password gets no strong-password suggestion or Keychain save. That's
-  accepted for 1.0 (bugs.md L6); the sign-in screen does save.
+- Set a password gets no strong-password suggestion or Keychain save. It was
+  accepted for 1.0 on 11-04, then **fixed in #77 on 11-05** after a re-run
+  (bugs.md L6). **Re-check it on the phone after the OTA:** the Strong
+  Password suggestion, the save, and the update-saved-password prompt after
+  *Forgot your password?*. The sign-in screen offers to save and autofills,
+  so the entitlement works.
+- 2026-11-05: a session over a day old asked for a code on Set a password,
+  and the right code saved (a wrong code wasn't tried).
 - The password-changed email only came once the notification was switched
   back on.
 
@@ -145,12 +161,12 @@ The exceptions:
 - App Information: subtitle, categories, content rights, age rating 4+ → 18+,
   and the privacy URL
 - the privacy label, published
-- Free, in 174 of 175 regions
+- Free, in **147 of 175 regions**: the EU was dropped for 1.0 on 2026-11-05,
+  so there's no DSA declaration, and App Store Connect shows no DSA flag
 - the version page's text and URLs, manual release, copyright, and the review
   contact
 
 Open:
-- the DSA trader declaration (deferred by the owner)
 - the review sign-in and Notes (§6 step 11)
 - screenshots and the build
 
@@ -165,7 +181,8 @@ Open:
 | 11-01 | Take-downs are silent: the author isn't told. The invite card keeps "Anyone with this code can join" (standard, short) |
 | 11-02 | Privacy label declares Customer Support; support inbox disclosed; **Supabase CLI v3 now** (rather than pinning 2.x) |
 | 11-03 | Short multi-line fields (Group description, bio): Return reads **Done** and closes the keyboard. **Batch the OTA:** #74 waits for the phone-check fixes |
-| 11-04 | **Accept** the missing strong-password suggestion on Set a password for 1.0 (bugs.md L6). **Copyright** names the owner's legal name; the App Review contact is the owner's personal phone and email. **DSA trader declaration deferred**: which address to publish is still open |
+| 11-04 | ~~**Accept**~~ (fixed instead on 11-05) the missing strong-password suggestion on Set a password for 1.0 (bugs.md L6). **Copyright** names the owner's legal name; the App Review contact is the owner's personal phone and email. **DSA trader declaration deferred**: which address to publish is still open |
+| 11-05 | **Drop the EU for 1.0** rather than publish a trader address, phone and email on EU product pages: 147 of 175 regions (UK, Norway, Iceland, Liechtenstein and Switzerland stay). When the EU comes back, the email is support@. **Fix the Keychain gap after all** (#77, rides the OTA). **Hold Expo patch drift** in `expo.install.exclude` until the final build (#78) |
 
 ## Next steps
 
@@ -174,9 +191,9 @@ clicks or commands. **[agent]** means the session does it.
 
 **§1. Finish batch 1: done 2026-11-04.** Steps 1 to 4 are done.
 
-**§2. Phone check batch 2: done 2026-11-04.** See Live state. Two Gate 7
-Auth items are still open and fold into §3: signed in on two devices, and a
-session over a day old asking for a code.
+**§2. Phone check batch 2: done 2026-11-04.** See Live state. The over-a-day-old
+session was checked 2026-11-05. One Gate 7 Auth item moves to §3: signed in on
+two devices, then sign out on one.
 
 **§3. Phone check batch 3: needs two or three accounts at once**
 
@@ -225,17 +242,14 @@ This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
    - Then `npx eas-cli update --channel production --environment production
      --message "…"`.
    - The owner cold-launches twice to apply it.
-   - It includes #74 and every other JS fix since `4392385`.
+   - It includes #74, #77 and every other JS fix since `4392385`.
+   - After it: re-check Set a password's Keychain behaviour (bugs.md L6).
 
 **§6. App Store Connect (items 19–22): no second device needed**
 
-10. **[owner, agent dictates] Mostly done 2026-11-04** (Live state). Only the
-    **EU DSA trader declaration** is left. First the owner chooses which
-    address Apple publishes: a P.O. box (individual accounts only), a
-    business address, or home. Then: Business → Agreements → Compliance →
-    Digital Services Act, and App Information → App Store Regulations and
-    Permits (§13.1 has the requirements). Pricing and Availability didn't
-    prompt for it.
+10. **[owner, agent dictates] Done 2026-11-04 and 11-05** (Live state). The
+    EU is out for 1.0, so there's no DSA declaration. Bringing it back after
+    launch is a todo.md item.
 11. **[agent + owner] Review account and demo Group** (STORE_LISTING §13.2;
     production writes, so ask first):
     - A review account with a password.
@@ -284,17 +298,17 @@ This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
 - Members can read each other's delivery flags through the API.
 
 **First move for the next session:** ask the owner which comes next:
-- §3, once the second device is chosen (step 5)
 - §6 step 11, the review account and demo Group (production writes, so ask
   first). It also gives §3 a ready second account.
-- §6 step 10, the DSA declaration, once they've picked an address
+- §3, once the second device is chosen (step 5)
+- §7, where the art stands: the finals were due around 11-07
+- §5, the `/qa` UI pass, then the OTA
 
 ## Decisions the owner owes
 
 | Decision | Needed by | Where |
 | --- | --- | --- |
 | Second device or tester for batch 3 | §3 | above |
-| DSA trader address (P.O. box, business or home) and contact details. Copyright and the review contact were done 2026-11-04 | §6 | STORE_LISTING §13.5 |
 | Screenshot size slots (Media Manager) | §8 | STORE_LISTING §5 |
 | Artist: fee, rights (they must cover content rights), dates | §7 | ILLUSTRATION_REWORK |
 | Publish-day default (minor): the app says Sunday 09:00 | Any time | `app/group/create.tsx` |

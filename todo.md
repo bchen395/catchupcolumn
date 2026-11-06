@@ -25,9 +25,11 @@ specified in CLAUDE.md. Git history has the detail if you need it.
       ~~Still needs screenshots and the store-console fields; the copy pass rewrites
       it first.~~ Ready for 1.0 on 2026-10-30: §13 has every App Store Connect
       field and the Review Notes. Still needs screenshots and the owner's ☐ items
-      (§13.5). **Entered in App Store Connect 2026-11-04**, apart from the DSA
-      trader declaration, the review sign-in and Notes, screenshots and the
-      build (§13.5).
+      (§13.5). **Entered in App Store Connect 2026-11-04**, apart from the
+      review sign-in and Notes, screenshots and the build (§13.5). The EU was
+      dropped for 1.0 on 2026-11-05, so there's no DSA trader declaration.
+- [ ] **Bring the EU back** (after 1.0) — needs the DSA trader declaration: a
+      published address, phone and email (support@ chosen). STORE_LISTING §13.1
 - [ ] Onboarding tested with a real non-technical user (folded into Group Zero
       — *skipped 2026-10-24, so this is no longer covered*)
 
@@ -58,7 +60,8 @@ POSITIONING §8 is the authoritative sequence. The short version:
       and onboarding, the deep links, every Gate 7 Auth item, and #68's
       notifications-blocked note. The two security-notification switches were
       found off and turned back on (LAUNCH step 5, item 4). The Keychain gap
-      was accepted (bugs.md L6). The multi-account batch is left
+      was fixed in #77 (2026-11-05), to re-check after the OTA (bugs.md L6).
+      The multi-account batch is left
 - [ ] **Release day: deploy `unsubscribe`** —
       `npx supabase functions deploy unsubscribe --use-api --remote` (asks
       first), when the App Store version is released and not before: #68's new
