@@ -37,6 +37,25 @@ const settleProfile = async (user: User): Promise<boolean> => {
   }
 };
 
+// Every screen that calls useAuth gets its own INITIAL_SESSION, and each used
+// to settle the profile again: one users upsert per mount (two per story foot,
+// via the report link and its sheet), and `user` stayed null for that round
+// trip, so each screen's first fetch waited behind it. One settle per user per
+// app run is enough — the row doesn't go away while they're signed in. Only a
+// success is kept, so a failure is tried again by the next caller, as before.
+const settledProfiles = new Map<string, Promise<boolean>>();
+
+const settleProfileOnce = (user: User): Promise<boolean> => {
+  const known = settledProfiles.get(user.id);
+  if (known) return known;
+  const attempt = settleProfile(user).then((ok) => {
+    if (!ok) settledProfiles.delete(user.id);
+    return ok;
+  });
+  settledProfiles.set(user.id, attempt);
+  return attempt;
+};
+
 export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,7 +77,7 @@ export const useAuth = () => {
       let profileOk = true;
 
       if (next?.user && userChanged) {
-        profileOk = await settleProfile(next.user);
+        profileOk = await settleProfileOnce(next.user);
         if (!mountedRef.current) return;
         // push_tokens.user_id references users.id, so a token can only be
         // saved once the row exists; retryProfile registers it on success.
@@ -99,6 +118,7 @@ export const useAuth = () => {
     const ok = await settleProfile(user);
     // Signed out (or switched accounts) while the retry was in flight — the
     // answer belongs to someone who's no longer here.
+    if (ok) settledProfiles.set(user.id, Promise.resolve(true));
     if (!mountedRef.current || lastUserIdRef.current !== user.id) return;
     setProfileError(!ok);
     if (ok) registerForPushAsync(user.id);
