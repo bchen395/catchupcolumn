@@ -52,6 +52,13 @@ Sentry.init({
     if (breadcrumb.data?.url && typeof breadcrumb.data.url === 'string') {
       breadcrumb.data.url = breadcrumb.data.url.split('?')[0];
     }
+    // A console breadcrumb keeps every argument, serialized whole — and the
+    // app's warnings pass Supabase errors, whose `details` can quote the row
+    // (a unique-violation names the email; a failed check prints the row's
+    // text). The joined message line is kept; the raw arguments aren't.
+    if (breadcrumb.category === 'console' && breadcrumb.data) {
+      delete breadcrumb.data.arguments;
+    }
     return breadcrumb;
   },
 });
@@ -64,6 +71,8 @@ export const unstable_settings = {
 };
 
 SplashScreen.preventAutoHideAsync();
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const RootLayout = () => {
   // Lora + Jost load on every platform (BRAND §3 — one metric reality; the
@@ -116,9 +125,14 @@ const RootLayout = () => {
       handledResponse.current = responseId;
       Notifications.clearLastNotificationResponse();
       const data = response.notification.request.content.data as
-        | { edition_id?: string }
+        | { edition_id?: unknown }
         | undefined;
-      if (data?.edition_id) setPendingTap({ responseId, editionId: data.edition_id });
+      // The payload is pushed to us, not read from our own database, so only
+      // an edition id goes into the route — never a path someone else wrote.
+      const editionId = data?.edition_id;
+      if (typeof editionId === 'string' && UUID_RE.test(editionId)) {
+        setPendingTap({ responseId, editionId });
+      }
     };
     take(Notifications.getLastNotificationResponse());
     const sub = Notifications.addNotificationResponseReceivedListener(take);

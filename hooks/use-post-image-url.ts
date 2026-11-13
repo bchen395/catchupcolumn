@@ -4,10 +4,11 @@ import { getPostImageDisplayUrl } from '@/lib/posts';
 
 /**
  * Resolve the raw value stored in `posts.image_url` (either a private
- * storage path that must be signed, or a passthrough URL/file URI) to a
- * URI that an `<Image>` can render.
+ * storage path that must be signed, one of our legacy public URLs, or a local
+ * file URI) to a URI that an `<Image>` can render.
  *
- * Returns `null` while resolving or when no image is set.
+ * Returns `null` while resolving, when no image is set, or for a URL that
+ * isn't ours (getPostImageDisplayUrl).
  */
 export const usePostImageUrl = (raw: string | null | undefined): string | null => {
   const [resolved, setResolved] = useState<string | null>(null);
