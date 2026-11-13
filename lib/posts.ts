@@ -293,8 +293,13 @@ export const getPostImageDisplayUrl = async (
   if (/^(file:|data:)/i.test(rawImageUrl)) return rawImageUrl;
 
   if (/^https?:/i.test(rawImageUrl)) {
+    // Any other URL is not one of ours. `image_url` is deliberately left
+    // unconstrained in the database (20261003154759), so a member writing
+    // through the API could point a post at their own server — and every
+    // reader's phone would fetch it, telling that server who opened the
+    // edition and when. Our own legacy URLs are re-signed from their path.
     const match = rawImageUrl.match(LEGACY_PUBLIC_URL_RE);
-    if (!match) return rawImageUrl;
+    if (!match) return null;
     storagePath = match[1];
   }
 
