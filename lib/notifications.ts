@@ -49,8 +49,8 @@ let cached: { userId: string; token: string } | null = null;
 /**
  * Asks for push permission, fetches an Expo push token, and stores it.
  *
- * Safe to call multiple times — duplicate (user_id, token) inserts are
- * idempotent thanks to the table's composite primary key.
+ * Safe to call multiple times — a (user_id, token) already stored is left as
+ * it is (the table's composite primary key, ON CONFLICT DO NOTHING).
  *
  * Returns the token, or null if the device can't receive push (simulator,
  * permission denied, web).
@@ -95,12 +95,20 @@ export const registerForPushAsync = async (userId: string): Promise<string | nul
       return token;
     }
 
-    await supabase
+    // ON CONFLICT DO NOTHING, not DO UPDATE: push_tokens has no UPDATE policy,
+    // so DO UPDATE failed RLS whenever the row was already there (every launch
+    // after the first) — harmless only because the error went unread. The
+    // columns are the key plus a platform that never changes for a token, so
+    // there is nothing to update. With the error read, a save that really
+    // failed is no longer cached as a success that every later call this run
+    // would skip retrying.
+    const { error } = await supabase
       .from('push_tokens')
       .upsert(
         { user_id: userId, token, platform: PLATFORM() },
-        { onConflict: 'user_id,token', ignoreDuplicates: false },
+        { onConflict: 'user_id,token', ignoreDuplicates: true },
       );
+    if (error) throw error;
 
     cached = { userId, token };
     return token;
@@ -146,11 +154,14 @@ export const unregisterPushAsync = async (userId: string): Promise<void> => {
     );
     const token = tokenResponse.data;
     if (!token) return;
-    await supabase
+    const { error } = await supabase
       .from('push_tokens')
       .delete()
       .eq('user_id', userId)
       .eq('token', token);
+    // Sign-out still goes ahead (the warn below), but the token is still
+    // registered, so the cache that says so stays.
+    if (error) throw error;
     if (cached?.userId === userId) {
       cached = null;
     }
