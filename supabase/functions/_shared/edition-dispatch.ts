@@ -281,9 +281,12 @@ async function sendOneEmail(
       res = await request();
     }
   } catch (err) {
-    // Timed out or the network failed. Whether Resend sent it is unknown, so
-    // it's a failure like any other — not retried (see sendEditionEmail).
-    return { ok: false, error: `Resend request failed: ${err instanceof Error ? err.message : String(err)}` };
+    // Timed out or the network failed. Thrown, not counted as one recipient's
+    // failure: the sweep releases the claim and the next tick sends the
+    // edition again, which is what an outage needs — counting it would mark
+    // the edition emailed with nobody mailed. The idempotency key is what
+    // makes that second run safe for the people this run already reached.
+    throw new Error(`Resend request failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   if (!res.ok) {
