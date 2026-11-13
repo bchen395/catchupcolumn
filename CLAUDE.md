@@ -270,9 +270,13 @@ deno run --allow-write=preview-out supabase/functions/_shared/preview/render-ema
 ```
 
 The checks above — typecheck, lint, `deno check`, the fixture render — run
-automatically in CI (`.github/workflows/ci.yml`) on every PR, alongside a
-two-platform Metro bundle and — when SQL changes — a from-scratch migration
-apply. **CI deploys nothing:** migrations are pushed and edge functions deployed
+automatically in CI (`.github/workflows/ci.yml`) on PRs, alongside a
+two-platform Metro bundle, a runtime-fingerprint comparison that warns when a PR
+would cut existing builds off from OTAs, and — when SQL changes — a from-scratch
+migration apply. Each job runs only when its surface changed, so a docs-only PR
+builds nothing. Checks that depend on the day rather than the diff (Expo patch
+drift, npm advisories) run weekly in `dependency-health.yml`, and CodeQL runs in
+`codeql.yml`. **CI deploys nothing:** migrations are pushed and edge functions deployed
 by hand, and only the Vercel site ships on merge. (Production ran a 2026-07-11
 function build until 2026-09-24 because of exactly this.) See the
 `verify-changes` skill for what CI does and does not cover.

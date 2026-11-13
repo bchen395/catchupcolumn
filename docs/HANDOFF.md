@@ -387,8 +387,11 @@ This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
     use `--yes`, never `echo y |`.
   - Bump `package.json` and CI together.
   - An unpinned `npx supabase` broke on 3.0.0's release day.
-- **Expo patch drift fails CI on any PR** (expo-doctor). Fix it in its own
-  commit with `npx expo install --fix`. Native packages move the fingerprint.
+- **Expo patch drift fails the weekly `Dependency health` run**, and any PR
+  that itself changes `package.json`, the lockfile or `app.json` (expo-doctor).
+  It no longer fails unrelated PRs. Fix it in its own
+  commit with `npx expo install --fix`. Native packages move the fingerprint;
+  CI's `fingerprint` job warns on a PR that does.
   **Until the final build, don't:** since 2026-11-05 the drifted packages are
   listed in `package.json` → `expo.install.exclude`, which silences the check
   without moving the fingerprint (checked), so OTAs still reach build 10. Add

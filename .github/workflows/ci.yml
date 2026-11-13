@@ -8,21 +8,44 @@
 #
 # Jobs, and what each one actually catches:
 #
-#   app             typecheck + lint + dependency drift. The everyday gate.
+#   changes         sorts the changed files into surfaces, so each job below
+#                   runs only when its surface moved. About four PRs in ten
+#                   here are records and docs; they used to pay for two Metro
+#                   bundles and fail on checks that had nothing to do with them.
+#   app             typecheck + lint. When dependencies or Expo config changed,
+#                   also expo-doctor and the SDK version check.
 #   bundle          a real Metro bundle per platform. Catches the whole class
 #                   of breakage typecheck can't see: a bad import path, a
 #                   missing native module, a config-plugin error. This is what
 #                   caught the SDK 54→57 tab-bar move.
+#   fingerprint     PRs only. Warns when a PR moves the expo-updates runtime
+#                   fingerprint, because an OTA can then no longer reach the
+#                   build that's already on phones. A warning, not a gate: the
+#                   final build moves it on purpose.
 #   edge-functions  `deno check` (tsconfig excludes supabase/functions, so
 #                   nothing else covers them) plus the email fixture render,
 #                   which is the only behavioural check in the repo.
-#   migrations      only when SQL changed: refuses edits to already-merged
-#                   migrations, then applies the whole history from scratch.
+#   migrations      refuses edits to already-merged migrations, then applies
+#                   the whole history from scratch.
+#   deploy-reminder main only. Merging deploys nothing, so when a merge
+#                   touches functions or migrations this says what to deploy
+#                   by hand. (Production ran a July function build until late
+#                   September because nothing said so.)
+#   ci-passed       the one check to require in branch protection. Green when
+#                   every job above passed or was skipped as not applicable.
 #
-# Actions are pinned to a major tag and kept current on purpose: GitHub retires
-# the Node runtime that older action majors are built on (Node 20 was deprecated
-# 2025-09), and a stale major eventually becomes a hard failure rather than a
-# warning. If a run starts warning about a deprecated runtime, bump them.
+# What is deliberately NOT here: anything whose result depends on the day
+# rather than on the diff. Expo publishing a patch release, or a new npm
+# advisory, used to turn every open PR red — 19 of the 20 failed runs before
+# 2026-11-13 were that one expo-doctor step, most of them on docs PRs. Those
+# checks now run on a schedule in `dependency-health.yml`, and on PRs only
+# when the PR itself changes dependencies.
+#
+# Actions are pinned to a commit SHA, with the release in a trailing comment.
+# A tag can be moved to point at different code; a SHA can't. Dependabot
+# (`.github/dependabot.yml`) opens a PR when an action publishes a release, so
+# the pins stay current — GitHub retires the Node runtime that older action
+# majors run on, and a stale one eventually becomes a hard failure.
 
 name: CI
 
@@ -30,18 +53,19 @@ on:
   pull_request:
   push:
     branches: [main]
-  # So you can re-run the gate by hand without pushing an empty commit.
+  # So you can re-run the gate by hand without pushing an empty commit. A
+  # manual run checks every surface.
   workflow_dispatch:
 
 # Least privilege: nothing here writes to the repo.
 permissions:
   contents: read
 
-# A new push to the same branch makes the previous run pointless. Don't pay for
-# it. `github.head_ref` is the PR branch; `github.ref` covers push/dispatch.
+# A new push to a PR branch makes the previous run pointless. Don't pay for
+# it. Runs on main are never cancelled: each one may carry a deploy reminder.
 concurrency:
-  group: ci-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.head_ref || github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   # `lib/supabase.ts` throws at module load if these are unset, and Metro
@@ -54,14 +78,100 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
+  changes:
+    name: Detect changed surfaces
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      base: ${{ steps.sort.outputs.base }}
+      app: ${{ steps.sort.outputs.app }}
+      deps: ${{ steps.sort.outputs.deps }}
+      functions: ${{ steps.sort.outputs.functions }}
+      sql: ${{ steps.sort.outputs.sql }}
+    steps:
+      # Full history so the base commit is available for the diff.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Plain git rather than a third-party "paths filter" action: one fewer
+      # dependency with access to the checkout. Event values come in through
+      # `env`, never interpolated into the script.
+      - name: Sort changed files into surfaces
+        id: sort
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          case "$EVENT" in
+            pull_request) base="$PR_BASE" ;;
+            push)         base="$PUSH_BEFORE" ;;
+            *)            base="" ;;
+          esac
+          # A first push to a branch reports an all-zero "before", and a
+          # force-push can report a commit that no longer exists.
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base="$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)"
+          fi
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+
+          files="$(git diff --name-only "$base" HEAD)"
+          touched() { printf '%s\n' "$files" | grep -Eq "$1"; }
+
+          deps=false; app=false; functions=false; sql=false
+          # Anything that decides what gets installed or how the native app is
+          # configured.
+          if touched '^(package\.json|package-lock\.json|app\.json|eas\.json|\.nvmrc)$'; then deps=true; fi
+          # Anything Metro bundles or tsc/eslint read.
+          if touched '^(app|components|hooks|lib|constants|types|assets)/|^(tsconfig\.json|eslint\.config\.js|metro\.config\.js|babel\.config\.js)$'; then app=true; fi
+          if touched '^(supabase/functions|scripts/group-zero)/'; then functions=true; fi
+          if touched '^supabase/(migrations/|config\.toml$)'; then sql=true; fi
+          if [ "$deps" = true ]; then app=true; fi
+
+          # A manual run, or a change to CI itself, checks everything.
+          if [ "$EVENT" = workflow_dispatch ] || touched '^\.github/'; then
+            deps=true; app=true; functions=true; sql=true
+          fi
+
+          {
+            echo "deps=$deps"
+            echo "app=$app"
+            echo "functions=$functions"
+            echo "sql=$sql"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### What this run checks"
+            echo
+            echo "| Surface | Changed |"
+            echo "| --- | --- |"
+            echo "| App code | $app |"
+            echo "| Dependencies and Expo config | $deps |"
+            echo "| Edge functions | $functions |"
+            echo "| Migrations | $sql |"
+            if [ "$app$functions$sql" = falsefalsefalse ]; then
+              echo
+              echo "Docs and records only — nothing to build."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
   app:
     name: Typecheck, lint, dependencies
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           # .nvmrc is the single source of truth for the Node version; keep it
           # and package.json's `engines` in step.
@@ -82,17 +192,25 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # The next two fail when Expo publishes a patch release, whatever the PR
+      # contains — so they run here only when the PR changes dependencies or
+      # Expo config, where the answer is the PR's business. Everything else is
+      # covered weekly by `dependency-health.yml`.
       - name: Expo config and native-module checks
+        if: needs.changes.outputs.deps == 'true'
         run: npx expo-doctor
 
       # Fails when an Expo-managed dependency drifts off the SDK's pinned
       # version — the thing that let this project sit three SDKs behind.
       - name: Dependencies match the SDK
+        if: needs.changes.outputs.deps == 'true'
         run: npx expo install --check
 
   # ---------------------------------------------------------------------------
   bundle:
     name: Bundle (${{ matrix.platform }})
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
@@ -101,9 +219,11 @@ jobs:
       matrix:
         platform: [ios, android]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -114,33 +234,126 @@ jobs:
       # A production Metro bundle. Exercises every import in the app — a route
       # file that no other job imports still has to resolve here.
       - name: Export ${{ matrix.platform }} bundle
-        run: npx expo export --platform ${{ matrix.platform }} --output-dir dist-ci
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: npx expo export --platform "$PLATFORM" --output-dir dist-ci
 
       # Bundle size is a launch concern (it's a phone app for people on
       # family plans), so print it rather than let it drift silently. Not a
       # gate: a threshold would fail on the first legitimate feature.
       - name: Report bundle size
+        env:
+          PLATFORM: ${{ matrix.platform }}
         run: |
           {
-            echo "### ${{ matrix.platform }} bundle"
+            echo "### $PLATFORM bundle"
             echo
             echo '| Item | Size |'
             echo '| --- | --- |'
             printf '| JS (Hermes bytecode) | %s |\n' \
-              "$(du -ch dist-ci/_expo/static/js/${{ matrix.platform }}/*.hbc 2>/dev/null | tail -1 | cut -f1)"
+              "$(du -ch dist-ci/_expo/static/js/"$PLATFORM"/*.hbc 2>/dev/null | tail -1 | cut -f1)"
             printf '| Assets | %s |\n' "$(du -sh dist-ci/assets 2>/dev/null | cut -f1)"
             printf '| Total | %s |\n' "$(du -sh dist-ci | cut -f1)"
           } >> "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------------------
+  fingerprint:
+    name: Runtime fingerprint
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # `app.json` sets runtimeVersion to the fingerprint policy: a hash of
+      # everything native. An OTA update only reaches builds with the same
+      # hash. So a PR that moves it silently cuts the build in the field off
+      # from every later update — the reason patch drift is held in
+      # `expo.install.exclude` (HANDOFF → Traps). Base and head are both
+      # computed here, on one machine, so the comparison doesn't depend on a
+      # hash recorded somewhere else.
+      - name: Check out the PR
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: head
+          persist-credentials: false
+
+      - name: Check out the base
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: head/.nvmrc
+          cache: npm
+          cache-dependency-path: |
+            head/package-lock.json
+            base/package-lock.json
+
+      - name: Install both
+        run: |
+          npm ci --prefix base
+          npm ci --prefix head
+
+      - name: Compare fingerprints
+        run: |
+          set -euo pipefail
+          moved=false
+          {
+            echo "### Runtime fingerprint"
+            echo
+            echo "| Platform | Base | This PR | |"
+            echo "| --- | --- | --- | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          for platform in ios android; do
+            for side in base head; do
+              (cd "$side" && npx expo-updates fingerprint:generate --platform "$platform") \
+                > "$side-$platform.json"
+            done
+            b="$(jq -r .hash "base-$platform.json")"
+            h="$(jq -r .hash "head-$platform.json")"
+            if [ "$b" = "$h" ]; then
+              echo "| $platform | \`$b\` | \`$h\` | same |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              moved=true
+              echo "| $platform | \`$b\` | \`$h\` | **moved** |" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
+          if [ "$moved" = true ]; then
+            {
+              echo
+              echo "**This PR moves the runtime fingerprint.** An OTA published from it will not reach builds made before it. That is right for the PR that prepares a new build, and wrong for anything meant to ship as an update to the current one."
+              echo
+              echo "What moved (ios):"
+              echo
+              echo '```'
+              # Each source with its hash, base against head.
+              diff \
+                <(jq -r '.sources[] | "\(.filePath // .id // .type) \(.hash)"' base-ios.json | sort) \
+                <(jq -r '.sources[] | "\(.filePath // .id // .type) \(.hash)"' head-ios.json | sort) \
+                | grep '^[<>]' | head -40 || true
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning title=Runtime fingerprint moved::An OTA from this PR will not reach existing builds. See the run summary for what moved."
+          fi
+
+  # ---------------------------------------------------------------------------
   edge-functions:
     name: Edge functions (Deno)
+    needs: changes
+    if: needs.changes.outputs.functions == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: denoland/setup-deno@v2
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
           # Pinned major: a Deno release shouldn't be able to redefine the gate.
           deno-version: v2.x
@@ -168,7 +381,7 @@ jobs:
       # Lets you eyeball the rendered email on a PR without running anything.
       - name: Upload rendered emails
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: edition-email-preview
           path: preview-out/
@@ -178,47 +391,30 @@ jobs:
   # ---------------------------------------------------------------------------
   migrations:
     name: Migrations
+    needs: changes
+    # The Supabase stack takes a couple of minutes to come up and most PRs
+    # don't touch the database.
+    if: needs.changes.outputs.sql == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       # Full history so the base commit is available for the diff below.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-
-      # Everything after this is gated on SQL actually having changed — the
-      # Supabase stack takes a couple of minutes to come up and most PRs
-      # don't touch the database.
-      - name: Detect SQL changes
-        id: changed
-        run: |
-          set -euo pipefail
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            base='${{ github.event.pull_request.base.sha }}'
-          else
-            # push/dispatch: compare against the previous commit on the branch.
-            base="$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)"
-          fi
-          echo "base=$base" >> "$GITHUB_OUTPUT"
-          if git diff --name-only "$base" HEAD -- supabase/migrations supabase/config.toml \
-               | grep -q .; then
-            echo "sql=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "sql=false" >> "$GITHUB_OUTPUT"
-            echo "No migration or config changes — skipping." >> "$GITHUB_STEP_SUMMARY"
-          fi
+          persist-credentials: false
 
       # The Supabase footgun this project is most exposed to. Migrations are
       # applied once to a live remote database and never replayed, so editing
       # one that's already merged means local and production diverge
       # permanently — with no error anywhere to tell you. New migrations only.
       - name: Already-merged migrations must not be edited
-        if: steps.changed.outputs.sql == 'true'
+        env:
+          BASE: ${{ needs.changes.outputs.base }}
         run: |
           set -euo pipefail
-          base='${{ steps.changed.outputs.base }}'
           # M=modified, D=deleted, R=renamed. Added (A) is the whole point.
-          touched="$(git diff --name-only --diff-filter=MDR "$base" HEAD \
+          touched="$(git diff --name-only --diff-filter=MDR "$BASE" HEAD \
                      -- supabase/migrations || true)"
           if [ -n "$touched" ]; then
             echo "::error::Existing migration(s) were modified, renamed or deleted."
@@ -229,8 +425,7 @@ jobs:
           fi
           echo "Only new migrations added." >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: supabase/setup-cli@v3
-        if: steps.changed.outputs.sql == 'true'
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
         with:
           # Pinned: a CLI release shouldn't be able to break the gate. Bump
           # deliberately, alongside the version you run locally (the exact
@@ -241,16 +436,96 @@ jobs:
       # A syntax error, a bad dependency order, or a policy that references a
       # dropped column all fail here rather than against production.
       - name: Apply the full migration history
-        if: steps.changed.outputs.sql == 'true'
         run: supabase db start
 
       # plpgsql static analysis on the resulting schema (unreachable code, bad
       # record references). Error level only — warnings are noisy on the
       # SECURITY DEFINER RPCs this project leans on.
       - name: Lint the schema
-        if: steps.changed.outputs.sql == 'true'
         run: supabase db lint --level error
 
       - name: Stop the stack
-        if: always() && steps.changed.outputs.sql == 'true'
+        if: always()
         run: supabase stop --no-backup || true
+
+  # ---------------------------------------------------------------------------
+  deploy-reminder:
+    name: What this merge needs deployed
+    needs: changes
+    if: >-
+      github.event_name == 'push' &&
+      (needs.changes.outputs.functions == 'true' || needs.changes.outputs.sql == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # CI holds no production credentials and deploys nothing, on purpose.
+      # This only reads the diff and writes down the by-hand steps.
+      - name: List the by-hand steps
+        env:
+          BASE: ${{ needs.changes.outputs.base }}
+        run: |
+          set -euo pipefail
+          files="$(git diff --name-only "$BASE" HEAD)"
+          migrations="$(printf '%s\n' "$files" | grep -E '^supabase/migrations/' || true)"
+          fn_files="$(printf '%s\n' "$files" | grep -E '^supabase/functions/' || true)"
+
+          functions=""
+          if printf '%s\n' "$fn_files" | grep -Eq '^supabase/functions/(_shared/|deno\.json$)'; then
+            # A shared file is compiled into every function that imports it.
+            functions="$(find supabase/functions -mindepth 1 -maxdepth 1 -type d ! -name '_*' -exec basename {} \; | sort)"
+            shared_note=" (\`_shared/\` changed, so every function)"
+          else
+            functions="$(printf '%s\n' "$fn_files" | cut -d/ -f3 | grep -v '^_' | sort -u || true)"
+            shared_note=""
+          fi
+
+          {
+            echo "### Merged, not deployed"
+            echo
+            echo "Merging ships only the Vercel site. Production still runs what was last deployed by hand."
+            if [ -n "$migrations" ]; then
+              echo
+              echo "**Migrations to push** (\`npx supabase db push --remote\`; \`--dry-run\` first):"
+              echo
+              printf '%s\n' "$migrations" | sed 's/^/- `/; s/$/`/'
+            fi
+            if [ -n "$functions" ]; then
+              echo
+              echo "**Functions to deploy**$shared_note:"
+              echo
+              echo '```bash'
+              printf '%s\n' "$functions" | sed 's/^/npx supabase functions deploy /; s/$/ --use-api --remote/'
+              echo '```'
+            fi
+            echo
+            echo "Push migrations before deploying functions that depend on them, then record both in \`docs/HANDOFF.md\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "::notice title=Merged, not deployed::This merge changed migrations or edge functions. Production is unchanged until they are pushed and deployed by hand — the run summary lists the commands."
+
+  # ---------------------------------------------------------------------------
+  ci-passed:
+    name: CI passed
+    # The single check to mark as required. A job that was skipped because its
+    # surface didn't change counts as passing; requiring the jobs one by one
+    # would leave a docs PR waiting forever on checks that never report.
+    needs: [changes, app, bundle, fingerprint, edge-functions, migrations]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every job passed or was not needed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          if echo "$RESULTS" | jq -e 'any(.[]; .result == "failure" or .result == "cancelled")' > /dev/null; then
+            echo "::error::At least one job failed or was cancelled."
+            exit 1
+          fi
