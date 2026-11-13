@@ -81,8 +81,23 @@ RPC, wiring inside `compile-editions`, copy, tone rules, checklist.
   sent_at)`, primary key `(group_id, slot_at, kind)`, instead of
   `edition_nudges`. Section 3 needs the same once-per-slot guarantee for a
   second kind of notice. Service-role only: RLS on, no policies.
-- **"Already written" depends on the open question in section 4.** Today any
-  autosaved post counts as written.
+- **Drafts publish, and the reminder says so** (owner, 2026-11-13). Anything
+  written goes to press at the deadline, filed or not. To tell the two apart,
+  add a nullable `posts.filed_at`, set when the writer presses "File my story"
+  and cleared by a later edit, matching the composer's own `filed` state
+  (`hooks/use-composer-draft.ts:70`). **The compiler ignores it.** The reminder
+  then has three cases, still one push per member per cycle:
+  - filed this cycle: no push;
+  - a draft that isn't filed: `Two days to press` / `Your story for {day} is
+    saved and will run as it stands. Open it if you'd like to finish.` Deep
+    link to that draft;
+  - nothing written: the copy in NUDGE_SPEC.
+- **Home's bylines count filed stories only** (`fetchThisWeeksBylines`,
+  `lib/posts.ts:50`), so "Ruth has written this week" is never about half a
+  sentence. Posts saved by builds without `filed_at` count as filed.
+- **The composer says it once**, near the save status: a saved story runs in
+  {day}'s edition whether or not it's filed. Copy to be set in the paper's
+  voice under BRAND §9 → "The composer".
 
 Everything binding in NUDGE_SPEC stays binding: push only, one per member per
 cycle, who *has* written and never who hasn't, no urgency language.
@@ -140,13 +155,6 @@ the cron twice sends neither twice.
   block as the join page. This is a signpost, not the web composer
   (POSITIONING §4), which stays gated. Check the fixtures still clear Gmail's
   clip limit.
-- **Open question for the owner: an unfinished draft can publish.** There is
-  no filed flag on the server. Autosave writes a real `posts` row, and the
-  compiler takes every uncompiled post, so a story the writer never pressed
-  "File my story" on goes out at the deadline, and counts as "has written" on
-  Home and in the reminder. Either this is intended (anything written is in)
-  and the composer should say so, or posts need a `filed_at` and the compiler,
-  bylines and reminder should all require it. Decide before building section 2.
 - **A readout for any Group.** `scripts/group-zero/readout.sql` is hard-coded
   to named Groups. Generalize it to take a Group id and return, per edition:
   writers, stories, members at the time, and when in the week each post was

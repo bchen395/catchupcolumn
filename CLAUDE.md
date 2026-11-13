@@ -7,7 +7,7 @@ Catch Up Column is a mobile app where a friend group or a family collaborates on
 ## Target Audience
 
 **Direction set 2026-09-14.** Full reasoning, and the work it implies, in
-[`docs/POSITIONING.md`](docs/POSITIONING.md).
+[`docs/POSITIONING.md`](docs/POSITIONING.md) — read its §0 (2026-11-13) first; it amends the revenue path and the order of work.
 
 **Primary: post-grad friend groups.** Six to ten people who were close in one place and now live in five states. The pain isn't that they stopped caring — it's that there's no occasion. The group text is dead or it's memes; social media reports that their friends exist, not how they are. Catch Up Column manufactures the occasion.
 
@@ -175,11 +175,11 @@ policy and terms, which is the sanctioned explicit form.
 
 ## Non-features
 
-Two lists that are often confused. The first is permanent; the second is sequencing.
+Three lists that are often confused. The first is permanent; the second is waiting on evidence; the third is sequencing.
 
 **Deliberately never.** Proposing these is a misread of the product:
 
-- Likes, reactions, comments, follower/view counts, streaks, or any other engagement metric
+- Likes, reactions, comments, follower/view counts, streaks, or any other engagement metric. (A letter to the editor is not a comment — see "To be tested" below.)
 - A feed, an algorithm, or any reading surface that isn't a compiled Edition
 - Public posts, discovery, stranger pairing, public Groups
 - Ads, data sale, or engagement-based monetization — third-party advertising was
@@ -188,14 +188,20 @@ Two lists that are often confused. The first is permanent; the second is sequenc
   does not exist). The arithmetic is in [`docs/POSITIONING.md`](docs/POSITIONING.md)
   §5 so it doesn't get relitigated. The Volume offer in the edition email is a
   house ad for our own object, not an exception to this.
-- Writing prompts and timed exercises — Home's rotating `deckLines` are flavor copy in the paper's own voice, *not* prompts (see the comment in `constants/strings.ts`)
+- Writing prompts **from the app** and timed exercises. A question posed by one of the Group's own people is content, not a prompt — see "To be tested" below. Home's rotating `deckLines` are flavor copy in the paper's own voice, *not* prompts (see the comment in `constants/strings.ts`)
 - AI "write for you" — the writing being yours is the entire point
+
+**To be tested (reopened 2026-11-13 — do not build until the test Groups say so).** Reasoning in [`docs/POSITIONING.md`](docs/POSITIONING.md) §0:
+
+- **Letters to the editor** — a short reply to a story that prints in the next Edition. Nothing is delivered before the paper is; the week's delay is the point. Built after the test Groups have run a few editions.
+- **Sections of the paper** posed by members — a question of the week, an advice column, a survey, classifieds. Tried by hand first (the organizer files a story titled "Question of the week"); nothing is built until a Group picks one up unprompted.
 
 **Not yet, but planned:**
 
-- Physical print — **the primary revenue path as of 2026-09-14**, after research. A bound volume of ~12 editions, sold as an object for $89–99, never as access. Print-on-demand (Lulu's API: no setup fees, no inventory, dropship) removes the operational objection that briefly got this deferred. Nothing is ever withheld from a Group that doesn't buy. See [`docs/POSITIONING.md`](docs/POSITIONING.md) §5.
+- **The monthly print edition — the lead revenue path as of 2026-11-13.** A month of a Group's paper, printed and mailed to anyone the buyer names, paid monthly. Not yet costed. POSITIONING.md §0.
+- Physical print — the Volume: the primary revenue path from 2026-09-14, now the yearly gift behind the monthly paper. A bound volume of ~12 editions, sold as an object for $89–99, never as access. Print-on-demand (Lulu's API: no setup fees, no inventory, dropship) removes the operational objection that briefly got this deferred. Nothing is ever withheld from a Group that doesn't buy. See [`docs/POSITIONING.md`](docs/POSITIONING.md) §5.
 - **Friends distribute, families pay.** The revenue evidence in this category (Storyworth, Remento) is all family/gift purchase; no friend-group social app was found with meaningful direct revenue. This does **not** reverse the friends-first audience decision — friend groups are how users arrive, families are who buys the artifact, and the product already serves both first-class. POSITIONING.md §5.
-- Subscriptions of any kind — ruled out, not deferred. Freemium converts at 2–5%, and reaching the same revenue that way needs ~25x the user base. See POSITIONING.md §5.
+- Subscriptions **for access** — ruled out, not deferred. (Amended 2026-11-13: recurring payment for a physical object, like the monthly print edition, is allowed; nothing is ever withheld from a Group that doesn't buy.) Freemium converts at 2–5%, and reaching the same revenue that way needs ~25x the user base. See POSITIONING.md §5.
 - Web composer — write without installing the app, via magic link from the weekly email. Gated on evidence; §4.
 - Templates for post layouts
 - Personalized reading recommendations

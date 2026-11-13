@@ -15,9 +15,122 @@ work-item doc gets deleted when its work lands (COPY_PASS.md did, 2026-09-16):
 | --- | --- |
 | [ORGANIZER_PLAYBOOK.md](./ORGANIZER_PLAYBOOK.md) | The one page an organizer follows to start and run a Group. Handed to Group B (§6) as-is. |
 | [NUDGE_SPEC.md](./NUDGE_SPEC.md) | §3's build spec — table DDL, RPC, wiring, verification. |
+| [LOOP_SPEC.md](./LOOP_SPEC.md) | The pre-test-Group build (2026-11-13): https invite link, the reminder, thin and empty weeks. |
 | [LAUNCH.md](./LAUNCH.md) | The submission runbook and the owner's vendor setup. |
 | [PRESUBMISSION_CHECKLIST.md](./PRESUBMISSION_CHECKLIST.md) | The tickable gates for submission day. |
 | [STORE_LISTING.md](./STORE_LISTING.md) | Store metadata and the privacy questionnaire answers. |
+
+---
+
+## 0. Update — 2026-11-13 (read this first)
+
+A review of the repo, the code and the market, then the owner's decisions. Where
+this section disagrees with a later one, this section wins; the later text is
+kept as the record of how the thinking got here. §1's audience decision is
+unchanged.
+
+### Where things stood
+
+- No real Group has run a week. Group Zero was skipped (§6), which removed the
+  trigger for the nudge (§3), write-by-web (§4) and the December test (§5).
+- The loop leaks in five places, found in code: the invite link is a custom
+  scheme that does nothing without the app; the only push arrives after the
+  deadline; empty and one-story weeks pass in silence; an email reader has no
+  way in to writing; the archive doesn't show itself building.
+- The December test can't run as written. It needed family Groups publishing
+  since September, and a Volume is 12 editions.
+
+### Decisions
+
+1. **Real Groups before submission, after the art.** Two or three test Groups
+   (the owner's friends, the owner's partner's friends, one family) start once
+   the illustration rework lands, and run before or alongside App Store review.
+   The illustrations are the difference between a project and a product with an
+   identity, so the Groups wait for them. This reinstates the substance of §6
+   without its four-week gate. *Owner step:* people outside the team need
+   external TestFlight, which means Beta App Review (§6, "how the app gets onto
+   their phones").
+2. **The wait is spent closing the leaks.** [LOOP_SPEC.md](./LOOP_SPEC.md): an
+   `https://www.catchupcolumn.com/join/CODE` invite link with a web page behind
+   it; the pre-publish reminder, with §3's "after Group Zero" gate lifted; a
+   one-story edition that arrives as a letter; a quiet note to moderators only
+   when a week has nothing.
+3. **A draft still publishes.** Anything written goes to press at the deadline,
+   filed or not. A writer with an unfiled draft gets their own form of the
+   reminder, saying it will run as it stands. That needs a `filed_at` on posts,
+   which the compiler ignores (LOOP_SPEC §2).
+4. **Revenue leads with a monthly printed paper, not the yearly book.** "The
+   print edition": a month of a Group's paper, printed and mailed to anyone the
+   buyer names, paid monthly. The Volume (§5) stays as the yearly gift. The
+   evidence is below. This amends §5's "subscriptions ruled out": charging for
+   *access* stays ruled out, permanently; recurring payment for a physical
+   object is allowed. Nothing is ever withheld from a Group that doesn't buy.
+5. **Two entries on the never list are reopened for testing**, not adopted:
+   - **Letters to the editor** — a short reply to a story, written after
+     reading, that prints in the next Edition. It is not a comment: nothing is
+     delivered until the paper is. The week's delay is the point. Built after
+     the test Groups have run a few editions, so the difference is visible.
+   - **Sections of the paper** posed by the Group's own people — a question of
+     the week, an advice column, a survey, classifieds (§9). The line that
+     holds: a prompt from the app is an engagement mechanic; a question from
+     one of your people is content. Tested by hand first — the organizer files
+     a story titled "Question of the week" and sees whether anyone answers.
+     Nothing is built until a test Group picks one up unprompted.
+
+   Likes, reactions, counts, feeds, streaks, app-written prompts and AI writing
+   stay permanently out.
+6. **First revenue target: any first dollar**, from the family test Group — a
+   month printed and mailed by hand, then asking them to pay for the next. The
+   earlier $2,000/month arithmetic (§5) stays as the longer view.
+7. **Content is the owner's own lane.** Good content in whatever the owner
+   likes making, linked back to the app; not positioned against calm or
+   friendship apps. §7's community plan is not the growth plan. Nothing to
+   decide until the join page and a store link exist, since until then a view
+   has nowhere to go.
+
+### The evidence behind decision 4
+
+Gathered 2026-11-12 from search results; several sites could not be read
+directly, so **check every price on the live site before relying on it.**
+
+- **Famileo** — a monthly printed family gazette mailed to a grandparent, about
+  $9.99/month in the US. One secondary source reports 260,000+ subscribing
+  families and about €14M revenue in 2024; profitable since 2020.
+- **Chatbooks** Monthly Minis and **Neveo** sell monthly print at about $10.
+- **Storyworth** and **Remento** charge $99 a year, renewing. No one was found
+  selling a single book with no renewal.
+- **No friend-group product was found making meaningful money from print.**
+  This supports "friends distribute, families pay" (§5).
+- **Letterloop** — the nearest friend-group neighbour — charges $5/month per
+  group for a question-and-answer email. No revenue figures found.
+- **One source says Storyworth launched a monthly "Family Newsletters" product
+  in August 2026.** Unconfirmed; if true, the family side has a large
+  competitor, and the newspaper form and the friend-group entry matter more.
+- **Rough arithmetic for $4,000/month** (conversion rates are guesses): one $95
+  Volume per Group per year needs about 960 books and 4,800–9,600 active
+  Groups; a $10 monthly print edition needs 600–800 subscriptions and
+  3,000–8,000 active Groups. The monthly paper also earns from a Group's first
+  month, not its twelfth edition.
+- **Unknown, and the first owner step:** what one short colour paper costs to
+  print and post. Run Lulu's calculator and order one book and one short paper
+  (Newspaper Club and Mixam print from one copy).
+- **On replies:** observational studies of newsgroups and Stack Exchange found
+  newcomers who got any reply were more likely to post again. That is the case
+  for letters; it is not proof.
+- **On group decay:** Cocoon closed on cold start (it only worked once the
+  whole circle joined); Dick Costolo's Chorus closed because people hide from
+  their group once they fall behind. Hence the reminder's rule of naming who
+  has written and never who hasn't, and the empty-week note going to
+  moderators only.
+
+### Order of work
+
+1. Now, while the art is in progress: build LOOP_SPEC; order test prints.
+2. Art lands: start the test Groups; submit to the App Store.
+3. After three or four editions: read the participation readout, tune the
+   reminder's lead time, try a section by hand, then build letters.
+4. Second month of the family Group: mail a printed month by hand and ask for
+   payment for the next.
 
 ---
 
@@ -137,8 +250,9 @@ floor keeps its "grandparent clause" name (§1).
 
 ## 3. Work item — the pre-publish nudge (the retention feature)
 
-**Status: does not exist. Highest retention-per-line-of-code item on the board —
-but sequenced after Group Zero, not during it. See §8 step 7 for why.**
+**Status: does not exist. Highest retention-per-line-of-code item on the board.
+~~Sequenced after Group Zero, not during it.~~ Gate lifted 2026-11-13 (§0): it
+is built before the test Groups start, per [LOOP_SPEC.md](./LOOP_SPEC.md).**
 
 ### Why this is the priority
 
@@ -216,9 +330,11 @@ a web-only member can be reached by a link.
 
 ## 5. Work item — monetization
 
-**Status: planning only, now backed by research (2026-09-14). Revenue target
-brought forward — see "the December test" below. Ads costed and rejected
-2026-09-15 — see "Ads" below.**
+**Status: planning only, now backed by research (2026-09-14). Ads costed and
+rejected 2026-09-15 — see "Ads" below. Amended 2026-11-13 (§0): a monthly
+printed paper now leads, the Volume follows as the yearly gift, recurring
+payment for a physical object is allowed, and the December test below cannot
+run as written.**
 
 ### How this section got here
 
@@ -483,6 +599,10 @@ is a *content* decision rather than a revenue one and is logged in §9.
 
 ### The December test [owner]
 
+*Not reachable in 2026 (§0): no Group has twelve editions to print. Its manual
+method — lay out by hand, sell by payment link, record the attach rate — carries
+over to the first hand-mailed print edition.*
+
 The calendar is the plan. Q4 is the revenue event and there are roughly ten
 weeks left in it. A print renderer, a Lulu integration and a checkout flow do
 not fit in that window — so don't build them.
@@ -585,7 +705,8 @@ what keeps this compatible with an audience leaving monetized connection.
 Skipped — owner decision, 2026-10-24.** No Group Zero run, so no external
 TestFlight and no Beta App Review: the app goes straight to App Store review
 once the illustration rework lands and the presubmission checks pass (§8). The
-plan below is kept as written.
+plan below is kept as written. **Partly reinstated 2026-11-13 (§0):** two or
+three test Groups start when the art lands, without the four-week gate.
 
 The app has never been run on real people — everything to date is seed data. A
 weekly-ritual product whose ritual has never been lived once is not ready to
