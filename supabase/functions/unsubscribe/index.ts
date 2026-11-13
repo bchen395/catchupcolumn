@@ -15,7 +15,7 @@
 //   SUPABASE_URL              — injected automatically by Supabase
 //   SUPABASE_SERVICE_ROLE_KEY — injected automatically by Supabase
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.102.1';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

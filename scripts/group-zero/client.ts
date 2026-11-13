@@ -5,7 +5,7 @@
 // error message — only the project ref (not a secret) is shown, so every run
 // says which project it is about to touch.
 
-import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.102.1';
 
 import { UsageError } from './args.ts';
 

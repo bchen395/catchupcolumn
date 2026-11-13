@@ -19,7 +19,7 @@
 //   FUNCTIONS_PUBLIC_URL      — public base URL of the functions host
 //                               (e.g. https://<ref>.supabase.co/functions/v1).
 
-import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.102.1';
 import {
   dispatchPendingEmails,
   dispatchPendingPushes,
@@ -56,6 +56,28 @@ async function compileEditions(client: SupabaseClient): Promise<CompileResult> {
   return (data ?? { compiled: 0, skipped_no_posts: 0, details: [] }) as CompileResult;
 }
 
+// The platform answers 504 at 150 s and stops the run (bugs.md H2). The email
+// and push sweeps stop claiming new editions after this long, so a busy tick
+// ends between editions, not halfway through one; the next tick, 15 minutes
+// on, takes the rest. The headroom covers the edition already in hand.
+const DISPATCH_BUDGET_MS = 100_000;
+
+// Compares the bearer token with CRON_SECRET in constant time. Hashing both
+// first gives two equal-length digests, so neither the length nor the first
+// differing byte of the secret shows up in the response time.
+const secretsMatch = async (given: string, expected: string): Promise<boolean> => {
+  const encoder = new TextEncoder();
+  const [a, b] = await Promise.all([
+    crypto.subtle.digest('SHA-256', encoder.encode(given)),
+    crypto.subtle.digest('SHA-256', encoder.encode(expected)),
+  ]);
+  const x = new Uint8Array(a);
+  const y = new Uint8Array(b);
+  let diff = 0;
+  for (let i = 0; i < x.length; i++) diff |= x[i] ^ y[i];
+  return diff === 0;
+};
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -83,9 +105,10 @@ Deno.serve(async (req: Request) => {
 
   const authHeader = req.headers.get('Authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-  if (!token || token !== cronSecret) {
+  if (!token || !(await secretsMatch(token, cronSecret))) {
     return json(401, { error: 'Unauthorized' });
   }
+  const deadline = Date.now() + DISPATCH_BUDGET_MS;
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -109,8 +132,8 @@ Deno.serve(async (req: Request) => {
 
   try {
     const compileResult = await compileEditions(adminClient);
-    const emailResult = await dispatchPendingEmails(adminClient, resendApiKey, functionsBaseUrl);
-    const pushResult = await dispatchPendingPushes(adminClient);
+    const emailResult = await dispatchPendingEmails(adminClient, resendApiKey, functionsBaseUrl, deadline);
+    const pushResult = await dispatchPendingPushes(adminClient, deadline);
     return json(200, { compile: compileResult, email: emailResult, push: pushResult });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

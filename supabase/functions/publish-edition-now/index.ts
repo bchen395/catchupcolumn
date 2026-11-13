@@ -20,7 +20,7 @@
 //   RESEND_API_KEY
 //   FUNCTIONS_PUBLIC_URL (optional; derived from SUPABASE_URL if absent)
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.102.1';
 import { dispatchSingleEdition } from '../_shared/edition-dispatch.ts';
 
 const corsHeaders = {
