@@ -10,7 +10,7 @@
 // RPCs (claim_edition_for_email, mark_edition_pushed, …) that are granted
 // only to service_role.
 
-import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.102.1';
 import {
   EditionEmailPayload,
   EditionEmailPost,
@@ -31,6 +31,47 @@ export const EMAIL_FROM =
 // The www host is canonical — the apex 308-redirects to it on Vercel.
 const WEB_BASE_URL =
   (Deno.env.get('WEB_BASE_URL') ?? 'https://www.catchupcolumn.com').replace(/\/+$/, '');
+
+// Every outbound call gets a deadline. A provider that hangs would otherwise
+// hold the run until the platform kills it, mid-send and before
+// mark_edition_emailed — which is exactly the double-send window the claim
+// lease reopens 5 minutes later.
+const RESEND_TIMEOUT_MS = 15_000;
+const EXPO_TIMEOUT_MS = 20_000;
+
+// ---------------------------------------------------------------------------
+// Email — avatars
+// ---------------------------------------------------------------------------
+
+// `users.avatar_url` is whatever its owner last wrote: the users UPDATE policy
+// doesn't constrain the column, so a member can point it at any server. The
+// email loads it in every co-member's mail client, which would make it a
+// tracking pixel (open time and IP, per reader) in an email whose privacy
+// promise is that there is no tracking. The app only ever stores a public URL
+// from this project's `avatars` bucket (lib/auth.ts getPublicAvatarUrl), so
+// that's the only kind the email prints; anything else prints no avatar,
+// exactly as a member without one.
+const AVATAR_URL_PREFIX = (() => {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  if (!supabaseUrl) return null;
+  try {
+    return `${new URL(supabaseUrl).origin}/storage/v1/object/public/avatars/`;
+  } catch {
+    return null;
+  }
+})();
+
+export const safeAvatarUrl = (raw: string | null): string | null => {
+  if (!raw || !AVATAR_URL_PREFIX) return null;
+  let normalized: string;
+  try {
+    // Normalizes `..` segments, so a path can't climb out of the bucket.
+    normalized = new URL(raw).href;
+  } catch {
+    return null;
+  }
+  return normalized.startsWith(AVATAR_URL_PREFIX) ? raw : null;
+};
 
 type EmailRecipient = {
   user_id: string;
@@ -186,6 +227,11 @@ async function attachSignedPhotoUrls(
 // Email — single edition
 // ---------------------------------------------------------------------------
 
+// A 429 means Resend sent nothing, so one retry can't duplicate. Only a
+// short wait is worth it inside a cron tick; a longer Retry-After (the daily
+// quota, say) is left to fail as before.
+const RESEND_MAX_RETRY_AFTER_SECONDS = 2;
+
 async function sendOneEmail(
   apiKey: string,
   to: string,
@@ -193,31 +239,76 @@ async function sendOneEmail(
   html: string,
   text: string,
   unsubscribeUrl: string,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: EMAIL_FROM,
-      to: [to],
-      subject,
-      html,
-      text,
+  idempotencyKey: string,
+): Promise<{ ok: true; duplicate: boolean } | { ok: false; error: string }> {
+  const request = () =>
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
       headers: {
-        'List-Unsubscribe': `<${unsubscribeUrl}>`,
-        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        // Resend keeps a key for 24 hours and won't send the same one twice.
+        // The claim lease can hand a half-sent edition to a second run (a
+        // worker killed mid-loop, or mark_edition_emailed failing); with the
+        // key, that run's sends to people already mailed are refused instead
+        // of delivered again.
+        'Idempotency-Key': idempotencyKey,
       },
-    }),
-  });
+      body: JSON.stringify({
+        from: EMAIL_FROM,
+        to: [to],
+        subject,
+        html,
+        text,
+        headers: {
+          'List-Unsubscribe': `<${unsubscribeUrl}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
+      }),
+      signal: AbortSignal.timeout(RESEND_TIMEOUT_MS),
+    });
+
+  let res: Response;
+  try {
+    res = await request();
+    if (res.status === 429) {
+      const retryAfter = Number(res.headers.get('retry-after') ?? '1');
+      await res.body?.cancel();
+      if (!(retryAfter >= 0 && retryAfter <= RESEND_MAX_RETRY_AFTER_SECONDS)) {
+        return { ok: false, error: `Resend 429 (retry-after ${retryAfter}s)` };
+      }
+      await new Promise((resolve) => setTimeout(resolve, Math.max(retryAfter, 0.5) * 1000));
+      res = await request();
+    }
+  } catch (err) {
+    // Timed out or the network failed. Whether Resend sent it is unknown, so
+    // it's a failure like any other — not retried (see sendEditionEmail).
+    return { ok: false, error: `Resend request failed: ${err instanceof Error ? err.message : String(err)}` };
+  }
 
   if (!res.ok) {
     const body = await res.text().catch(() => '');
+    // This key is only ever used for this edition and recipient, so a 409
+    // about it means an earlier run already sent (or is sending) this email.
+    if (
+      res.status === 409 &&
+      (body.includes('invalid_idempotent_request') || body.includes('concurrent_idempotent_requests'))
+    ) {
+      return { ok: true, duplicate: true };
+    }
     return { ok: false, error: `Resend ${res.status}: ${body.slice(0, 300)}` };
   }
-  return { ok: true };
+  await res.body?.cancel();
+  return { ok: true, duplicate: false };
+}
+
+// mark_edition_emailed is what stops the next sweep sending the edition
+// again, so a failure to record it must at least be visible.
+async function markEditionEmailed(client: SupabaseClient, editionId: string): Promise<void> {
+  const { error } = await client.rpc('mark_edition_emailed', { p_edition_id: editionId });
+  if (error) {
+    console.error(`mark_edition_emailed failed for ${editionId}: ${error.message}`);
+  }
 }
 
 export async function sendEditionEmail(
@@ -250,18 +341,24 @@ export async function sendEditionEmail(
   // also stops the sweep picking it up again.
   if (payload.posts.length === 0) {
     console.log(`Edition ${editionId} has no stories left; marking it emailed without sending.`);
-    await client.rpc('mark_edition_emailed', { p_edition_id: editionId });
+    await markEditionEmailed(client, editionId);
     return { recipientsSent: 0, recipientsFailed: 0, allSucceeded: true };
   }
 
   if (payload.recipients.length === 0) {
-    await client.rpc('mark_edition_emailed', { p_edition_id: editionId });
+    await markEditionEmailed(client, editionId);
     return { recipientsSent: 0, recipientsFailed: 0, allSucceeded: true };
   }
 
   // Signed once for the whole edition; each recipient's email uses the posts
   // they haven't hidden.
-  const allPosts = await attachSignedPhotoUrls(client, payload.posts);
+  const allPosts = (await attachSignedPhotoUrls(client, payload.posts)).map((post) => {
+    const avatar = safeAvatarUrl(post.author_avatar_url);
+    if (post.author_avatar_url && !avatar) {
+      console.error(`Edition ${editionId}: leaving out author ${post.author_id}'s avatar: not in this project's avatars bucket.`);
+    }
+    return avatar === post.author_avatar_url ? post : { ...post, author_avatar_url: avatar };
+  });
   const editionWebUrl = `${WEB_BASE_URL}/edition/${payload.edition_id}`;
   const startYourOwnUrl = `${WEB_BASE_URL}/start`;
 
@@ -303,9 +400,13 @@ export async function sendEditionEmail(
       html,
       text,
       unsubscribeUrl,
+      `edition-email/${editionId}/${recipient.user_id}`,
     );
     if (result.ok) {
       sent++;
+      if (result.duplicate) {
+        console.log(`Edition ${editionId}: recipient=${recipient.user_id} was already sent this email; not sent again.`);
+      }
     } else {
       failed++;
       console.error(`Email failed for edition=${editionId} recipient=${recipient.user_id}: ${result.error}`);
@@ -314,7 +415,7 @@ export async function sendEditionEmail(
 
   // An Edition is emailed at most once. Mark after the first attempt;
   // per-recipient failures are logged for visibility but not retried.
-  await client.rpc('mark_edition_emailed', { p_edition_id: editionId });
+  await markEditionEmailed(client, editionId);
 
   if (failed > 0) {
     console.error(
@@ -329,10 +430,21 @@ export async function sendEditionEmail(
 // Email — sweep unsent editions
 // ---------------------------------------------------------------------------
 
+// A sweep stops claiming new editions once `deadline` (epoch ms) has passed,
+// so a busy tick ends between editions rather than being killed by the
+// platform in the middle of one. What's left is still unsent and unclaimed,
+// and the next tick picks it up.
+const pastDeadline = (deadline: number | undefined, what: string, remaining: number): boolean => {
+  if (deadline === undefined || Date.now() < deadline) return false;
+  console.log(`${what}: time budget used up; leaving ${remaining} edition(s) for the next tick.`);
+  return true;
+};
+
 export async function dispatchPendingEmails(
   client: SupabaseClient,
   resendApiKey: string,
   functionsBaseUrl: string,
+  deadline?: number,
 ): Promise<EmailResult> {
   const { data: pending, error } = await client
     .from('editions')
@@ -350,7 +462,8 @@ export async function dispatchPendingEmails(
   let recipientsSent = 0;
   let recipientsFailed = 0;
 
-  for (const row of pending ?? []) {
+  for (const [i, row] of (pending ?? []).entries()) {
+    if (pastDeadline(deadline, 'Email sweep', (pending?.length ?? 0) - i)) break;
     const { data: claimed, error: claimErr } = await client.rpc(
       'claim_edition_for_email',
       { p_edition_id: row.id },
@@ -414,15 +527,24 @@ async function sendExpoPushBatch(messages: ExpoPushMessage[]): Promise<{
 }> {
   if (messages.length === 0) return { sent: 0, failed: 0, deadTokens: [] };
 
-  const res = await fetch(EXPO_PUSH_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Accept-encoding': 'gzip, deflate',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(messages),
-  });
+  let res: Response;
+  try {
+    res = await fetch(EXPO_PUSH_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Accept-encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(messages),
+      signal: AbortSignal.timeout(EXPO_TIMEOUT_MS),
+    });
+  } catch (err) {
+    // Timed out or the network failed: a retriable failure for the whole
+    // batch, like a non-2xx below.
+    console.error(`Expo push batch failed: ${err instanceof Error ? err.message : String(err)}`);
+    return { sent: 0, failed: messages.length, deadTokens: [] };
+  }
 
   if (!res.ok) {
     const body = await res.text().catch(() => '');
@@ -543,7 +665,10 @@ export async function pushEdition(
 // Push — sweep pending editions
 // ---------------------------------------------------------------------------
 
-export async function dispatchPendingPushes(client: SupabaseClient): Promise<PushResult> {
+export async function dispatchPendingPushes(
+  client: SupabaseClient,
+  deadline?: number,
+): Promise<PushResult> {
   const { data: pending, error } = await client
     .from('editions')
     .select('id')
@@ -559,7 +684,8 @@ export async function dispatchPendingPushes(client: SupabaseClient): Promise<Pus
   let pushesSent = 0;
   let pushesFailed = 0;
 
-  for (const row of pending ?? []) {
+  for (const [i, row] of (pending ?? []).entries()) {
+    if (pastDeadline(deadline, 'Push sweep', (pending?.length ?? 0) - i)) break;
     const { data: claimed, error: claimErr } = await client.rpc(
       'claim_edition_for_push',
       { p_edition_id: row.id },

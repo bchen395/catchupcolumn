@@ -32,7 +32,7 @@
 // _shared/edition-dispatch.ts for one constant would put this function on the
 // list of importers to redeploy after every edition-delivery change.
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.102.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -118,6 +118,9 @@ const sendReportEmail = async (
       text,
       ...(replyTo ? { reply_to: replyTo } : {}),
     }),
+    // A hung Resend call would otherwise hold the reporter's sheet open until
+    // the platform's 150 s timeout. The caller's catch turns this into 502.
+    signal: AbortSignal.timeout(15_000),
   });
 
   if (!res.ok) {

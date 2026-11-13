@@ -1,6 +1,6 @@
 // Account + membership steps shared by add-member and create-group.
 
-import type { User } from 'https://esm.sh/@supabase/supabase-js@2';
+import type { User } from 'https://esm.sh/@supabase/supabase-js@2.102.1';
 
 import type { GroupRow } from '../../types/database.ts';
 import type { Db } from './client.ts';

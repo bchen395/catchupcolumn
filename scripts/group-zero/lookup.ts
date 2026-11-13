@@ -3,7 +3,7 @@
 // Row shapes come from the app's hand-written mirror (types/database.ts), so a
 // schema change that forgets this script at least has one place to trip over.
 
-import type { User } from 'https://esm.sh/@supabase/supabase-js@2';
+import type { User } from 'https://esm.sh/@supabase/supabase-js@2.102.1';
 
 import type { GroupMembership, GroupRow, PostRow, UserRow } from '../../types/database.ts';
 import { Refusal, UsageError } from './args.ts';
