@@ -1,0 +1,24 @@
+# Dependabot — keeps the pinned GitHub Actions current.
+#
+# The workflows pin every action to a commit SHA. Without this, those pins
+# would go stale and eventually break when GitHub retires an old Node runtime.
+#
+# npm is deliberately NOT listed. Version-update PRs for Expo packages would
+# each move the runtime fingerprint and fight the hold in package.json's
+# `expo.install.exclude` (HANDOFF → Traps → Expo patch drift). npm is watched
+# by `dependency-health.yml` instead, and security fixes come from Dependabot
+# alerts, which are a repository setting rather than an entry here.
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    # One PR for the week's releases rather than one per action.
+    groups:
+      actions:
+        patterns: ['*']
+    commit-message:
+      prefix: ci

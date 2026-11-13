@@ -1,0 +1,62 @@
+# CodeQL — static security analysis.
+#
+# Reads the app (TypeScript), the edge functions, the public site's scripts
+# and these workflow files, looking for the patterns a reviewer skims past:
+# untrusted input reaching a URL, HTML or a query; a workflow that interpolates
+# event data into a shell. Findings appear under Security → Code scanning and
+# as annotations on the PR. Free for a public repository.
+#
+# It complements, and doesn't replace, the two things that actually gate data
+# here: RLS and the SECURITY DEFINER RPCs in `supabase/migrations/`. CodeQL
+# doesn't read SQL.
+
+name: CodeQL
+
+on:
+  pull_request:
+    # Records and docs have nothing to analyse.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'design/**'
+  push:
+    branches: [main]
+  schedule:
+    # Weekly, so new queries run against code that hasn't changed.
+    - cron: '30 13 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      # To upload results to code scanning. The only write permission in CI.
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: ${{ matrix.language }}
+          # Neither language needs a build.
+          build-mode: none
+          queries: security-extended
+
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          category: /language:${{ matrix.language }}

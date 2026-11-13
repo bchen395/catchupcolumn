@@ -1,0 +1,90 @@
+# Dependency health — the checks whose answer depends on the day, not the diff.
+#
+# Expo publishes a patch release, or npm publishes an advisory, and a check
+# that passed yesterday fails today with no change to this repo. In `ci.yml`
+# that meant every open PR went red for something it didn't do. Here it means
+# one scheduled run fails, GitHub emails the owner, and PRs stay about PRs.
+#
+# What to do when this goes red:
+#
+#   Expo drift      Until the final build: add the drifted package to
+#                   `expo.install.exclude` in package.json (bumping it moves
+#                   the runtime fingerprint; HANDOFF → Traps → Expo patch
+#                   drift). After the final build: `npx expo install --fix`.
+#   Advisories      `npm audit --omit=dev` lists them. `npm audit fix` is safe;
+#                   `npm audit fix --force` is not — it proposes downgrading
+#                   Expo by five majors.
+
+name: Dependency health
+
+on:
+  schedule:
+    # Mondays 13:00 UTC — a weekday morning in US time zones.
+    - cron: '0 13 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-health
+  cancel-in-progress: true
+
+jobs:
+  expo:
+    name: Expo SDK alignment
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Expo config and native-module checks
+        run: npx expo-doctor
+
+      # `if: always()` so one run reports both, rather than hiding the second
+      # behind the first.
+      - name: Dependencies match the SDK
+        if: always()
+        run: npx expo install --check
+
+  advisories:
+    name: npm advisories
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      # Reads package-lock.json; nothing is installed. `--omit=dev` because
+      # what ships to a phone is what matters here.
+      - name: High and critical advisories in what ships
+        run: npm audit --omit=dev --audit-level=high
+
+      # The full picture, build tooling included. Reported, never a failure:
+      # most of it is Expo's and React Native's toolchain and can only move
+      # when they do.
+      - name: Everything else, for the record
+        if: always()
+        run: |
+          {
+            echo "### npm audit, dev tooling included"
+            echo
+            echo '```'
+            npm audit || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

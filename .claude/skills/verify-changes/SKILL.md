@@ -11,14 +11,24 @@ For *launching* the app, defer to the built-in **`run`** / **`verify`** skills a
 
 ## CI runs the static half for you
 
-`.github/workflows/ci.yml` runs on every PR and every push to `main`:
+`.github/workflows/ci.yml` runs on every PR and every push to `main`. **Each job runs only when its surface changed** (a `changes` job sorts the diff), so a docs-only PR builds nothing and goes green in seconds. A change under `.github/`, or a manual run, checks everything.
 
-| Job | Gate |
-| --- | --- |
-| `app` | `npm run typecheck`, `npm run lint`, `npx expo-doctor`, `npx expo install --check` |
-| `bundle` | a real `expo export` Metro bundle for **iOS and Android** — catches bad imports, missing native modules, and config-plugin errors that typecheck can't see. Prints bundle size to the run summary. |
-| `edge-functions` | `deno check` on every function file, plus the edition-email fixture render, which **fails if a fixture would hit Gmail's ~102KB clip limit**. Uploads the rendered emails as an artifact so you can eyeball them from the PR. |
-| `migrations` | *Only when `supabase/migrations/` or `config.toml` changed.* Refuses any edit to an already-merged migration, then applies the whole history from scratch against a real Postgres and runs `supabase db lint`. The lint only *reports*: without `--fail-on error` it can't fail the job, and it currently shows two known `PGRST301` errors (todo.md). Read its output rather than trusting the green tick. |
+| Job | Runs when | Gate |
+| --- | --- | --- |
+| `app` | app code, dependencies or Expo config changed | `npm run typecheck`, `npm run lint`. **Only when `package.json`, the lockfile, `app.json`, `eas.json` or `.nvmrc` changed:** `npx expo-doctor`, `npx expo install --check` |
+| `bundle` | same | a real `expo export` Metro bundle for **iOS and Android** — catches bad imports, missing native modules, and config-plugin errors that typecheck can't see. Prints bundle size to the run summary. |
+| `fingerprint` | same, PRs only | computes the expo-updates runtime fingerprint for the base and the PR, both platforms. **Warns, never fails**, when it moved, and lists what moved in the run summary. A moved fingerprint means an OTA from that PR can't reach existing builds. |
+| `edge-functions` | `supabase/functions/` or `scripts/group-zero/` changed | `deno check` on every function file, plus the edition-email fixture render, which **fails if a fixture would hit Gmail's ~102KB clip limit**. Uploads the rendered emails as an artifact so you can eyeball them from the PR. |
+| `migrations` | `supabase/migrations/` or `config.toml` changed | Refuses any edit to an already-merged migration, then applies the whole history from scratch against a real Postgres and runs `supabase db lint`. The lint only *reports*: without `--fail-on error` it can't fail the job, and it currently shows two known `PGRST301` errors (todo.md). Read its output rather than trusting the green tick. |
+| `deploy-reminder` | a push to `main` changed functions or migrations | Not a gate. Writes the by-hand `db push` / `functions deploy` commands for that merge into the run summary, because merging deploys nothing. |
+| `ci-passed` | always | The one check to require in branch protection: green when every job above passed or was skipped as not applicable. |
+
+Two more workflows sit beside it:
+
+- **`dependency-health.yml`** — Mondays, and on demand. `expo-doctor`, `expo install --check`, and `npm audit --omit=dev --audit-level=high`. These fail because of what was published that day, not because of a diff, so they no longer run on unrelated PRs (19 of the 20 failed CI runs before 2026-11-13 were the expo-doctor step, mostly on docs PRs). A red run here is the signal; the file's header says what to do about each.
+- **`codeql.yml`** — CodeQL on the TypeScript and on the workflow files, on PRs that touch code, on `main`, and weekly. Findings land under Security → Code scanning. It does not read SQL: RLS and the RPCs are still reviewed by hand (`db-migrations` skill).
+
+Actions are pinned to commit SHAs; `.github/dependabot.yml` opens a weekly PR to move them. Dependabot does **not** manage npm — version bumps of Expo packages move the fingerprint.
 
 So you don't have to run the baseline locally to be safe — but running it locally is still faster than waiting for a red build. **CI cannot replace the manual QA below**: it never renders a screen, never sends a push, and never touches a device.
 
