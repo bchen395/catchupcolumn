@@ -213,12 +213,17 @@ POSITIONING §8 is the authoritative sequence. The short version:
       [docs/LAUNCH.md](docs/LAUNCH.md) step 5. *(Both read since: 60s on
       2026-09-28; 100/day and 3,000/month on 2026-10-30. The Resend domain is
       `verified`, 2026-10-30.)*
-- [ ] **Pre-publish nudge** — after Group Zero, and only if the run showed people
-      forgetting rather than declining. *(Group Zero skipped 2026-10-24, so
-      this has no trigger yet — the owner re-keys it.)*
-      [docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md)
-- [ ] **Thin-edition design** — a one-story edition must read as a letter, not a
-      failure. [docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md)
+- [ ] **Close the loop's leaks before the test Groups** (re-keyed 2026-11-13):
+      an https invite link with a web join page, the pre-publish reminder
+      ([docs/NUDGE_SPEC.md](docs/NUDGE_SPEC.md), gate lifted), a one-story
+      edition that reads as a letter, a moderators-only note for an empty week.
+      [docs/LOOP_SPEC.md](docs/LOOP_SPEC.md)
+- [ ] **[owner] Start two or three test Groups when the art lands** — friends,
+      partner's friends, one family. Needs external TestFlight.
+      [docs/POSITIONING.md](docs/POSITIONING.md) §0
+- [ ] **Letters to the editor** — after the test Groups have run a few
+      editions. Sections (question of the week, advice column) are tried by
+      hand first. [docs/POSITIONING.md](docs/POSITIONING.md) §0
 - [ ] **Decide on write-by-web** from the editions 1–2 vs. 3–4 delta. *(That
       delta was Group Zero's, skipped 2026-10-24 — no trigger yet.)*
       [docs/POSITIONING.md](docs/POSITIONING.md) §4
@@ -241,8 +246,14 @@ POSITIONING §8 is the authoritative sequence. The short version:
 ## Revenue — the one item with a real deadline
 
 - [ ] **[owner] Run Lulu's pricing calculator** against a real trim size and page
-      count. Nothing in the pricing ladder is costed until this happens.
-- [ ] **[owner] The December test** — hand-made volumes, uploaded to Lulu by hand,
+      count, **and order one book and one short colour paper** (Newspaper Club
+      or Mixam). Nothing in the pricing ladder is costed until this happens.
+- [ ] **[owner] The monthly print edition, by hand** — the lead revenue path as
+      of 2026-11-13. In the family test Group's second month, print and mail a
+      month, then ask them to pay for the next.
+      [docs/POSITIONING.md](docs/POSITIONING.md) §0
+- [ ] **[owner] The December test** — *not reachable in 2026: no Group has twelve
+      editions (POSITIONING §0).* As written: hand-made volumes, uploaded to Lulu by hand,
       sold by Stripe Payment Link. No renderer, no API, no code. Q4 is 40–60% of
       annual revenue for gift products. [docs/POSITIONING.md](docs/POSITIONING.md) §5
 
@@ -251,7 +262,7 @@ POSITIONING §8 is the authoritative sequence. The short version:
 ## Not planned
 
 CLAUDE.md → **Non-features** is the list, and it distinguishes *deliberately never*
-(likes, reactions, comments, feeds, ads, prompts, AI writing) from *not yet*
+(likes, reactions, comments, feeds, ads, app-written prompts, AI writing) from *not yet*
 (physical print, web composer, post templates). Don't keep a second copy here.
 
 Ads specifically were costed and rejected on 2026-09-15 — the arithmetic is in
