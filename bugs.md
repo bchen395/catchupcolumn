@@ -336,9 +336,76 @@ isn't mistaken for an oversight. The operator's side of them is in
 
 ---
 
+## Hardening pass — 2026-11-13 and 11-14 (#85–#89)
+
+A four-surface review (database, edge functions, app client, dependencies).
+Everything under **Fixed** is live: migration `20261113191544` applied,
+functions deployed and the OTA published on 2026-11-14.
+
+**Fixed, database (#87):**
+- Any moderator could INSERT into `editions` with the server-only delivery
+  columns, enough to stall every Group's email and push sweep. The policy and
+  the client write grants are gone.
+- A post could be filed straight into a published edition, or another Group's.
+  The posts INSERT policy now requires `edition_id is null`.
+- A user could rewrite their own `users.email`, the address editions are sent
+  to. The client UPDATE grant is `display_name`, `avatar_url`, `bio` only.
+- Two leftover "group cover images" policies let any signed-in user insert or
+  overwrite any object under `avatars/groups/`. Dropped.
+- A Group's last moderator could demote themselves, leaving it unmanageable.
+  `prevent_last_moderator_demotion` refuses it.
+- Invite codes were unique only case-sensitively while joins compare
+  case-insensitively. Unique index on `lower(invite_code)`.
+- Index on `posts(author_id)`.
+
+**Fixed, edge functions (#88):**
+- A run killed between sending and marking could email an edition twice. Each
+  send carries a Resend `Idempotency-Key` of `edition-email/<edition>/<user>`.
+- No outbound call had a timeout. Resend 15 s, Expo 20 s, and the cron sweep
+  stops starting work after 100 s.
+- An avatar URL from anywhere was embedded in the email. Only this project's
+  public `avatars` bucket is, now.
+- An Expo network failure didn't count against the push retry cap.
+- `CRON_SECRET` is compared in constant time; every function pins
+  `@supabase/supabase-js@2.102.1`.
+
+**Fixed, app (#89):**
+- The push-token save failed silently for any token already stored
+  (`push_tokens` has no UPDATE policy, and the upsert updated). It inserts or
+  does nothing, and reads its error.
+- A stored `https://` image URL was handed to the image loader. Only storage
+  paths are signed and shown.
+- Every `useAuth` mount re-ran the profile upsert. Once per user now.
+- A tapped push routes only a UUID. Sentry breadcrumbs drop console arguments.
+
+**Open, none blocking 1.0:**
+- **Unsubscribe acts on GET**, so a mail scanner that follows links can
+  unsubscribe someone. Needs a confirm page; it would ship with the
+  release-day `unsubscribe` deploy.
+- **Switching Groups in the composer while a draft can't save drops the
+  words.** Needs a UX decision.
+- **`users.avatar_url` and `groups.cover_image_url` accept any URL** at the
+  database level. The app and the email no longer load outside URLs, so this
+  is defence in depth.
+- **`app/_layout.tsx` sets `initialRouteName: '(auth)/login'`,** which isn't a
+  valid anchor (`'(auth)'` is). The web export fails on it, and on native it
+  is probably ignored, so the cold start it was written to protect may not be
+  protected. Changing it changes cold-start navigation: test on a phone.
+- **`query-string` / `decode-uri-component` advisory** through expo-router 57.
+  Fixed only in SDK 58.
+- **`deno lint` reports 10 existing problems,** so it isn't a CI gate, and the
+  new `edition-dispatch.test.ts` isn't run in CI either.
+- Cosmetic, seen 2026-11-14: the Publish now confirmation says "every sunday
+  at 9:00 am" in lowercase; Profile shows "Your account" and a letter avatar
+  for a moment before the profile loads.
+
+---
+
 ## Latent / defense-in-depth
 
 ### D1. Edition-number uniqueness leans on the advisory lock, not the constraint path
+- **2026-11-14:** the direct-insert path this warns about did exist (a leftover
+  moderator INSERT policy) and is closed by `20261113191544`.
 - **Where:** `supabase/migrations/20260525000000_manual_publish.sql:204`
 - `max(edition_number)+1` under a per-group `pg_try_advisory_xact_lock` is race-safe for every current writer (all edition inserts go through the locked RPC). It is **not** safe against a hypothetical future direct-insert path that skips the lock. No such path exists today — noted so it isn't introduced unknowingly.
 

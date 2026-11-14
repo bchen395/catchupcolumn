@@ -69,6 +69,7 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - `bio` (text, nullable, max 200 chars)
 - `email` (text, not null)
 - `created_at` (timestamptz)
+- Writes: **the client UPDATE grant is `display_name`, `avatar_url`, `bio` only** (`20261113191544`). `email` is where the edition email goes, so no client can change it
 
 ### groups (group newsletters)
 - `id` (uuid, PK)
@@ -79,7 +80,7 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - `publish_time` (time, default '09:00')
 - `timezone` (text, not null, default 'UTC') — IANA name; publish_day/time are evaluated in this zone. The `check_group_timezone` trigger rejects a name `pg_timezone_names` doesn't list (`invalid_timezone`); `createGroup` retries once on UTC
 - `created_by` (uuid, FK → users.id, never cascades) — when its creator's account is deleted, passes to a remaining member: a moderator first, else the earliest to join (`hand_over_groups`)
-- `invite_code` (text, unique) — short code for invite links
+- `invite_code` (text, unique, and unique ignoring case since `20261113191544`) — short code for invite links; joins and previews match it case-insensitively
 - `created_at` (timestamptz)
 
 ### group_members
@@ -91,7 +92,7 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - `push_subscribed` (boolean, default true) — per-Group push opt-out
 - `joined_at` (timestamptz)
 - PK: (group_id, user_id)
-- Writes: inserts are denied (joins go through `join_group_by_invite_code`), and DELETE is self-only (leave). **The client UPDATE grant is `role` only** (`20261101195502`), so the moderator policy can't reach anyone's delivery flags or token. A member changes their own `email_subscribed` / `push_subscribed` with `set_delivery_preferences` ("Your delivery" on the Group page); the unsubscribe link can only turn email off
+- Writes: inserts are denied (joins go through `join_group_by_invite_code`), and DELETE is self-only (leave). **The client UPDATE grant is `role` only** (`20261101195502`), so the moderator policy can't reach anyone's delivery flags or token. A member changes their own `email_subscribed` / `push_subscribed` with `set_delivery_preferences` ("Your delivery" on the Group page); the unsubscribe link can only turn email off. A Group's last moderator can't be demoted (`prevent_last_moderator_demotion`) or removed
 
 ### group_bans (people removed from a Group)
 - `group_id` (uuid, FK → groups.id, cascade delete)
@@ -112,6 +113,7 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - `edition_id` (uuid, nullable, FK → editions.id) — null until compiled
 - `created_at` (timestamptz)
 - `updated_at` (timestamptz)
+- RLS INSERT: a new post must be a draft — `edition_id is null` (`20261113191544`). Only the compile and publish RPCs attach a post to an edition
 - RLS SELECT: members of the post's Group, **minus anyone the reader has blocked** (`is_blocked_by_caller(author_id)`). Every app read goes through it — front page, reader, Editions list, Home, this-week bylines, deep links — and so does the `post-images` read policy, so a blocked writer's photos can't be signed either. No screen filters blocks itself
 
 ### editions (compiled weekly newsletters)
@@ -121,6 +123,7 @@ Summary of the live schema. Sources of truth: `supabase/migrations/` (full DDL, 
 - `published_at` (timestamptz)
 - `created_at` (timestamptz)
 - Delivery tracking (server-only, not in `types/database.ts`): `emailed_at`, `email_attempts`, `email_claim_at` and `pushed_at`, `push_attempts`, `push_claim_at` — sent-marker, retry count, and worker-claim timestamp for email and push respectively
+- Writes: none from a client (`20261113191544`). Only `compile_due_editions`, `publish_edition_now` and the service role write editions
 
 ### push_tokens
 - `user_id` (uuid, FK → users.id, cascade delete)
