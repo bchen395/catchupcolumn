@@ -1,6 +1,6 @@
 # Launch handoff — orchestration brief
 
-**Rewritten 2026-11-03, updated 2026-11-04 and 2026-11-05** (first written 2026-09-24). This is a living brief for
+**Rewritten 2026-11-03, updated 2026-11-04, 2026-11-05 and 2026-11-14** (first written 2026-09-24). This is a living brief for
 whichever session is running the launch. It holds what the lists don't: current
 live state, the order things must happen in, who does what, and how to verify.
 **Rewrite it at the end of every orchestration session** (state, decisions,
@@ -47,10 +47,41 @@ Run the rest of the launch with the owner.
 - **The owner merges PRs**, or tells you to, one PR at a time. Ask before every
   production change (Guardrails).
 
-## Live state — 2026-11-05, re-check before relying on it
+## Live state — 2026-11-14, re-check before relying on it
 
-**Code:** `main` at `343eca7` (#77), plus the 2026-11-05 records PR. CI is
-green. Since build 10, the merged changes are JS or config only:
+**Hardening pass, 2026-11-13 and 11-14 (#85–#89): merged, applied, deployed
+and published.**
+- #85: CI runs each job only for its surface, with one required-able check,
+  `CI passed`. Date-dependent checks moved to the weekly `Dependency health`
+  run. Added: a fingerprint warning on PRs, CodeQL, a deploy reminder on
+  `main`, Dependabot for the pinned actions.
+- #86: in-range npm advisory fixes (28 → 21; critical 1 → 0, high 10 → 5) and
+  `expo-linking` added to the drift hold. Fingerprint unchanged.
+- #87: migration `20261113191544` closes five direct-write paths (CLAUDE.md
+  schema; bugs.md → Hardening pass). **Applied 2026-11-14.**
+- #88: edge functions (bugs.md → Hardening pass). **Four deployed 2026-11-14.**
+- #89: app client fixes and site security headers (live on Vercel, checked).
+- **OTA published 2026-11-14:** update group `55ba9092-2369-4129-9844-7c983f919066`
+  on `production`, runtime `dd742296…`, iOS only. It carries #74, #77, #86 and
+  #89. It's the first update ever published to the channel.
+
+**What was checked on 2026-11-14, and what wasn't:**
+- Checked in Expo Go on the simulator, as T1, on `main` against production:
+  compose with a photo, file, Publish now, the edition and reader (Take down
+  shown, no Report or Block on your own story), photos on Home, Editions and
+  the composer, profile save, sign-out. The owner tested the four deployed
+  functions (publish, email, push, report) before the OTA.
+- **Not checked on build 10 since the OTA** (the owner chose to defer them):
+  that the OTA applied at all, push arriving, tapping a push with the app
+  killed and open, pushes stopping after sign-out, an https link opening the
+  app, password sign-in. **Push receive and push tap are the two that matter
+  before release:** #89 changed how the push token is saved and how a tapped
+  push is routed, and nothing but a phone can show either. The rest fold into
+  §3.
+- T1's Test Group now has Edition No. 1 ("Simulator walkthrough", one photo).
+
+**Code:** `main` at `383da9c` (#89), plus the 2026-11-14 records PR. CI is
+green. Since build 10, the merged app changes are JS or config only:
 - #74, the keyboard fix
 - #76, which records the checks; it also adds the security notifications to
   `supabase/config.toml` (local-stack config)
@@ -58,20 +89,22 @@ green. Since build 10, the merged changes are JS or config only:
   expo-doctor stops failing every PR without moving the fingerprint (Traps)
 - #77, a read-only Email field on Set a password, as a username so iOS
   offers Strong Password (bugs.md L6)
+- #86 and #89 (above)
 
-None of them should move the fingerprint. The worktree comparison was done
-for #78; re-check `dd742296…` in the owner's checkout before the OTA anyway.
+None of them moved the fingerprint: the owner's checkout resolved `dd742296…`
+on 2026-11-14, before the OTA.
 
 **Production:**
-- **Database:** all 38 migrations applied (CLI v3: `migration list --remote` matches).
+- **Database:** all 39 migrations applied (CLI v3: `migration list --remote`
+  matched 2026-11-14).
 - **Functions:**
 
   | Function | Version | Notes |
   | --- | --- | --- |
-  | `compile-editions` | v21 | downloaded and diffed clean against `main`, 2026-11-02 |
-  | `publish-edition-now` | v10 | same |
-  | `report-story` | v1 | same |
-  | `delete-account` | v11 | unchanged |
+  | `compile-editions` | v22 | deployed from `main` 2026-11-14 (#88); not downloaded and diffed |
+  | `publish-edition-now` | v11 | same |
+  | `report-story` | v2 | same |
+  | `delete-account` | v12 | same; its only change is the pinned import |
   | `unsubscribe` | v7 | old on purpose: its new wording deploys on release day |
 
 - **Cron:** healthy. Checked 2026-10-30: the last tick returned 200, and 0 of
@@ -116,10 +149,9 @@ Review Notes make the structural case instead.
 | Runtime (fingerprint) | `dd742296d0f188b486a1af3dee8fe6f7ef7e662b` |
 | Status | submitted 2026-11-03; App Store Connect app **`6830424103`** created; installed through internal TestFlight |
 
-It has every PR up to #72. **#74 and #77 are merged but not published as an
-OTA:** the owner chose to send them together with the fixes from the phone
-checks and the UI pass (§5). `main`'s fingerprint still equals the build's (checked after
-#74 merged).
+It has every PR up to #72 built in, and since 2026-11-14 an OTA with #74,
+#77, #86 and #89 (cold-launch twice to apply it; not yet confirmed on the
+phone). Fixes from the phone checks and the UI pass (§5) will be a second OTA.
 
 **The owner's local checkout:**
 - `package.json` has an **uncommitted** change: the `ios`/`android` scripts say
@@ -182,6 +214,7 @@ Open:
 | 11-02 | Privacy label declares Customer Support; support inbox disclosed; **Supabase CLI v3 now** (rather than pinning 2.x) |
 | 11-03 | Short multi-line fields (Group description, bio): Return reads **Done** and closes the keyboard. **Batch the OTA:** #74 waits for the phone-check fixes |
 | 11-04 | ~~**Accept**~~ (fixed instead on 11-05) the missing strong-password suggestion on Set a password for 1.0 (bugs.md L6). **Copyright** names the owner's legal name; the App Review contact is the owner's personal phone and email. **DSA trader declaration deferred**: which address to publish is still open |
+| 11-14 | **Publish the OTA now** rather than after the UI pass, iOS only, and **defer the phone checks** of it (Live state lists them). `unsubscribe` still waits for release day |
 | 11-05 | **Drop the EU for 1.0** rather than publish a trader address, phone and email on EU product pages: 147 of 175 regions (UK, Norway, Iceland, Liechtenstein and Switzerland stay). When the EU comes back, the email is support@. **Fix the Keychain gap after all** (#77, rides the OTA). **Hold Expo patch drift** in `expo.install.exclude` until the final build (#78) |
 
 ## Next steps
@@ -240,10 +273,12 @@ This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
    - Before publishing, confirm `npx expo-updates runtimeversion:resolve
      --platform ios` in the owner's checkout prints `dd742296…`.
    - Then `npx eas-cli update --channel production --environment production
-     --message "…"`.
+     --platform ios --message "…"`. `--platform ios` is required (Traps).
    - The owner cold-launches twice to apply it.
-   - It includes #74, #77 and every other JS fix since `4392385`.
-   - After it: re-check Set a password's Keychain behaviour (bugs.md L6).
+   - **The first OTA went out 2026-11-14** (#74, #77, #86, #89). This step is
+     now the second one, for whatever the UI pass and the phone checks fix.
+   - Still owed after the first: re-check Set a password's Keychain behaviour
+     (bugs.md L6), and the deferred checks in Live state.
 
 **§6. App Store Connect (items 19–22): no second device needed**
 
@@ -296,8 +331,17 @@ This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
 - Authors can delete their own *published* post through the API without its
   photos (`001_initial_schema.sql:201`).
 - Members can read each other's delivery flags through the API.
+- From the 2026-11-14 pass (bugs.md → Hardening pass, open items): the
+  unsubscribe link acts on GET; switching Groups in the composer can drop an
+  unsaved draft; `users.avatar_url` and `groups.cover_image_url` accept any
+  URL; `app/_layout.tsx`'s `initialRouteName` is not a valid anchor; the
+  `query-string` advisory waits for SDK 58.
+- Repo settings nobody has changed yet: require `CI passed` on `main`, and
+  turn on Dependabot alerts.
 
-**First move for the next session:** ask the owner which comes next:
+**First move for the next session:** confirm the 2026-11-14 OTA applied on
+build 10 and run the push checks (Live state), then ask the owner which comes
+next:
 - §6 step 11, the review account and demo Group (production writes, so ask
   first). It also gives §3 a ready second account.
 - §3, once the second device is chosen (step 5)
@@ -376,6 +420,16 @@ This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
 - **The `production` channel is the owner's TestFlight build now,** and after
   release it's everyone's. There is no `staging` build: the profile exists,
   but none was built.
+- **`eas update` without `--platform ios` fails.** It exports web too, and the
+  static web render rejects `initialRouteName: '(auth)/login'` in
+  `app/_layout.tsx` ("invalid anchor"). Nothing is published by the failed
+  run. Don't "fix" it by editing `app.json`'s `web` block: that moves the
+  fingerprint.
+- **The simulator can run the app after all, in Expo Go** (`npx expo start`,
+  then open it on a booted simulator). It runs `main`'s JS against production,
+  so it covers screens, photos, compose and publish. It can't receive this
+  app's pushes or open its https links, and a local build is still
+  impossible (Xcode 26.3).
 - **Apple ID lockout (error -20209):** a wrong password locks the account;
   unlock it at iforgot.apple.com. EAS caches the password in the Keychain
   before auth succeeds, so delete the wrong one with
