@@ -334,10 +334,10 @@ This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
 - From the 2026-11-14 pass (bugs.md → Hardening pass, open items): the
   unsubscribe link acts on GET; switching Groups in the composer can drop an
   unsaved draft; `users.avatar_url` and `groups.cover_image_url` accept any
-  URL; the
-  `query-string` advisory waits for SDK 58.
-- Repo settings nobody has changed yet: require `CI passed` on `main`, and
-  turn on Dependabot alerts.
+  URL; the `query-string` advisory waits for SDK 58.
+- Repo settings, set 2026-11-14: `main` requires the `CI passed` check (no
+  review requirement; force-pushes and deletion are off), and Dependabot
+  alerts are on (alerts only, no automatic npm PRs).
 
 **First move for the next session:** confirm the 2026-11-14 OTA applied on
 build 10 and run the push checks (Live state), then ask the owner which comes
