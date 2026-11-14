@@ -387,10 +387,12 @@ functions deployed and the OTA published on 2026-11-14.
 - **`users.avatar_url` and `groups.cover_image_url` accept any URL** at the
   database level. The app and the email no longer load outside URLs, so this
   is defence in depth.
-- **`app/_layout.tsx` sets `initialRouteName: '(auth)/login'`,** which isn't a
-  valid anchor (`'(auth)'` is). The web export fails on it, and on native it
-  is probably ignored, so the cold start it was written to protect may not be
-  protected. Changing it changes cold-start navigation: test on a phone.
+- ~~**`app/_layout.tsx` set `initialRouteName: '(auth)/login'`,**~~ FIXED
+  2026-11-14. It named no child of the root layout, so the router ignored it
+  on the phone and the web export failed on it. It was never what kept cold
+  start off the tab tree: `app/index.tsx`'s redirect does that. The setting is
+  removed rather than corrected, because a valid anchor would put the sign-in
+  stack underneath every deep link. Not yet in an OTA.
 - **`query-string` / `decode-uri-component` advisory** through expo-router 57.
   Fixed only in SDK 58.
 - **`deno lint` reports 10 existing problems,** so it isn't a CI gate, and the

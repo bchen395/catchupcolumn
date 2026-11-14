@@ -63,12 +63,17 @@ Sentry.init({
   },
 });
 
-// Start the navigator on the auth stack so the tab tree (and its data
-// fetches) doesn't briefly mount against an unauthenticated client during
-// cold start. The redirect effect below moves signed-in users to /(tabs).
-export const unstable_settings = {
-  initialRouteName: '(auth)/login',
-};
+// Cold start lands on `/`, and `app/index.tsx` redirects that to the auth
+// stack, so the tab tree (and its data fetches) never mounts against an
+// unauthenticated client. The redirect effect below moves signed-in users to
+// /(tabs).
+//
+// There is deliberately no `unstable_settings` anchor here. Until 2026-11-14
+// this file set `initialRouteName: '(auth)/login'`, which names no child of
+// this layout: the router ignored it on the phone and the web export failed on
+// it ("invalid anchor"), which broke `eas update` without `--platform ios`. A
+// valid anchor (`'(auth)'`) would do something new instead: put the sign-in
+// stack underneath every deep link.
 
 SplashScreen.preventAutoHideAsync();
 

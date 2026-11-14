@@ -334,10 +334,10 @@ This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
 - From the 2026-11-14 pass (bugs.md → Hardening pass, open items): the
   unsubscribe link acts on GET; switching Groups in the composer can drop an
   unsaved draft; `users.avatar_url` and `groups.cover_image_url` accept any
-  URL; `app/_layout.tsx`'s `initialRouteName` is not a valid anchor; the
-  `query-string` advisory waits for SDK 58.
-- Repo settings nobody has changed yet: require `CI passed` on `main`, and
-  turn on Dependabot alerts.
+  URL; the `query-string` advisory waits for SDK 58.
+- Repo settings, set 2026-11-14: `main` requires the `CI passed` check (no
+  review requirement; force-pushes and deletion are off), and Dependabot
+  alerts are on (alerts only, no automatic npm PRs).
 
 **First move for the next session:** confirm the 2026-11-14 OTA applied on
 build 10 and run the push checks (Live state), then ask the owner which comes
@@ -420,11 +420,12 @@ next:
 - **The `production` channel is the owner's TestFlight build now,** and after
   release it's everyone's. There is no `staging` build: the profile exists,
   but none was built.
-- **`eas update` without `--platform ios` fails.** It exports web too, and the
-  static web render rejects `initialRouteName: '(auth)/login'` in
-  `app/_layout.tsx` ("invalid anchor"). Nothing is published by the failed
-  run. Don't "fix" it by editing `app.json`'s `web` block: that moves the
-  fingerprint.
+- **Publish OTAs with `--platform ios`.** There is no Android build to
+  receive one. Until 2026-11-14 the flag was also required: `eas update`
+  exports web too, and the web render rejected an invalid
+  `unstable_settings` anchor in `app/_layout.tsx` ("invalid anchor"). The
+  anchor is removed; don't add one back (the comment there says why). A failed
+  export publishes nothing.
 - **The simulator can run the app after all, in Expo Go** (`npx expo start`,
   then open it on a booted simulator). It runs `main`'s JS against production,
   so it covers screens, photos, compose and publish. It can't receive this
