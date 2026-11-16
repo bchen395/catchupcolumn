@@ -1,6 +1,6 @@
 # Launch handoff — orchestration brief
 
-**Rewritten 2026-11-03, updated 2026-11-04, 2026-11-05 and 2026-11-14** (first written 2026-09-24). This is a living brief for
+**Rewritten 2026-11-03, updated 2026-11-04, 2026-11-05 and 2026-11-14; Next steps rewritten 2026-11-15** as the one launch list, merging LOOP_SPEC and the UI pass (first written 2026-09-24). This is a living brief for
 whichever session is running the launch. It holds what the lists don't: current
 live state, the order things must happen in, who does what, and how to verify.
 **Rewrite it at the end of every orchestration session** (state, decisions,
@@ -17,7 +17,10 @@ It deliberately does **not** copy the lists. Each has one home:
 | What | Where |
 | --- | --- |
 | What's left, short form | `todo.md` |
-| Sequence and why; open questions | `docs/POSITIONING.md` §8, §9 (Group Zero, §6, was skipped 2026-10-24) |
+| **The order of work** | **this file → Next steps** (the one list; other docs hold the detail) |
+| Why: audience, test Groups, revenue | `docs/POSITIONING.md` §0 (2026-11-13; wins over the later sections) |
+| The loop to build before the test Groups | `docs/LOOP_SPEC.md` |
+| The owner's UI-pass decisions (2026-11-08) | `docs/UI_PASS.md` |
 | Runbook narrative, commands, live-ops checks | `docs/LAUNCH.md` |
 | Submission-day gates (authoritative over LAUNCH) | `docs/PRESUBMISSION_CHECKLIST.md` |
 | Every App Store Connect value, the review account, the Review Notes | `docs/STORE_LISTING.md` §13 (§9.1 age rating, §7 privacy labels, §5 screenshots) |
@@ -27,7 +30,7 @@ It deliberately does **not** copy the lists. Each has one home:
 | Illustration commission: spec, contracts, integration | `design/ILLUSTRATION_REWORK.md` |
 | The artist-facing brief (a shareable doc) | <https://claude.ai/code/artifact/c729acda-f9d2-4fd5-a929-04382415acaa> |
 | How to work on each surface | `.claude/skills/*` (auto-load) |
-| Dormant since Group Zero was skipped | `scripts/group-zero/`, `docs/ORGANIZER_PLAYBOOK.md`, STORE_LISTING §12 (TestFlight external) |
+| Back in use for the test Groups (POSITIONING §0) | `docs/ORGANIZER_PLAYBOOK.md`, STORE_LISTING §12 (TestFlight external); `scripts/group-zero/readout.sql` gets generalized (LOOP_SPEC §4) |
 
 When something gets done, record it **there**, dated, then update this file.
 
@@ -151,7 +154,8 @@ Review Notes make the structural case instead.
 
 It has every PR up to #72 built in, and since 2026-11-14 an OTA with #74,
 #77, #86 and #89 (cold-launch twice to apply it; not yet confirmed on the
-phone). Fixes from the phone checks and the UI pass (§5) will be a second OTA.
+phone). The UI pass and LOOP_SPEC's app half will be the second OTA (Next
+steps, Step 5).
 
 **The owner's local checkout:**
 - `package.json` has an **uncommitted** change: the `ios`/`android` scripts say
@@ -162,7 +166,33 @@ phone). Fixes from the phone checks and the UI pass (§5) will be a second OTA.
   switching branches, stash and pop.
 
 **Test accounts:** T1 = `bchen395+t1@gmail.com` (moderator of a test Group).
-T2 and T3 will be `bchen395+t2@`/`+t3@gmail.com`, not created yet.
+T2 and T3 will be `bchen395+t2@`/`+t3@gmail.com`. On 2026-11-08 the owner was
+about to sign up T2 in the simulator through T1's invite link; **check whether
+T2 exists** before creating it.
+
+**Review account and demo Group: done 2026-11-08** (§6 step 11, in the UI
+session; it never reached this file until 11-15):
+- Review account `bchen395+appreview@gmail.com`, display name **App Review**,
+  with a password (in the owner's password manager).
+- Demo Group **Teddy's Crew**, moderated by App Review. Second member **Henry
+  Miller** (`bchen395+appreview2@gmail.com`, no password).
+- Edition 1 published with both stories (App Review's has 3 photos, Henry's
+  at least one). Email to both, push, and Report/Block on Henry's story all
+  worked.
+- **Still owed:** write the names into the Review Notes in STORE_LISTING §13.3
+  (measured at 3,691 bytes with them in, under 4,000), then paste into App
+  Store Connect.
+- Don't type in the composer as App Review: autosave makes it a real post in
+  Teddy's Crew's next edition, which the reviewer sees.
+
+**Sentry, 2026-11-08:** no issues ever received. Release `1.0.0 (10)` lists 2
+artifacts (bundle and source map), so build 10 had the org, project and token.
+That doesn't prove the DSN is in the build: the test event (#83) does, and it
+**did not ride the 11-14 OTA**. It goes in the next one.
+
+**Local launch config:** `.claude/launch.json` has an uncommitted
+`expo-ios-go` entry (Expo Go on the simulator, port 8081) from the UI session.
+Like the `package.json` change, leave it out of commits unless the owner says.
 
 **Phone check batch 1: done 2026-11-03.** Sign-up with the Terms agreement,
 the 10-minute code, onboarding, the photo permission wording, notifications
@@ -199,14 +229,14 @@ The exceptions:
   contact
 
 Open:
-- the review sign-in and Notes (§6 step 11)
+- the review sign-in and Notes (the account exists; see Review account above)
 - screenshots and the build
 
 ## Decisions since 2026-10-24 (all the owner's)
 
 | Date | Decision |
 | --- | --- |
-| 10-24 | **Skip Group Zero.** No external TestFlight, no beta review; submit once the art lands and the checks pass. Multi-photo ships in v1 |
+| 10-24 | **Skip Group Zero.** ~~No external TestFlight, no beta review; submit once the art lands and the checks pass.~~ (Reversed 11-13, below.) Multi-photo ships in v1 |
 | 10-30 | Age rating **18+** override; Terms §1 stays at 18. Messaging & Chat: Yes. Content rights: Yes (the art contract must grant the rights). EU **trader**. Every region except mainland China. **Manual** release. Reports answered **within 24 hours, every day** |
 | 10-30 | Guideline 1.2 closed in code before the final build: one-way block, "Let back in", **no word filter**, report sent from the app, email and push switches for each Group. Existing accounts aren't asked to re-agree to the Terms. bugs.md M1 accepted |
 | 10-31 – 11-02 | Accepted for 1.0: report spam can use up the shared Resend cap (G1); push isn't filtered by blocks (G2); a moderator's block hides stories in their own Group too (G3); deleting an account removes that person's stories (G4) |
@@ -214,117 +244,152 @@ Open:
 | 11-02 | Privacy label declares Customer Support; support inbox disclosed; **Supabase CLI v3 now** (rather than pinning 2.x) |
 | 11-03 | Short multi-line fields (Group description, bio): Return reads **Done** and closes the keyboard. **Batch the OTA:** #74 waits for the phone-check fixes |
 | 11-04 | ~~**Accept**~~ (fixed instead on 11-05) the missing strong-password suggestion on Set a password for 1.0 (bugs.md L6). **Copyright** names the owner's legal name; the App Review contact is the owner's personal phone and email. **DSA trader declaration deferred**: which address to publish is still open |
+| 11-08 | **The UI pass, decided screen by screen:** all in `docs/UI_PASS.md`. Also: **Sign in with Apple** is the first update after launch, not 1.0; **dark mode** waits until after launch; the paperboy stays static. The illustrations are drawn by someone the owner knows personally: **no fee and no fixed dates**; the owner asks for pieces when they're needed (this replaces the "commission, finals ~11-07" framing in §7 and ILLUSTRATION_REWORK) |
+| 11-13 | **Real test Groups before submission, after the art** (POSITIONING §0): two or three Groups (the owner's friends, the owner's partner's friends, one family) on **external TestFlight**, so Beta App Review is back. The wait is spent building `docs/LOOP_SPEC.md`. **A draft still publishes** at the deadline (`posts.filed_at`, ignored by the compiler). Revenue leads with a monthly printed paper |
 | 11-14 | **Publish the OTA now** rather than after the UI pass, iOS only, and **defer the phone checks** of it (Live state lists them). `unsubscribe` still waits for release day |
 | 11-05 | **Drop the EU for 1.0** rather than publish a trader address, phone and email on EU product pages: 147 of 175 regions (UK, Norway, Iceland, Liechtenstein and Switzerland stay). When the EU comes back, the email is support@. **Fix the Keychain gap after all** (#77, rides the OTA). **Hold Expo patch drift** in `expo.install.exclude` until the final build (#78) |
 
-## Next steps
+## Next steps — the one launch list (2026-11-15)
 
 **[owner]** means only the owner can do it: one step at a time, with exact
-clicks or commands. **[agent]** means the session does it.
+clicks or commands. **[agent]** means the session does it. Work top to bottom;
+lanes marked *parallel* can run at the same time in separate worktrees because
+they don't share files. Every **server** item (migration, function deploy) asks
+first; batch them so the owner approves one deploy, not five.
 
-**§1. Finish batch 1: done 2026-11-04.** Steps 1 to 4 are done.
+Finished and kept for the record: phone check batches 1 and 2 (11-03/04), App
+Store Connect fields (11-04/05), the review account and demo Group (11-08), the
+hardening pass and first OTA (11-14).
 
-**§2. Phone check batch 2: done 2026-11-04.** See Live state. The over-a-day-old
-session was checked 2026-11-05. One Gate 7 Auth item moves to §3: signed in on
-two devices, then sign out on one.
+### Step 1. Close out the 11-14 OTA — [owner], 10 minutes, on the phone
 
-**§3. Phone check batch 3: needs two or three accounts at once**
+1. Cold-launch build 10 twice. Home loading means the OTA applied.
+2. Publish in T1's Test Group; see the push arrive; tap it once with the app
+   killed and once with it open (#89 changed both).
+3. Set a password: the Strong Password suggestion, the Keychain save, and the
+   update prompt after *Forgot your password?* (bugs.md L6, #77).
 
-This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
-(`gh pr view <n>`), plus join, publish, email, push and unsubscribe.
+### Step 2. Start Beta App Review early — [owner, agent dictates]
 
-5. **[owner] Choose the second device.** Options:
-   - Another iPhone or iPad on the same Apple ID, installed from TestFlight.
-   - Someone added to App Store Connect as a user, then as an internal tester.
-     External testers would need Apple's beta review.
-   - **Fallback:** switch accounts on one phone (sign out and in). That covers
-     everything except push arriving while another account is active, since
-     push goes to whoever is signed in on the phone.
-   - **Not the simulator:** local Xcode 26.3 can't build SDK 57.
-6. **[owner + agent] Run the batch in this order.** Setup is T1 moderator, T2
-   and T3 contributors.
-   - T2 joins by code.
+The test Groups need external TestFlight, and Apple's beta review is the one
+wait nobody here controls. Revive STORE_LISTING §12 (TestFlight external),
+create the external group, and submit **build 10** for beta review now, so any
+questions Apple asks come back while the build work runs. Testers won't be
+invited until Step 6.
+
+### Step 3. Build — [agent], PRs off `main`
+
+Read `docs/UI_PASS.md` and `docs/LOOP_SPEC.md` in full first. They overlap in
+four places, already reconciled in UI_PASS: Done sets `filed_at`; "Write yours"
+counts filed stories; "· N writers" goes everywhere and the whole line goes for
+one-story editions; the invite preview's faces versus the public web page.
+
+3a. **The ghost-button style** (UI_PASS §1). First and alone: it touches every
+    screen.
+
+Then three lanes, *parallel*:
+
+- **Lane A — invite and join:** LOOP_SPEC §1 (https link, `web/join`, AASA,
+  routing, share message) together with UI_PASS §9 (faces on the signed-out
+  invite preview, **server**). Needs the owner's answer on faces on the web
+  page first (Decisions the owner owes). Merging `web/` publishes it. Check on
+  the phone whether `/join/*` works by OTA or needs the final build.
+- **Lane B — composer, then the loop's server half, in this order:**
+  UI_PASS §6 (Done, the stamp, the toolbar, the date button) → LOOP_SPEC §2
+  (`group_slot_notices`, `filed_at`, the reminder, **server**) → LOOP_SPEC §3
+  (the one-story letter, the empty-week note to moderators, **server**) →
+  #81 (the email photo credit, **server**). All touch `compile-editions` or
+  `_shared/`, so they go one at a time.
+- **Lane C — the other screens:** UI_PASS §2 (sign-up copy), §3 (Home; "Write
+  yours" lands after Lane B's `filed_at`), §4 (Editions), §5 (front page;
+  coordinate the masthead line with LOOP_SPEC §3a), §7 (Groups tab), §8 (Group
+  page), §10 (Profile initial), #80, #82.
+
+3b. **LOOP_SPEC §4** once Lanes A and B are in: the "Write for it →" email
+    line (**server**), the generalized readout, the push-permission note in
+    Your delivery, and the Resend paid-plan line in LAUNCH.
+
+3c. **One server deploy** for everything above: `db push --remote`, then
+    `compile-editions` and `publish-edition-now` (and any other importer of a
+    changed `_shared/` file). Ask first; download and diff afterwards.
+
+### Step 4. Walk what changed — [owner + agent]
+
+In Expo Go on the simulator, then on the phone after the OTA:
+- the screens never walked (UI_PASS §11): onboarding, join, welcome, Set a
+  password, the reader, **through the new `/join` link**;
+- every screen changed in Step 3.
+
+New notes go into UI_PASS as decisions first, then get built. Keep this to one
+round: anything that isn't a bug or a broken promise waits for the test Groups.
+
+### Step 5. Second OTA, then the multi-account checks
+
+1. **[agent → owner] Publish the OTA** (ask first): confirm
+   `npx expo-updates runtimeversion:resolve --platform ios` prints
+   `dd742296…`, then
+   `npx eas-cli update --channel production --environment production --platform ios --message "…"`.
+   It carries Step 3 and #83 (the Sentry test). Cold-launch twice.
+2. **[owner + agent] Sentry** (LAUNCH 10.3/10.5): the #83 event arrives;
+   check what it contains.
+3. **[owner + agent] Phone check batch 3** (the rest of Gate 7) on the updated
+   build. Needs the second device or account switching (Decisions the owner
+   owes). T1 moderator, T2/T3 contributors:
+   - T2 joins **by the new https link**.
    - A post with 2 photos → Publish now. The email arrives from the verified
-     domain, its "read the edition" link opens the app (not a 404), and push
-     fires.
-   - Report (#64). The email reaches `support@`.
+     domain, its link opens the app, push fires.
+   - The reminder push before a slot, and the empty-week note (LOOP_SPEC §2–3).
+   - Report (#64), reaching `support@`.
    - Block and Unblock (#70).
-   - Delivery switches, and the unsubscribe link flipping the switch (#68).
-   - Take down a published 2-photo story (#69). This is **the production
-     take-down test**: see #69's "After merging" item 3 for the before/after
-     file counts. The **[agent]** hands the owner the read-only queries.
+   - The delivery switches, and the unsubscribe link flipping the switch (#68).
+   - Take down a published 2-photo story (#69): **the production take-down
+     test**, with #69's before/after file counts; the agent hands over the
+     read-only queries.
    - Remove, the removed member refused at the join screen, then Let back in
      (#66).
-   - Delete a *creator's* account while their Group has a member (#65): the
-     deletion completes and the Group passes on. Read-only checks are in #65.
+   - Delete a *creator's* account while their Group has a member (#65).
    - Profile → Delete my account.
-   - Clean up the test Groups afterwards.
+   - Share an invitation and the QR code (UI_PASS §8).
+   - Clean up the test Groups afterwards (not Teddy's Crew).
 
-**§4. Sentry smoke test** (LAUNCH step 10; its 10.3 is owed)
+### Step 6. The art, the final build, the test Groups
 
-7. **[owner + agent]** Follow LAUNCH 10.3/10.5 on the TestFlight build.
+1. **[owner]** Ask for the art when Steps 3–5 are close: there's no fee and no
+   fixed date, so the ask is the trigger. The SVGs ride an OTA; the icon and
+   splash need the build.
+2. **[agent]** Integrate per ILLUSTRATION_REWORK → Integration; decide the
+   mug (UI_PASS §10); fold the outcomes into BRAND §4/§11 and delete
+   ILLUSTRATION_REWORK.
+3. **[owner] The final build:** remove `expo.install.exclude` from
+   `package.json`, run `npx expo install --fix`, then the production build. Its
+   runtime is new, so build 10 stops getting OTAs. Remove #83's test line
+   before building.
+4. **[owner] Start the test Groups** on that build through external TestFlight,
+   with ORGANIZER_PLAYBOOK. Run them before or alongside App Review
+   (POSITIONING §0). Read them with the generalized readout.
 
-**§5. The owner's UI pass, then one OTA**
+### Step 7. Submit
 
-8. **[owner + agent]** The owner walks the app and reports in a `/qa` session
-   (it files GitHub issues). Agents fix them in PRs.
-9. **[agent → owner] Publish the batch as one OTA:**
-   - **Ask first.**
-   - Before publishing, confirm `npx expo-updates runtimeversion:resolve
-     --platform ios` in the owner's checkout prints `dd742296…`.
-   - Then `npx eas-cli update --channel production --environment production
-     --platform ios --message "…"`. `--platform ios` is required (Traps).
-   - The owner cold-launches twice to apply it.
-   - **The first OTA went out 2026-11-14** (#74, #77, #86, #89). This step is
-     now the second one, for whatever the UI pass and the phone checks fix.
-   - Still owed after the first: re-check Set a password's Keychain behaviour
-     (bugs.md L6), and the deferred checks in Live state.
+1. **[owner]** Screenshots, last, from Teddy's Crew with the new art (check
+   the size slots in Media Manager first; STORE_LISTING §5).
+2. **[agent]** Write the demo names into the Review Notes (§13.3), re-measure
+   under 4,000 bytes; **[owner]** paste them and the review sign-in into App
+   Store Connect.
+3. **[owner]** Move Resend to a paid plan (LOOP_SPEC §4).
+4. **[owner]** Submit the build with `npx eas-cli submit --platform ios --id <id>`
+   and add it to the version page.
+5. **[owner + agent]** The final PRESUBMISSION pass (all gates), then
+   **Submit for Review**. Release is manual.
 
-**§6. App Store Connect (items 19–22): no second device needed**
+### Step 8. Release day and after
 
-10. **[owner, agent dictates] Done 2026-11-04 and 11-05** (Live state). The
-    EU is out for 1.0, so there's no DSA declaration. Bringing it back after
-    launch is a todo.md item.
-11. **[agent + owner] Review account and demo Group** (STORE_LISTING §13.2;
-    production writes, so ask first):
-    - A review account with a password.
-    - A demo Group with a second member who has written a story, because
-      Report, Block and Take down only appear on other people's stories.
-    - One published edition.
-    - Then fill the Review Notes placeholders `{{DEMO GROUP NAME}}` and the two
-      `{{SECOND MEMBER NAME}}` (§13.3) and re-measure them under 4,000 bytes.
-
-**§7. Illustration commission** (`design/ILLUSTRATION_REWORK.md`)
-
-12. **[owner]** The artist's timeline: sketches were proposed for about 10-17
-    and finals for about 11-07. Confirm where it stands.
-13. **[agent], when the art lands:**
-    - Integrate it per ILLUSTRATION_REWORK → Integration.
-    - Regenerate the icon, splash and derived assets. That moves the
-      fingerprint, so it needs a new build.
-
-**§8. Final build and submit**
-
-14. **[owner]**
-    - First remove `expo.install.exclude` from `package.json` and run
-      `npx expo install --fix` (Traps → Expo patch drift).
-    - A new production build, the same command as before. Its runtime is new,
-      so older builds stop getting OTAs.
-    - Submit it with `npx eas-cli submit --platform ios --id <id>`.
-    - Add it to the version page.
-15. **[owner]** Screenshots:
-    - Check the required size slots in Media Manager first (STORE_LISTING §5;
-      Apple's page named the 6.3-inch class, 2026-11-02).
-    - Use the demo Group's invented content.
-16. **[owner + agent]** The final PRESUBMISSION pass (all gates), then **Submit
-    for Review**. Release is manual.
-
-**§9. Release day and after**
-
-17. **[agent → owner]** `npx supabase functions deploy unsubscribe --use-api
-    --remote`. It asks first; default is No.
-18. **[agent]** After approval, set `appStoreUrl` in `web/config.js` (PR; this
-    publishes the site).
+1. **[agent → owner]** `npx supabase functions deploy unsubscribe --use-api
+   --remote` (asks first; default No).
+2. **[agent]** After approval, set `appStoreUrl` in `web/config.js` (a PR; this
+   publishes the site).
+3. The first update after launch: **Sign in with Apple** (UI_PASS → Post-launch).
+4. What the test Groups show decides letters to the editor and sections of the
+   paper (POSITIONING §0, LOOP_SPEC §5).
 
 **Not blocking:**
 - Make CI's schema lint able to fail (todo.md).
@@ -339,22 +404,19 @@ This is the rest of Gate 7: #64, #65, #66, #68, #69 and #70's device scripts
   review requirement; force-pushes and deletion are off), and Dependabot
   alerts are on (alerts only, no automatic npm PRs).
 
-**First move for the next session:** confirm the 2026-11-14 OTA applied on
-build 10 and run the push checks (Live state), then ask the owner which comes
-next:
-- §6 step 11, the review account and demo Group (production writes, so ask
-  first). It also gives §3 a ready second account.
-- §3, once the second device is chosen (step 5)
-- §7, where the art stands: the finals were due around 11-07
-- §5, the `/qa` UI pass, then the OTA
+**First move for the next session:** Step 1 if the owner hasn't done it, then
+Step 2's beta review and Step 3a. Lanes A–C can each go to their own session
+once 3a is merged.
 
 ## Decisions the owner owes
 
 | Decision | Needed by | Where |
 | --- | --- | --- |
-| Second device or tester for batch 3 | §3 | above |
-| Screenshot size slots (Media Manager) | §8 | STORE_LISTING §5 |
-| Artist: fee, rights (they must cover content rights), dates | §7 | ILLUSTRATION_REWORK |
+| Faces and first names on the **public web** join page too, or only in the app | Step 3, Lane A | UI_PASS §9 |
+| Second device or tester for batch 3 | Step 5 | Step 5.3 |
+| Which friends and family make up the two or three test Groups, and who organizes each | Step 6 | POSITIONING §0 |
+| A written grant of rights for the drawings (App Store Connect says Content rights: Yes) | Step 7 | ILLUSTRATION_REWORK |
+| Screenshot size slots (Media Manager) | Step 7 | STORE_LISTING §5 |
 | Publish-day default (minor): the app says Sunday 09:00 | Any time | `app/group/create.tsx` |
 
 ## How to verify without Docker

@@ -1,8 +1,10 @@
 # TODO.md — Catch Up Column
 
-What's left. The spec is [CLAUDE.md](CLAUDE.md); the *why* and the order of work
-are [docs/POSITIONING.md](docs/POSITIONING.md) §8. Orchestrating the launch from
-a fresh session? Start at [docs/HANDOFF.md](docs/HANDOFF.md).
+What's left. The spec is [CLAUDE.md](CLAUDE.md); the *why* is
+[docs/POSITIONING.md](docs/POSITIONING.md) §0. **The order of work is one list:
+[docs/HANDOFF.md](docs/HANDOFF.md) → Next steps** (since 2026-11-15), which
+sequences [docs/LOOP_SPEC.md](docs/LOOP_SPEC.md) and
+[docs/UI_PASS.md](docs/UI_PASS.md) with the launch.
 
 **Phases 1–7 are complete** — project skeleton, auth & onboarding, Group creation
 and invites, the post composer, weekly edition compilation, the inbox and reading
@@ -31,13 +33,13 @@ specified in CLAUDE.md. Git history has the detail if you need it.
 - [ ] **Bring the EU back** (after 1.0) — needs the DSA trader declaration: a
       published address, phone and email (support@ chosen). STORE_LISTING §13.1
 - [ ] Onboarding tested with a real non-technical user (folded into Group Zero
-      — *skipped 2026-10-24, so this is no longer covered*)
+      — *skipped 2026-10-24*; covered again by the test Groups, POSITIONING §0)
 
 ---
 
 ## In front of launch, in order
 
-POSITIONING §8 is the authoritative sequence. The short version:
+HANDOFF → Next steps is the authoritative sequence. The short version:
 
 - [x] **Guideline 1.2 work** (owner's decisions, 2026-10-30) — #64–#70 merged
       2026-10-31 to 2026-11-02: *Report this story* sends from inside the app
@@ -237,9 +239,23 @@ POSITIONING §8 is the authoritative sequence. The short version:
       "don't". The owner sends the brief and agrees fee, rights and dates.
       [design/ILLUSTRATION_REWORK.md](design/ILLUSTRATION_REWORK.md)
 - [ ] **App Store submission** — [docs/PRESUBMISSION_CHECKLIST.md](docs/PRESUBMISSION_CHECKLIST.md).
-      Straight after the illustration rework and the presubmission checks
-      (Group Zero skipped 2026-10-24). The App Store Connect sheet is
+      After the illustration rework, with the test Groups running before or
+      alongside review (POSITIONING §0, 2026-11-13; HANDOFF Steps 6–7). The App Store Connect sheet is
       [docs/STORE_LISTING.md](docs/STORE_LISTING.md) §13 (2026-10-30).
+
+---
+
+## After launch (decided 2026-11-08, in docs/UI_PASS.md)
+
+- [ ] **Sign in with Apple**: the first update after launch. Apple only;
+      Google once there's Android. Needs the Hide My Email relay registered
+      for Resend, revoke-on-delete in `delete-account`, and a design for
+      duplicate accounts.
+- [ ] **Dark mode**: needs dark versions of the drawings first, then a token
+      pass (BRAND §2's "evening edition").
+- [ ] **A dog for each Group**: an idea for the artist after the current set.
+- [ ] **The paperboy riding in on Home**, once the new art's wheels are
+      separate pieces. Optional.
 
 ---
 
